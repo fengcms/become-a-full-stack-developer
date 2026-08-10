@@ -6,9 +6,20 @@ info:
     Node 后端与 Go 后端均按此实现；React/Vue/Next/Flutter/Taro 各端均按此对接。
     契约变更必须先改此文件，再改实现。
     本契约作为「单一事实来源」，所有 200 响应均给出完整 schema，供各端自动生成类型。
-    公开端点（security: []）强制只返回 published 内容，未发布内容对匿名返回 404，
-    杜绝草稿/待审泄露（见 02 文档 §三「公开内容可见性铁律」）。
-  version: 1.2.0
+
+
+    三条贯穿全契约的硬规则（详见 02 文档）：
+
+    1. 公开可见性铁律：公开列表只返回 published，未发布内容对匿名返回 404（02 §三）。
+
+    2. 实体生命周期完整：每个实体都有可达的创建/读取/变更/删除路径，不存在契约沉默的孤儿实体或死胡同状态（02 §3.1）。
+
+    3. 约束尽量机器化：可枚举的约束一律下沉到 enum / security / responses，不靠散文自觉（02 §3.2 机器强制约束清单）。
+
+
+    可选鉴权端点采用 OpenAPI 标准写法 `security: [{}, {bearerAuth: []}]`
+    （空安全需求对象表示允许匿名），各端生成客户端须配置「持有令牌则自动附加」，见 02 §3.3。
+  version: 1.3.0
 servers:
   - url: http://localhost:3000
     description: 本地开发（Node 后端）
@@ -50,7 +61,39 @@ components:
     Sort:
       name: sort
       in: query
-      description: 排序字段,方向，如 publishedAt,desc；白名单字段：publishedAt, viewCount, createdAt
+      description: >
+        排序，格式 `字段,方向`。枚举穷举全部合法组合，生成客户端即受约束（不再是散文白名单）。
+        跨实现一致性规定：`publishedAt` 为 null 的行（draft/pending）以 `createdAt` 参与比较
+        （等价 `COALESCE(published_at, created_at)`），避免 SQLite 与 PostgreSQL 的 NULL 排序默认值差异；
+        末位统一追加 `id desc` 作为稳定排序键，保证分页不重不漏。
+      schema:
+        type: string
+        enum:
+          - publishedAt,desc
+          - publishedAt,asc
+          - viewCount,desc
+          - viewCount,asc
+          - createdAt,desc
+          - createdAt,asc
+        default: publishedAt,desc
+    FilterCategory:
+      name: category
+      in: query
+      description: 按分类 **slug** 精确匹配（非 id、非 name）。不含子分类，只匹配该分类自身
+      schema:
+        type: string
+    FilterTag:
+      name: tag
+      in: query
+      description: 按标签 **slug** 精确匹配（非 id、非 name）
+      schema:
+        type: string
+    FilterKeyword:
+      name: keyword
+      in: query
+      description: >
+        关键词，匹配 `title` + `summary` 两个字段的子串（大小写不敏感），**不含 content 全文**。
+        全文检索是 M1-19 的独立议题，v1 契约不纳入，避免 Node 与 Go 因检索范围不同而分歧
       schema:
         type: string
   schemas:
@@ -118,12 +161,26 @@ components:
         pagination:
           $ref: '#/components/schemas/Pagination'
       required: [list, pagination]
+    AttachmentPage:
+      type: object
+      description: 附件分页结果
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required: [list, pagination]
     User:
       type: object
       description: 用户对象；密码哈希绝不出现在此结构中
       properties:
         id: { type: integer }
         username: { type: string }
+        email:
+          type: string
+          description: 邮箱，唯一。仅本人（/me/profile）与 admin（/users）可见，公开端点不返回
         nickname: { type: string }
         avatar: { type: string, nullable: true }
         role:
@@ -133,6 +190,7 @@ components:
         status:
           type: string
           enum: [active, disabled]
+          description: disabled 账号无法登录与刷新（401 / code 1005），其公开主页返回 404
         level:
           type: integer
           default: 1
@@ -141,7 +199,7 @@ components:
       required: [id, username, nickname, role, status]
     MemberProfile:
       type: object
-      description: 会员公开主页数据
+      description: 会员公开主页数据（不含 email 等隐私字段）
       properties:
         id: { type: integer }
         nickname: { type: string }
@@ -253,10 +311,26 @@ components:
         status:
           type: string
           enum: [approved, rejected, reviewing]
-          description: approved=通过（转义后展示）；rejected=违规比率超阈值不予展示；reviewing=人工复核中
+          description: >
+            approved=通过（转义后展示）；rejected=违规比率超阈值不予展示；reviewing=人工复核中。
+            自动流只产出 approved / rejected；reviewing 仅能由 `PATCH /comments/{id}/status`（admin）置位与移出。
+            公开列表 `GET /articles/{idOrSlug}/comments` 只返回 approved
         rejectedReason: { type: string, nullable: true }
         createdAt: { type: string, format: date-time }
       required: [id, articleId, userId, content, status]
+    CommentModerateRequest:
+      type: object
+      description: 评论人工复核置位入参（admin 专用）
+      properties:
+        status:
+          type: string
+          enum: [approved, rejected, reviewing]
+          description: 目标状态。置为当前同一状态时幂等返回 200
+        reason:
+          type: string
+          nullable: true
+          description: 可选，写入 rejectedReason（置为 approved 时后端清空该字段）
+      required: [status]
     ReadingHistoryItem:
       type: object
       description: 阅读历史条目，文章摘要 + 阅读进度
@@ -280,16 +354,30 @@ components:
       required: [list, pagination]
     Attachment:
       type: object
+      description: >
+        附件 / 上传资源。`POST /upload` 返回本结构（上传即落 Attachment 表），
+        `GET /me/attachments` 列举本人上传，`DELETE /attachments/{id}` 删除。
+        它不是内部影子表，而是契约对外暴露的一等实体。
       properties:
         id: { type: integer }
+        userId:
+          type: integer
+          description: 上传者，由令牌推断，不由客户端传入
+        articleId:
+          type: integer
+          nullable: true
+          description: 可选关联的文章；由上传时的表单字段 articleId 写入（编辑器内上传场景）
         url: { type: string }
         storage:
           type: string
           enum: [r2, local]
+          description: 本次实际使用的存储后端，由 STORAGE_DRIVER 决定（见 02 §2.6）
         mimeType: { type: string }
-        size: { type: integer }
+        size:
+          type: integer
+          description: 字节数
         createdAt: { type: string, format: date-time }
-      required: [id, url, storage]
+      required: [id, userId, url, storage, mimeType, size]
     ValidationError:
       type: object
       description: 字段级校验错误明细
@@ -306,11 +394,6 @@ components:
           items:
             $ref: '#/components/schemas/ValidationError'
       required: [errors]
-    ErrorDetail:
-      type: object
-      properties:
-        field: { type: string }
-        message: { type: string }
     LoginRequest:
       type: object
       properties:
@@ -336,7 +419,10 @@ components:
           description: access token 有效期（秒）
         refreshToken:
           type: string
-          description: 刷新令牌。浏览器端由 Set-Cookie 写入 HttpOnly+SameSite Cookie；移动端返回此字段存于安全存储，刷新时置于请求体
+          description: >
+            刷新令牌。浏览器端由 Set-Cookie 写入 HttpOnly+SameSite Cookie；
+            移动端返回此字段存于安全存储，刷新时置于请求体。
+            采用**旋转策略**：每次刷新签发新值并作废旧值（见 POST /auth/refresh）
         user:
           $ref: '#/components/schemas/User'
       required: [accessToken, expiresIn, user]
@@ -363,7 +449,11 @@ components:
         slug:
           type: string
           nullable: true
-          description: 可选；仅管理员可手动指定唯一 slug
+          description: >
+            可选的 URL 别名。权限约束（与 status 同规格显式化）：
+            **member / author 传入 slug 时后端一律忽略**（创建时留空、更新时保持原值），不报错也不写入；
+            仅 admin 可指定。slug 需全局唯一（软删除行不占用，见 02 §2.2 部分唯一索引），
+            重复则返回 409 / code 3002；命中预留子路径黑名单（tree/view/submit 等）返回 400 / code 4001
         status:
           type: string
           enum: [draft, pending, published]
@@ -387,6 +477,24 @@ components:
         oldPassword: { type: string }
         newPassword: { type: string }
       required: [oldPassword, newPassword]
+    AdminResetPasswordRequest:
+      type: object
+      description: >
+        admin 重置他人密码。v1 不做邮件找回（Non-goal，见 02 §九），
+        此端点是「忘记密码」的唯一兜底路径，同时是「哈希不可逆但管理员仍能重置」这一权衡的教学素材
+      properties:
+        newPassword: { type: string }
+      required: [newPassword]
+    ProfileUpdateRequest:
+      type: object
+      description: 更新本人资料。email 唯一，冲突返回 409 / code 3002
+      properties:
+        nickname: { type: string }
+        avatar: { type: string, nullable: true }
+        email:
+          type: string
+          description: 可选。v1 无邮箱验证流程（Non-goal），改后立即生效，仅做唯一性校验
+      required: []
     OAuthCallbackRequest:
       type: object
       description: 第三方登录回调入参（M3-09 扩展点）
@@ -400,6 +508,7 @@ security:
 paths:
   /api/v1/auth/register:
     post:
+      operationId: registerUser
       tags: [Auth]
       summary: 注册
       security: []
@@ -430,10 +539,14 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/ValidationErrorList'
+        '409':
+          description: 用户名或邮箱已被占用（code 3002）
   /api/v1/auth/login:
     post:
+      operationId: login
       tags: [Auth]
       summary: 登录
+      description: 账号 status=disabled 时拒绝登录，返回 401 / code 1005（不返回 403，避免暴露账号存在性）
       security: []
       requestBody:
         required: true
@@ -453,12 +566,20 @@ paths:
                       data:
                         $ref: '#/components/schemas/AuthResult'
         '401':
-          description: 用户名或密码错误（code 1001）
+          description: 用户名或密码错误（code 1001）；或账号已被禁用（code 1005）
   /api/v1/auth/refresh:
     post:
+      operationId: refreshToken
       tags: [Auth]
       summary: 刷新访问令牌
-      description: 浏览器端通过 HttpOnly Cookie 携带 refreshToken；移动端将 refreshToken 置于请求体
+      description: >
+        浏览器端通过 HttpOnly Cookie 携带 refreshToken；移动端将 refreshToken 置于请求体。
+        读取优先级：Cookie 优先，缺失取请求体，两者皆无 → 401 / code 1003。
+
+
+        **旋转策略（强制）**：每次刷新成功即作废旧 refreshToken 并签发新值（响应体与 Set-Cookie 同时更新）。
+        旧令牌再次使用视为重放攻击 → 401 / code 1003，并连带作废该用户的整个令牌家族（须重新登录）。
+        账号 status=disabled 时刷新一律失败（401 / code 1005）。
       security: []
       requestBody:
         required: false
@@ -468,7 +589,7 @@ paths:
               $ref: '#/components/schemas/RefreshRequest'
       responses:
         '200':
-          description: 刷新成功
+          description: 刷新成功（返回全新的 accessToken 与 refreshToken）
           content:
             application/json:
               schema:
@@ -478,15 +599,16 @@ paths:
                       data:
                         $ref: '#/components/schemas/AuthResult'
         '401':
-          description: 刷新令牌失效（code 1003）
+          description: 刷新令牌失效 / 已被旋转作废 / 重放（code 1003）；或账号已被禁用（code 1005）
   /api/v1/auth/logout:
     post:
+      operationId: logout
       tags: [Auth]
       summary: 登出，作废刷新令牌
       description: >
         登出闭环：浏览器端须清除 refreshToken Cookie（示例响应头
         `Set-Cookie: refreshToken=; HttpOnly; SameSite=None; Secure; Max-Age=0`）；
-        移动端清除本地安全存储的 refreshToken。本端点同时返回 200 信封，Cookie 清理由响应头完成。
+        移动端清除本地安全存储的 refreshToken。服务端同时作废该令牌家族。
       requestBody:
         required: false
         content:
@@ -502,6 +624,7 @@ paths:
                 $ref: '#/components/schemas/ApiResponse'
   /api/v1/auth/me:
     get:
+      operationId: getCurrentUser
       tags: [Auth]
       summary: 当前登录用户
       responses:
@@ -517,6 +640,7 @@ paths:
                         $ref: '#/components/schemas/User'
   /api/v1/auth/{provider}/callback:
     post:
+      operationId: oauthCallback
       tags: [Auth]
       summary: 第三方登录回调（扩展点，M3-09）
       description: >
@@ -553,25 +677,25 @@ paths:
           description: 该第三方登录尚未实现（扩展点占位）
   /api/v1/articles:
     get:
+      operationId: listArticles
       tags: [Article]
       summary: 公开文章列表（仅 published）
       description: >
         公开列表，强制只返回 status=published 的文章；`?status=` 参数在本端点被忽略（避免草稿/待审泄露）。
-        后台管理所需的 draft/pending 筛选由鉴权端点 `GET /admin/articles` 提供。
+        后台管理所需的 draft/pending 筛选由鉴权端点 `GET /admin/articles` 提供，
+        「我自己的全部文章」由 `GET /me/articles` 提供。
+
+
+        作者账号被禁用（status=disabled）**不影响**其已发布文章的公开可见性——内容下架走文章状态机
+        `POST /admin/articles/{id}/status`，与账号状态解耦（见 02 §三）。
       security: []
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/Sort'
-        - name: category
-          in: query
-          schema: { type: string }
-        - name: tag
-          in: query
-          schema: { type: string }
-        - name: keyword
-          in: query
-          schema: { type: string }
+        - $ref: '#/components/parameters/FilterCategory'
+        - $ref: '#/components/parameters/FilterTag'
+        - $ref: '#/components/parameters/FilterKeyword'
       responses:
         '200':
           description: 成功（仅 published）
@@ -584,9 +708,10 @@ paths:
                       data:
                         $ref: '#/components/schemas/ArticlePage'
     post:
+      operationId: createArticle
       tags: [Article]
       summary: 创建文章
-      description: 会员创建默认 draft/pending；admin 可 published。详见 02 文档 §2.3
+      description: 会员创建默认 draft/pending；admin 可 published。slug 仅 admin 可指定。详见 02 文档 §2.3
       requestBody:
         required: true
         content:
@@ -605,7 +730,7 @@ paths:
                       data:
                         $ref: '#/components/schemas/Article'
         '400':
-          description: 参数校验失败（code 4001，data 含字段级 errors 明细）
+          description: 参数校验失败（code 4001，data 含字段级 errors 明细；含 slug 命中预留路径黑名单）
           content:
             application/json:
               schema:
@@ -614,14 +739,20 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/ValidationErrorList'
+        '409':
+          description: slug 已被未删除文章占用（code 3002）
   /api/v1/articles/{idOrSlug}:
     get:
+      operationId: getArticle
       tags: [Article]
       summary: 文章详情（id 或 slug 均可解析）
       description: >
+        **可选鉴权**：匿名可访问；携带 Bearer 时按登录身份放宽可见性。
         未发布文章（draft/pending）对匿名用户返回 404；仅作者本人与 admin 可见未发布详情。
         公开内容可见性铁律见 02 文档 §三。
-      security: []
+      security:
+        - {}
+        - bearerAuth: []
       parameters:
         - name: idOrSlug
           in: path
@@ -642,8 +773,13 @@ paths:
           description: 不存在，或匿名访问未发布文章
   /api/v1/articles/{id}:
     put:
+      operationId: updateArticle
       tags: [Article]
       summary: 更新文章
+      description: >
+        仅作者本人或 admin。**状态副作用（显式定义，避免两实现分歧）**：
+        member / author 编辑自己已 published 的文章，保存后状态自动退回 `pending` 需重新审核；
+        admin 编辑不改变状态。slug 权限同创建（member/author 传入被忽略）。
       parameters:
         - name: id
           in: path
@@ -666,13 +802,27 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/Article'
+        '400':
+          description: 参数校验失败（code 4001）
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ValidationErrorList'
         '403':
           description: 无权限
         '404':
           description: 文章不存在
+        '409':
+          description: slug 已被未删除文章占用（code 3002）
     delete:
+      operationId: deleteArticle
       tags: [Article]
       summary: 删除文章（软删除）
+      description: 软删除（置 deleted_at）。删除后其 slug 释放，可被新文章复用（部分唯一索引，见 02 §2.2）
       parameters:
         - name: id
           in: path
@@ -691,8 +841,12 @@ paths:
           description: 文章不存在
   /api/v1/articles/{id}/submit:
     post:
+      operationId: submitArticle
       tags: [Article]
       summary: 草稿→待审（会员投稿）
+      description: >
+        **合法前态仅 `draft`**。当前状态为 pending / published 时返回 409 / code 3003（状态转移非法），
+        不做静默幂等——否则 Node 与 Go 会各自发挥（见 02 §2.3 转移合法性矩阵）。
       parameters:
         - name: id
           in: path
@@ -700,7 +854,7 @@ paths:
           schema: { type: integer }
       responses:
         '200':
-          description: 成功
+          description: 成功（draft → pending）
           content:
             application/json:
               schema:
@@ -710,17 +864,28 @@ paths:
                       data:
                         $ref: '#/components/schemas/Article'
         '403':
-          description: 无权限
+          description: 无权限（非作者本人）
         '404':
           description: 文章不存在
+        '409':
+          description: 当前状态不允许提交（code 3003，非 draft 前态）
   /api/v1/articles/{id}/view:
     post:
+      operationId: viewArticle
       tags: [Article]
       summary: 阅读量 +1（带防刷去重）
       description: >
-        匿名可调用。可选携带 Bearer：携带则按 user_id 去重，否则按 ip+ua 哈希去重（§2.4）。
+        **可选鉴权**：`security: [{}, {bearerAuth: []}]` 是 OpenAPI 表达「可匿名、也可携带令牌」的标准写法。
+        携带 Bearer 则按 `user_id` 去重，否则按 `ip+ua` 哈希去重（§2.4）。
+        各端生成客户端须配置「持有令牌则自动附加 Authorization」，否则登录用户会退化到匿名去重分支——
+        这是契约驱动生成的已知注意点，已在 02 §3.3 列为交付项。
+
+
+        仅 `published` 文章可计数；draft/pending 一律 404（含作者本人），避免未发布内容被计数探测存在性。
         本端点只递增 view_count，不写入阅读历史；阅读历史由鉴权端点 `POST /me/history` 上报。
-      security: []
+      security:
+        - {}
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -740,9 +905,40 @@ paths:
                         properties:
                           viewCount: { type: integer }
         '404':
-          description: 文章不存在（或未发布且匿名访问）
+          description: 文章不存在或未发布
+  /api/v1/me/articles:
+    get:
+      operationId: listMyArticles
+      tags: [Member]
+      summary: 我的文章（全部状态，仅本人）
+      description: >
+        投稿流在 member 侧的集合读取路径。返回**当前登录用户自己**的全部文章，
+        含 draft / pending / published 三态，供会员中心「我的投稿」列表（M3-10）与后台「我的文章」使用。
+        member 不具备 `GET /admin/articles` 权限，故必须有本端点，否则只能逐条 GET 详情遍历。
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - name: status
+          in: query
+          description: 可选，按状态筛选；不传返回全部三态
+          schema:
+            type: string
+            enum: [draft, pending, published]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ArticlePage'
   /api/v1/categories:
     get:
+      operationId: listCategories
       tags: [Category]
       summary: 分类平铺列表
       security: []
@@ -760,6 +956,7 @@ paths:
                         items:
                           $ref: '#/components/schemas/Category'
     post:
+      operationId: createCategory
       tags: [Category]
       summary: 创建分类
       requestBody:
@@ -786,10 +983,18 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/Category'
+        '403':
+          description: 无权限（非 admin）
+        '409':
+          description: slug 已存在（code 3002）
   /api/v1/categories/{id}:
     put:
+      operationId: updateCategory
       tags: [Category]
       summary: 更新分类
+      description: >
+        变更 parentId 时后端须校验不产生**环**（不能把节点挂到自己的子孙下），
+        否则返回 409 / code 3002。无限级自关联树的经典陷阱，两实现必须一致（见 02 §2.2）。
       parameters:
         - name: id
           in: path
@@ -819,7 +1024,14 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/Category'
+        '403':
+          description: 无权限（非 admin）
+        '404':
+          description: 分类不存在
+        '409':
+          description: slug 已存在，或 parentId 会导致成环（code 3002）
     delete:
+      operationId: deleteCategory
       tags: [Category]
       summary: 删除分类
       description: >
@@ -837,10 +1049,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
+        '403':
+          description: 无权限（非 admin）
+        '404':
+          description: 分类不存在
         '409':
-          description: 存在子分类或文章引用，拒绝删除（code 3001 类冲突）
+          description: 存在子分类或文章引用，拒绝删除（code 3002）
   /api/v1/categories/tree:
     get:
+      operationId: getCategoryTree
       tags: [Category]
       summary: 分类树（整树）
       security: []
@@ -859,6 +1076,7 @@ paths:
                           $ref: '#/components/schemas/CategoryNode'
   /api/v1/tags:
     get:
+      operationId: listTags
       tags: [Tag]
       summary: 标签列表
       security: []
@@ -876,6 +1094,7 @@ paths:
                         items:
                           $ref: '#/components/schemas/Tag'
     post:
+      operationId: createTag
       tags: [Tag]
       summary: 创建标签
       requestBody:
@@ -899,8 +1118,52 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/Tag'
+        '403':
+          description: 无权限（需 admin/author）
+        '409':
+          description: slug 已存在（code 3002）
   /api/v1/tags/{id}:
+    put:
+      operationId: updateTag
+      tags: [Tag]
+      summary: 更新标签（改名 / 改 slug）
+      description: >
+        补齐标签生命周期。没有本端点时，标签一旦有文章引用就既不能改名（无更新端点）
+        也不能删除（409 保护），成为不可维护的死数据。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                slug: { type: string }
+              required: [name, slug]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Tag'
+        '403':
+          description: 无权限（需 admin/author）
+        '404':
+          description: 标签不存在
+        '409':
+          description: slug 已存在（code 3002）
     delete:
+      operationId: deleteTag
       tags: [Tag]
       summary: 删除标签
       description: 删除前须先清除 ArticleTag 关联（无文章引用），否则返回 409（避免孤儿中间表行）。
@@ -916,14 +1179,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
+        '403':
+          description: 无权限（非 admin）
+        '404':
+          description: 标签不存在
         '409':
-          description: 仍有文章引用该标签，拒绝删除（code 3001 类冲突）
+          description: 仍有文章引用该标签，拒绝删除（code 3002）
   /api/v1/articles/{idOrSlug}/comments:
     get:
+      operationId: listArticleComments
       tags: [Comment]
       summary: 文章评论（楼中楼平面展开）
-      description: 未发布文章对匿名返回 404；仅作者/管理员可见未发布文章的评论。
-      security: []
+      description: >
+        **只返回 status=approved 的评论**——对任何调用者（匿名、评论作者本人、文章作者、admin）都一样。
+        `reviewing` / `rejected` 不出现在本列表，管理视图请用 `GET /admin/comments`。
+        这条规则显式化是为了防止 Node 与 Go 各自理解（原契约在此沉默）。
+
+
+        **可选鉴权**：未发布文章对匿名返回 404；仅文章作者本人与 admin 可读取未发布文章的评论列表。
+      security:
+        - {}
+        - bearerAuth: []
       parameters:
         - name: idOrSlug
           in: path
@@ -933,7 +1209,7 @@ paths:
         - $ref: '#/components/parameters/PageSize'
       responses:
         '200':
-          description: 成功
+          description: 成功（仅 approved）
           content:
             application/json:
               schema:
@@ -945,9 +1221,13 @@ paths:
         '404':
           description: 文章不存在（或未发布且匿名访问）
     post:
+      operationId: createComment
       tags: [Comment]
       summary: 发表评论（自动敏感词过滤）
-      description: 命中转星号；违规比率超阈值则 rejected，否则 approved；详见 02 文档 §2.5
+      description: >
+        命中转等长星号；违规比率超阈值则 rejected，否则 approved（自动流不产生 reviewing）。
+        返回体即本条评论的判定结果：若为 rejected，前端应就地提示且**不要插入列表**
+        （该条不会出现在后续 GET 列表中，属预期，见 02 §2.5）。详见 02 文档 §2.5
       parameters:
         - name: idOrSlug
           in: path
@@ -965,7 +1245,7 @@ paths:
               required: [content]
       responses:
         '200':
-          description: 成功
+          description: 成功（data.status 为 approved 或 rejected）
           content:
             application/json:
               schema:
@@ -976,8 +1256,11 @@ paths:
                         $ref: '#/components/schemas/Comment'
         '403':
           description: 无权限
+        '404':
+          description: 文章不存在或未发布（不可对未发布文章评论）
   /api/v1/comments/{id}:
     delete:
+      operationId: deleteComment
       tags: [Comment]
       summary: 删除评论
       description: 删除评论时级联删除其所有子回复（parent_id 指向它的行一并删除），避免孤儿回复。
@@ -997,20 +1280,30 @@ paths:
           description: 无权限
         '404':
           description: 评论不存在
-  /api/v1/upload:
-    post:
-      tags: [Upload]
-      summary: 资源上传（R2 为主 / 本地磁盘兜底，由 STORAGE_DRIVER 配置驱动）
+  /api/v1/comments/{id}/status:
+    patch:
+      operationId: moderateComment
+      tags: [Comment]
+      summary: 评论人工复核置位（admin）
+      description: >
+        `reviewing` 态的**唯一进出路径**。没有本端点时，reviewing 既进不去也出不来，
+        是 100% 不可达的死胡同状态（第三轮复审 P1）。
+
+
+        语义：admin 可把任意评论置为 approved / rejected / reviewing；
+        置为当前同一状态时幂等返回 200；置为 approved 时后端清空 rejectedReason。
+        自动流（发表评论）只产出 approved / rejected，reviewing 只能由本端点人工置位。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
+              $ref: '#/components/schemas/CommentModerateRequest'
       responses:
         '200':
           description: 成功
@@ -1021,17 +1314,144 @@ paths:
                   - $ref: '#/components/schemas/ApiResponse'
                   - properties:
                       data:
-                        type: object
-                        properties:
-                          url: { type: string }
-                          storage:
-                            type: string
-                            enum: [r2, local]
-                            description: 实际使用的存储后端
+                        $ref: '#/components/schemas/Comment'
+        '403':
+          description: 无权限（非 admin）
+        '404':
+          description: 评论不存在
+  /api/v1/admin/comments:
+    get:
+      operationId: listAdminComments
+      tags: [Admin]
+      summary: 后台评论管理列表（可按 status 筛选）
+      description: >
+        评论管理视图，是 reviewing / rejected 评论的**唯一读取路径**（公开列表只返回 approved）。
+        admin 可见全部评论；author 只可见自己文章下的评论。与 `PATCH /comments/{id}/status` 配套，
+        构成「发现 → 复核 → 置位」的完整人工审核闭环（M1-27 / M2 后台）。
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - name: status
+          in: query
+          description: 可选，按状态筛选；不传返回全部三态
+          schema:
+            type: string
+            enum: [approved, rejected, reviewing]
+        - name: articleId
+          in: query
+          description: 可选，只看某篇文章下的评论
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/CommentPage'
+        '403':
+          description: 无权限（需 author/admin）
+  /api/v1/upload:
+    post:
+      operationId: uploadFile
+      tags: [Upload]
+      summary: 资源上传（R2 为主 / 本地磁盘兜底，由 STORAGE_DRIVER 配置驱动）
+      description: >
+        上传即落 Attachment 表并返回**完整 Attachment 实体**（含 id / mimeType / size / storage），
+        不再只返回 `{url}`——否则 Attachment 模型的字段在契约中无处落地（第三轮复审 P2）。
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                articleId:
+                  type: integer
+                  nullable: true
+                  description: 可选。从文章编辑器内上传时传入，把附件关联到该文章（写入 Attachment.articleId）
+              required: [file]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Attachment'
+        '400':
+          description: 文件类型或大小不合法（code 4001）
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ValidationErrorList'
+  /api/v1/me/attachments:
+    get:
+      operationId: listMyAttachments
+      tags: [Member]
+      summary: 我上传的附件（分页）
+      description: Attachment 的读取路径，同时是编辑器「素材库」的数据来源（M2-10）。
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/AttachmentPage'
+  /api/v1/attachments/{id}:
+    delete:
+      operationId: deleteAttachment
+      tags: [Upload]
+      summary: 删除附件（上传者本人或 admin）
+      description: >
+        删除 Attachment 行并尽力删除底层对象（R2 或本地磁盘）。
+        底层删除失败不阻塞行删除，记日志即可——这是「双存储适配层」的真实边界（M1-24）。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '403':
+          description: 无权限（非上传者本人且非 admin）
+        '404':
+          description: 附件不存在
   /api/v1/members/{id}:
     get:
+      operationId: getMemberProfile
       tags: [Member]
       summary: 会员公开主页（资料 + 其 published 文章）
+      description: >
+        公开端点，只返回 published 文章，不含 email 等隐私字段。
+        **status=disabled 的会员返回 404**（等同不存在，避免账号枚举）；
+        但其已发布文章**仍保留**在公开列表与详情中——内容下架走文章状态机，与账号状态解耦（见 02 §三）。
       security: []
       parameters:
         - name: id
@@ -1050,32 +1470,28 @@ paths:
                       data:
                         $ref: '#/components/schemas/MemberProfile'
         '404':
-          description: 会员不存在
+          description: 会员不存在，或该会员已被禁用
   /api/v1/admin/articles:
     get:
+      operationId: listAdminArticles
       tags: [Admin]
       summary: 后台文章管理列表（鉴权，支持 draft/pending/published 筛选）
       description: >
         后台管理端点，需鉴权。支持按 status 筛选草稿/待审/已发布，补齐公开列表 `GET /articles`
-        不暴露未发布内容的约束。作者可见自己全部文章，admin 可见全部。
+        不暴露未发布内容的约束。author 可见自己全部文章，admin 可见全部；
+        member 无权访问，其「我的文章」走 `GET /me/articles`。
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/Sort'
-        - name: category
-          in: query
-          schema: { type: string }
-        - name: tag
-          in: query
-          schema: { type: string }
+        - $ref: '#/components/parameters/FilterCategory'
+        - $ref: '#/components/parameters/FilterTag'
         - name: status
           in: query
           schema:
             type: string
             enum: [draft, pending, published]
-        - name: keyword
-          in: query
-          schema: { type: string }
+        - $ref: '#/components/parameters/FilterKeyword'
       responses:
         '200':
           description: 成功
@@ -1087,10 +1503,16 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/ArticlePage'
+        '403':
+          description: 无权限（需 author/admin）
   /api/v1/admin/articles/{id}/approve:
     post:
+      operationId: approveArticle
       tags: [Admin]
       summary: 待审→已发布（审核通过）
+      description: >
+        **合法前态仅 `pending`**。当前为 draft / published 时返回 409 / code 3003，
+        不静默成功（见 02 §2.3 转移合法性矩阵）。通过时写入 published_at。
       parameters:
         - name: id
           in: path
@@ -1098,7 +1520,7 @@ paths:
           schema: { type: integer }
       responses:
         '200':
-          description: 成功
+          description: 成功（pending → published）
           content:
             application/json:
               schema:
@@ -1108,13 +1530,20 @@ paths:
                       data:
                         $ref: '#/components/schemas/Article'
         '403':
-          description: 无权限
+          description: 无权限（非 admin）
         '404':
           description: 文章不存在
+        '409':
+          description: 当前状态不允许审核通过（code 3003，非 pending 前态）
   /api/v1/admin/articles/{id}/status:
     post:
+      operationId: setArticleStatus
       tags: [Admin]
       summary: 任意状态置位（下架/退回）
+      description: >
+        admin 的万能置位端点，可在三态间任意转移（下架 published→draft、退回 pending→draft 等）。
+        目标状态与当前相同时幂等返回 200。这是唯一不受转移矩阵限制的端点，
+        故仅限 admin——普通流转请用 submit / approve。
       parameters:
         - name: id
           in: path
@@ -1143,11 +1572,12 @@ paths:
                       data:
                         $ref: '#/components/schemas/Article'
         '403':
-          description: 无权限
+          description: 无权限（非 admin）
         '404':
           description: 文章不存在
   /api/v1/me/favorites:
     get:
+      operationId: listMyFavorites
       tags: [Member]
       summary: 我的收藏（分页）
       parameters:
@@ -1165,8 +1595,10 @@ paths:
                       data:
                         $ref: '#/components/schemas/ArticlePage'
     post:
+      operationId: addFavorite
       tags: [Member]
       summary: 添加收藏
+      description: 幂等：重复收藏同一篇返回 200，不报错、不重复插行（唯一约束 user_id+article_id）
       requestBody:
         required: true
         content:
@@ -1183,10 +1615,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
+        '404':
+          description: 文章不存在或未发布（不可收藏未发布文章）
   /api/v1/me/favorites/{articleId}:
     delete:
+      operationId: removeFavorite
       tags: [Member]
       summary: 取消收藏
+      description: 幂等：取消一条本不存在的收藏同样返回 200
       parameters:
         - name: articleId
           in: path
@@ -1201,8 +1637,10 @@ paths:
                 $ref: '#/components/schemas/ApiResponse'
   /api/v1/me/history:
     get:
+      operationId: listMyHistory
       tags: [Member]
       summary: 阅读历史（分页）
+      description: 按 lastReadAt 倒序返回
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
@@ -1218,11 +1656,12 @@ paths:
                       data:
                         $ref: '#/components/schemas/HistoryPage'
     post:
+      operationId: reportReadingProgress
       tags: [Member]
       summary: 上报阅读进度（写入/更新 ReadingLog）
       description: >
-        阅读历史的唯一写入路径（解决阅读历史功能不可实现问题）。携带 Bearer 识别用户，
-        upsert lastReadAt 与可选 progress。与 `POST /articles/{id}/view`（仅增 view_count）职责分离。
+        阅读历史的唯一写入路径。携带 Bearer 识别用户，upsert lastReadAt 与可选 progress。
+        与 `POST /articles/{id}/view`（仅增 view_count）职责分离。
       requestBody:
         required: true
         content:
@@ -1240,8 +1679,41 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/ReadingHistoryItem'
+        '404':
+          description: 文章不存在或未发布
+    delete:
+      operationId: clearMyHistory
+      tags: [Member]
+      summary: 清空阅读历史
+      description: 隐私诉求的兜底路径。ReadingLog 由此具备完整生命周期（写入/读取/删除）。
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /api/v1/me/history/{articleId}:
+    delete:
+      operationId: removeHistoryItem
+      tags: [Member]
+      summary: 删除单条阅读历史
+      description: 幂等：删除一条本不存在的记录同样返回 200
+      parameters:
+        - name: articleId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
   /api/v1/me/profile:
     get:
+      operationId: getMyProfile
       tags: [Member]
       summary: 个人资料
       responses:
@@ -1256,18 +1728,18 @@ paths:
                       data:
                         $ref: '#/components/schemas/User'
     patch:
+      operationId: updateMyProfile
       tags: [Member]
-      summary: 更新资料
+      summary: 更新资料（昵称 / 头像 / 邮箱）
+      description: >
+        邮箱可改（唯一，冲突 409 / code 3002）。v1 无邮箱验证流程，属显式 Non-goal（见 02 §九），
+        改后立即生效——教程须点明这在真实产品中需要验证链路。
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                nickname: { type: string }
-                avatar: { type: string, nullable: true }
-              required: []
+              $ref: '#/components/schemas/ProfileUpdateRequest'
       responses:
         '200':
           description: 成功
@@ -1279,11 +1751,27 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/User'
+        '400':
+          description: 参数校验失败（code 4001）
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ValidationErrorList'
+        '409':
+          description: 邮箱已被占用（code 3002）
   /api/v1/me/change-password:
     post:
+      operationId: changePassword
       tags: [Member]
       summary: 修改密码
-      description: 会员中心「个人设置」的密码修改端点。校验 oldPassword 后更新 password_hash。
+      description: >
+        会员中心「个人设置」的密码修改端点，需旧密码。校验 oldPassword 后更新 password_hash，
+        并作废该用户全部 refreshToken（强制其它设备重新登录）。
+        忘记旧密码时，v1 的唯一兜底是 admin 重置（`POST /admin/users/{id}/reset-password`）。
       requestBody:
         required: true
         content:
@@ -1309,11 +1797,27 @@ paths:
                         $ref: '#/components/schemas/ValidationErrorList'
   /api/v1/users:
     get:
+      operationId: listUsers
       tags: [Admin]
       summary: 用户列表（分页）
       parameters:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [admin, author, member]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, disabled]
+        - name: keyword
+          in: query
+          description: 匹配 username / nickname / email 的子串
+          schema:
+            type: string
       responses:
         '200':
           description: 成功
@@ -1325,8 +1829,11 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/UserPage'
+        '403':
+          description: 无权限（非 admin）
   /api/v1/users/{id}:
     get:
+      operationId: getUser
       tags: [Admin]
       summary: 用户详情
       parameters:
@@ -1345,15 +1852,20 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/User'
+        '403':
+          description: 无权限（非 admin）
         '404':
           description: 用户不存在
     patch:
+      operationId: updateUser
       tags: [Admin]
       summary: 变更角色 / 状态 / 会员等级
       description: >
         admin 专用。可改 role（member/author/admin）、status（active/disabled）、
         level（会员等级，仅展示用，默认 1，admin 可上调以体现会员体系）。
         注册默认角色为 member，admin 经此端点将 member 晋升为 author。
+        置 status=disabled 即「封号」：该用户无法登录/刷新，公开主页 404，但其已发布文章仍公开。
+        v1 **不提供物理删除用户**的端点（禁用即软删除，见 02 §九）。
       parameters:
         - name: id
           in: path
@@ -1389,5 +1901,47 @@ paths:
                         $ref: '#/components/schemas/User'
         '403':
           description: 无权限（如非 admin 调用）
+        '404':
+          description: 用户不存在
+  /api/v1/admin/users/{id}/reset-password:
+    post:
+      operationId: adminResetPassword
+      tags: [Admin]
+      summary: 管理员重置用户密码
+      description: >
+        v1 不做邮件找回密码（引入 SMTP/第三方依赖，与 Non-goals 冲突），
+        本端点是「忘记密码」的唯一兜底路径，避免账号死锁。
+        重置后作废该用户全部 refreshToken。
+        教学价值：密码哈希不可逆，但管理员仍能重置——权限边界与信任模型的经典讨论（B-11）。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminResetPasswordRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: 新密码强度不足（code 4001）
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ValidationErrorList'
+        '403':
+          description: 无权限（非 admin）
         '404':
           description: 用户不存在

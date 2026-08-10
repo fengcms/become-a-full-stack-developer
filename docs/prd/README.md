@@ -6,10 +6,10 @@
 
 | 编号 | 文档 | 作用 | 状态 |
 |---|---|---|---|
-| 00 | [项目章程](./00-项目章程.md) | 定位、读者、成功标准、非目标、推进节奏、文风约定、技术方向与产品决策 | ✅ 已确认（v1.5） |
-| 01 | [内容路线图](./01-内容路线图.md) | 文章系列完整大纲（八段式 M0–M8 + 支线），项目北极星 | 🟡 待评审（v1.5） |
-| 02 | [领域模型与 API 契约](./02-领域模型与API契约.md) | 文章系统实体/关系、API 设计原则、端点目录、错误码 | ✅ 已定稿（v1.4） |
-| — | [API 契约（OpenAPI v1）](../api/openapi.v1.yaml) | 机器可读的接口单一事实来源，七端复用（契约版本 1.2.0，文档修订 v1.4）；经 openapi-spec-validator 严格校验通过 | ✅ 已定稿（v1.4） |
+| 00 | [项目章程](./00-项目章程.md) | 定位、读者、成功标准、非目标、推进节奏、文风约定、技术方向与产品决策 | ✅ 已确认（v1.6） |
+| 01 | [内容路线图](./01-内容路线图.md) | 文章系列完整大纲（八段式 M0–M8 + 支线），项目北极星 | ✅ 已确认（v1.6） |
+| 02 | [领域模型与 API 契约](./02-领域模型与API契约.md) | 文章系统实体/关系、API 设计原则、端点目录、错误码 | ✅ 已定稿（v1.5） |
+| — | [API 契约（OpenAPI v1）](../api/openapi.v1.yaml) | 机器可读的接口单一事实来源，七端复用（契约版本 1.3.0，文档修订 v1.5）；经 openapi-spec-validator 严格校验 + 语义自查 `check_contract.py` 双门通过 | ✅ 已定稿（v1.5） |
 | 03 | M1 PRD（Node 后端） | 第一件实现的功能规格 | ⬜ 未开始 |
 | 04 | M2 PRD（React 管理后台） | 第二件实现的功能规格 | ⬜ 未开始 |
 | 05 | M3 PRD（Next.js 前台） | 第三件实现的功能规格 | ⬜ 未开始 |
@@ -68,9 +68,22 @@
 3. ✅ 契约校验：40 操作 / 27 schema，无缺失 $ref、无空 items、无非法嵌套，所有 200 含 schema、所有 400 含 schema
 4. 🟡 产出 `docs/review/回应复审.md` 交评审 AI 第三轮复审
 
+第六轮（v1.6，第三轮复审整改 · 零逻辑漏洞目标）：
+
+1. 🔴 评审 AI 产出 `docs/review/第三次复审报告.md`（18 项：🔴3 / 🟠6 / 🟡9），标准为"逻辑无漏洞、状态机闭环、约束机器可读、七端一致"
+2. ✅ 产品 AI **清零全部 P1–P18**：
+   - 🔴 P1 评论 reviewing 闭环：新增 `PATCH /comments/{id}/status`（进出）+ `GET /admin/comments`（reviewing/rejected 读取路径）
+   - 🔴 P2 `Attachment` 转一等实体：`upload` 返回完整 `Attachment` + 新增 `GET /me/attachments`、`DELETE /attachments/{id}`
+   - 🔴 P3 新增 `GET /me/articles`（member 列举自己的全部文章）
+   - 🟠 P4 可选鉴权改标准写法 `security:[{},{bearerAuth:[]}]`（3 端点，机器可读）；P5/P7/P12 排序/过滤口径下沉 `enum`（Sort 6 组合 + 默认、FilterCategory/Tag/Keyword 共享参数）；P6 评论公开列表仅 `approved`；P8 slug member 忽略规则；P9 全量 49 个 `operationId`
+   - 🟡 P10 邮箱找回登记 Non-goal（admin 重置端点兜底）；P11 refresh 旋转策略写死；P13 应急集登记「经 API 发文」前提；P14 submit/approve 非法前态 409；P15 disabled 主页 404；P16 路径记号等价全文档声明；P17 被拒评论 UX；P18 阅读历史 DELETE 端点
+3. ✅ 新增**语义自查门** `docs/api/check_contract.py`（无孤儿 schema / 枚举态有写入路径 / Sort 枚举 / 可选鉴权写法 / 全量 operationId），与结构门 `openapi-spec-validator` 组成双门；自查当场抓出并删除孤儿 schema `ErrorDetail`
+4. ✅ 两门全绿：结构门 `docs/api/openapi.v1.yaml: OK`；语义门 37 路径 / 49 操作 / 30 schema，0 孤儿、0 死胡同状态
+5. 🟡 产出 `docs/review/回应第三次复审.md` 交评审 AI 终审
+
 下一步待决策：
 
-1. 评审 AI 对 `回应复审.md` 的第三轮复审结论（若 PASS，规划阶段正式冻结）
+1. 评审 AI 对 `回应第三次复审.md` 的终审结论（若 PASS，规划阶段正式冻结，进入 M0-03 技术选型定稿）
 2. M0-03 技术选型结论需在动工前定稿，会反向影响 M1 篇目细节
 3. 支线 B 系列发布节奏（交叉发布 or 前置一批）
 4. 规划冻结后，启动 M1 PRD 与 Node 后端实现（Hono + Drizzle + D1/R2，兼容 Linux）

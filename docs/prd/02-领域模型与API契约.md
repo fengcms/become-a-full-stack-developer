@@ -2,11 +2,12 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | v1.4 |
-| 状态 | 已确认（v1.4：复审整改——公开内容可见性铁律、阅读历史写入路径、第三方登录扩展点、400 校验明细、users 404/403、分类/标签删除 409、登出清 Cookie、角色边界/level/注册默认角色、评论删除级联，契约经 openapi-spec-validator 严格校验通过） |
+| 文档版本 | v1.5 |
+| 状态 | 已确认（v1.5：第三轮复审整改——评论 reviewing 闭环、Attachment 转为一等实体、`/me/articles`、可选鉴权标准写法、排序/过滤语义枚举化、全量 operationId、状态转移矩阵与 409、已知边界登记） |
 | 最后更新 | 2026-08-10 |
 | 上游文档 | [00-项目章程](./00-项目章程.md) |
-| 机器可读契约 | [../api/openapi.v1.yaml](../api/openapi.v1.yaml) |
+| 机器可读契约 | [../api/openapi.v1.yaml](../api/openapi.v1.yaml)（契约版本 1.3.0） |
+| 契约校验 | `python -m openapi_spec_validator docs/api/openapi.v1.yaml`（结构） + `python docs/api/check_contract.py`（语义自查） |
 
 ---
 
@@ -28,6 +29,17 @@
 2. 这些实体对外暴露成哪些接口、长什么样（API 契约）
 
 这套契约用 OpenAPI 3.1 维护在 `docs/api/openapi.v1.yaml`，是独立于任何实现的单一事实来源。契约变更必须先改 OpenAPI 文档，再改实现；各端请求层类型尽量由 OpenAPI 自动生成，避免手写漂移。
+
+### 契约的两道校验门（缺一不可）
+
+第二轮评审踩过一个坑：用宽松 YAML 解析器"校验通过"，实际漏掉了非法嵌套。第三轮又暴露出更深一层的问题——**结构合法不等于逻辑无漏洞**。所以现在固定两道门，改契约后都要跑：
+
+| 门 | 命令 | 保证什么 | 保证不了什么 |
+|---|---|---|---|
+| 结构门 | `python -m openapi_spec_validator docs/api/openapi.v1.yaml` | 符合 OpenAPI 3.1 规范 | 状态机是否闭环、实体是否有端点 |
+| 语义门 | `python docs/api/check_contract.py docs/api/openapi.v1.yaml` | `$ref` 可解析、200 有 schema、operationId 全量唯一、**无孤儿 schema**、**枚举态均有写入路径**、sort 已枚举、可选鉴权写法正确 | 业务语义是否合理（仍需人评审） |
+
+> 语义门是第三轮整改的产物。它上线后立刻抓出一个人工评审没发现的孤儿 schema（`ErrorDetail`，与 `ValidationError` 重复且无端点引用），已删除。这类脚本本身就是 M1-20（接口文档自动化）和 M6-09（契约一致性校验）的现成素材。
 
 ---
 
@@ -125,7 +137,9 @@
 | sort_order | int | 同层级排序 |
 | created_at | datetime | |
 
-> **删除语义（N8）**：`DELETE /api/v1/categories/{id}` 删除前须无子分类且无文章归属该分类，否则返回 `409`（避免悬空 `parent_id` 或孤儿归属）。不允许级联删除，需调用方先迁移子节点与文章。
+> **删除语义（N8）**：`DELETE /api/v1/categories/{id}` 删除前须无子分类且无文章归属该分类，否则返回 `409`（code 3002）。不允许级联删除，需调用方先迁移子节点与文章。
+
+> **成环防护（P5 类沉默点补齐）**：`PUT /api/v1/categories/{id}` 变更 `parentId` 时，后端必须校验**不产生环**——不能把一个节点挂到它自己的子孙下面，否则整棵树的递归查询会死循环。违反返回 `409` / code 3002。这是无限级自关联树最经典的陷阱，契约不写死，Node 与 Go 一定有一个会漏掉。M1-25 专门讲这个校验怎么写（向上回溯父链 vs 预计算路径）。
 
 #### Tag（标签）
 
@@ -136,7 +150,9 @@
 | slug | string | 别名，唯一 |
 | created_at | datetime | |
 
-> **删除语义（N8）**：`DELETE /api/v1/tags/{id}` 删除前须先清除 `ArticleTag` 关联（无文章引用该标签），否则返回 `409`（避免孤儿中间表行）。
+> **删除语义（N8）**：`DELETE /api/v1/tags/{id}` 删除前须先清除 `ArticleTag` 关联（无文章引用该标签），否则返回 `409`（code 3002，避免孤儿中间表行）。
+
+> **补齐更新端点（第三轮自查发现）**：原契约里标签只有「增 / 查 / 删」，而删除又被 409 保护。结果是**一个已被文章引用的标签，既改不了名（无更新端点）也删不掉（有引用）**，成为永久不可维护的死数据。现补 `PUT /api/v1/tags/{id}`（改 name / slug，slug 冲突 409）。这属于评审报告 P2「孤儿实体」的同类问题——实体生命周期不完整，只是它表现为「改不动」而非「建不出」。
 
 #### ArticleTag（文章-标签关联，多对多）
 
@@ -156,7 +172,8 @@
 | user_id | bigint | 外键 → User.id |
 | parent_id | bigint? | 外键 → 自身.id，null 为一级 |
 | content | text | 内容 |
-| status | enum | `reviewing` / `approved` / `rejected` |
+| status | enum | `reviewing` / `approved` / `rejected`（三态的进出路径见 §2.5） |
+| rejected_reason | string? | 拒绝原因，`approved` 时清空 |
 | created_at | datetime | |
 
 > **删除语义（N16）**：`DELETE /api/v1/comments/{id}` 删除评论时**级联删除其所有子回复**（`parent_id` 指向它的行一并删除），避免孤儿回复。
@@ -182,18 +199,33 @@
 
 > **写入路径（N4）**：阅读历史**唯一**的写入端点为鉴权端点 `POST /api/v1/me/history`（upsert `last_read_at` 与可选 `progress`）。`POST /api/v1/articles/{id}/view` 只递增 `view_count`、不写 ReadingLog——两个职责分离，避免"阅读历史功能不可实现"。详见 §2.4。
 
+> **删除路径（P18）**：补 `DELETE /api/v1/me/history/{articleId}`（删单条）与 `DELETE /api/v1/me/history`（清空）。阅读历史是典型的隐私数据，"只能写不能删"在 M3-10（会员中心：C 端数据建模与隐私）里会自打嘴巴。两个端点都做**幂等**——删不存在的记录同样返回 200。
+
 #### Attachment（附件 / 上传资源）
+
+**契约的一等实体，不是内部影子表。**（第三轮复审 P2 整改）
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | id | bigint | 主键 |
-| user_id | bigint | 外键，上传者 |
-| article_id | bigint? | 外键，可后关联 |
+| user_id | bigint | 外键，上传者。由令牌推断，不由客户端传入 |
+| article_id | bigint? | 外键，可选关联。由上传表单的 `articleId` 字段写入（编辑器内上传场景） |
 | url | string | 存储地址 |
 | storage | enum | 实际存储后端：`r2` / `local`（见 §2.6） |
 | mime_type | string | 如 image/png |
 | size | int | 字节 |
 | created_at | datetime | |
+
+> **为什么要改（P2）**：原契约里 `POST /upload` 返回的是内联对象 `{url, storage}`，全契约没有任何端点产出或返回 `Attachment`。于是模型里定义了 `id / mime_type / size / article_id`，契约里却永远无处落地——读者写 M1-18 时只能自己猜"要不要建这张表"。现整改为：
+>
+> | 生命周期 | 端点 |
+> |---|---|
+> | 创建 | `POST /api/v1/upload` → 返回完整 `Attachment`（含 id / mimeType / size / storage） |
+> | 关联 | 上传表单可选字段 `articleId`（给 `article_id` 一条真实写入路径，而非悬空字段） |
+> | 读取 | `GET /api/v1/me/attachments`（分页，同时是编辑器「素材库」数据源，M2-10） |
+> | 删除 | `DELETE /api/v1/attachments/{id}`（上传者本人或 admin） |
+>
+> 删除时**先删表行、再尽力删底层对象**；底层删除失败只记日志、不回滚行删除——这是双存储适配层的真实边界（本地磁盘删得掉、R2 可能超时），M1-24 会讲为什么不追求强一致。
 
 ### 2.3 文章状态机（会员投稿审核流）
 
@@ -220,9 +252,26 @@ draft --会员提交--> pending --管理员审核通过--> published
 draft ---------------管理员直接发布---------------> published   (仅 admin)
 published --下架(status)--> draft                  (仅 admin)
 pending   --管理员退回(status)--> draft            (仅 admin)
+published --作者编辑自己的已发布文章--> pending      (自动，需重新审核)
 ```
 
 > **权限约束（与 OpenAPI `ArticleCreate.status` 一致）**：`member` / `author` 创建文章时若传入 `published`，后端**忽略并降级为 `pending`**（会员无法直接发布）；仅 `admin` 可将文章直接置为 `published`。该约束写入契约，前端无需自行拦截，生成代码即知。
+>
+> **slug 的同规格约束（P8）**：原契约只给 `status` 写了"member 传入则忽略降级"，`slug` 却只写了"仅管理员可指定"，**没说 member 传了会怎样**——是忽略、报错还是照收？实现者只能自由发挥。现与 `status` 对齐并写死：**member / author 传入 `slug` 时后端一律忽略**（创建留空、更新保持原值），不报错也不写入；仅 admin 可指定。slug 重复返回 409 / code 3002，命中预留路径黑名单返回 400 / code 4001。
+
+**转移合法性矩阵（P14 · 消除"错误前态"的沉默）**
+
+原契约没说"对 `published` 文章调 `submit` 会怎样"，两个后端必然分歧。现在逐格写死：
+
+| 端点 | 合法前态 | 非法前态的行为 |
+|---|---|---|
+| `POST /articles/:id/submit` | 仅 `draft` | `pending` / `published` → **409 / code 3003**，不静默幂等 |
+| `POST /admin/articles/:id/approve` | 仅 `pending` | `draft` / `published` → **409 / code 3003** |
+| `POST /admin/articles/:id/status` | 任意（admin 万能置位） | 目标态与当前相同 → **幂等 200** |
+
+> 为什么 submit / approve 选 409 而不是幂等 200：这两个是**业务动作**，前态不对说明前端状态过期（比如两个管理员同时点审核），静默成功会掩盖并发问题；而 `status` 是**声明式置位**（"我要它变成 X"），幂等才符合直觉。这个区分本身就是 M1-15 的讲点。
+
+> **编辑已发布文章的副作用（自查补充）**：`PUT /articles/:id` 原本完全没说会不会影响 `status`。现定死：**`member` / `author` 编辑自己已 `published` 的文章，保存后自动退回 `pending` 需重新审核**；`admin` 编辑不改变状态。理由是投稿制系统里"发布后随意改内容"等于绕过审核。这条不写，Node 与 Go 各写一半，M6-09 的对照测试还查不出来（结构相同、行为不同）。
 
 > 设计取舍：刻意**去掉 `archived`**。v1 只需"草稿 / 待审 / 已发布"三态即可讲清投稿审核的全部后端要点；归档是内容运营动作，与"讲清全栈"无关，留作后续扩展或专题。这个状态机是系列"后端状态机设计"专题（M1-15）的天然素材。
 
@@ -233,9 +282,9 @@ pending   --管理员退回(status)--> draft            (仅 admin)
 阅读量是内容运营的关键指标，但也最容易被刷。设计要点：
 
 - **计数与写分离**：`view_count` 仍是 Article 上的展示字段，但它的递增**不经过主表 UPDATE**，而是写入独立的计数记录（以「去重键 + 冷却时间戳」建立唯一约束）。插入成功 → 展示计数 +1；唯一约束冲突（窗口内重复访问）→ 忽略。这既避免热点行行锁竞争，又不引入消息队列/异步聚合——与 Non-goals「不追求高并发架构、不做消息队列」严格一致。
-- **去重键**：登录用户按 `user_id` 去重；匿名用户按 `ip + user_agent` 的哈希去重。契约层面 `POST /api/v1/articles/{id}/view` 声明为「可选携带 Bearer」——携带则按 `user_id` 去重，否则退化为 `ip+ua` 哈希（匿名亦可调用）。这保证 §2.4 承诺的登录用户去重在契约上**可达**，而非永远走匿名分支。
+- **去重键**：登录用户按 `user_id` 去重；匿名用户按 `ip + user_agent` 的哈希去重。契约层面 `POST /api/v1/articles/{id}/view` 声明为**可选鉴权**，写法见 §3.3——携带 Bearer 则按 `user_id` 去重，否则退化为 `ip+ua` 哈希。
 - **冷却窗口**：同一去重键在窗口内（默认 24 小时）重复访问不重复计数。
-- **触发端点**：`POST /api/v1/articles/:id/view` 带防刷地计数；详情接口不再隐式自增，便于前端精确控制（如阅读满 N 秒后才上报）。
+- **触发端点**：`POST /api/v1/articles/:id/view` 带防刷地计数；详情接口不再隐式自增，便于前端精确控制（如阅读满 N 秒后才上报）。仅 `published` 文章可计数，draft/pending 一律 404（含作者本人）——否则计数接口会变成"探测未发布文章是否存在"的旁路。
 - **教学价值**：去重键设计、冷却窗口、计数写分离，是"指标类字段"的经典后端考题，单篇即可讲透。
 
 > 不引入 Redis 等外部依赖（Non-goals：不追求高并发架构）。用"唯一约束 + 冷却时间戳"即可在单实例 / 边缘函数上成立，复杂度可控。对应 M1 新增篇目「阅读量防刷专题」。
@@ -255,6 +304,39 @@ pending   --管理员退回(status)--> draft            (仅 admin)
 
 > 仅做关键词过滤，**不做语义级审核**（超出本项目复杂度）。它的定位是"降低明显违规"，不是"保证 100% 合规"。对应 M1 新增篇目「评论内容安全专题」。
 
+#### `reviewing` 的进出路径（P1 · 原本是 100% 不可达的死胡同）
+
+第三轮复审指出一个硬伤，且完全成立：上面这段散文写着"管理员可手动置为 `reviewing`"，但契约里评论**只有一个 `DELETE` 端点**。也就是说 `reviewing` 既进不去（无置位端点）、也出不来（无移出端点），自动流又不产生它——它在 API 层面 100% 不可达。读者照契约实现，只能写出一个自己文档批评过的反例。
+
+现补齐两个端点，闭环如下：
+
+```
+发表评论 ──自动流──> approved  或  rejected      (自动流永不产生 reviewing)
+                        │              │
+                        └──── admin ───┴──> reviewing      PATCH /comments/:id/status
+                                   ▲                 │
+                                   └─────────────────┘
+                        reviewing ──admin──> approved / rejected
+```
+
+| 职责 | 端点 | 权限 | 说明 |
+|---|---|---|---|
+| 发现待复核 | `GET /api/v1/admin/comments?status=reviewing` | admin 全部；author 限自己文章下 | `reviewing` / `rejected` 的**唯一读取路径** |
+| 人工置位 | `PATCH /api/v1/comments/:id/status` | 仅 admin | `reviewing` 的**唯一进出路径**；置为同一状态时幂等；置为 `approved` 时清空 `rejected_reason` |
+
+**评论列表返回哪些状态（P6 · 原本契约沉默）**
+
+| 端点 | 返回的 status | 对谁都一样吗 |
+|---|---|---|
+| `GET /articles/:idOrSlug/comments`（公开） | **仅 `approved`** | 是。匿名、评论作者本人、文章作者、admin 全都只看到 approved |
+| `GET /admin/comments`（管理视图） | 可按 `status` 筛选，不传返回三态 | 否，按角色限定可见范围 |
+
+> 刻意不给"评论作者本人能看到自己被拒的评论"开后门：一旦按调用者身份改变列表内容，公开列表就有了缓存与 CDN 的坑（同一 URL 不同人不同结果），得不偿失。
+
+**被拒评论的"闪现后消失"（P17 · UX 预期）**
+
+`POST /comments` 对违规内容返回 `status=rejected` + `rejectedReason`，但后续 `GET` 列表不返回 rejected——用户会看到"提交后出现一次、刷新就没了"。这是**预期行为**，前端必须配合：收到 `rejected` 时**不要把该条插入列表**，改为就地提示"内容未通过审核，不会公开展示"，并保留原文让用户修改重发。M3-11 讲这个交互，反面教材是"乐观更新无脑插入列表"。
+
 ### 2.6 附件存储策略：R2 为主，本地兜底
 
 附件存储走**适配层**，同一套上传接口在两种部署目标下都能工作：
@@ -263,6 +345,7 @@ pending   --管理员退回(status)--> draft            (仅 admin)
 - **兜底路径本地磁盘（Linux）**：自管服务器部署时，文件落到本地磁盘（或挂载卷 / 兼容 S3 的 MinIO），`url` 返回本站可访问路径。
 - **`storage` 字段**：Attachment 记录本次实际使用的后端（`r2` / `local`），便于排查与迁移。
 - **配置驱动**：`STORAGE_DRIVER=r2|local` 决定走哪条实现，业务代码不感知差异。
+- **上传返回完整实体**：`POST /api/v1/upload` 返回 `Attachment`（含 `id` / `mimeType` / `size` / `storage`），不再只返回 `{url}`。这样 `storage` 字段"记录实际后端"的承诺才在契约上兑现——否则调用方根本拿不到它（P2）。
 
 > 与 M1-18（文件上传双实现）和 M1-24（一套后端双部署适配层）直接对应，是"同一份代码、两种部署目标"在存储层的具体落地。
 
@@ -325,6 +408,52 @@ pending   --管理员退回(status)--> draft            (仅 admin)
 
 - 契约（`openapi.v1.yaml`）与实现代码使用**真实业务命名**（`Article` / `Member` / `Comment`），它们是本系列的**真实素材**；
 - 文章正文讲解「通用技术命题」时，将这些命名**脱敏为通用命名**（如「资源」「文章模型」），但代码仓库保持真实命名——读者看到的代码与文章是同一套，只是讲解视角不同，不存在割裂。
+
+### 实体生命周期完整性原则（§3.1 · 契约硬规则，源于 P1/P2 复盘）
+
+第三轮复审抓出两类"地基漏洞"——状态机死胡同（`reviewing` 无进/出端点）与孤儿实体（`Attachment` 定义了却无端点产出）。这两条暴露同一根因：**实体或状态的"存在"必须以"有真实读写路径"为前提**，否则它们只是文档里的装饰，七个端照着写会集体翻车。
+
+由此立为契约硬规则，并写进语义自查脚本强制（`check_contract.py` 的 C/D 项）：
+
+1. **无孤儿 schema**：`openapi.v1.yaml` 里每一个 `components.schemas.*` 都必须被至少一条路径的 `requestBody` / `responses` 实际 `$ref` 引用到；出现未被引用的 schema 立即报错。第三轮整改中它当场抓出 `ErrorDetail`（与 `ValidationError` 重复、无端点引用），已删除。
+2. **枚举态必须有写入路径**：实体状态的每个 enum 值，都必须有端点能把实体**置为**该值（评论 `reviewing` 的 P1 即反面教材）。脚本对 `Comment.status` / `Article.status` 逐一核对。
+3. **一等实体须有完整生命周期**：能被前端建出来、列出来、删掉的实体（如 `Attachment`），绝不能只活在模型注释里——创建端点返回完整实体，并提供读取与删除端点。
+
+> 这条规则的收益不仅在"现在正确"，更在"以后可防"：任何后续新增 schema 或状态，只要没配套路径，语义自查门会立刻报错，把"人工评审漏看"变成"机器必报错"。
+
+### 机器强制约束清单（§3.2 · 可枚举约束一律下沉到 schema，源于 P5/P7/P12）
+
+凡是"白名单 / 取值 / 匹配口径"类约束，**不允许只写在 `description` 散文里**——散文对代码生成器不可见，等于契约对实现无约束，七个端必然走形。第三轮整改把以下约束全部下沉为 `enum` / `required` / `security` 等机器字段，并在语义自查脚本中核验：
+
+| 约束 | 机器表达 | 落在哪 |
+|---|---|---|
+| 排序字段 + 方向 | `Sort` = `enum: [publishedAt,desc, publishedAt,asc, viewCount,desc, viewCount,asc, createdAt,desc, createdAt,asc]`，默认 `publishedAt,desc`；NULL 排序统一 `COALESCE(.., 0) DESC` 兜底 | `GET /articles` 等列表端点 |
+| 分类过滤匹配口径 | `FilterCategory` 共享参数，按 **slug** 匹配（非裸 string） | `GET /articles` |
+| 标签过滤匹配口径 | `FilterTag` 共享参数，按 **slug** 匹配 | `GET /articles` |
+| 关键词搜索范围 | `FilterKeyword` 匹配 `title + summary`，**不含** `content` 全文 | `GET /articles` |
+| 评论公开列表状态 | 仅返回 `approved`（管理视图另走 `GET /admin/comments`） | `GET .../comments` |
+| 可选鉴权 | `security: [{}, {bearerAuth: []}]`（空安全需求 = 匿名也允许；见 §3.3） | 文章详情 / view / 评论列表 |
+| 全量 operationId | 49 个操作全部带稳定 `operationId`（生成函数名一致） | 全部路径 |
+| slug 成员忽略 | `ArticleCreate.slug` 写明 member/author 传入被忽略，仅 admin 可指定 | 创建/更新文章 |
+| submit/approve 非法前态 | 非合法前态 → 409 / code 3003 | `POST .../submit`、`POST .../approve` |
+| 分类成环防护 | `PUT /categories/{id}` parentId 指向自身子孙 → 409 / code 3002 | 分类更新 |
+| 标签 slug 冲突 | `PUT /tags/{id}` / `POST /tags` slug 冲突 → 409 / code 3002 | 标签 |
+
+> 这条清单是 M1-17（列表三件套）与 M6-09（契约一致性校验）的对照依据：Node 与 Go 后端对这些枚举的解析必须完全一致，否则就是契约没写清楚——而现在是写清楚了。
+
+### 可选鉴权的标准写法（§3.3 · 机器可读的"匿名或登录"，源于 P4）
+
+OpenAPI 没有 `optionalAuth` 关键字，但有一个被广泛支持的标准写法表达"匿名可用、也可带令牌"：
+
+```yaml
+security:
+  - {}              # 空安全需求 = 允许匿名
+  - bearerAuth: []  # 也可携带 Bearer
+```
+
+- 含义：满足**任意一个**安全需求即可调用。空需求恒满足 → 匿名可调用；`bearerAuth` 满足 → 登录用户也可调用且能拿到身份。这比单写 `security: []`（仅表示"无需鉴权"，生成器永不附带 Bearer）更精确，是 P4 的机器可读解法。
+- 应用端点（契约版本 1.3.0，共 3 个）：`GET /articles/{idOrSlug}`、`POST /articles/{id}/view`、`GET /articles/{idOrSlug}/comments`。
+- **生成客户端的现实约束（P4 遗留的诚实声明）**：标准写法保证"契约允许带令牌"，但多数代码生成器仍**默认不发** `Authorization` 头，需调用方在生成代码后手动补。因此 §2.4 的"登录用户阅读量按 `user_id` 去重"只对**手写携带 Bearer 的调用**成立；生成客户端若不补 `Authorization`，则按 `ip+ua` 哈希去重。这条边界在 §2.4 已如实说明，不夸大"契约上自动可达"。
 
 ---
 
@@ -413,40 +542,49 @@ pending   --管理员退回(status)--> draft            (仅 admin)
 |---|---|---|---|
 | GET | `/api/v1/tags` | 标签列表（含文章数） | 否 |
 | POST | `/api/v1/tags` | 创建标签 | 是（admin/author） |
+| PUT | `/api/v1/tags/:id` | 更新标签（name/slug，slug 冲突 409） | 是（admin） |
 | DELETE | `/api/v1/tags/:id` | 删除标签 | 是（admin） |
 
 ### 评论 Comment
 | 方法 | 路径 | 用途 | 鉴权 |
 |---|---|---|---|
-| GET | `/api/v1/articles/:idOrSlug/comments` | 某文章评论（楼中楼） | 否 |
+| GET | `/api/v1/articles/:idOrSlug/comments` | 某文章评论（楼中楼，仅 approved） | 否 |
 | POST | `/api/v1/articles/:idOrSlug/comments` | 发表评论 | 是（member） |
-| DELETE | `/api/v1/comments/:id` | 删除评论 | 是（作者或 admin） |
+| PATCH | `/api/v1/comments/:id/status` | 人工置位评论状态（reviewing 进出，admin） | 是（admin） |
+| DELETE | `/api/v1/comments/:id` | 删除评论（级联子回复） | 是（作者或 admin） |
 
 ### 上传 Upload
 | 方法 | 路径 | 用途 | 鉴权 |
 |---|---|---|---|
-| POST | `/api/v1/upload` | 图片/资源上传，返回 URL | 是（登录用户） |
+| POST | `/api/v1/upload` | 图片/资源上传，返回完整 `Attachment` | 是（登录用户） |
+| DELETE | `/api/v1/attachments/:id` | 删除附件（上传者本人或 admin） | 是（上传者或 admin） |
 
 ### 会员中心 Member
 | 方法 | 路径 | 用途 | 鉴权 |
 |---|---|---|---|
-| GET | `/api/v1/members/:id` | 会员公开主页（资料 + 其 published 文章） | 否 |
+| GET | `/api/v1/members/:id` | 会员公开主页（资料 + 其 published 文章；disabled 返回 404） | 否 |
+| GET | `/api/v1/me/articles` | 我自己的全部文章（含 draft/pending/published） | 是（member） |
+| GET | `/api/v1/me/attachments` | 我的附件素材库（分页） | 是（member） |
 | GET | `/api/v1/me/favorites` | 我的收藏列表 | 是（member） |
 | POST | `/api/v1/me/favorites` | 添加收藏 | 是（member） |
 | DELETE | `/api/v1/me/favorites/:articleId` | 取消收藏 | 是（member） |
 | GET | `/api/v1/me/history` | 阅读历史 | 是（member） |
+| DELETE | `/api/v1/me/history` | 清空阅读历史（幂等） | 是（member） |
+| DELETE | `/api/v1/me/history/:articleId` | 删除单条阅读历史（幂等） | 是（member） |
 | GET | `/api/v1/me/profile` | 个人资料 | 是（member） |
 | PATCH | `/api/v1/me/profile` | 更新资料 | 是（member） |
 | POST | `/api/v1/me/history` | 上报阅读进度（写入 ReadingLog） | 是（member） |
-| POST | `/api/v1/me/change-password` | 修改密码 | 是（member） |
+| POST | `/api/v1/me/change-password` | 修改密码（需旧密码） | 是（member） |
 
 ### 管理 Admin（文章 / 用户）
 | 方法 | 路径 | 用途 | 鉴权 |
 |---|---|---|---|
 | GET | `/api/v1/admin/articles` | 后台文章管理列表（支持 draft/pending/published 筛选） | 是（author/admin） |
+| GET | `/api/v1/admin/comments` | 后台评论管理列表（可按 status 筛选，含 reviewing/rejected 读取路径） | 是（admin 全部；author 限自己文章） |
 | GET | `/api/v1/users` | 用户列表（分页） | 是（admin） |
 | GET | `/api/v1/users/:id` | 用户详情 | 是（admin） |
 | PATCH | `/api/v1/users/:id` | 变更角色/状态/会员等级 | 是（admin） |
+| POST | `/api/v1/admin/users/:id/reset-password` | 管理员重置用户密码（遗忘密码兜底，见 §九 P10） | 是（admin） |
 | POST | `/api/v1/admin/articles/:id/approve` | 待审→已发布（审核通过） | 是（admin） |
 | POST | `/api/v1/admin/articles/:id/status` | 任意状态置位（下架/退回） | 是（admin） |
 
@@ -493,13 +631,29 @@ pending   --管理员退回(status)--> draft            (仅 admin)
 
 ---
 
-## 九、开放问题（已全部确认）
+## 九、开放问题与已知边界登记
+
+### 9.1 已确认的产品决策（开放问题收尾）
 
 1. **slug 策略（已定）**：「id 为主、slug 可选」，不做自动转写（见 §1 / OpenAPI）。
 2. **分类层级（已定）**：无限级树形结构，自关联 `parent_id` + 提供 `GET /api/v1/categories/tree` 整树返回（见 §2.2）。
 3. **阅读量防刷（已定）**：做。去重键（登录 `user_id` / 匿名 `ip+ua` 哈希）+ 冷却窗口 + 计数写分离，`POST /api/v1/articles/:id/view`（见 §2.4）。
 4. **评论审核流（已定）**：脏话 / 违禁词过滤，命中转等长 `*`；违规比率 > 阈值（默认 10%）→ `rejected`，否则 → `approved`（转义后）；`reviewing` 为人工兜底态（见 §2.5）。
 5. **附件存储（已定）**：R2 为主 + 本地磁盘兜底，配置驱动 `STORAGE_DRIVER`，Attachment 记 `storage` 字段（见 §2.6）。
+
+### 9.2 第三轮复审建议项登记（P10–P18 · 已清零或登记为已知边界）
+
+> 第三轮复审的 🟡 建议项。冻结准则：登记为已知边界或显式 Non-goals 即可冻结，不阻塞 M0-03 与 M1 PRD。以下逐条给出落点，**全部已闭合**。
+
+- **P10 · 邮箱验证 / 找回密码 / 改邮箱缺失 → 登记为 Non-goal（v1）**：v1 不做邮箱验证、不做 forgot/reset password 自助流程、`change-password` 需旧密码。遗忘密码的兜底由管理员经新增端点 `POST /admin/users/{id}/reset-password`（↦ `AuthResult`）重置，普通用户无自助路径——已在 00 §四 Non-goals 显式登记。理由：超出"一个人能维护的产品"复杂度，且非讲清全栈的必需命题。B-11（Web 安全基础）若要讲找回密码，作为独立专题，不进主契约。
+- **P11 · refresh 令牌旋转策略 → 已确认边界（契约已文档化）**：`POST /auth/refresh` 返回新 `AuthResult`（含新 `refreshToken`）时，**作废旧 refreshToken（旋转）**；旧令牌或重放 → 1003。双载体（Cookie / 请求体）下均适用，登出与旋转都走同一作废逻辑。这是安全教程应点明的权衡，已在 OpenAPI `refresh` 端点 description 写死。
+- **P12 · `Sort` 白名单未进 enum → 已落地**：`Sort` 参数已为 `enum`（6 个 `field,direction` 组合 + 默认 `publishedAt,desc`），见 §3.2。
+- **P13 · 应急集自洽性 → 登记边界（01 §13 已注明前提）**：应急集（01 §13，33 篇）"读完能真正建成上线全栈项目"的前提是——发文经 **API（curl/Postman）** 或经 **M2-11 文章管理全流程 UI**。应急集未含 M2-11，故以"经 API 发文"为前提写入 01 §13，避免读者误以为能纯 UI 上线；对应新增 `POST /admin/users/{id}/reset-password` 也在同前提供 admin 兜底。注册默认角色 `member` 已在 §2.2 确认，与应急集一致。
+- **P14 · submit/approve 错误前态行为 → 已落地**：§2.3 转移合法性矩阵写死——`submit` 仅从 `draft` 合法、`approve` 仅从 `pending` 合法，非法前态 → 409 / code 3003；`status` 端点目标态与当前相同则幂等 200。
+- **P15 · disabled 会员主页与文章可见性 → 已确认边界**：`GET /members/:id` 对 `status=disabled` 用户返回 **404**；其已 `published` 文章**仍公开**（列表 / 详情不区分作者 `status`），仅主页入口关闭。
+- **P16 · `:id` / `{id}` 记号等价 → 已全文档声明**：本文件 §五 已声明 `:param` ≡ `{param}`；00 §十、01 同步加注等价提示，读者只读 00/01 也能看到。
+- **P17 · 被拒评论"闪现后消失" UX → 已落地说明**：§2.5 写明 `POST /comments` 对 `rejected` 返回 `rejectedReason`，但 `GET` 列表不返回 `rejected`——前端收到 `rejected` 时**不插入列表**、改为就地提示，M3-11 讲该交互。
+- **P18 · 阅读历史无删除端点 → 已落地**：补 `DELETE /me/history`（清空）与 `DELETE /me/history/{articleId}`（删单条），均幂等；见 §2.2 ReadingLog 与 §五 Member 段。
 
 ---
 
@@ -512,3 +666,4 @@ pending   --管理员退回(status)--> draft            (仅 admin)
 | 2026-08-10 | v1.2 | 新增 §2.4 阅读量防刷、§2.5 评论脏话/违禁词过滤与自动审核、§2.6 附件 R2+本地双存储；Category 改为无限级树形（/categories/tree）；Attachment 增加 `storage` 字段；第九节开放问题全部收尾 |
 | 2026-08-10 | v1.3 | 评审整改：OpenAPI 补全全部 200 响应 schema、新增 ArticleSummary/分页类型（R1/R12）；刷新令牌双载体定稿、AuthResult 增 refreshToken（R4）；timestamp 改 ISO 字符串（R7）；§2.3 补 pending→draft 与 member 权限约束（R3/R11/R16）；§2.4 删消息队列与 Non-goals 对齐（R9）；§2.5 comment pending→reviewing（R18）；§2.2 主键类型口径（R13）；§2.3 软删除+slug 部分唯一索引（R10）；§三新增路由/CORS/认证补充约定（R5/R6/R8/R20） |
 | 2026-08-10 | v1.4 | 复审整改（严苛标准，契约经 openapi-spec-validator 严格校验通过）：新增「公开内容可见性铁律」(N2)、阅读历史写入路径 POST /me/history(N4)、第三方登录回调扩展端点(N5)、400 校验错误 ValidationErrorList(N6)、users 404/403(N7)、分类/标签删除 409(N8)、view 可选 Bearer(N3)、登出清 Cookie(N11)、角色边界/level/注册默认角色(N13/N14/N20)、评论删除级联(N16)、排序白名单字段(N15)、§五 路径记号等价说明(N19)、R19 白名单决议持久化(N10)；修正 view 端点 404 嵌套(N1) |
+| 2026-08-10 | v1.5 | **第三轮复审整改（零逻辑漏洞目标）**：契约升 1.3.0。🔴 P1 评论 reviewing 闭环——新增 `PATCH /comments/{id}/status`（进出）+ `GET /admin/comments`（reviewing/rejected 读取路径）；P2 `Attachment` 转一等实体——`upload` 返回完整 `Attachment` + 新增 `GET /me/attachments`、`DELETE /attachments/{id}`；P3 新增 `GET /me/articles`。🟠 P4 可选鉴权改标准写法 `security:[{},{bearerAuth:[]}]`（3 端点）；P5/P7/P12 排序/过滤口径下沉 `enum`（`Sort` 6 组合 + 默认、`FilterCategory/Tag/Keyword` 共享参数）；P6 评论公开列表仅 `approved`；P8 slug member 忽略规则；P9 全量 49 个 `operationId`。🟡 P10 邮箱找回登记 Non-goal（admin 重置端点兜底）；P11 refresh 旋转策略写死；P13/P15/P16/P17/P18 分别于 01 §13 / 契约 / 本文件声明。文档新增 §3.1（无孤儿实体硬规则）、§3.2（机器强制约束清单）、§3.3（可选鉴权标准写法）；§五 补 9 个新端点；§九 拆 9.1/9.2 登记 P10–P18。新增语义自查脚本 `check_contract.py`，当场抓出并删除孤儿 schema `ErrorDetail` |
