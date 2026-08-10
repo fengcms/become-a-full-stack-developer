@@ -1,0 +1,1393 @@
+openapi: 3.1.0
+info:
+  title: 文章系统 API
+  description: >
+    《成为一个全栈开发工程师》系列项目的统一 API 契约 v1。
+    Node 后端与 Go 后端均按此实现；React/Vue/Next/Flutter/Taro 各端均按此对接。
+    契约变更必须先改此文件，再改实现。
+    本契约作为「单一事实来源」，所有 200 响应均给出完整 schema，供各端自动生成类型。
+    公开端点（security: []）强制只返回 published 内容，未发布内容对匿名返回 404，
+    杜绝草稿/待审泄露（见 02 文档 §三「公开内容可见性铁律」）。
+  version: 1.2.0
+servers:
+  - url: http://localhost:3000
+    description: 本地开发（Node 后端）
+  - url: http://localhost:8080
+    description: 本地开发（Go 后端重写）
+tags:
+  - name: Auth
+  - name: Article
+  - name: Category
+  - name: Tag
+  - name: Comment
+  - name: Upload
+  - name: Member
+  - name: Admin
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Page:
+      name: page
+      in: query
+      description: 页码，从 1 开始
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSize:
+      name: pageSize
+      in: query
+      description: 每页条数
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    Sort:
+      name: sort
+      in: query
+      description: 排序字段,方向，如 publishedAt,desc；白名单字段：publishedAt, viewCount, createdAt
+      schema:
+        type: string
+  schemas:
+    ApiResponse:
+      type: object
+      description: 统一响应信封。data 为业务数据，无数据时可为 null。
+      properties:
+        code:
+          type: integer
+          description: 0 表示业务成功，>0 表示业务错误（见错误码表）
+          example: 0
+        message:
+          type: string
+          example: ok
+        data:
+          nullable: true
+          description: 业务数据；无数据时省略或为 null
+        requestId:
+          type: string
+          example: req_8f3a1b2c
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 时间戳，与业务字段时间格式保持一致
+          example: "2026-08-10T12:00:00Z"
+      required: [code, message, requestId, timestamp]
+    Pagination:
+      type: object
+      properties:
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+        totalPages: { type: integer }
+      required: [page, pageSize, total, totalPages]
+    ArticlePage:
+      type: object
+      description: 文章分页结果，list 项为 ArticleSummary（不含 content 全文）
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/ArticleSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required: [list, pagination]
+    UserPage:
+      type: object
+      description: 用户分页结果
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required: [list, pagination]
+    CommentPage:
+      type: object
+      description: 评论分页结果（楼中楼平面展开，由 parentId 关联）
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required: [list, pagination]
+    User:
+      type: object
+      description: 用户对象；密码哈希绝不出现在此结构中
+      properties:
+        id: { type: integer }
+        username: { type: string }
+        nickname: { type: string }
+        avatar: { type: string, nullable: true }
+        role:
+          type: string
+          enum: [admin, author, member]
+          description: 三角色：member=普通会员；author=被 admin 晋升、可管理标签；admin=后台管理员
+        status:
+          type: string
+          enum: [active, disabled]
+        level:
+          type: integer
+          default: 1
+          description: 会员等级，仅展示用，无业务功能；默认 1，仅 admin 可改（见 PATCH /users/{id}）
+        createdAt: { type: string, format: date-time }
+      required: [id, username, nickname, role, status]
+    MemberProfile:
+      type: object
+      description: 会员公开主页数据
+      properties:
+        id: { type: integer }
+        nickname: { type: string }
+        avatar: { type: string, nullable: true }
+        level: { type: integer }
+        articleCount: { type: integer }
+        articles:
+          type: array
+          description: 该会员的 published 文章列表（不含 content 全文）
+          items:
+            $ref: '#/components/schemas/ArticleSummary'
+      required: [id, nickname, level, articleCount]
+    Article:
+      type: object
+      description: 文章完整对象（含 content 全文，仅详情/管理接口返回）
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        slug:
+          type: string
+          nullable: true
+          description: URL 别名，可选；留空时前台用 id 路由。仅管理员手动填且需唯一
+        summary: { type: string, nullable: true }
+        content: { type: string }
+        coverImage: { type: string, nullable: true }
+        authorId: { type: integer }
+        authorName: { type: string }
+        categoryId: { type: integer, nullable: true }
+        categoryName: { type: string, nullable: true }
+        tags:
+          type: array
+          items: { type: string }
+        status:
+          type: string
+          enum: [draft, pending, published]
+        viewCount: { type: integer }
+        publishedAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, title, content, authorId, status]
+    ArticleSummary:
+      type: object
+      description: 文章摘要（列表/收藏/会员主页复用，不含 content 全文）
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        slug:
+          type: string
+          nullable: true
+        summary: { type: string, nullable: true }
+        coverImage: { type: string, nullable: true }
+        authorId: { type: integer }
+        authorName: { type: string }
+        categoryId: { type: integer, nullable: true }
+        categoryName: { type: string, nullable: true }
+        tags:
+          type: array
+          items: { type: string }
+        status:
+          type: string
+          enum: [draft, pending, published]
+        viewCount: { type: integer }
+        publishedAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, title, authorId, status]
+    Category:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string, nullable: true }
+        parentId: { type: integer, nullable: true }
+        sortOrder: { type: integer }
+      required: [id, name, slug]
+    CategoryNode:
+      type: object
+      description: 分类树节点（递归）
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        description: { type: string, nullable: true }
+        sortOrder: { type: integer }
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategoryNode'
+    Tag:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        slug: { type: string }
+        articleCount: { type: integer }
+      required: [id, name, slug]
+    Comment:
+      type: object
+      properties:
+        id: { type: integer }
+        articleId: { type: integer }
+        userId: { type: integer }
+        userName: { type: string }
+        parentId: { type: integer, nullable: true }
+        content:
+          type: string
+          description: 展示内容，已做敏感词转星号处理
+        status:
+          type: string
+          enum: [approved, rejected, reviewing]
+          description: approved=通过（转义后展示）；rejected=违规比率超阈值不予展示；reviewing=人工复核中
+        rejectedReason: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+      required: [id, articleId, userId, content, status]
+    ReadingHistoryItem:
+      type: object
+      description: 阅读历史条目，文章摘要 + 阅读进度
+      properties:
+        article:
+          $ref: '#/components/schemas/ArticleSummary'
+        lastReadAt: { type: string, format: date-time }
+        progress:
+          type: integer
+          description: 阅读进度百分比 0-100，可选
+      required: [article, lastReadAt]
+    HistoryPage:
+      type: object
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReadingHistoryItem'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required: [list, pagination]
+    Attachment:
+      type: object
+      properties:
+        id: { type: integer }
+        url: { type: string }
+        storage:
+          type: string
+          enum: [r2, local]
+        mimeType: { type: string }
+        size: { type: integer }
+        createdAt: { type: string, format: date-time }
+      required: [id, url, storage]
+    ValidationError:
+      type: object
+      description: 字段级校验错误明细
+      properties:
+        field: { type: string, description: 出错的字段名 }
+        message: { type: string, description: 错误说明 }
+      required: [field, message]
+    ValidationErrorList:
+      type: object
+      description: 4001 参数校验失败的 data 结构
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+      required: [errors]
+    ErrorDetail:
+      type: object
+      properties:
+        field: { type: string }
+        message: { type: string }
+    LoginRequest:
+      type: object
+      properties:
+        username: { type: string }
+        password: { type: string }
+      required: [username, password]
+    RegisterRequest:
+      type: object
+      description: 注册入参。注册默认角色为 member；admin 后续经 PATCH /users/{id} 晋升为 author。
+      properties:
+        username: { type: string }
+        email: { type: string }
+        password: { type: string }
+        nickname: { type: string }
+      required: [username, email, password]
+    AuthResult:
+      type: object
+      description: 登录/刷新结果。refreshToken 用于浏览器 HttpOnly Cookie 与移动端安全存储两种载体
+      properties:
+        accessToken: { type: string }
+        expiresIn:
+          type: integer
+          description: access token 有效期（秒）
+        refreshToken:
+          type: string
+          description: 刷新令牌。浏览器端由 Set-Cookie 写入 HttpOnly+SameSite Cookie；移动端返回此字段存于安全存储，刷新时置于请求体
+        user:
+          $ref: '#/components/schemas/User'
+      required: [accessToken, expiresIn, user]
+    RefreshRequest:
+      type: object
+      description: 刷新访问令牌。浏览器端通常无需传体（用 Cookie）；移动端将 refreshToken 置于体
+      properties:
+        refreshToken:
+          type: string
+          nullable: true
+      required: []
+    ArticleCreate:
+      type: object
+      description: 创建/更新文章入参
+      properties:
+        title: { type: string }
+        summary: { type: string, nullable: true }
+        content: { type: string }
+        coverImage: { type: string, nullable: true }
+        categoryId: { type: integer, nullable: true }
+        tags:
+          type: array
+          items: { type: string }
+        slug:
+          type: string
+          nullable: true
+          description: 可选；仅管理员可手动指定唯一 slug
+        status:
+          type: string
+          enum: [draft, pending, published]
+          description: >
+            目标状态。权限约束：member 传入 published 时后端忽略并降级为 pending（会员无法直接发布）；
+            author 同 member；仅 admin 可将文章直接置为 published。
+      required: [title, content]
+    HistoryReport:
+      type: object
+      description: 上报阅读进度（写入/更新 ReadingLog）
+      properties:
+        articleId: { type: integer }
+        progress:
+          type: integer
+          nullable: true
+          description: 阅读进度百分比 0-100，可选；不传则仅记录 lastReadAt
+      required: [articleId]
+    ChangePasswordRequest:
+      type: object
+      properties:
+        oldPassword: { type: string }
+        newPassword: { type: string }
+      required: [oldPassword, newPassword]
+    OAuthCallbackRequest:
+      type: object
+      description: 第三方登录回调入参（M3-09 扩展点）
+      properties:
+        code: { type: string, description: 第三方授权码 }
+        state: { type: string, nullable: true }
+        redirectUri: { type: string, nullable: true }
+      required: [code]
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: 注册
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '200':
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/AuthResult'
+        '400':
+          description: 参数校验失败（code 4001，data 含字段级 errors 明细）
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ValidationErrorList'
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: 登录
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/AuthResult'
+        '401':
+          description: 用户名或密码错误（code 1001）
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: 刷新访问令牌
+      description: 浏览器端通过 HttpOnly Cookie 携带 refreshToken；移动端将 refreshToken 置于请求体
+      security: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: 刷新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/AuthResult'
+        '401':
+          description: 刷新令牌失效（code 1003）
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: 登出，作废刷新令牌
+      description: >
+        登出闭环：浏览器端须清除 refreshToken Cookie（示例响应头
+        `Set-Cookie: refreshToken=; HttpOnly; SameSite=None; Secure; Max-Age=0`）；
+        移动端清除本地安全存储的 refreshToken。本端点同时返回 200 信封，Cookie 清理由响应头完成。
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: 登出成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: 当前登录用户
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+  /api/v1/auth/{provider}/callback:
+    post:
+      tags: [Auth]
+      summary: 第三方登录回调（扩展点，M3-09）
+      description: >
+        第三方登录（微信/微博等）授权回调入口，将第三方身份归并到统一 User 体系。
+        新用户按 provider+openid 自动建号（默认角色 member），已存在则直接登录。
+        此为扩展端点：第一波 Node 后端可先返回 501 Not Implemented，M3-09 统一讲解设计模式与对接，
+        但契约预留，保证前后端不漂移。
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [wechat, weibo, github]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuthCallbackRequest'
+      responses:
+        '200':
+          description: 绑定/登录成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/AuthResult'
+        '501':
+          description: 该第三方登录尚未实现（扩展点占位）
+  /api/v1/articles:
+    get:
+      tags: [Article]
+      summary: 公开文章列表（仅 published）
+      description: >
+        公开列表，强制只返回 status=published 的文章；`?status=` 参数在本端点被忽略（避免草稿/待审泄露）。
+        后台管理所需的 draft/pending 筛选由鉴权端点 `GET /admin/articles` 提供。
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - name: category
+          in: query
+          schema: { type: string }
+        - name: tag
+          in: query
+          schema: { type: string }
+        - name: keyword
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: 成功（仅 published）
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ArticlePage'
+    post:
+      tags: [Article]
+      summary: 创建文章
+      description: 会员创建默认 draft/pending；admin 可 published。详见 02 文档 §2.3
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleCreate'
+      responses:
+        '200':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Article'
+        '400':
+          description: 参数校验失败（code 4001，data 含字段级 errors 明细）
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ValidationErrorList'
+  /api/v1/articles/{idOrSlug}:
+    get:
+      tags: [Article]
+      summary: 文章详情（id 或 slug 均可解析）
+      description: >
+        未发布文章（draft/pending）对匿名用户返回 404；仅作者本人与 admin 可见未发布详情。
+        公开内容可见性铁律见 02 文档 §三。
+      security: []
+      parameters:
+        - name: idOrSlug
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: 成功（仅 published，或未发布的作者/管理员本人）
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Article'
+        '404':
+          description: 不存在，或匿名访问未发布文章
+  /api/v1/articles/{id}:
+    put:
+      tags: [Article]
+      summary: 更新文章
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleCreate'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Article'
+        '403':
+          description: 无权限
+        '404':
+          description: 文章不存在
+    delete:
+      tags: [Article]
+      summary: 删除文章（软删除）
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '403':
+          description: 无权限
+        '404':
+          description: 文章不存在
+  /api/v1/articles/{id}/submit:
+    post:
+      tags: [Article]
+      summary: 草稿→待审（会员投稿）
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Article'
+        '403':
+          description: 无权限
+        '404':
+          description: 文章不存在
+  /api/v1/articles/{id}/view:
+    post:
+      tags: [Article]
+      summary: 阅读量 +1（带防刷去重）
+      description: >
+        匿名可调用。可选携带 Bearer：携带则按 user_id 去重，否则按 ip+ua 哈希去重（§2.4）。
+        本端点只递增 view_count，不写入阅读历史；阅读历史由鉴权端点 `POST /me/history` 上报。
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          viewCount: { type: integer }
+        '404':
+          description: 文章不存在（或未发布且匿名访问）
+  /api/v1/categories:
+    get:
+      tags: [Category]
+      summary: 分类平铺列表
+      security: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Category'
+    post:
+      tags: [Category]
+      summary: 创建分类
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                slug: { type: string }
+                description: { type: string }
+                parentId: { type: integer, nullable: true }
+                sortOrder: { type: integer }
+              required: [name, slug]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Category'
+  /api/v1/categories/{id}:
+    put:
+      tags: [Category]
+      summary: 更新分类
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                slug: { type: string }
+                description: { type: string }
+                parentId: { type: integer, nullable: true }
+                sortOrder: { type: integer }
+              required: [name, slug]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Category'
+    delete:
+      tags: [Category]
+      summary: 删除分类
+      description: >
+        删除前须无子分类且无文章归属该分类，否则返回 409（避免悬空 parent_id / 孤儿归属）。
+        本端不允许级联删除，需调用方先迁移子节点与文章。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '409':
+          description: 存在子分类或文章引用，拒绝删除（code 3001 类冲突）
+  /api/v1/categories/tree:
+    get:
+      tags: [Category]
+      summary: 分类树（整树）
+      security: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CategoryNode'
+  /api/v1/tags:
+    get:
+      tags: [Tag]
+      summary: 标签列表
+      security: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Tag'
+    post:
+      tags: [Tag]
+      summary: 创建标签
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                slug: { type: string }
+              required: [name, slug]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Tag'
+  /api/v1/tags/{id}:
+    delete:
+      tags: [Tag]
+      summary: 删除标签
+      description: 删除前须先清除 ArticleTag 关联（无文章引用），否则返回 409（避免孤儿中间表行）。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '409':
+          description: 仍有文章引用该标签，拒绝删除（code 3001 类冲突）
+  /api/v1/articles/{idOrSlug}/comments:
+    get:
+      tags: [Comment]
+      summary: 文章评论（楼中楼平面展开）
+      description: 未发布文章对匿名返回 404；仅作者/管理员可见未发布文章的评论。
+      security: []
+      parameters:
+        - name: idOrSlug
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/CommentPage'
+        '404':
+          description: 文章不存在（或未发布且匿名访问）
+    post:
+      tags: [Comment]
+      summary: 发表评论（自动敏感词过滤）
+      description: 命中转星号；违规比率超阈值则 rejected，否则 approved；详见 02 文档 §2.5
+      parameters:
+        - name: idOrSlug
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content: { type: string }
+                parentId: { type: integer, nullable: true }
+              required: [content]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Comment'
+        '403':
+          description: 无权限
+  /api/v1/comments/{id}:
+    delete:
+      tags: [Comment]
+      summary: 删除评论
+      description: 删除评论时级联删除其所有子回复（parent_id 指向它的行一并删除），避免孤儿回复。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '403':
+          description: 无权限
+        '404':
+          description: 评论不存在
+  /api/v1/upload:
+    post:
+      tags: [Upload]
+      summary: 资源上传（R2 为主 / 本地磁盘兜底，由 STORAGE_DRIVER 配置驱动）
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          url: { type: string }
+                          storage:
+                            type: string
+                            enum: [r2, local]
+                            description: 实际使用的存储后端
+  /api/v1/members/{id}:
+    get:
+      tags: [Member]
+      summary: 会员公开主页（资料 + 其 published 文章）
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/MemberProfile'
+        '404':
+          description: 会员不存在
+  /api/v1/admin/articles:
+    get:
+      tags: [Admin]
+      summary: 后台文章管理列表（鉴权，支持 draft/pending/published 筛选）
+      description: >
+        后台管理端点，需鉴权。支持按 status 筛选草稿/待审/已发布，补齐公开列表 `GET /articles`
+        不暴露未发布内容的约束。作者可见自己全部文章，admin 可见全部。
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Sort'
+        - name: category
+          in: query
+          schema: { type: string }
+        - name: tag
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, pending, published]
+        - name: keyword
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ArticlePage'
+  /api/v1/admin/articles/{id}/approve:
+    post:
+      tags: [Admin]
+      summary: 待审→已发布（审核通过）
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Article'
+        '403':
+          description: 无权限
+        '404':
+          description: 文章不存在
+  /api/v1/admin/articles/{id}/status:
+    post:
+      tags: [Admin]
+      summary: 任意状态置位（下架/退回）
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [draft, pending, published]
+              required: [status]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Article'
+        '403':
+          description: 无权限
+        '404':
+          description: 文章不存在
+  /api/v1/me/favorites:
+    get:
+      tags: [Member]
+      summary: 我的收藏（分页）
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ArticlePage'
+    post:
+      tags: [Member]
+      summary: 添加收藏
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                articleId: { type: integer }
+              required: [articleId]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /api/v1/me/favorites/{articleId}:
+    delete:
+      tags: [Member]
+      summary: 取消收藏
+      parameters:
+        - name: articleId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /api/v1/me/history:
+    get:
+      tags: [Member]
+      summary: 阅读历史（分页）
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/HistoryPage'
+    post:
+      tags: [Member]
+      summary: 上报阅读进度（写入/更新 ReadingLog）
+      description: >
+        阅读历史的唯一写入路径（解决阅读历史功能不可实现问题）。携带 Bearer 识别用户，
+        upsert lastReadAt 与可选 progress。与 `POST /articles/{id}/view`（仅增 view_count）职责分离。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HistoryReport'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ReadingHistoryItem'
+  /api/v1/me/profile:
+    get:
+      tags: [Member]
+      summary: 个人资料
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+    patch:
+      tags: [Member]
+      summary: 更新资料
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname: { type: string }
+                avatar: { type: string, nullable: true }
+              required: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+  /api/v1/me/change-password:
+    post:
+      tags: [Member]
+      summary: 修改密码
+      description: 会员中心「个人设置」的密码修改端点。校验 oldPassword 后更新 password_hash。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '400':
+          description: 参数校验失败（code 4001，如旧密码错误或新密码强度不足）
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ValidationErrorList'
+  /api/v1/users:
+    get:
+      tags: [Admin]
+      summary: 用户列表（分页）
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/PageSize'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/UserPage'
+  /api/v1/users/{id}:
+    get:
+      tags: [Admin]
+      summary: 用户详情
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '404':
+          description: 用户不存在
+    patch:
+      tags: [Admin]
+      summary: 变更角色 / 状态 / 会员等级
+      description: >
+        admin 专用。可改 role（member/author/admin）、status（active/disabled）、
+        level（会员等级，仅展示用，默认 1，admin 可上调以体现会员体系）。
+        注册默认角色为 member，admin 经此端点将 member 晋升为 author。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum: [admin, author, member]
+                status:
+                  type: string
+                  enum: [active, disabled]
+                level:
+                  type: integer
+                  description: 会员等级，仅展示用，仅 admin 可改
+              required: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '403':
+          description: 无权限（如非 admin 调用）
+        '404':
+          description: 用户不存在
