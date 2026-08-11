@@ -6,10 +6,10 @@
 
 | 编号 | 文档 | 作用 | 状态 |
 |---|---|---|---|
-| 00 | [项目章程](./00-项目章程.md) | 定位、读者、成功标准、非目标、推进节奏、文风约定、技术方向与产品决策 | ✅ 已确认（v1.8） |
-| 01 | [内容路线图](./01-内容路线图.md) | 文章系列完整大纲（八段式 M0–M8 + 支线），项目北极星 | ✅ 已确认（v1.8） |
-| 02 | [领域模型与 API 契约](./02-领域模型与API契约.md) | 文章系统实体/关系、API 设计原则、端点目录、错误码 | ✅ 已定稿（v1.8） |
-| — | [API 契约（OpenAPI v1）](../api/openapi.v1.yaml) | 机器可读的接口单一事实来源，七端复用（契约版本 1.5.0，文档修订 v1.8）；经 openapi-spec-validator 严格校验 + 语义自查 `check_contract.py` 双门通过 | ✅ 已定稿（v1.8） |
+| 00 | [项目章程](./00-项目章程.md) | 定位、读者、成功标准、非目标、推进节奏、文风约定、技术方向与产品决策 | ✅ 已确认（v1.10） |
+| 01 | [内容路线图](./01-内容路线图.md) | 文章系列完整大纲（八段式 M0–M8 + 支线），项目北极星 | ✅ 已确认（v1.10） |
+| 02 | [领域模型与 API 契约](./02-领域模型与API契约.md) | 文章系统实体/关系、API 设计原则、端点目录、错误码 | ✅ 已定稿（v1.10） |
+| — | [API 契约（OpenAPI v1）](../api/openapi.v1.yaml) | 机器可读的接口单一事实来源，七端复用（契约版本 1.7.0，文档修订 v1.10）；经 openapi-spec-validator 严格校验 + 语义自查 `check_contract.py` 双门通过 | ✅ 已定稿（v1.10） |
 | 03 | M1 PRD（Node 后端） | 第一件实现的功能规格 | ⬜ 未开始 |
 | 04 | M2 PRD（React 管理后台） | 第二件实现的功能规格 | ⬜ 未开始 |
 | 05 | M3 PRD（Next.js 前台） | 第三件实现的功能规格 | ⬜ 未开始 |
@@ -28,7 +28,7 @@
 - **节奏**：波次串行，一个 M 只讲一件实现（一个代码库）
 - **交付点**：M3 结束即为完整交付，M4–M7（含 Go/Vue 重写）是加分项与差异化王牌
 - **硬地基**：领域模型 + API 契约（OpenAPI），唯一值得提前投入设计的部分，已在动工前定稿
-- **规模**：主线 105 篇 + 支线 14 篇（总计 119 篇）；最小可交付集 37 篇（含已升 P0 的 M1-25/26/27 与站点配置 M2-16/M3-16）
+- **规模**：主线 112 篇 + 支线 14 篇（总计 126 篇）；最小可交付集 41 篇（含已升 P0 的 M1-25/26/27、站点配置 M2-16/M3-16，及辅助接口 M1-28/M2-17/M3-17/M3-18）
 
 ## 当前进度
 
@@ -81,16 +81,15 @@
 4. ✅ 两门全绿：结构门 `docs/api/openapi.v1.yaml: OK`；语义门 37 路径 / 49 操作 / 30 schema，0 孤儿、0 死胡同状态
 5. 🟡 产出 `docs/review/回应第三次复审.md` 交评审 AI 终审
 
-当前状态（规划更新至 v1.8 · 用户复审整改）：
+当前状态（规划更新至 v1.10 · 补常用辅助接口）：
 
-> 第八轮（v1.8）采纳用户对设计稿的四项修订，规划基线更新：
-> - **角色模型重做**：删除 `author` 角色，改设 `editor`（内容编辑，管全站文章/评论/分类/标签，但不涉用户/角色/站点配置）；三角色 `member` / `editor` / `admin`，权限分层清晰、`editor` 打用户管理端点即吃 403，可演示 RBAC
-> - **新增站点基础配置**：`SiteSetting` 实体 + `GET /site/settings`（公开）、`GET/PATCH /admin/site/settings`（admin）；路线图新增 M2-16（后台设置）、M3-16（前台展示）
-> - **排序 `Sort` 改带符号字段名**：`publishedAt` 正序 / `-publishedAt` 倒序（保持机器化 enum，默认 `-publishedAt`）
-> - **路径命名维持全复数**（用户拍板，REST 主流约定，避免 7 端破坏性变更）
-> - 00/01/02 统一为 v1.8，契约 1.4.0→1.5.0；应急集 35→37 篇；主线 103→105、总计 117→119
+> 第十轮（v1.10）补齐文章系统「好用」所需的常用辅助接口，规划基线更新：
+> - **纯计算 / 聚合类**：`GET /articles/{id}/adjacent`（上一篇/下一篇）、`GET /articles/{id}/related`（相关文章）、`GET /articles/{id}/toc`（目录）、`GET /categories/{id}/breadcrumb`（面包屑）、`GET /categories/stats`（分类计数）、`GET /stats`（站点统计）、`GET /search`（全文搜索）
+> - **互动类（2 个新实体）**：`POST/DELETE /articles/{id}/like` + `GET /articles/{id}/like/status` + `GET /me/likes`（Like 实体）；`GET /me/notifications` + `GET /me/notifications/unread-count` + `POST /me/notifications/read-all` + `PATCH /me/notifications/{id}`（Notification 实体）；`Article`/`ArticleSummary` 加 `likeCount`
+> - **不重复造**：标签云计数已由 `GET /tags` 的 `Tag.articleCount` 覆盖；热门/最新复用 `Sort` 枚举；RSS/sitemap/robots 列为 M3 实现笔记不进 JSON 契约
+> - 00/01/02 统一为 v1.10，契约 1.6.0→1.7.0；主线 105→112、总计 119→126、应急集 37→41
 >
-> 双门校验（结构门 `openapi-spec-validator` + 语义门 `check_contract.py`）**全绿**（契约 39 路径 / 52 操作 / 33 schema）。
+> 双门校验（结构门 `openapi-spec-validator` + 语义门 `check_contract.py`）**全绿**（契约 53 路径 / 67 操作 / 45 schema）。
 
 下一步待决策：
 

@@ -2,11 +2,11 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | v1.8 |
-| 状态 | 已确认（v1.8：用户复审整改——删除 `author` 角色、改设 `editor`（内容编辑，管全站文章/评论/分类/标签，但不涉用户/角色/站点配置）；新增站点基础配置 `SiteSetting` 实体与 3 端点（GET /site/settings 公开、GET/PATCH /admin/site/settings）；排序 `Sort` 改为带符号字段名约定（`-publishedAt` 表倒序）；文档版本对齐 00/01（v1.8），契约 1.4.0→1.5.0） |
+| 文档版本 | v1.10 |
+| 状态 | 已确认（v1.10：补常用辅助接口——纯计算/聚合类 `adjacent`/`related`/`toc`/`breadcrumb`/`categories/stats`/`stats`/`search`，互动类 `like`（Like 实体）+ `notifications`（Notification 实体）；`Article`/`ArticleSummary` 加 `likeCount`；`Tag.articleCount` 已覆盖标签云计数（不重复造）；RSS/sitemap/robots 列为 M3 实现笔记不进 JSON 契约。契约 1.6.0→1.7.0。前序 v1.9：站点配置 `SiteSetting` 字段扩展） |
 | 最后更新 | 2026-08-11 |
 | 上游文档 | [00-项目章程](./00-项目章程.md) |
-| 机器可读契约 | [../api/openapi.v1.yaml](../api/openapi.v1.yaml)（契约版本 1.5.0） |
+| 机器可读契约 | [../api/openapi.v1.yaml](../api/openapi.v1.yaml)（契约版本 1.7.0） |
 | 契约校验 | `python -m openapi_spec_validator docs/api/openapi.v1.yaml`（结构） + `python docs/api/check_contract.py`（语义自查） |
 
 ---
@@ -234,19 +234,53 @@
 
 #### SiteSetting（站点基础配置）
 
-站点级基础配置，单条记录。承载站点名称、描述、Logo 等前台展示所需信息，是「一个真实站点」不可缺的一块；也是演示「后台设置 → 前端消费」数据流的绝佳题材（admin 经 PATCH 更新，前台经公开端点读取）。
+站点级基础配置，单条记录。承载站点名称、标题、描述、关键词、Logo、版权等前台展示与 SEO 所需信息，是「一个真实站点」不可缺的一块；也是演示「后台设置 → 前端消费」数据流的绝佳题材（admin 经 PATCH 更新，前台经公开端点读取）。
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | id | bigint | 主键（恒为 1，单条配置） |
-| site_name | string | 站点名称 |
-| site_description | string | 站点描述（SEO meta / 页脚简介） |
+| site_name | string | 站点名称（品牌短名，页头/Logo alt/文章页标题拼接用） |
+| site_title | string? | 站点标题（浏览器标签/SEO `<title>` 主页默认标题；文章详情页由前端拼接为「{文章标题} · {site_name}」） |
+| site_description | string | 站点描述（SEO meta description / 页脚简介） |
+| site_keywords | string? | 站点关键词（meta keywords，逗号分隔，如「全栈,前端,React」） |
 | logo_url | string? | Logo 图片地址（经上传端点获得） |
+| copyright | string? | 版权信息（页脚展示，如「© 2026 成为全栈开发工程师」） |
 | updated_at | datetime | 最后更新时间 |
 
 - 公开读取：`GET /api/v1/site/settings`（无需登录，供页头/页脚/SEO）。
 - 后台读写：`GET /api/v1/admin/site/settings`（取全量回填）、`PATCH /api/v1/admin/site/settings`（字段可选，仅传变更项；仅 `admin`）。
 - Logo 不在此端点内上传，先走 `POST /upload` 拿到 URL 再写入 `logo_url`。
+
+#### Like（点赞，会员互动）
+
+文章点赞记录。一条 `(user_id, article_id)` 唯一，幂等（重复点赞不报错）；`article.like_count` 由触发器或应用层维护，与 `Like` 表行数一致。仅登录会员可操作。
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| id | bigint | 主键 |
+| user_id | bigint | 点赞者，由令牌推断 |
+| article_id | bigint | 被赞文章 |
+| created_at | datetime | 点赞时间 |
+
+- 端点：`POST /api/v1/articles/{id}/like`（点赞，幂等）、`DELETE /api/v1/articles/{id}/like`（取消，幂等）、`GET /api/v1/articles/{id}/like/status`（当前用户点赞态 + 总赞数，公开）、`GET /api/v1/me/likes`（我的点赞列表）。
+- `Article` / `ArticleSummary` 已加 `likeCount` 字段，由该表聚合得出。
+
+#### Notification（通知）
+
+系统事件（评论审核通过、文章发布等）由服务端生成，客户端不可直接创建。仅本人可读取 / 标记已读。
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| id | bigint | 主键 |
+| type | enum | `article_published` / `comment_approved` / `system` |
+| title | string | 标题 |
+| body | string? | 正文 |
+| link | string? | 跳转链接（如 `/articles/{id}`） |
+| is_read | bool | 是否已读 |
+| created_at | datetime | |
+
+- 端点：`GET /api/v1/me/notifications`（列表，支持 `isRead` 筛选）、`GET /api/v1/me/notifications/unread-count`（未读数）、`POST /api/v1/me/notifications/read-all`（全部已读）、`PATCH /api/v1/me/notifications/{id}`（标记已读，仅本人）。
+- 通知之外，RSS / sitemap / robots 等 SEO 格式输出**不进 JSON 契约**——属 M3 实现笔记（在 Next.js 端以非 OpenAPI 方式落地），详见 §五 注。
 
 ### 2.3 文章状态机（会员投稿审核流）
 
@@ -549,6 +583,12 @@ security:
 | PUT | `/api/v1/articles/:id` | 更新文章 | 是（作者或 admin） |
 | DELETE | `/api/v1/articles/:id` | 删除（软删除） | 是（作者或 admin） |
 | POST | `/api/v1/articles/:id/submit` | 草稿→待审（会员投稿） | 是（作者本人） |
+| GET | `/api/v1/articles/:id/adjacent` | 上一篇/下一篇（同 `-publishedAt` 相邻，仅 published） | 否（公开） |
+| GET | `/api/v1/articles/:id/related` | 相关文章（共享标签 + 同分类打分，排除自身） | 否（公开） |
+| GET | `/api/v1/articles/:id/toc` | 文章目录（正文 Markdown 标题解析） | 否（公开） |
+| POST | `/api/v1/articles/:id/like` | 点赞（幂等，重复点赞返回当前态） | 是（member） |
+| DELETE | `/api/v1/articles/:id/like` | 取消点赞（幂等，未点赞返回 liked=false） | 是（member） |
+| GET | `/api/v1/articles/:id/like/status` | 点赞状态 + 总赞数（匿名 liked=false） | 否（公开） |
 
 ### 分类 Category
 | 方法 | 路径 | 用途 | 鉴权 |
@@ -557,6 +597,8 @@ security:
 | POST | `/api/v1/categories` | 创建分类 | 是（admin） |
 | PUT | `/api/v1/categories/:id` | 更新分类 | 是（admin） |
 | DELETE | `/api/v1/categories/:id` | 删除分类 | 是（admin） |
+| GET | `/api/v1/categories/:id/breadcrumb` | 分类面包屑路径（根→当前） | 否（公开） |
+| GET | `/api/v1/categories/stats` | 各分类 published 文章数 | 否（公开） |
 
 ### 标签 Tag
 | 方法 | 路径 | 用途 | 鉴权 |
@@ -580,6 +622,16 @@ security:
 | POST | `/api/v1/upload` | 图片/资源上传，返回完整 `Attachment` | 是（登录用户） |
 | DELETE | `/api/v1/attachments/:id` | 删除附件（上传者本人或 admin） | 是（上传者或 admin） |
 
+### 搜索 Search
+| 方法 | 路径 | 用途 | 鉴权 |
+|---|---|---|---|
+| GET | `/api/v1/search` | 全文搜索（type=article/member；跨标题/正文/昵称） | 否（公开） |
+
+### 站点统计 Site
+| 方法 | 路径 | 用途 | 鉴权 |
+|---|---|---|---|
+| GET | `/api/v1/stats` | 站点级聚合统计（文章/评论/会员数 + 阅读总量） | 否（公开） |
+
 ### 会员中心 Member
 | 方法 | 路径 | 用途 | 鉴权 |
 |---|---|---|---|
@@ -596,7 +648,12 @@ security:
 | PATCH | `/api/v1/me/profile` | 更新资料 | 是（member） |
 | POST | `/api/v1/me/history` | 上报阅读进度（写入 ReadingLog） | 是（member） |
 | POST | `/api/v1/me/change-password` | 修改密码（需旧密码） | 是（member） |
-| GET | `/api/v1/site/settings` | 站点基础配置（公开，无需登录；页头/页脚/SEO 用） | 否（公开） |
+| GET | `/api/v1/me/likes` | 我的点赞列表（published 文章，按点赞时间倒序） | 是（member） |
+| GET | `/api/v1/me/notifications` | 我的通知（支持 isRead 筛选） | 是（member） |
+| GET | `/api/v1/me/notifications/unread-count` | 未读通知数 | 是（member） |
+| POST | `/api/v1/me/notifications/read-all` | 全部标记已读 | 是（member） |
+| PATCH | `/api/v1/me/notifications/:id` | 标记单条已读（仅本人） | 是（member） |
+| GET | `/api/v1/site/settings` | 站点基础配置（公开，无需登录；页头/页脚/SEO 用：名称/标题/描述/关键词/Logo/版权） | 否（公开） |
 
 ### 管理 Admin（文章 / 用户）
 | 方法 | 路径 | 用途 | 鉴权 |
@@ -610,7 +667,13 @@ security:
 | POST | `/api/v1/admin/articles/:id/approve` | 待审→已发布（审核通过） | 是（admin） |
 | POST | `/api/v1/admin/articles/:id/status` | 任意状态置位（下架/退回） | 是（admin） |
 | GET | `/api/v1/admin/site/settings` | 站点配置全量读取（回填后台设置页） | 是（admin） |
-| PATCH | `/api/v1/admin/site/settings` | 更新站点配置（字段可选） | 是（admin） |
+| PATCH | `/api/v1/admin/site/settings` | 更新站点配置（名称/标题/描述/关键词/Logo/版权，字段可选） | 是（admin） |
+
+> **辅助接口设计说明（v1.10 新增）**
+> - **标签云计数已覆盖**：`GET /api/v1/tags` 返回的 `Tag` 已含 `articleCount` 字段，标签云（带计数）直接复用，无需新增 `withCount` 参数或独立端点。
+> - **热门/最新不新增端点**：`GET /api/v1/articles?sort=-viewCount`（热门）、`?sort=-publishedAt`（最新）等由 `Sort` 枚举直接支持，属「列表别名型」，不新增资源。
+> - **RSS / sitemap / robots 不进 JSON 契约**：这三者是 SEO 的格式输出（XML/文本），属 M3（Next.js 前台）实现笔记，在应用层以非 OpenAPI 方式落地，不在七端共享契约内。
+> - **辅助端点返回紧凑投影**：上一篇/下一篇、相关文章、面包屑等只返 `{id,title,slug}` 级精简字段，不返回完整 `Article`，降低传输与耦合。
 
 ---
 
@@ -698,3 +761,5 @@ security:
 | 2026-08-10 | v1.5 | **第三轮复审整改（零逻辑漏洞目标）**：契约升 1.3.0。🔴 P1 评论 reviewing 闭环——新增 `PATCH /comments/{id}/status`（进出）+ `GET /admin/comments`（reviewing/rejected 读取路径）；P2 `Attachment` 转一等实体——`upload` 返回完整 `Attachment` + 新增 `GET /me/attachments`、`DELETE /attachments/{id}`；P3 新增 `GET /me/articles`。🟠 P4 可选鉴权改标准写法 `security:[{},{bearerAuth:[]}]`（3 端点）；P5/P7/P12 排序/过滤口径下沉 `enum`（`Sort` 6 组合 + 默认、`FilterCategory/Tag/Keyword` 共享参数）；P6 评论公开列表仅 `approved`；P8 slug member 忽略规则；P9 全量 49 个 `operationId`。🟡 P10 邮箱找回登记 Non-goal（admin 重置端点兜底）；P11 refresh 旋转策略写死；P13/P15/P16/P17/P18 分别于 01 §13 / 契约 / 本文件声明。文档新增 §3.1（无孤儿实体硬规则）、§3.2（机器强制约束清单）、§3.3（可选鉴权标准写法）；§五 补 9 个新端点；§九 拆 9.1/9.2 登记 P10–P18。新增语义自查脚本 `check_contract.py`，当场抓出并删除孤儿 schema `ErrorDetail` |
 | 2026-08-11 | v1.7 | **冻结前整改（清零 F1–F4）**：错误码体系机器化——新增 `ErrorCode` 枚举（12 值：0 成功 + 11 错误码），`ApiResponse.code` 改为 `$ref` 引用，每个 4xx/5xx 响应补 `content` + `example` 钉死 `code`；语义自查脚本新增 F 段强制校验错误码（枚举码须落地、禁止未定义码）；§三 过滤行修正 `?status` 仅用于鉴权后台列表；§六 错误码表补全 `1005`/`3002`/`3003` 并与 `ErrorCode` 枚举逐项对齐；文档版本对齐 00/01（v1.7），契约 1.3.0→1.4.0 |
 | 2026-08-11 | v1.8 | **用户复审整改**：删除 `author` 角色，改设 `editor`（内容编辑，管全站文章/评论/分类/标签，但不涉用户/角色/站点配置），三角色 member/editor/admin；新增 `SiteSetting` 实体与 3 端点（GET /site/settings 公开、GET/PATCH /admin/site/settings）；排序 `Sort` 改为带符号字段名约定（`-publishedAt` 表倒序，默认 `-publishedAt`）；文档版本对齐 00/01（v1.8），契约 1.4.0→1.5.0 |
+| 2026-08-11 | v1.9 | **站点配置字段扩展**：`SiteSetting` 在 v1.8 的 siteName/siteDescription/logoUrl 基础上新增 `siteTitle`（浏览器标签/SEO 标题）、`siteKeywords`（meta 关键词）、`copyright`（页脚版权）；`SiteSettingUpdate` 同步可填；契约 1.5.0→1.6.0 |
+| 2026-08-11 | v1.10 | **补常用辅助接口**：纯计算/聚合类新增 `GET /articles/{id}/adjacent`（上一篇/下一篇）、`GET /articles/{id}/related`（相关文章）、`GET /articles/{id}/toc`（目录）、`GET /categories/{id}/breadcrumb`（面包屑）、`GET /categories/stats`（分类计数）、`GET /stats`（站点统计）、`GET /search`（全文搜索）；互动类新增 `POST/DELETE /articles/{id}/like`、`GET /articles/{id}/like/status`、`GET /me/likes`（Like 实体）与 `GET /me/notifications`、`GET /me/notifications/unread-count`、`POST /me/notifications/read-all`、`PATCH /me/notifications/{id}`（Notification 实体）；`Article`/`ArticleSummary` 加 `likeCount`。标签云计数已由 `GET /tags` 的 `Tag.articleCount` 覆盖，不重复造；RSS/sitemap/robots 列为 M3 实现笔记不进 JSON 契约。契约 1.6.0→1.7.0，双门校验全绿（53 路径 / 67 操作 / 45 schema） |

@@ -19,7 +19,7 @@ info:
 
     可选鉴权端点采用 OpenAPI 标准写法 `security: [{}, {bearerAuth: []}]`
     （空安全需求对象表示允许匿名），各端生成客户端须配置「持有令牌则自动附加」，见 02 §3.3。
-  version: 1.5.0
+  version: 1.7.0
 servers:
   - url: http://localhost:3000
     description: 本地开发（Node 后端）
@@ -34,6 +34,7 @@ tags:
   - name: Upload
   - name: Member
   - name: Site
+  - name: Search
   - name: Admin
 components:
   securitySchemes:
@@ -238,6 +239,7 @@ components:
           type: string
           enum: [draft, pending, published]
         viewCount: {type: integer}
+        likeCount: {type: integer, description: 文章总赞数}
         publishedAt: {type: string, format: date-time, nullable: true}
         createdAt: {type: string, format: date-time}
         updatedAt: {type: string, format: date-time}
@@ -264,6 +266,7 @@ components:
           type: string
           enum: [draft, pending, published]
         viewCount: {type: integer}
+        likeCount: {type: integer, description: 文章总赞数}
         publishedAt: {type: string, format: date-time, nullable: true}
         createdAt: {type: string, format: date-time}
         updatedAt: {type: string, format: date-time}
@@ -506,12 +509,15 @@ components:
       required: [code]
     SiteSetting:
       type: object
-      description: 站点基础配置（站点名称/描述/Logo）。单条记录，由 admin 经 PATCH /admin/site/settings 维护；前台经 GET /site/settings 读取用于页头/页脚展示。
+      description: 站点基础配置（站点名称/标题/描述/关键词/Logo/版权）。单条记录，由 admin 经 PATCH /admin/site/settings 维护；前台经 GET /site/settings 读取用于页头/页脚/SEO。
       properties:
         id: {type: integer}
-        siteName: {type: string, description: 站点名称}
-        siteDescription: {type: string, description: 站点描述（用于 SEO meta / 页脚简介）}
+        siteName: {type: string, description: 站点名称（品牌短名，用于页头、Logo alt、文章页标题拼接）}
+        siteTitle: {type: string, nullable: true, description: "站点标题（浏览器标签/SEO `<title>` 主页默认标题；文章详情页由前端拼接为「{文章标题} · {siteName}」）"}
+        siteDescription: {type: string, description: 站点描述（SEO meta description / 页脚简介）}
+        siteKeywords: {type: string, nullable: true, description: "站点关键词（meta keywords，逗号分隔，如「全栈,前端,React」）"}
         logoUrl: {type: string, nullable: true, description: Logo 图片地址（经上传端点获得）}
+        copyright: {type: string, nullable: true, description: 版权信息（页脚展示，如「© 2026 成为全栈开发工程师」）}
         updatedAt: {type: string, format: date-time}
       required: [id, siteName, siteDescription]
     SiteSettingUpdate:
@@ -519,9 +525,132 @@ components:
       description: 站点配置更新入参，字段均可选（仅传需变更项）。
       properties:
         siteName: {type: string}
+        siteTitle: {type: string, nullable: true}
         siteDescription: {type: string}
+        siteKeywords: {type: string, nullable: true}
         logoUrl: {type: string, nullable: true}
+        copyright: {type: string, nullable: true}
       required: []
+    ArticleStub:
+      type: object
+      description: 文章精简投影，用于上一篇/下一篇、相关文章等导航场景（不含 content 全文）
+      properties:
+        id: {type: integer}
+        title: {type: string}
+        slug:
+          type: string
+          nullable: true
+      required: [id, title]
+    ArticleAdjacent:
+      type: object
+      description: 当前文章在同排序（-publishedAt）下的相邻两篇，仅 published 文章参与
+      properties:
+        prev:
+          $ref: '#/components/schemas/ArticleStub'
+          nullable: true
+          description: 更早发布的文章；无则 null
+        next:
+          $ref: '#/components/schemas/ArticleStub'
+          nullable: true
+          description: 更晚发布的文章；无则 null
+      required: [prev, next]
+    CategoryBreadcrumbItem:
+      type: object
+      description: 面包屑路径单项（从根到当前分类）
+      properties:
+        id: {type: integer}
+        name: {type: string}
+        slug: {type: string}
+      required: [id, name, slug]
+    ArticleRelatedItem:
+      type: object
+      description: 相关文章精简投影，基于共享标签 + 同分类打分，排除自身，仅 published
+      properties:
+        id: {type: integer}
+        title: {type: string}
+        slug:
+          type: string
+          nullable: true
+        viewCount: {type: integer}
+      required: [id, title]
+    SiteStats:
+      type: object
+      description: 站点级聚合统计，供页脚/后台概览；计数均为有效口径（published 文章、approved 评论、active 会员）
+      properties:
+        articleCount: {type: integer, description: 已发布文章数}
+        commentCount: {type: integer, description: 已通过评论数}
+        memberCount: {type: integer, description: 活跃会员数}
+        viewTotal: {type: integer, description: 全站阅读量累计}
+      required: [articleCount, commentCount, memberCount, viewTotal]
+    CategoryStat:
+      type: object
+      description: 分类文章数统计项
+      properties:
+        id: {type: integer}
+        name: {type: string}
+        slug: {type: string}
+        articleCount: {type: integer, description: 该分类下 published 文章数}
+      required: [id, name, slug, articleCount]
+    TocItem:
+      type: object
+      description: 文章目录项，由正文 Markdown 标题解析生成
+      properties:
+        level: {type: integer, description: 标题层级 1-6}
+        text: {type: string, description: 标题文本}
+        anchor: {type: string, description: 锚点 id（slug 化标题）}
+      required: [level, text, anchor]
+    MemberPage:
+      type: object
+      description: 会员公开资料分页结果（用于搜索会员）
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/MemberProfile'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required: [list, pagination]
+    SearchResult:
+      type: object
+      description: 搜索结果。type=article 时填充 articles，type=member 时填充 members，其余为 null
+      properties:
+        articles:
+          $ref: '#/components/schemas/ArticlePage'
+          nullable: true
+        members:
+          $ref: '#/components/schemas/MemberPage'
+          nullable: true
+      required: []
+    LikeStatus:
+      type: object
+      description: 点赞状态，返回当前用户对该文章的点赞态与总赞数
+      properties:
+        liked: {type: boolean, description: 当前用户是否已赞（匿名恒为 false）}
+        likeCount: {type: integer, description: 文章总赞数}
+      required: [liked, likeCount]
+    Notification:
+      type: object
+      description: 通知实体。由系统事件（评论审核通过、文章发布等）服务端生成，客户端不可直接创建
+      properties:
+        id: {type: integer}
+        type: {type: string, enum: [article_published, comment_approved, system], description: 通知类型}
+        title: {type: string}
+        body: {type: string, nullable: true}
+        link: {type: string, nullable: true, description: "跳转链接（如 /articles/{id}）"}
+        isRead: {type: boolean}
+        createdAt: {type: string, format: date-time}
+      required: [id, type, title, isRead, createdAt]
+    NotificationPage:
+      type: object
+      description: 通知分页结果
+      properties:
+        list:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+      required: [list, pagination]
     ErrorCode:
       type: integer
       description: 业务错误码。0 表示成功；>0 见错误码表（1xxx 认证 / 2xxx 授权 / 3xxx 资源 / 4xxx 参数 /
@@ -2634,7 +2763,7 @@ paths:
       tags: [Site]
       summary: 获取站点基础配置（公开）
       description: >
-        公开端点，无需登录。返回站点名称/描述/Logo，供前台页头页脚、SEO meta 展示。
+        公开端点，无需登录。返回站点名称/标题/描述/关键词/Logo/版权，供前台页头页脚、SEO meta 展示。
         站点级配置，单条记录，始终返回最新已发布配置。
       security: []
       responses:
@@ -2688,7 +2817,7 @@ paths:
       tags: [Admin]
       summary: 管理员更新站点配置
       description: >
-        admin 专用。更新站点名称/描述/Logo，字段可选（仅传需变更项）。
+        admin 专用。更新站点名称/标题/描述/关键词/Logo/版权，字段可选（仅传需变更项）。
         Logo 须先经上传端点获得 URL 再传入 logoUrl。
       security:
         - bearerAuth: []
@@ -2726,6 +2855,581 @@ paths:
               example:
                 code: 2001
                 message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+  /api/v1/articles/{id}/adjacent:
+    get:
+      operationId: getArticleAdjacent
+      tags: [Article]
+      summary: 获取上一篇/下一篇
+      description: 返回当前文章在同排序（-publishedAt）下的相邻两篇，仅 published 参与；用于文章底部导航。
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: integer}
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/ArticleAdjacent'
+        '404':
+          description: 文章不存在或不可见（code 3001）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+  /api/v1/articles/{id}/related:
+    get:
+      operationId: getArticleRelated
+      tags: [Article]
+      summary: 获取相关文章
+      description: 基于共享标签 + 同分类打分，排除自身，仅返回 published；用于「看完还看」推荐。
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: integer}
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 5
+            minimum: 1
+            maximum: 10
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ArticleRelatedItem'
+        '404':
+          description: 文章不存在（code 3001）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+  /api/v1/articles/{id}/toc:
+    get:
+      operationId: getArticleToc
+      tags: [Article]
+      summary: 获取文章目录
+      description: 由正文 Markdown 标题解析生成目录，供长文侧边导航。
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: integer}
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TocItem'
+        '404':
+          description: 文章不存在（code 3001）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+  /api/v1/articles/{id}/like:
+    post:
+      operationId: likeArticle
+      tags: [Article]
+      summary: 点赞文章
+      description: 当前登录用户对文章点赞；幂等，重复点赞返回 200 与当前状态。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: integer}
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/LikeStatus'
+        '401':
+          description: 未登录（code 1002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 1002
+                message: 令牌缺失或无效
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+        '404':
+          description: 文章不存在（code 3001）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+    delete:
+      operationId: unlikeArticle
+      tags: [Article]
+      summary: 取消点赞
+      description: 当前登录用户取消对文章的点赞；幂等，未点赞时返回 200 且 liked=false。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: integer}
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/LikeStatus'
+        '401':
+          description: 未登录（code 1002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 1002
+                message: 令牌缺失或无效
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+        '404':
+          description: 文章不存在（code 3001）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+  /api/v1/articles/{id}/like/status:
+    get:
+      operationId: getArticleLikeStatus
+      tags: [Article]
+      summary: 获取点赞状态
+      description: 返回当前用户对该文章的点赞态与总赞数；匿名用户 liked 恒为 false。
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: integer}
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/LikeStatus'
+        '404':
+          description: 文章不存在（code 3001）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+  /api/v1/categories/{id}/breadcrumb:
+    get:
+      operationId: getCategoryBreadcrumb
+      tags: [Category]
+      summary: 获取分类面包屑路径
+      description: 返回从根到当前分类的路径，供文章/分类页面包屑导航。
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: integer}
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CategoryBreadcrumbItem'
+        '404':
+          description: 分类不存在（code 3001）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+  /api/v1/categories/stats:
+    get:
+      operationId: getCategoryStats
+      tags: [Category]
+      summary: 获取各分类文章数
+      description: 返回每个分类的 published 文章数，供导航侧栏展示。
+      security: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CategoryStat'
+  /api/v1/stats:
+    get:
+      operationId: getSiteStats
+      tags: [Site]
+      summary: 获取站点统计
+      description: 返回站点级聚合统计，供页脚/后台概览展示。
+      security: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/SiteStats'
+  /api/v1/search:
+    get:
+      operationId: search
+      tags: [Search]
+      summary: 全文搜索
+      description: 跨文章标题/正文与会员昵称检索；type 决定返回文章列表还是会员列表。
+      security: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: {type: string}
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [article, member]
+            default: article
+        - name: page
+          in: query
+          required: false
+          schema: {type: integer, default: 1, minimum: 1}
+        - name: pageSize
+          in: query
+          required: false
+          schema: {type: integer, default: 10, minimum: 1, maximum: 50}
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - publishedAt
+              - "-publishedAt"
+              - viewCount
+              - "-viewCount"
+              - createdAt
+              - "-createdAt"
+            default: "-publishedAt"
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/SearchResult'
+        '400':
+          description: 关键词为空（code 4001）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 4001
+                message: 参数校验失败
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+  /api/v1/me/likes:
+    get:
+      operationId: listMyLikes
+      tags: [Member]
+      summary: 获取我的点赞列表
+      description: 返回当前用户点赞过的文章（published），按点赞时间倒序。
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema: {type: integer, default: 1, minimum: 1}
+        - name: pageSize
+          in: query
+          required: false
+          schema: {type: integer, default: 10, minimum: 1, maximum: 50}
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ArticleSummary'
+        '401':
+          description: 未登录（code 1002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 1002
+                message: 令牌缺失或无效
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+  /api/v1/me/notifications:
+    get:
+      operationId: listMyNotifications
+      tags: [Member]
+      summary: 获取我的通知
+      description: 返回当前用户通知，按创建时间倒序。
+      parameters:
+        - name: isRead
+          in: query
+          required: false
+          schema: {type: boolean, description: 筛选已读/未读；不传返回全部}
+        - name: page
+          in: query
+          required: false
+          schema: {type: integer, default: 1, minimum: 1}
+        - name: pageSize
+          in: query
+          required: false
+          schema: {type: integer, default: 10, minimum: 1, maximum: 50}
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/NotificationPage'
+        '401':
+          description: 未登录（code 1002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 1002
+                message: 令牌缺失或无效
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+  /api/v1/me/notifications/unread-count:
+    get:
+      operationId: getUnreadNotificationCount
+      tags: [Member]
+      summary: 获取未读通知数
+      description: 返回当前用户未读通知数量。
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          count: {type: integer}
+                        required: [count]
+        '401':
+          description: 未登录（code 1002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 1002
+                message: 令牌缺失或无效
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+  /api/v1/me/notifications/read-all:
+    post:
+      operationId: readAllNotifications
+      tags: [Member]
+      summary: 全部标记为已读
+      description: 将当前用户全部未读通知置为已读。
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          description: 未登录（code 1002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 1002
+                message: 令牌缺失或无效
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+  /api/v1/me/notifications/{id}:
+    patch:
+      operationId: updateNotification
+      tags: [Member]
+      summary: 更新通知（标记已读）
+      description: 将指定通知标记为已读；仅本人通知可操作。
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: integer}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isRead: {type: boolean}
+              required: [isRead]
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/Notification'
+        '401':
+          description: 未登录（code 1002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 1002
+                message: 令牌缺失或无效
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+        '404':
+          description: 通知不存在或非本人（code 3001）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
                 data:
                 requestId: req_8f3a1b2c
                 timestamp: '2026-08-10T12:00:00Z'
