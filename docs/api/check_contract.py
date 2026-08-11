@@ -280,8 +280,13 @@ def main(path):
         for st, resp in respmap.items():
             if str(st) not in ERR_HTTP and str(st) != "default":
                 continue
-            err_struct |= resp_structured_codes(resp)
-            err_desc |= resp_desc_codes(resp)
+            r = resp
+            if isinstance(r, dict) and "$ref" in r:
+                resolved = resolve(spec, r["$ref"])
+                if resolved:
+                    r = resolved
+            err_struct |= resp_structured_codes(r)
+            err_desc |= resp_desc_codes(r)
 
     for p, m, op in ops:
         sweep(op.get("responses", {}))
@@ -296,7 +301,12 @@ def main(path):
         for st, resp in op.get("responses", {}).items():
             if str(st) not in ERR_HTTP and str(st) != "default":
                 continue
-            if not resp_structured_codes(resp):
+            r = resp
+            if isinstance(r, dict) and "$ref" in r:
+                resolved = resolve(spec, r["$ref"])
+                if resolved:
+                    r = resolved
+            if not resp_structured_codes(r):
                 missing.append(f"{m.upper()} {p} -> {st}")
     if missing:
         fail("F1", f"以下错误响应未挂结构化 code 示例（机器不可读，仅靠 description 兜底）：{missing}")
@@ -393,6 +403,47 @@ def main(path):
         fail("R1e", f"仍存在遗留 x-required-roles / x-owner-resource（应已重构为 x-authz）：{r1_legacy}")
     else:
         ok("无遗留 x-required-roles / x-owner-resource（已全量重构为 x-authz）")
+
+    # ---------- N7/N8. 响应完整性 & ownerOverride 表征一致性（回应三审 N6 盲区）----------
+    n7_missing_401 = []
+    n7_missing_403 = []
+    n8_owner_note = []
+    n7_inline_401 = []
+    for path, item in spec.get("paths", {}).items():
+        for m, op in item.items():
+            if m not in HTTP_METHODS:
+                continue
+            sec = effective_security(item, op)
+            if is_public(sec):
+                continue
+            az = op.get("x-authz")
+            if not isinstance(az, dict):
+                continue
+            resp = op.get("responses", {})
+            if "401" not in resp:
+                n7_missing_401.append(f"{m.upper()} {path}")
+            else:
+                r401 = resp["401"]
+                if isinstance(r401, dict) and r401.get("$ref") != "#/components/responses/Unauthorized":
+                    n7_inline_401.append(f"{m.upper()} {path}")
+            if az.get("minRole") in ("editor", "admin") and "403" not in resp:
+                n7_missing_403.append(f"{m.upper()} {path}")
+            if path.startswith("/api/v1/me/") and "{" in path and "ownerOverride" not in az:
+                n8_owner_note.append(f"{m.upper()} {path}")
+    if n7_missing_401:
+        fail("N7a", f"需登录端点未声明 401（Unauthorized）：{n7_missing_401}")
+    else:
+        ok(f"全部 {n_login} 个需登录端点均声明 401（Unauthorized 组件，授权失败线协议完整）")
+    if n7_missing_403:
+        fail("N7b", f"minRole∈{{editor,admin}} 端点未声明 403（Forbidden）：{n7_missing_403}")
+    else:
+        ok("editor/admin 受限端点均声明 403（Forbidden 线协议完整）")
+    if n7_inline_401:
+        notes.append(f"  NOTE N7c：以下 {len(n7_inline_401)} 个端点 401 为内联声明（未 $ref Unauthorized 共享组件，建议后续统一）：{n7_inline_401}")
+    if n8_owner_note:
+        notes.append(f"  NOTE N8：以下 /me/* 子资源端点依赖规则⑤隐式归属（未显式 ownerOverride）：{n8_owner_note}")
+    else:
+        ok("/me/* 子资源端点均已显式声明 ownerOverride（表征一致）")
 
     # ---------- R5. 限流声明 ----------
     rl = spec["info"].get("x-rate-limit")

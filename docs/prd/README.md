@@ -6,10 +6,10 @@
 
 | 编号 | 文档 | 作用 | 状态 |
 |---|---|---|---|
-| 00 | [项目章程](./00-项目章程.md) | 定位、读者、成功标准、非目标、推进节奏、文风约定、技术方向与产品决策 | ✅ 已确认（v1.12） |
-| 01 | [内容路线图](./01-内容路线图.md) | 文章系列完整大纲（八段式 M0–M8 + 支线），项目北极星 | ✅ 已确认（v1.12） |
-| 02 | [领域模型与 API 契约](./02-领域模型与API契约.md) | 文章系统实体/关系、API 设计原则、端点目录、错误码 | ✅ 已定稿（v1.12） |
-| — | [API 契约（OpenAPI v1）](../api/openapi.v1.yaml) | 机器可读的接口单一事实来源，七端复用（契约版本 1.9.0，文档修订 v1.12）；经 openapi-spec-validator 严格校验 + 语义自查 `check_contract.py` 双门通过（含 R1/N1 授权求值机器化 / R5/N5 限流 / G 扩展约束 / N2 字段约束） | ✅ 已定稿（v1.12） |
+| 00 | [项目章程](./00-项目章程.md) | 定位、读者、成功标准、非目标、推进节奏、文风约定、技术方向与产品决策 | ✅ 已确认（v1.13） |
+| 01 | [内容路线图](./01-内容路线图.md) | 文章系列完整大纲（八段式 M0–M8 + 支线），项目北极星 | ✅ 已确认（v1.13） |
+| 02 | [领域模型与 API 契约](./02-领域模型与API契约.md) | 文章系统实体/关系、API 设计原则、端点目录、错误码 | ✅ 已定稿（v1.13） |
+| — | [API 契约（OpenAPI v1）](../api/openapi.v1.yaml) | 机器可读的接口单一事实来源，七端复用（契约版本 1.10.0，文档修订 v1.13）；经 openapi-spec-validator 严格校验 + 语义自查 `check_contract.py` 双门通过（含 R1/N1 授权求值机器化 / N7 响应完整性 / N8 ownerOverride 一致性 / R5/N5 限流 / G 扩展约束 / N2 字段约束） | ✅ 已定稿（v1.13） |
 | 03 | M1 PRD（Node 后端） | 第一件实现的功能规格 | ⬜ 未开始 |
 | 04 | M2 PRD（React 管理后台） | 第二件实现的功能规格 | ⬜ 未开始 |
 | 05 | M3 PRD（Next.js 前台） | 第三件实现的功能规格 | ⬜ 未开始 |
@@ -81,17 +81,20 @@
 4. ✅ 两门全绿：结构门 `docs/api/openapi.v1.yaml: OK`；语义门 37 路径 / 49 操作 / 30 schema，0 孤儿、0 死胡同状态
 5. 🟡 产出 `docs/review/回应第三次复审.md` 交评审 AI 终审
 
-当前状态（规划更新至 v1.12 · 二次评审整改）：
+当前状态（规划更新至 v1.13 · 三次评审整改）：
 
-> 第十一轮（v1.11）针对后端架构师专项评审 R1–R11 做「约束机器化」整改；第十二轮（v1.12）针对二次评审 N1–N6 做「授权求值机器化 + 字段约束统一」整改，规划基线更新：
+> 第十一轮（v1.11）针对后端架构师专项评审 R1–R11 做「约束机器化」整改；第十二轮（v1.12）针对二次评审 N1–N6 做「授权求值机器化 + 字段约束统一」整改；第十三轮（v1.13）针对三次评审 N7–N9 做「响应完整性 + 表征一致 + 自包含措辞收敛」整改，规划基线更新：
 > - **授权角色机器化（R1）**：契约新增 `x-required-roles`（member/editor/admin）覆盖全部 46 个需登录端点，`x-owner-resource` 标注归属敏感端点；语义门新增 R1 段强制校验
 > - **幂等 / 归属 / 级联 / 限流 / 上传 / 字段约束机器化（R2–R5、R10）**：`x-idempotent`、`x-cascade`、`x-max-depth`、`x-max-size-bytes`/`x-accepted-mime-types`、字符串 `maxLength`/`format`/`pattern`，新增 `ErrorCode 5001` + `RateLimited` + 21 个公开端点挂 429
 > - **错误码校验收紧（R9）**：F 段去掉 `description` 兜底、改认结构化 `example`/`examples`；顺带修正 02 文档自身角色不一致
 > - **授权求值机器化（N1/N3/N4，第十二轮 v1.12）**：`x-required-roles`+`x-owner-resource` 合并为结构化 `x-authz`（minRole + ownerOverride{param,ownerField}）；第 4 铁律改写为自包含求值规则（删除"详见 02"）；`submitArticle` 收紧为 minRole:admin；Notification 补 `userId`
 > - **字段约束统一（N2）+ 限流粒度（N5）**：URL 类统一 `format: uri + maxLength: 512`；反范式展示字段补 `maxLength`；`x-rate-limit` 加 `scope: per-endpoint` + `key: client`
-> - 00/01/02 统一为 v1.12，契约 1.8.0→1.9.0
+> - **响应完整性（N7，第十三轮 v1.13）**：新增共享 `Unauthorized`（401）组件（code 1002/1004）；全部 46 个 `x-authz` 端点均声明 401，editor/admin 受限端点均声明 403；语义门新增 N7a/N7b 断言固化「授权失败线协议完整」
+> - **ownerOverride 表征一致（N8，第十三轮 v1.13）**：`/me/favorites/{articleId}` 与 `/me/history/{articleId}` 显式声明 `ownerOverride{param: articleId, ownerField: userId}`；第 4 铁律规则⑤改写为机器可读表述（self-scoped 等价于 `ownerOverride{ownerField: userId}`），语义门新增 N8 一致性断言
+> - **自包含措辞收敛（N9，第十三轮 v1.13）**：硬规则导语「详见 02 文档」改为「已在本契约内逐条定义，溯源细节见 02」；新增权威声明「本文档中『见 02 §x』均为溯源注，以本契约为准」；可选鉴权配置标注「实现细节见 02 §3.3（以本契约为准）」。授权求值已自包含；其余 02 引用仅作溯源
+> - 00/01/02 统一为 v1.13，契约 1.9.0→1.10.0
 >
-> 双门校验（结构门 `openapi-spec-validator` + 语义门 `check_contract.py`）**全绿**（契约 53 路径 / 67 操作 / 45 schema / 46 x-authz / 28 条 OK 断言）。
+> 双门校验（结构门 `openapi-spec-validator` + 语义门 `check_contract.py`）**全绿**（契约 53 路径 / 67 操作 / 45 schema / 46 x-authz / 31 条 OK 断言；N7c 提示 7 个端点 401 仍内联、建议后续统一 $ref）。
 
 下一步待决策：
 

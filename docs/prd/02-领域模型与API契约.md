@@ -2,11 +2,11 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | v1.12 |
-| 状态 | 已确认（v1.12：二次评审 N1–N6 整改——**授权求值机器化（x-authz 重构）**：46 个需登录端点的 `x-required-roles` 列表 + 6 个 `x-owner-resource` 字符串合并为结构化 `x-authz: {minRole, ownerOverride:{param, ownerField}}`；`ownerField` 用真实字段（article→authorId / comment&attachment→userId / notification→userId，并为 Notification 补 `userId`）；第 4 铁律改写为**自包含求值规则**（删除"详见 02"，仅凭 OpenAPI 即可确定性推出授权结果）；`submitArticle` 由 [member] 收紧为 minRole:admin + ownerOverride（防任意 member 越权提交）。**N2 字段约束统一**：URL 类（coverImage/redirectUri/logoUrl/avatar/url/link）统一 `format: uri + maxLength: 512`；反范式展示字段（authorName/categoryName/userName/rejectedReason/body）补 `maxLength`。**N5 限流粒度**：`x-rate-limit` 加 `scope: per-endpoint` + `key: client`。语义门新增 R1 授权求值 / N2 字段约束 / N5 限流粒度断言（22→28 条 OK）。契约 1.8.0→1.9.0。前序 v1.11：后端架构师评审 R1–R11 整改） |
+| 文档版本 | v1.13 |
+| 状态 | 已确认（v1.13：三次评审 N7–N9 整改（N1–N6 见 v1.12）——**授权求值机器化（x-authz 重构）**：46 个需登录端点的 `x-required-roles` 列表 + 6 个 `x-owner-resource` 字符串合并为结构化 `x-authz: {minRole, ownerOverride:{param, ownerField}}`；`ownerField` 用真实字段（article→authorId / comment&attachment→userId / notification→userId，并为 Notification 补 `userId`）；第 4 铁律改写为**自包含求值规则**（删除"详见 02"，仅凭 OpenAPI 即可确定性推出授权结果）；`submitArticle` 由 [member] 收紧为 minRole:admin + ownerOverride（防任意 member 越权提交）。**N2 字段约束统一**：URL 类（coverImage/redirectUri/logoUrl/avatar/url/link）统一 `format: uri + maxLength: 512`；反范式展示字段（authorName/categoryName/userName/rejectedReason/body）补 `maxLength`。**N5 限流粒度**：`x-rate-limit` 加 `scope: per-endpoint` + `key: client`。**N7 响应完整性**：新增共享 `Unauthorized`(401) 组件（code 1002/1004），46 个 `x-authz` 端点统挂 401、editor/admin 端点挂 403。**N8 ownerOverride 表征一致**：`/me/favorites/{articleId}` 与 `/me/history/{articleId}` 显式声明 `ownerOverride{param: articleId, ownerField: userId}`，第 4 铁律规则⑤改写为机器可读 self-scoped 表述。**N9 自包含措辞收敛**：硬规则导语与可选鉴权配置标注为 02 溯源注。语义门新增 R1 授权求值 / N2 字段约束 / N5 限流粒度 / N7 响应完整性 / N8 ownerOverride 一致性断言（28→31 条 OK）。契约 1.9.0→1.10.0。前序 v1.12：二次评审 N1–N6 整改；v1.11：后端架构师评审 R1–R11 整改） |
 | 最后更新 | 2026-08-11 |
 | 上游文档 | [00-项目章程](./00-项目章程.md) |
-| 机器可读契约 | [../api/openapi.v1.yaml](../api/openapi.v1.yaml)（契约版本 1.9.0） |
+| 机器可读契约 | [../api/openapi.v1.yaml](../api/openapi.v1.yaml)（契约版本 1.10.0） |
 | 契约校验 | `python -m openapi_spec_validator docs/api/openapi.v1.yaml`（结构） + `python docs/api/check_contract.py`（语义自查） |
 
 ---
@@ -100,7 +100,7 @@
 >
 > 会员 `level` **仅展示用、无业务功能**，默认 1，本期仅由 `admin` 经上述端点手动上调，普通流程不会自动变化——读者不应误以为有自动升级逻辑。
 >
-> **授权求值权威（v1.12 澄清）**：角色边界的**具体求值算法**（min-role OR owner-override）以 OpenAPI `info.description` 第 4 铁律为唯一权威，且该规则自包含、不引用本文档——七端实现只需读契约即可产出一致的授权结果。本节为上溯性说明，不得与第 4 铁律冲突；若歧义，以契约为准。
+> **授权求值权威（v1.13 澄清）**：角色边界的**具体求值算法**（min-role OR owner-override）以 OpenAPI `info.description` 第 4 铁律为唯一权威，且该规则自包含、不引用本文档——七端实现只需读契约即可产出一致的授权结果。未经认证访问受保护端点时，第 4 铁律要求返回 401，契约已通过共享 `Unauthorized` 组件在全部 46 个 `x-authz` 端点统一声明（N7 整改）。本节为上溯性说明，不得与第 4 铁律冲突；若歧义，以契约为准。
 
 #### Article（文章）
 
@@ -492,6 +492,7 @@ published --作者编辑自己的已发布文章--> pending      (自动，需�
 | 评论公开列表状态 | 仅返回 `approved`（管理视图另走 `GET /admin/comments`） | `GET .../comments` |
 | 可选鉴权 | `security: [{}, {bearerAuth: []}]`（空安全需求 = 匿名也允许；见 §3.3） | 文章详情 / view / 评论列表 |
 | 授权求值（RBAC） | 每个需登录端点声明结构化 `x-authz: {minRole: member|editor|admin, ownerOverride?: {param, ownerField}}`；`minRole` 为放行的最小角色层级，`ownerOverride` 显式声明归属资源的 path 参数名与归属字段（authorId/userId）；完整求值规则见 OpenAPI `info.description` 第 4 铁律（自包含，不依赖本文档） | 全部需登录端点（46 个，语义门 R1 段强制） |
+| 401/403 响应完整性（N7） | 全部 `x-authz` 端点声明 `401`（共享 `components.responses.Unauthorized`，code 1002/1004）；`minRole ∈ {editor,admin}` 端点额外声明 `403`；语义门新增 N7a/N7b 断言固化 | 全部需登录端点（46 个，语义门 N7 段强制） |
 | 点赞 / 收藏幂等 | `x-idempotent: true` + 重复调用返回 200（不 409、不重复计数，返回当前态） | like/unlike/addFavorite/removeFavorite |
 | 限流 | `info.x-rate-limit`（limit/window/code）+ `components.responses.RateLimited`（429 + `Retry-After` + `code 5001`） | 公开端点（21 个挂 429，网关层施加） |
 | 上传约束 | requestBody schema 上的 `x-max-size-bytes: 10485760` + `x-accepted-mime-types`（6 类：png/jpeg/gif/webp/svg/pdf） | `POST /upload` |
