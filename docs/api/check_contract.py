@@ -8,6 +8,7 @@ openapi-spec-validator 只保证「结构合法」。本脚本补上「逻辑无
   C. 孤儿实体：每个 schema 都被至少一个端点可达引用（P2 类问题）
   D. 死胡同状态：枚举态都有写入路径（P1 类问题）
   E. 机器强制约束：sort 枚举、可选鉴权写法（P4/P5/P7/P12）
+  F. 错误码机器强制（F1/F6）：每个错误响应挂 code 示例、码落在 ErrorCode 枚举、枚举非零码均落地
 
 用法：python3 docs/api/check_contract.py docs/api/openapi.v1.yaml
 """
@@ -213,6 +214,43 @@ def main(path):
     else:
         ok("category/tag/keyword 三个过滤参数均已定义匹配口径（共享 $ref，两实现无解释空间）")
 
+    # ---------- F. 错误码机器强制（F1/F6 整改：把错误码纳入机器校验）----------
+    # 第三轮复审的语义门不校验错误码，导致 §六 表与契约实际码值长期不一致、
+    # 且大量 4xx/5xx 响应无结构化 code —— 直接动摇「七端复用同一张错误码表」承诺。
+    # 本段把错误码锁死：每个错误响应必须挂 code 示例、且码必须落在 ErrorCode 枚举内、
+    # 枚举内每个非零码都必须在契约某处出现（保证 §六 表与契约不漂移）。
+    errorcode_enum = spec["components"]["schemas"].get("ErrorCode", {}).get("enum", [])
+    err_codes_used = set()       # 出现在 example.code（机器强约束）
+    err_codes_documented = set()  # 出现在响应 description 的 "code N"（散文兜底）
+    ERR_HTTP = {"400", "401", "403", "404", "409", "500", "501"}
+    import re as _re
+    for p, m, op in ops:
+        for st, resp in op.get("responses", {}).items():
+            s = str(st)
+            if s not in ERR_HTTP and s != "default":
+                continue
+            aj = (resp or {}).get("content", {}).get("application/json", {})
+            ex = aj.get("example")
+            if isinstance(ex, dict) and ex.get("code") is not None:
+                err_codes_used.add(ex["code"])
+            else:
+                fail("F1", f"{m.upper()} {p} -> {st} 错误响应未挂 code 示例（机器不可读）")
+            desc = (resp or {}).get("description", "") or ""
+            for mm in _re.findall(r"code (\d{4})", desc):
+                err_codes_documented.add(int(mm))
+    # 一个枚举码只要「在 example 出现」或「在 description 出现」即视为已在契约落地
+    represented = err_codes_used | err_codes_documented
+    bad = [c for c in err_codes_used if c not in errorcode_enum]
+    if bad:
+        fail("F2", f"错误响应使用了未定义于 ErrorCode 枚举的码：{sorted(bad)}")
+    else:
+        ok(f"全部 {len(err_codes_used)} 种错误码示例均落在 ErrorCode 枚举内")
+    missing = [c for c in errorcode_enum if c != 0 and c not in represented]
+    if missing:
+        fail("F3", f"ErrorCode 枚举中以下非零码未在契约任何错误响应的 example/description 出现（§六与契约漂移）：{missing}")
+    else:
+        ok(f"ErrorCode 枚举全部非零码（{len([c for c in errorcode_enum if c != 0])} 个）均已在契约中落地")
+
     # ---------- 输出 ----------
     print("\n".join(notes))
     print("-" * 72)
@@ -221,7 +259,7 @@ def main(path):
         for f in failures:
             print("  FAIL", f)
         sys.exit(1)
-    print("语义自查全部通过（结构 + operationId + 孤儿实体 + 死胡同状态 + 机器强制约束）")
+    print("语义自查全部通过（结构 + operationId + 孤儿实体 + 死胡同状态 + 机器强制约束 + 错误码）")
 
 
 if __name__ == "__main__":

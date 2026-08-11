@@ -19,7 +19,7 @@ info:
 
     可选鉴权端点采用 OpenAPI 标准写法 `security: [{}, {bearerAuth: []}]`
     （空安全需求对象表示允许匿名），各端生成客户端须配置「持有令牌则自动附加」，见 02 §3.3。
-  version: 1.3.0
+  version: 1.5.0
 servers:
   - url: http://localhost:3000
     description: 本地开发（Node 后端）
@@ -33,6 +33,7 @@ tags:
   - name: Comment
   - name: Upload
   - name: Member
+  - name: Site
   - name: Admin
 components:
   securitySchemes:
@@ -62,20 +63,22 @@ components:
       name: sort
       in: query
       description: >
-        排序，格式 `字段,方向`。枚举穷举全部合法组合，生成客户端即受约束（不再是散文白名单）。
+        排序，采用「带符号字段名」约定：字段名本身表示正序（asc），前缀 `-` 表示倒序（desc）。
+        例如 `publishedAt` = 按发布时间正序，`-publishedAt` = 按发布时间倒序；`-viewCount` = 按阅读量倒序。
+        枚举穷举全部合法组合，生成客户端即受约束（不再是散文白名单）。
         跨实现一致性规定：`publishedAt` 为 null 的行（draft/pending）以 `createdAt` 参与比较
         （等价 `COALESCE(published_at, created_at)`），避免 SQLite 与 PostgreSQL 的 NULL 排序默认值差异；
         末位统一追加 `id desc` 作为稳定排序键，保证分页不重不漏。
       schema:
         type: string
         enum:
-          - publishedAt,desc
-          - publishedAt,asc
-          - viewCount,desc
-          - viewCount,asc
-          - createdAt,desc
-          - createdAt,asc
-        default: publishedAt,desc
+          - publishedAt
+          - "-publishedAt"
+          - viewCount
+          - "-viewCount"
+          - createdAt
+          - "-createdAt"
+        default: "-publishedAt"
     FilterCategory:
       name: category
       in: query
@@ -102,8 +105,7 @@ components:
       description: 统一响应信封。data 为业务数据，无数据时可为 null。
       properties:
         code:
-          type: integer
-          description: 0 表示业务成功，>0 表示业务错误（见错误码表）
+          $ref: '#/components/schemas/ErrorCode'
           example: 0
         message:
           type: string
@@ -123,10 +125,10 @@ components:
     Pagination:
       type: object
       properties:
-        page: { type: integer }
-        pageSize: { type: integer }
-        total: { type: integer }
-        totalPages: { type: integer }
+        page: {type: integer}
+        pageSize: {type: integer}
+        total: {type: integer}
+        totalPages: {type: integer}
       required: [page, pageSize, total, totalPages]
     ArticlePage:
       type: object
@@ -176,17 +178,17 @@ components:
       type: object
       description: 用户对象；密码哈希绝不出现在此结构中
       properties:
-        id: { type: integer }
-        username: { type: string }
+        id: {type: integer}
+        username: {type: string}
         email:
           type: string
           description: 邮箱，唯一。仅本人（/me/profile）与 admin（/users）可见，公开端点不返回
-        nickname: { type: string }
-        avatar: { type: string, nullable: true }
+        nickname: {type: string}
+        avatar: {type: string, nullable: true}
         role:
           type: string
-          enum: [admin, author, member]
-          description: 三角色：member=普通会员；author=被 admin 晋升、可管理标签；admin=后台管理员
+          enum: [admin, editor, member]
+          description: 三角色：member=普通会员（仅阅读/评论）；editor=内容编辑，管理全站文章/评论/分类/标签，但不可管理用户/角色/站点配置；admin=后台管理员（含用户/角色/站点配置）
         status:
           type: string
           enum: [active, disabled]
@@ -195,17 +197,17 @@ components:
           type: integer
           default: 1
           description: 会员等级，仅展示用，无业务功能；默认 1，仅 admin 可改（见 PATCH /users/{id}）
-        createdAt: { type: string, format: date-time }
+        createdAt: {type: string, format: date-time}
       required: [id, username, nickname, role, status]
     MemberProfile:
       type: object
       description: 会员公开主页数据（不含 email 等隐私字段）
       properties:
-        id: { type: integer }
-        nickname: { type: string }
-        avatar: { type: string, nullable: true }
-        level: { type: integer }
-        articleCount: { type: integer }
+        id: {type: integer}
+        nickname: {type: string}
+        avatar: {type: string, nullable: true}
+        level: {type: integer}
+        articleCount: {type: integer}
         articles:
           type: array
           description: 该会员的 published 文章列表（不含 content 全文）
@@ -216,75 +218,75 @@ components:
       type: object
       description: 文章完整对象（含 content 全文，仅详情/管理接口返回）
       properties:
-        id: { type: integer }
-        title: { type: string }
+        id: {type: integer}
+        title: {type: string}
         slug:
           type: string
           nullable: true
           description: URL 别名，可选；留空时前台用 id 路由。仅管理员手动填且需唯一
-        summary: { type: string, nullable: true }
-        content: { type: string }
-        coverImage: { type: string, nullable: true }
-        authorId: { type: integer }
-        authorName: { type: string }
-        categoryId: { type: integer, nullable: true }
-        categoryName: { type: string, nullable: true }
+        summary: {type: string, nullable: true}
+        content: {type: string}
+        coverImage: {type: string, nullable: true}
+        authorId: {type: integer}
+        authorName: {type: string}
+        categoryId: {type: integer, nullable: true}
+        categoryName: {type: string, nullable: true}
         tags:
           type: array
-          items: { type: string }
+          items: {type: string}
         status:
           type: string
           enum: [draft, pending, published]
-        viewCount: { type: integer }
-        publishedAt: { type: string, format: date-time, nullable: true }
-        createdAt: { type: string, format: date-time }
-        updatedAt: { type: string, format: date-time }
+        viewCount: {type: integer}
+        publishedAt: {type: string, format: date-time, nullable: true}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
       required: [id, title, content, authorId, status]
     ArticleSummary:
       type: object
       description: 文章摘要（列表/收藏/会员主页复用，不含 content 全文）
       properties:
-        id: { type: integer }
-        title: { type: string }
+        id: {type: integer}
+        title: {type: string}
         slug:
           type: string
           nullable: true
-        summary: { type: string, nullable: true }
-        coverImage: { type: string, nullable: true }
-        authorId: { type: integer }
-        authorName: { type: string }
-        categoryId: { type: integer, nullable: true }
-        categoryName: { type: string, nullable: true }
+        summary: {type: string, nullable: true}
+        coverImage: {type: string, nullable: true}
+        authorId: {type: integer}
+        authorName: {type: string}
+        categoryId: {type: integer, nullable: true}
+        categoryName: {type: string, nullable: true}
         tags:
           type: array
-          items: { type: string }
+          items: {type: string}
         status:
           type: string
           enum: [draft, pending, published]
-        viewCount: { type: integer }
-        publishedAt: { type: string, format: date-time, nullable: true }
-        createdAt: { type: string, format: date-time }
-        updatedAt: { type: string, format: date-time }
+        viewCount: {type: integer}
+        publishedAt: {type: string, format: date-time, nullable: true}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
       required: [id, title, authorId, status]
     Category:
       type: object
       properties:
-        id: { type: integer }
-        name: { type: string }
-        slug: { type: string }
-        description: { type: string, nullable: true }
-        parentId: { type: integer, nullable: true }
-        sortOrder: { type: integer }
+        id: {type: integer}
+        name: {type: string}
+        slug: {type: string}
+        description: {type: string, nullable: true}
+        parentId: {type: integer, nullable: true}
+        sortOrder: {type: integer}
       required: [id, name, slug]
     CategoryNode:
       type: object
       description: 分类树节点（递归）
       properties:
-        id: { type: integer }
-        name: { type: string }
-        slug: { type: string }
-        description: { type: string, nullable: true }
-        sortOrder: { type: integer }
+        id: {type: integer}
+        name: {type: string}
+        slug: {type: string}
+        description: {type: string, nullable: true}
+        sortOrder: {type: integer}
         children:
           type: array
           items:
@@ -292,19 +294,19 @@ components:
     Tag:
       type: object
       properties:
-        id: { type: integer }
-        name: { type: string }
-        slug: { type: string }
-        articleCount: { type: integer }
+        id: {type: integer}
+        name: {type: string}
+        slug: {type: string}
+        articleCount: {type: integer}
       required: [id, name, slug]
     Comment:
       type: object
       properties:
-        id: { type: integer }
-        articleId: { type: integer }
-        userId: { type: integer }
-        userName: { type: string }
-        parentId: { type: integer, nullable: true }
+        id: {type: integer}
+        articleId: {type: integer}
+        userId: {type: integer}
+        userName: {type: string}
+        parentId: {type: integer, nullable: true}
         content:
           type: string
           description: 展示内容，已做敏感词转星号处理
@@ -315,8 +317,8 @@ components:
             approved=通过（转义后展示）；rejected=违规比率超阈值不予展示；reviewing=人工复核中。
             自动流只产出 approved / rejected；reviewing 仅能由 `PATCH /comments/{id}/status`（admin）置位与移出。
             公开列表 `GET /articles/{idOrSlug}/comments` 只返回 approved
-        rejectedReason: { type: string, nullable: true }
-        createdAt: { type: string, format: date-time }
+        rejectedReason: {type: string, nullable: true}
+        createdAt: {type: string, format: date-time}
       required: [id, articleId, userId, content, status]
     CommentModerateRequest:
       type: object
@@ -337,7 +339,7 @@ components:
       properties:
         article:
           $ref: '#/components/schemas/ArticleSummary'
-        lastReadAt: { type: string, format: date-time }
+        lastReadAt: {type: string, format: date-time}
         progress:
           type: integer
           description: 阅读进度百分比 0-100，可选
@@ -359,7 +361,7 @@ components:
         `GET /me/attachments` 列举本人上传，`DELETE /attachments/{id}` 删除。
         它不是内部影子表，而是契约对外暴露的一等实体。
       properties:
-        id: { type: integer }
+        id: {type: integer}
         userId:
           type: integer
           description: 上传者，由令牌推断，不由客户端传入
@@ -367,23 +369,23 @@ components:
           type: integer
           nullable: true
           description: 可选关联的文章；由上传时的表单字段 articleId 写入（编辑器内上传场景）
-        url: { type: string }
+        url: {type: string}
         storage:
           type: string
           enum: [r2, local]
           description: 本次实际使用的存储后端，由 STORAGE_DRIVER 决定（见 02 §2.6）
-        mimeType: { type: string }
+        mimeType: {type: string}
         size:
           type: integer
           description: 字节数
-        createdAt: { type: string, format: date-time }
+        createdAt: {type: string, format: date-time}
       required: [id, userId, url, storage, mimeType, size]
     ValidationError:
       type: object
       description: 字段级校验错误明细
       properties:
-        field: { type: string, description: 出错的字段名 }
-        message: { type: string, description: 错误说明 }
+        field: {type: string, description: 出错的字段名}
+        message: {type: string, description: 错误说明}
       required: [field, message]
     ValidationErrorList:
       type: object
@@ -397,23 +399,23 @@ components:
     LoginRequest:
       type: object
       properties:
-        username: { type: string }
-        password: { type: string }
+        username: {type: string}
+        password: {type: string}
       required: [username, password]
     RegisterRequest:
       type: object
-      description: 注册入参。注册默认角色为 member；admin 后续经 PATCH /users/{id} 晋升为 author。
+      description: 注册入参。注册默认角色为 member；admin 后续经 PATCH /users/{id} 晋升为 editor。
       properties:
-        username: { type: string }
-        email: { type: string }
-        password: { type: string }
-        nickname: { type: string }
+        username: {type: string}
+        email: {type: string}
+        password: {type: string}
+        nickname: {type: string}
       required: [username, email, password]
     AuthResult:
       type: object
       description: 登录/刷新结果。refreshToken 用于浏览器 HttpOnly Cookie 与移动端安全存储两种载体
       properties:
-        accessToken: { type: string }
+        accessToken: {type: string}
         expiresIn:
           type: integer
           description: access token 有效期（秒）
@@ -438,34 +440,33 @@ components:
       type: object
       description: 创建/更新文章入参
       properties:
-        title: { type: string }
-        summary: { type: string, nullable: true }
-        content: { type: string }
-        coverImage: { type: string, nullable: true }
-        categoryId: { type: integer, nullable: true }
+        title: {type: string}
+        summary: {type: string, nullable: true}
+        content: {type: string}
+        coverImage: {type: string, nullable: true}
+        categoryId: {type: integer, nullable: true}
         tags:
           type: array
-          items: { type: string }
+          items: {type: string}
         slug:
           type: string
           nullable: true
           description: >
             可选的 URL 别名。权限约束（与 status 同规格显式化）：
-            **member / author 传入 slug 时后端一律忽略**（创建时留空、更新时保持原值），不报错也不写入；
-            仅 admin 可指定。slug 需全局唯一（软删除行不占用，见 02 §2.2 部分唯一索引），
+            **member 传入 slug 时后端一律忽略**（创建时留空、更新时保持原值），不报错也不写入；editor 与 admin 可直接指定。slug 需全局唯一（软删除行不占用，见 02 §2.2 部分唯一索引），
             重复则返回 409 / code 3002；命中预留子路径黑名单（tree/view/submit 等）返回 400 / code 4001
         status:
           type: string
           enum: [draft, pending, published]
           description: >
             目标状态。权限约束：member 传入 published 时后端忽略并降级为 pending（会员无法直接发布）；
-            author 同 member；仅 admin 可将文章直接置为 published。
+            editor 与 admin 可直接置为 published。
       required: [title, content]
     HistoryReport:
       type: object
       description: 上报阅读进度（写入/更新 ReadingLog）
       properties:
-        articleId: { type: integer }
+        articleId: {type: integer}
         progress:
           type: integer
           nullable: true
@@ -474,8 +475,8 @@ components:
     ChangePasswordRequest:
       type: object
       properties:
-        oldPassword: { type: string }
-        newPassword: { type: string }
+        oldPassword: {type: string}
+        newPassword: {type: string}
       required: [oldPassword, newPassword]
     AdminResetPasswordRequest:
       type: object
@@ -483,14 +484,14 @@ components:
         admin 重置他人密码。v1 不做邮件找回（Non-goal，见 02 §九），
         此端点是「忘记密码」的唯一兜底路径，同时是「哈希不可逆但管理员仍能重置」这一权衡的教学素材
       properties:
-        newPassword: { type: string }
+        newPassword: {type: string}
       required: [newPassword]
     ProfileUpdateRequest:
       type: object
       description: 更新本人资料。email 唯一，冲突返回 409 / code 3002
       properties:
-        nickname: { type: string }
-        avatar: { type: string, nullable: true }
+        nickname: {type: string}
+        avatar: {type: string, nullable: true}
         email:
           type: string
           description: 可选。v1 无邮箱验证流程（Non-goal），改后立即生效，仅做唯一性校验
@@ -499,10 +500,45 @@ components:
       type: object
       description: 第三方登录回调入参（M3-09 扩展点）
       properties:
-        code: { type: string, description: 第三方授权码 }
-        state: { type: string, nullable: true }
-        redirectUri: { type: string, nullable: true }
+        code: {type: string, description: 第三方授权码}
+        state: {type: string, nullable: true}
+        redirectUri: {type: string, nullable: true}
       required: [code]
+    SiteSetting:
+      type: object
+      description: 站点基础配置（站点名称/描述/Logo）。单条记录，由 admin 经 PATCH /admin/site/settings 维护；前台经 GET /site/settings 读取用于页头/页脚展示。
+      properties:
+        id: {type: integer}
+        siteName: {type: string, description: 站点名称}
+        siteDescription: {type: string, description: 站点描述（用于 SEO meta / 页脚简介）}
+        logoUrl: {type: string, nullable: true, description: Logo 图片地址（经上传端点获得）}
+        updatedAt: {type: string, format: date-time}
+      required: [id, siteName, siteDescription]
+    SiteSettingUpdate:
+      type: object
+      description: 站点配置更新入参，字段均可选（仅传需变更项）。
+      properties:
+        siteName: {type: string}
+        siteDescription: {type: string}
+        logoUrl: {type: string, nullable: true}
+      required: []
+    ErrorCode:
+      type: integer
+      description: 业务错误码。0 表示成功；>0 见错误码表（1xxx 认证 / 2xxx 授权 / 3xxx 资源 / 4xxx 参数 /
+        5xxx 服务）。
+      enum:
+        - 0
+        - 1001
+        - 1002
+        - 1003
+        - 1004
+        - 1005
+        - 2001
+        - 3001
+        - 3002
+        - 3003
+        - 4001
+        - 5000
 security:
   - bearerAuth: []
 paths:
@@ -539,14 +575,34 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/ValidationErrorList'
+              example:
+                code: 4001
+                message: 参数校验失败
+                data:
+                  errors:
+                    - field: email
+                      message: 邮箱格式不正确
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '409':
           description: 用户名或邮箱已被占用（code 3002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3002
+                message: 资源冲突（唯一约束或引用占用）
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/auth/login:
     post:
       operationId: login
       tags: [Auth]
       summary: 登录
-      description: 账号 status=disabled 时拒绝登录，返回 401 / code 1005（不返回 403，避免暴露账号存在性）
+      description: 账号 status=disabled 时拒绝登录，返回 401 / code 1005（不返回 
+        403，避免暴露账号存在性）
       security: []
       requestBody:
         required: true
@@ -567,6 +623,16 @@ paths:
                         $ref: '#/components/schemas/AuthResult'
         '401':
           description: 用户名或密码错误（code 1001）；或账号已被禁用（code 1005）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 1001
+                message: 用户名或密码错误
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/auth/refresh:
     post:
       operationId: refreshToken
@@ -599,7 +665,18 @@ paths:
                       data:
                         $ref: '#/components/schemas/AuthResult'
         '401':
-          description: 刷新令牌失效 / 已被旋转作废 / 重放（code 1003）；或账号已被禁用（code 1005）
+          description: 刷新令牌失效 / 已被旋转作废 / 重放（code 1003）；令牌缺失（code 1004）或无效（code 
+            1002）；或账号已被禁用（code 1005）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 1003
+                message: 刷新令牌失效，请重新登录
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/auth/logout:
     post:
       operationId: logout
@@ -675,6 +752,16 @@ paths:
                         $ref: '#/components/schemas/AuthResult'
         '501':
           description: 该第三方登录尚未实现（扩展点占位）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 5000
+                message: 服务器内部错误
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/articles:
     get:
       operationId: listArticles
@@ -711,7 +798,8 @@ paths:
       operationId: createArticle
       tags: [Article]
       summary: 创建文章
-      description: 会员创建默认 draft/pending；admin 可 published。slug 仅 admin 可指定。详见 02 文档 §2.3
+      description: 会员创建默认 draft/pending；admin 可 published。slug 仅 admin 可指定。详见 02
+        文档 §2.3
       requestBody:
         required: true
         content:
@@ -739,8 +827,27 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/ValidationErrorList'
+              example:
+                code: 4001
+                message: 参数校验失败
+                data:
+                  errors:
+                    - field: email
+                      message: 邮箱格式不正确
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '409':
           description: slug 已被未删除文章占用（code 3002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3002
+                message: 资源冲突（唯一约束或引用占用）
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/articles/{idOrSlug}:
     get:
       operationId: getArticle
@@ -757,7 +864,7 @@ paths:
         - name: idOrSlug
           in: path
           required: true
-          schema: { type: string }
+          schema: {type: string}
       responses:
         '200':
           description: 成功（仅 published，或未发布的作者/管理员本人）
@@ -771,6 +878,16 @@ paths:
                         $ref: '#/components/schemas/Article'
         '404':
           description: 不存在，或匿名访问未发布文章
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/articles/{id}:
     put:
       operationId: updateArticle
@@ -778,13 +895,13 @@ paths:
       summary: 更新文章
       description: >
         仅作者本人或 admin。**状态副作用（显式定义，避免两实现分歧）**：
-        member / author 编辑自己已 published 的文章，保存后状态自动退回 `pending` 需重新审核；
-        admin 编辑不改变状态。slug 权限同创建（member/author 传入被忽略）。
+        member 编辑自己已 published 的文章，保存后状态自动退回 `pending` 需重新审核；
+        editor 与 admin 编辑不改变状态。slug 权限同创建（member 传入被忽略；editor/admin 可直接指定）。
       parameters:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       requestBody:
         required: true
         content:
@@ -812,12 +929,51 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/ValidationErrorList'
+              example:
+                code: 4001
+                message: 参数校验失败
+                data:
+                  errors:
+                    - field: email
+                      message: 邮箱格式不正确
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '403':
           description: 无权限
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 文章不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '409':
           description: slug 已被未删除文章占用（code 3002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3002
+                message: 资源冲突（唯一约束或引用占用）
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
     delete:
       operationId: deleteArticle
       tags: [Article]
@@ -827,7 +983,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       responses:
         '200':
           description: 成功
@@ -837,8 +993,28 @@ paths:
                 $ref: '#/components/schemas/ApiResponse'
         '403':
           description: 无权限
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 文章不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/articles/{id}/submit:
     post:
       operationId: submitArticle
@@ -851,7 +1027,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       responses:
         '200':
           description: 成功（draft → pending）
@@ -865,10 +1041,40 @@ paths:
                         $ref: '#/components/schemas/Article'
         '403':
           description: 无权限（非作者本人）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 文章不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '409':
           description: 当前状态不允许提交（code 3003，非 draft 前态）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3003
+                message: 当前状态不允许该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/articles/{id}/view:
     post:
       operationId: viewArticle
@@ -890,7 +1096,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       responses:
         '200':
           description: 成功
@@ -903,9 +1109,19 @@ paths:
                       data:
                         type: object
                         properties:
-                          viewCount: { type: integer }
+                          viewCount: {type: integer}
         '404':
           description: 文章不存在或未发布
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/me/articles:
     get:
       operationId: listMyArticles
@@ -966,11 +1182,11 @@ paths:
             schema:
               type: object
               properties:
-                name: { type: string }
-                slug: { type: string }
-                description: { type: string }
-                parentId: { type: integer, nullable: true }
-                sortOrder: { type: integer }
+                name: {type: string}
+                slug: {type: string}
+                description: {type: string}
+                parentId: {type: integer, nullable: true}
+                sortOrder: {type: integer}
               required: [name, slug]
       responses:
         '200':
@@ -985,8 +1201,28 @@ paths:
                         $ref: '#/components/schemas/Category'
         '403':
           description: 无权限（非 admin）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '409':
           description: slug 已存在（code 3002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3002
+                message: 资源冲突（唯一约束或引用占用）
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/categories/{id}:
     put:
       operationId: updateCategory
@@ -999,7 +1235,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       requestBody:
         required: true
         content:
@@ -1007,11 +1243,11 @@ paths:
             schema:
               type: object
               properties:
-                name: { type: string }
-                slug: { type: string }
-                description: { type: string }
-                parentId: { type: integer, nullable: true }
-                sortOrder: { type: integer }
+                name: {type: string}
+                slug: {type: string}
+                description: {type: string}
+                parentId: {type: integer, nullable: true}
+                sortOrder: {type: integer}
               required: [name, slug]
       responses:
         '200':
@@ -1026,10 +1262,40 @@ paths:
                         $ref: '#/components/schemas/Category'
         '403':
           description: 无权限（非 admin）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 分类不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '409':
           description: slug 已存在，或 parentId 会导致成环（code 3002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3002
+                message: 资源冲突（唯一约束或引用占用）
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
     delete:
       operationId: deleteCategory
       tags: [Category]
@@ -1041,7 +1307,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       responses:
         '200':
           description: 成功
@@ -1051,10 +1317,40 @@ paths:
                 $ref: '#/components/schemas/ApiResponse'
         '403':
           description: 无权限（非 admin）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 分类不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '409':
           description: 存在子分类或文章引用，拒绝删除（code 3002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3002
+                message: 资源冲突（唯一约束或引用占用）
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/categories/tree:
     get:
       operationId: getCategoryTree
@@ -1104,8 +1400,8 @@ paths:
             schema:
               type: object
               properties:
-                name: { type: string }
-                slug: { type: string }
+                name: {type: string}
+                slug: {type: string}
               required: [name, slug]
       responses:
         '200':
@@ -1119,9 +1415,29 @@ paths:
                       data:
                         $ref: '#/components/schemas/Tag'
         '403':
-          description: 无权限（需 admin/author）
+          description: 无权限（需 admin/editor）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '409':
           description: slug 已存在（code 3002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3002
+                message: 资源冲突（唯一约束或引用占用）
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/tags/{id}:
     put:
       operationId: updateTag
@@ -1134,7 +1450,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       requestBody:
         required: true
         content:
@@ -1142,8 +1458,8 @@ paths:
             schema:
               type: object
               properties:
-                name: { type: string }
-                slug: { type: string }
+                name: {type: string}
+                slug: {type: string}
               required: [name, slug]
       responses:
         '200':
@@ -1157,11 +1473,41 @@ paths:
                       data:
                         $ref: '#/components/schemas/Tag'
         '403':
-          description: 无权限（需 admin/author）
+          description: 无权限（需 admin/editor）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 标签不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '409':
           description: slug 已存在（code 3002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3002
+                message: 资源冲突（唯一约束或引用占用）
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
     delete:
       operationId: deleteTag
       tags: [Tag]
@@ -1171,7 +1517,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       responses:
         '200':
           description: 成功
@@ -1181,10 +1527,40 @@ paths:
                 $ref: '#/components/schemas/ApiResponse'
         '403':
           description: 无权限（非 admin）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 标签不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '409':
           description: 仍有文章引用该标签，拒绝删除（code 3002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3002
+                message: 资源冲突（唯一约束或引用占用）
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/articles/{idOrSlug}/comments:
     get:
       operationId: listArticleComments
@@ -1204,7 +1580,7 @@ paths:
         - name: idOrSlug
           in: path
           required: true
-          schema: { type: string }
+          schema: {type: string}
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
       responses:
@@ -1220,6 +1596,16 @@ paths:
                         $ref: '#/components/schemas/CommentPage'
         '404':
           description: 文章不存在（或未发布且匿名访问）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
     post:
       operationId: createComment
       tags: [Comment]
@@ -1232,7 +1618,7 @@ paths:
         - name: idOrSlug
           in: path
           required: true
-          schema: { type: string }
+          schema: {type: string}
       requestBody:
         required: true
         content:
@@ -1240,8 +1626,8 @@ paths:
             schema:
               type: object
               properties:
-                content: { type: string }
-                parentId: { type: integer, nullable: true }
+                content: {type: string}
+                parentId: {type: integer, nullable: true}
               required: [content]
       responses:
         '200':
@@ -1256,8 +1642,28 @@ paths:
                         $ref: '#/components/schemas/Comment'
         '403':
           description: 无权限
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 文章不存在或未发布（不可对未发布文章评论）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/comments/{id}:
     delete:
       operationId: deleteComment
@@ -1268,7 +1674,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       responses:
         '200':
           description: 成功
@@ -1278,8 +1684,28 @@ paths:
                 $ref: '#/components/schemas/ApiResponse'
         '403':
           description: 无权限
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 评论不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/comments/{id}/status:
     patch:
       operationId: moderateComment
@@ -1297,7 +1723,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       requestBody:
         required: true
         content:
@@ -1317,8 +1743,28 @@ paths:
                         $ref: '#/components/schemas/Comment'
         '403':
           description: 无权限（非 admin）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 评论不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/admin/comments:
     get:
       operationId: listAdminComments
@@ -1326,7 +1772,7 @@ paths:
       summary: 后台评论管理列表（可按 status 筛选）
       description: >
         评论管理视图，是 reviewing / rejected 评论的**唯一读取路径**（公开列表只返回 approved）。
-        admin 可见全部评论；author 只可见自己文章下的评论。与 `PATCH /comments/{id}/status` 配套，
+        editor 与 admin 可见全部评论。与 `PATCH /comments/{id}/status` 配套，
         构成「发现 → 复核 → 置位」的完整人工审核闭环（M1-27 / M2 后台）。
       parameters:
         - $ref: '#/components/parameters/Page'
@@ -1354,7 +1800,17 @@ paths:
                       data:
                         $ref: '#/components/schemas/CommentPage'
         '403':
-          description: 无权限（需 author/admin）
+          description: 无权限（需 editor/admin）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/upload:
     post:
       operationId: uploadFile
@@ -1376,7 +1832,8 @@ paths:
                 articleId:
                   type: integer
                   nullable: true
-                  description: 可选。从文章编辑器内上传时传入，把附件关联到该文章（写入 Attachment.articleId）
+                  description: 可选。从文章编辑器内上传时传入，把附件关联到该文章（写入 
+                    Attachment.articleId）
               required: [file]
       responses:
         '200':
@@ -1399,6 +1856,15 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/ValidationErrorList'
+              example:
+                code: 4001
+                message: 参数校验失败
+                data:
+                  errors:
+                    - field: email
+                      message: 邮箱格式不正确
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/me/attachments:
     get:
       operationId: listMyAttachments
@@ -1431,7 +1897,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       responses:
         '200':
           description: 成功
@@ -1441,8 +1907,28 @@ paths:
                 $ref: '#/components/schemas/ApiResponse'
         '403':
           description: 无权限（非上传者本人且非 admin）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 附件不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/members/{id}:
     get:
       operationId: getMemberProfile
@@ -1457,7 +1943,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       responses:
         '200':
           description: 成功
@@ -1471,6 +1957,16 @@ paths:
                         $ref: '#/components/schemas/MemberProfile'
         '404':
           description: 会员不存在，或该会员已被禁用
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/admin/articles:
     get:
       operationId: listAdminArticles
@@ -1478,7 +1974,7 @@ paths:
       summary: 后台文章管理列表（鉴权，支持 draft/pending/published 筛选）
       description: >
         后台管理端点，需鉴权。支持按 status 筛选草稿/待审/已发布，补齐公开列表 `GET /articles`
-        不暴露未发布内容的约束。author 可见自己全部文章，admin 可见全部；
+        不暴露未发布内容的约束。editor 与 admin 可见全部文章；
         member 无权访问，其「我的文章」走 `GET /me/articles`。
       parameters:
         - $ref: '#/components/parameters/Page'
@@ -1504,7 +2000,17 @@ paths:
                       data:
                         $ref: '#/components/schemas/ArticlePage'
         '403':
-          description: 无权限（需 author/admin）
+          description: 无权限（需 editor/admin）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/admin/articles/{id}/approve:
     post:
       operationId: approveArticle
@@ -1517,7 +2023,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       responses:
         '200':
           description: 成功（pending → published）
@@ -1531,10 +2037,40 @@ paths:
                         $ref: '#/components/schemas/Article'
         '403':
           description: 无权限（非 admin）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 文章不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '409':
           description: 当前状态不允许审核通过（code 3003，非 pending 前态）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3003
+                message: 当前状态不允许该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/admin/articles/{id}/status:
     post:
       operationId: setArticleStatus
@@ -1548,7 +2084,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       requestBody:
         required: true
         content:
@@ -1573,8 +2109,28 @@ paths:
                         $ref: '#/components/schemas/Article'
         '403':
           description: 无权限（非 admin）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 文章不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/me/favorites:
     get:
       operationId: listMyFavorites
@@ -1606,7 +2162,7 @@ paths:
             schema:
               type: object
               properties:
-                articleId: { type: integer }
+                articleId: {type: integer}
               required: [articleId]
       responses:
         '200':
@@ -1617,6 +2173,16 @@ paths:
                 $ref: '#/components/schemas/ApiResponse'
         '404':
           description: 文章不存在或未发布（不可收藏未发布文章）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/me/favorites/{articleId}:
     delete:
       operationId: removeFavorite
@@ -1627,7 +2193,7 @@ paths:
         - name: articleId
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       responses:
         '200':
           description: 成功
@@ -1681,6 +2247,16 @@ paths:
                         $ref: '#/components/schemas/ReadingHistoryItem'
         '404':
           description: 文章不存在或未发布
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
     delete:
       operationId: clearMyHistory
       tags: [Member]
@@ -1703,7 +2279,7 @@ paths:
         - name: articleId
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       responses:
         '200':
           description: 成功
@@ -1761,8 +2337,27 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/ValidationErrorList'
+              example:
+                code: 4001
+                message: 参数校验失败
+                data:
+                  errors:
+                    - field: email
+                      message: 邮箱格式不正确
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '409':
           description: 邮箱已被占用（code 3002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3002
+                message: 资源冲突（唯一约束或引用占用）
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/me/change-password:
     post:
       operationId: changePassword
@@ -1795,6 +2390,15 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/ValidationErrorList'
+              example:
+                code: 4001
+                message: 参数校验失败
+                data:
+                  errors:
+                    - field: email
+                      message: 邮箱格式不正确
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/users:
     get:
       operationId: listUsers
@@ -1807,7 +2411,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [admin, author, member]
+            enum: [admin, editor, member]
         - name: status
           in: query
           schema:
@@ -1831,6 +2435,16 @@ paths:
                         $ref: '#/components/schemas/UserPage'
         '403':
           description: 无权限（非 admin）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/users/{id}:
     get:
       operationId: getUser
@@ -1840,7 +2454,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       responses:
         '200':
           description: 成功
@@ -1854,23 +2468,43 @@ paths:
                         $ref: '#/components/schemas/User'
         '403':
           description: 无权限（非 admin）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 用户不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
     patch:
       operationId: updateUser
       tags: [Admin]
       summary: 变更角色 / 状态 / 会员等级
       description: >
-        admin 专用。可改 role（member/author/admin）、status（active/disabled）、
+        admin 专用。可改 role（member/editor/admin）、status（active/disabled）、
         level（会员等级，仅展示用，默认 1，admin 可上调以体现会员体系）。
-        注册默认角色为 member，admin 经此端点将 member 晋升为 author。
+        注册默认角色为 member，admin 经此端点将 member 晋升为 editor。
         置 status=disabled 即「封号」：该用户无法登录/刷新，公开主页 404，但其已发布文章仍公开。
         v1 **不提供物理删除用户**的端点（禁用即软删除，见 02 §九）。
       parameters:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       requestBody:
         required: true
         content:
@@ -1880,7 +2514,7 @@ paths:
               properties:
                 role:
                   type: string
-                  enum: [admin, author, member]
+                  enum: [admin, editor, member]
                 status:
                   type: string
                   enum: [active, disabled]
@@ -1901,8 +2535,28 @@ paths:
                         $ref: '#/components/schemas/User'
         '403':
           description: 无权限（如非 admin 调用）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 用户不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/admin/users/{id}/reset-password:
     post:
       operationId: adminResetPassword
@@ -1917,7 +2571,7 @@ paths:
         - name: id
           in: path
           required: true
-          schema: { type: integer }
+          schema: {type: integer}
       requestBody:
         required: true
         content:
@@ -1941,7 +2595,137 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/ValidationErrorList'
+              example:
+                code: 4001
+                message: 参数校验失败
+                data:
+                  errors:
+                    - field: email
+                      message: 邮箱格式不正确
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '403':
           description: 无权限（非 admin）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 用户不存在
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 3001
+                message: 资源不存在
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+  /api/v1/site/settings:
+    get:
+      operationId: getSiteSettings
+      tags: [Site]
+      summary: 获取站点基础配置（公开）
+      description: >
+        公开端点，无需登录。返回站点名称/描述/Logo，供前台页头页脚、SEO meta 展示。
+        站点级配置，单条记录，始终返回最新已发布配置。
+      security: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteSetting'
+        '500':
+          description: 服务内部错误（code 5000）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 5000
+                message: 服务内部错误
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+  /api/v1/admin/site/settings:
+    get:
+      operationId: adminGetSiteSettings
+      tags: [Admin]
+      summary: 管理员读取站点配置（全量）
+      description: admin 专用。返回站点配置当前值，供后台设置页回填。
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteSetting'
+        '403':
+          description: 无权限（非 admin）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+    patch:
+      operationId: adminUpdateSiteSettings
+      tags: [Admin]
+      summary: 管理员更新站点配置
+      description: >
+        admin 专用。更新站点名称/描述/Logo，字段可选（仅传需变更项）。
+        Logo 须先经上传端点获得 URL 再传入 logoUrl。
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteSettingUpdate'
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SiteSetting'
+        '400':
+          description: 参数校验失败（code 4001）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 4001
+                message: 参数校验失败
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
+        '403':
+          description: 无权限（非 admin）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example:
+                code: 2001
+                message: 无权限执行该操作
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
