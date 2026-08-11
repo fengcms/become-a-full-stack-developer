@@ -2,11 +2,11 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | v1.10 |
-| 状态 | 已确认（v1.10：补常用辅助接口——纯计算/聚合类 `adjacent`/`related`/`toc`/`breadcrumb`/`categories/stats`/`stats`/`search`，互动类 `like`（Like 实体）+ `notifications`（Notification 实体）；`Article`/`ArticleSummary` 加 `likeCount`；`Tag.articleCount` 已覆盖标签云计数（不重复造）；RSS/sitemap/robots 列为 M3 实现笔记不进 JSON 契约。契约 1.6.0→1.7.0。前序 v1.9：站点配置 `SiteSetting` 字段扩展） |
+| 文档版本 | v1.11 |
+| 状态 | 已确认（v1.11：后端架构师评审 R1–R11 整改——**授权角色机器化**（每个需登录端点声明 `x-required-roles` ∈ member/editor/admin，语义门 R1 段强制）；幂等 `x-idempotent`、归属 `x-owner-resource`、级联 `x-cascade`、分类深度 `x-max-depth`、上传 `x-max-size-bytes`/`x-accepted-mime-types` 全部下沉为机器字段；85 字符串字段补 `format`/`maxLength`/`pattern`；新增 429 限流（`ErrorCode` 5001 + `RateLimited` 响应组件 + `info.x-rate-limit`）；错误码校验收紧（去 description 兜底，`examples` 复数亦机读）。契约 1.7.0→1.8.0。前序 v1.10：补常用辅助接口） |
 | 最后更新 | 2026-08-11 |
 | 上游文档 | [00-项目章程](./00-项目章程.md) |
-| 机器可读契约 | [../api/openapi.v1.yaml](../api/openapi.v1.yaml)（契约版本 1.7.0） |
+| 机器可读契约 | [../api/openapi.v1.yaml](../api/openapi.v1.yaml)（契约版本 1.8.0） |
 | 契约校验 | `python -m openapi_spec_validator docs/api/openapi.v1.yaml`（结构） + `python docs/api/check_contract.py`（语义自查） |
 
 ---
@@ -409,7 +409,8 @@ published --作者编辑自己的已发布文章--> pending      (自动，需�
 | 原则 | 规定 |
 |---|---|
 | 风格 | RESTful，面向资源，名词复数（`/articles`），不用动词 |
-| 版本 | 路径版本化 `/api/v1`，破坏式变更才升 v2 |
+| 版本 | 路径版本化 `/api/v1`，破坏式变更才升 v2；契约 `info.x-api-version` 记录当前主版本（=1），供网关 / 文档聚合识别 |
+| 废弃策略 | 仅允许**向后兼容**的增量变更落在 v1（加字段、加端点、放宽约束）；任何破坏式变更（删字段、改语义、改错误码含义）必须升 `/api/v2` 并保留 v1 过渡期。废弃端点/字段在契约 `deprecated: true` 标记 + 本文档 §变更记录登记，过渡期内新旧并存，到期移除 |
 | 传输 | JSON；`Content-Type: application/json`；时间用 ISO 8601 字符串 |
 | 认证 | `Authorization: Bearer <access_token>`（短时效，前端存内存非 localStorage）；刷新令牌 `refreshToken` 双载体：浏览器走 HttpOnly+SameSite Cookie、移动端返回请求体由安全存储保存（详见下「认证与刷新令牌」） |
 | 分页 | 偏移分页 `?page=&pageSize=`，列表统一返回 `{ list, pagination }` |
@@ -488,6 +489,13 @@ published --作者编辑自己的已发布文章--> pending      (自动，需�
 | 关键词搜索范围 | `FilterKeyword` 匹配 `title + summary`，**不含** `content` 全文 | `GET /articles` |
 | 评论公开列表状态 | 仅返回 `approved`（管理视图另走 `GET /admin/comments`） | `GET .../comments` |
 | 可选鉴权 | `security: [{}, {bearerAuth: []}]`（空安全需求 = 匿名也允许；见 §3.3） | 文章详情 / view / 评论列表 |
+| 授权角色（RBAC） | 每个需登录端点声明 `x-required-roles`（取值 member / editor / admin，层级 member < editor < admin）；归属敏感端点另标 `x-owner-resource`（资源归属者即便为 member 亦可操作）；公开端点 `security: []` 或可选鉴权写法 | 全部需登录端点（46 个，语义门 R1 段强制） |
+| 点赞 / 收藏幂等 | `x-idempotent: true` + 重复调用返回 200（不 409、不重复计数，返回当前态） | like/unlike/addFavorite/removeFavorite |
+| 限流 | `info.x-rate-limit`（limit/window/code）+ `components.responses.RateLimited`（429 + `Retry-After` + `code 5001`） | 公开端点（21 个挂 429，网关层施加） |
+| 上传约束 | requestBody schema 上的 `x-max-size-bytes: 10485760` + `x-accepted-mime-types`（6 类：png/jpeg/gif/webp/svg/pdf） | `POST /upload` |
+| 分类树深度 | `Category.x-max-depth: 4`（建树 / 变更 parentId 超出深度后端拒绝） | 分类实体 |
+| 删除级联 | `x-cascade: none`（附件/站点约定）/ `children`（评论级联子回复）/ `soft-hide`（文章隔离可见性，不物理删） | deleteComment / deleteArticle / deleteAttachment |
+| 字符串约束 | 关键字段下沉 `maxLength` / `format: email` / `pattern`（slug `^[a-z0-9-]{1,64}$`）/ `minLength`（密码 ≥8） | 全实体 |
 | 全量 operationId | 49 个操作全部带稳定 `operationId`（生成函数名一致） | 全部路径 |
 | slug 成员忽略 | `ArticleCreate.slug` 写明 member 传入被忽略，editor/admin 可直接指定 | 创建/更新文章 |
 | submit/approve 非法前态 | 非合法前态 → 409 / code 3003 | `POST .../submit`、`POST .../approve` |
@@ -564,6 +572,8 @@ security:
 > 完整请求/响应 schema 见 `docs/api/openapi.v1.yaml`。此处只列方法、路径与用途。
 > 路径记号说明：本目录用 Express 风格 `:param`，与 OpenAPI 的 `{param}` **完全等价**（如 `:idOrSlug` ≡ `{idOrSlug}`），阅读时无需区分。
 
+> **鉴权列读法（v1.11 机器化）**：`公开`=匿名可访问；`member`=任意登录用户即可；`editor/admin`=最小角色为 editor（admin 含其权）；`admin`=仅 admin。若带「作者本人 / 上传者本人」字样，表示该端点同时标了 `x-owner-resource`——资源归属者（member）亦可操作，与 `x-required-roles` 的最小角色取并集。每个需登录端点的角色都已下沉到契约 `x-required-roles`，不再只活在散文里（语义门 R1 段强制校验）。
+
 ### 认证 Auth
 | 方法 | 路径 | 用途 | 鉴权 |
 |---|---|---|---|
@@ -580,8 +590,8 @@ security:
 | GET | `/api/v1/articles` | 公开文章列表（仅 published，忽略 status 参数） | 否（公开，仅 published） |
 | GET | `/api/v1/articles/:idOrSlug` | 文章详情（id 或 slug 均可解析） | 否 |
 | POST | `/api/v1/articles` | 创建文章（会员默认 draft/pending；editor/admin 可 published） | 是（member/editor/admin） |
-| PUT | `/api/v1/articles/:id` | 更新文章 | 是（作者或 admin） |
-| DELETE | `/api/v1/articles/:id` | 删除（软删除） | 是（作者或 admin） |
+| PUT | `/api/v1/articles/:id` | 更新文章 | 是（作者本人或 editor/admin；`x-owner-resource: articleId`） |
+| DELETE | `/api/v1/articles/:id` | 删除（`x-cascade: soft-hide` 隔离可见性，不物理删） | 是（作者本人或 editor/admin） |
 | POST | `/api/v1/articles/:id/submit` | 草稿→待审（会员投稿） | 是（作者本人） |
 | GET | `/api/v1/articles/:id/adjacent` | 上一篇/下一篇（同 `-publishedAt` 相邻，仅 published） | 否（公开） |
 | GET | `/api/v1/articles/:id/related` | 相关文章（共享标签 + 同分类打分，排除自身） | 否（公开） |
@@ -594,9 +604,9 @@ security:
 | 方法 | 路径 | 用途 | 鉴权 |
 |---|---|---|---|
 | GET | `/api/v1/categories` | 分类列表（树或平铺） | 否 |
-| POST | `/api/v1/categories` | 创建分类 | 是（admin） |
-| PUT | `/api/v1/categories/:id` | 更新分类 | 是（admin） |
-| DELETE | `/api/v1/categories/:id` | 删除分类 | 是（admin） |
+| POST | `/api/v1/categories` | 创建分类 | 是（editor/admin） |
+| PUT | `/api/v1/categories/:id` | 更新分类 | 是（editor/admin） |
+| DELETE | `/api/v1/categories/:id` | 删除分类 | 是（editor/admin） |
 | GET | `/api/v1/categories/:id/breadcrumb` | 分类面包屑路径（根→当前） | 否（公开） |
 | GET | `/api/v1/categories/stats` | 各分类 published 文章数 | 否（公开） |
 
@@ -604,23 +614,23 @@ security:
 | 方法 | 路径 | 用途 | 鉴权 |
 |---|---|---|---|
 | GET | `/api/v1/tags` | 标签列表（含文章数） | 否 |
-| POST | `/api/v1/tags` | 创建标签 | 是（admin/editor） |
-| PUT | `/api/v1/tags/:id` | 更新标签（name/slug，slug 冲突 409） | 是（admin） |
-| DELETE | `/api/v1/tags/:id` | 删除标签 | 是（admin） |
+| POST | `/api/v1/tags` | 创建标签 | 是（editor/admin） |
+| PUT | `/api/v1/tags/:id` | 更新标签（name/slug，slug 冲突 409） | 是（editor/admin） |
+| DELETE | `/api/v1/tags/:id` | 删除标签 | 是（editor/admin） |
 
 ### 评论 Comment
 | 方法 | 路径 | 用途 | 鉴权 |
 |---|---|---|---|
 | GET | `/api/v1/articles/:idOrSlug/comments` | 某文章评论（楼中楼，仅 approved） | 否 |
 | POST | `/api/v1/articles/:idOrSlug/comments` | 发表评论 | 是（member） |
-| PATCH | `/api/v1/comments/:id/status` | 人工置位评论状态（reviewing 进出，admin） | 是（admin） |
-| DELETE | `/api/v1/comments/:id` | 删除评论（级联子回复） | 是（作者或 admin） |
+| PATCH | `/api/v1/comments/:id/status` | 人工置位评论状态（reviewing 进出，editor/admin） | 是（editor/admin） |
+| DELETE | `/api/v1/comments/:id` | 删除评论（级联子回复） | 是（作者本人或 editor/admin） |
 
 ### 上传 Upload
 | 方法 | 路径 | 用途 | 鉴权 |
 |---|---|---|---|
-| POST | `/api/v1/upload` | 图片/资源上传，返回完整 `Attachment` | 是（登录用户） |
-| DELETE | `/api/v1/attachments/:id` | 删除附件（上传者本人或 admin） | 是（上传者或 admin） |
+| POST | `/api/v1/upload` | 图片/资源上传，返回完整 `Attachment` | 是（member） |
+| DELETE | `/api/v1/attachments/:id` | 删除附件（上传者本人或 editor/admin；`x-owner-resource: attachmentId`） | 是（上传者本人或 editor/admin） |
 
 ### 搜索 Search
 | 方法 | 路径 | 用途 | 鉴权 |
@@ -664,7 +674,7 @@ security:
 | GET | `/api/v1/users/:id` | 用户详情 | 是（admin） |
 | PATCH | `/api/v1/users/:id` | 变更角色/状态/会员等级 | 是（admin） |
 | POST | `/api/v1/admin/users/:id/reset-password` | 管理员重置用户密码（遗忘密码兜底，见 §九 P10） | 是（admin） |
-| POST | `/api/v1/admin/articles/:id/approve` | 待审→已发布（审核通过） | 是（admin） |
+| POST | `/api/v1/admin/articles/:id/approve` | 待审→已发布（审核通过） | 是（editor/admin） |
 | POST | `/api/v1/admin/articles/:id/status` | 任意状态置位（下架/退回） | 是（admin） |
 | GET | `/api/v1/admin/site/settings` | 站点配置全量读取（回填后台设置页） | 是（admin） |
 | PATCH | `/api/v1/admin/site/settings` | 更新站点配置（名称/标题/描述/关键词/Logo/版权，字段可选） | 是（admin） |
@@ -679,7 +689,7 @@ security:
 
 ## 六、错误码表（权威集，与 OpenAPI `ErrorCode` 枚举逐项一致）
 
-> 本表与 `docs/api/openapi.v1.yaml` 的 `ErrorCode` 枚举**逐项一致**，并由 `check_contract.py` 的 F 段机器校验（每个枚举码必须在某错误响应的 `example` 或 `description` 中落地，且禁止出现未定义码）。前端按 `code` 分支处理，不依赖 HTTP 状态码表达业务逻辑。Go 后端（M6）须返回与 Node 后端**完全相同**的 `code`——这是 M6-09 契约一致性校验的硬指标。
+> 本表与 `docs/api/openapi.v1.yaml` 的 `ErrorCode` 枚举**逐项一致**，并由 `check_contract.py` 的 F 段机器校验（每个枚举码必须在某错误响应的**结构化** `example` / `examples` 中落地，**不再以 `description` 兜底**；且禁止出现未定义码）。前端按 `code` 分支处理，不依赖 HTTP 状态码表达业务逻辑。Go 后端（M6）须返回与 Node 后端**完全相同**的 `code`——这是 M6-09 契约一致性校验的硬指标。
 
 | code | 含义 | HTTP |
 |---|---|---|
@@ -763,3 +773,4 @@ security:
 | 2026-08-11 | v1.8 | **用户复审整改**：删除 `author` 角色，改设 `editor`（内容编辑，管全站文章/评论/分类/标签，但不涉用户/角色/站点配置），三角色 member/editor/admin；新增 `SiteSetting` 实体与 3 端点（GET /site/settings 公开、GET/PATCH /admin/site/settings）；排序 `Sort` 改为带符号字段名约定（`-publishedAt` 表倒序，默认 `-publishedAt`）；文档版本对齐 00/01（v1.8），契约 1.4.0→1.5.0 |
 | 2026-08-11 | v1.9 | **站点配置字段扩展**：`SiteSetting` 在 v1.8 的 siteName/siteDescription/logoUrl 基础上新增 `siteTitle`（浏览器标签/SEO 标题）、`siteKeywords`（meta 关键词）、`copyright`（页脚版权）；`SiteSettingUpdate` 同步可填；契约 1.5.0→1.6.0 |
 | 2026-08-11 | v1.10 | **补常用辅助接口**：纯计算/聚合类新增 `GET /articles/{id}/adjacent`（上一篇/下一篇）、`GET /articles/{id}/related`（相关文章）、`GET /articles/{id}/toc`（目录）、`GET /categories/{id}/breadcrumb`（面包屑）、`GET /categories/stats`（分类计数）、`GET /stats`（站点统计）、`GET /search`（全文搜索）；互动类新增 `POST/DELETE /articles/{id}/like`、`GET /articles/{id}/like/status`、`GET /me/likes`（Like 实体）与 `GET /me/notifications`、`GET /me/notifications/unread-count`、`POST /me/notifications/read-all`、`PATCH /me/notifications/{id}`（Notification 实体）；`Article`/`ArticleSummary` 加 `likeCount`。标签云计数已由 `GET /tags` 的 `Tag.articleCount` 覆盖，不重复造；RSS/sitemap/robots 列为 M3 实现笔记不进 JSON 契约。契约 1.6.0→1.7.0，双门校验全绿（53 路径 / 67 操作 / 45 schema） |
+| 2026-08-11 | v1.11 | **后端架构师评审整改（清零 R1–R11）**：🔴 R1 授权角色机器化——46 个需登录端点全部声明 `x-required-roles`（member/editor/admin，层级 member<editor<admin），6 个归属敏感端点标 `x-owner-resource`，语义门新增 R1 段强制（缺声明/非法角色即 FAIL）；顺带修正本文档自身角色不一致（§端点目录把 categories/tags/评论审核/approve 误标"仅 admin"，与§角色边界段矛盾，现统一为 `editor/admin`——**以角色定义段为权威**）。🔴 R2 幂等机器化——like/unlike/addFavorite/removeFavorite 标 `x-idempotent: true` 并补当前态示例，语义门断言幂等端点不得声明 409。🟠 R3 字符串约束下沉——85 处补 `maxLength`/`format: email`/`pattern`（slug `^[a-z0-9-]{1,64}$`）/`minLength`（密码 ≥8）。🟠 R4 上传约束——`x-max-size-bytes: 10485760` + `x-accepted-mime-types`（6 类）。🟠 R5 限流——`ErrorCode` 加 5001、新增 `RateLimited` 响应组件（429 + `Retry-After`）、`info.x-rate-limit`，21 个公开端点挂 429。🟡 R6/R7/R8 ownership 与级联下沉 `x-owner-resource`/`x-cascade`（none/children/soft-hide），`GET /users/{id}` 明确 admin 专用（查他人公开资料走 `GET /members/{id}`）。🟡 R9 错误码校验收紧——F 段去掉 `description` 兜底、改认结构化 `example`/`examples`，refresh 401 补 1003/1004/1002/1005 四例，login 401 补 1001/1005 两例。🟡 R10 `Category.x-max-depth: 4`。🟡 R11 `info.x-api-version` + §八 版本废弃策略。语义门新增 G 段校验扩展字段取值合法性。契约 1.7.0→1.8.0，双门校验全绿（53 路径 / 67 操作 / 45 schema / 46 角色声明 / 22 条 OK 断言） |

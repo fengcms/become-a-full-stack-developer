@@ -16,18 +16,10 @@ info:
 
     3. 约束尽量机器化：可枚举的约束一律下沉到 enum / security / responses，不靠散文自觉（02 §3.2 机器强制约束清单）。
 
-    4. 授权角色机器化：每个需登录的端点通过 `x-required-roles`（取值 member / editor / admin，层级 member < editor < admin）声明**允许的最小角色**；归属敏感端点另用 `x-owner-resource` 标注资源归属字段（owner 或 elevated 角色可操作）。公开端点 `security: []` 或可选鉴权 `security: [{}, {bearerAuth: []}]`。鉴权评估规则：admin 始终放行；其余角色当且仅当其层级 ≥ 端点 `x-required-roles` 最小层级，或与 `x-owner-resource` 指向的资源存在归属关系时放行。详见 02 文档角色边界段。
-
 
     可选鉴权端点采用 OpenAPI 标准写法 `security: [{}, {bearerAuth: []}]`
     （空安全需求对象表示允许匿名），各端生成客户端须配置「持有令牌则自动附加」，见 02 §3.3。
-  version: 1.8.0
-  x-api-version: 1
-  x-rate-limit:
-    description: 所有公开（未登录可访问）端点受网关层统一限流保护；超限返回 HTTP 429，带 Retry-After 头，业务 code 5001。鉴权端点不设此限。
-    limit: 60
-    window: 1m
-    code: 5001
+  version: 1.7.0
 servers:
   - url: http://localhost:3000
     description: 本地开发（Node 后端）
@@ -50,24 +42,6 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-  responses:
-    RateLimited:
-      description: 触发限流（网关层统一施加于公开端点）。带 Retry-After 头，业务 code 5001
-      headers:
-        Retry-After:
-          description: 建议重试等待秒数
-          schema:
-            type: integer
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiResponse'
-          example:
-            code: 5001
-            message: 请求过于频繁，请稍后重试
-            data:
-            requestId: req_8f3a1b2c
-            timestamp: '2026-08-10T12:00:00Z'
   parameters:
     Page:
       name: page
@@ -206,14 +180,12 @@ components:
       description: 用户对象；密码哈希绝不出现在此结构中
       properties:
         id: {type: integer}
-        username: {type: string, maxLength: 32}
+        username: {type: string}
         email:
           type: string
-          format: email
-          maxLength: 255
           description: 邮箱，唯一。仅本人（/me/profile）与 admin（/users）可见，公开端点不返回
-        nickname: {type: string, maxLength: 32}
-        avatar: {type: string, nullable: true, maxLength: 512}
+        nickname: {type: string}
+        avatar: {type: string, nullable: true}
         role:
           type: string
           enum: [admin, editor, member]
@@ -233,8 +205,8 @@ components:
       description: 会员公开主页数据（不含 email 等隐私字段）
       properties:
         id: {type: integer}
-        nickname: {type: string, maxLength: 32}
-        avatar: {type: string, nullable: true, maxLength: 512}
+        nickname: {type: string}
+        avatar: {type: string, nullable: true}
         level: {type: integer}
         articleCount: {type: integer}
         articles:
@@ -248,15 +220,13 @@ components:
       description: 文章完整对象（含 content 全文，仅详情/管理接口返回）
       properties:
         id: {type: integer}
-        title: {type: string, maxLength: 200}
+        title: {type: string}
         slug:
           type: string
           nullable: true
-          pattern: "^[a-z0-9-]{1,64}$"
-          maxLength: 64
           description: URL 别名，可选；留空时前台用 id 路由。仅管理员手动填且需唯一
-        summary: {type: string, nullable: true, maxLength: 500}
-        content: {type: string, maxLength: 65535}
+        summary: {type: string, nullable: true}
+        content: {type: string}
         coverImage: {type: string, nullable: true}
         authorId: {type: integer}
         authorName: {type: string}
@@ -279,13 +249,11 @@ components:
       description: 文章摘要（列表/收藏/会员主页复用，不含 content 全文）
       properties:
         id: {type: integer}
-        title: {type: string, maxLength: 200}
+        title: {type: string}
         slug:
           type: string
           nullable: true
-          pattern: "^[a-z0-9-]{1,64}$"
-          maxLength: 64
-        summary: {type: string, nullable: true, maxLength: 500}
+        summary: {type: string, nullable: true}
         coverImage: {type: string, nullable: true}
         authorId: {type: integer}
         authorName: {type: string}
@@ -305,13 +273,11 @@ components:
       required: [id, title, authorId, status]
     Category:
       type: object
-      description: 分类实体。无限级自关联树，最大嵌套深度 4 级（见 x-max-depth）；建树或变更 parentId 超出深度时后端拒绝
-      x-max-depth: 4
       properties:
         id: {type: integer}
-        name: {type: string, maxLength: 50}
-        slug: {type: string, pattern: "^[a-z0-9-]{1,64}$", maxLength: 64}
-        description: {type: string, nullable: true, maxLength: 500}
+        name: {type: string}
+        slug: {type: string}
+        description: {type: string, nullable: true}
         parentId: {type: integer, nullable: true}
         sortOrder: {type: integer}
       required: [id, name, slug]
@@ -320,9 +286,9 @@ components:
       description: 分类树节点（递归）
       properties:
         id: {type: integer}
-        name: {type: string, maxLength: 50}
-        slug: {type: string, pattern: "^[a-z0-9-]{1,64}$", maxLength: 64}
-        description: {type: string, nullable: true, maxLength: 500}
+        name: {type: string}
+        slug: {type: string}
+        description: {type: string, nullable: true}
         sortOrder: {type: integer}
         children:
           type: array
@@ -332,8 +298,8 @@ components:
       type: object
       properties:
         id: {type: integer}
-        name: {type: string, maxLength: 50}
-        slug: {type: string, pattern: "^[a-z0-9-]{1,64}$", maxLength: 64}
+        name: {type: string}
+        slug: {type: string}
         articleCount: {type: integer}
       required: [id, name, slug]
     Comment:
@@ -346,7 +312,6 @@ components:
         parentId: {type: integer, nullable: true}
         content:
           type: string
-          maxLength: 2000
           description: 展示内容，已做敏感词转星号处理
         status:
           type: string
@@ -407,16 +372,15 @@ components:
           type: integer
           nullable: true
           description: 可选关联的文章；由上传时的表单字段 articleId 写入（编辑器内上传场景）
-        url: {type: string, maxLength: 512}
+        url: {type: string}
         storage:
           type: string
           enum: [r2, local]
           description: 本次实际使用的存储后端，由 STORAGE_DRIVER 决定（见 02 §2.6）
-        mimeType: {type: string, maxLength: 100}
+        mimeType: {type: string}
         size:
           type: integer
-          maximum: 10485760
-          description: 字节数（上限 10MB，与上传约束一致）
+          description: 字节数
         createdAt: {type: string, format: date-time}
       required: [id, userId, url, storage, mimeType, size]
     ValidationError:
@@ -438,17 +402,17 @@ components:
     LoginRequest:
       type: object
       properties:
-        username: {type: string, maxLength: 32}
-        password: {type: string, minLength: 8}
+        username: {type: string}
+        password: {type: string}
       required: [username, password]
     RegisterRequest:
       type: object
       description: 注册入参。注册默认角色为 member；admin 后续经 PATCH /users/{id} 晋升为 editor。
       properties:
-        username: {type: string, maxLength: 32}
-        email: {type: string, format: email, maxLength: 255}
-        password: {type: string, minLength: 8}
-        nickname: {type: string, maxLength: 32}
+        username: {type: string}
+        email: {type: string}
+        password: {type: string}
+        nickname: {type: string}
       required: [username, email, password]
     AuthResult:
       type: object
@@ -479,9 +443,9 @@ components:
       type: object
       description: 创建/更新文章入参
       properties:
-        title: {type: string, maxLength: 200}
-        summary: {type: string, nullable: true, maxLength: 500}
-        content: {type: string, maxLength: 65535}
+        title: {type: string}
+        summary: {type: string, nullable: true}
+        content: {type: string}
         coverImage: {type: string, nullable: true}
         categoryId: {type: integer, nullable: true}
         tags:
@@ -514,8 +478,8 @@ components:
     ChangePasswordRequest:
       type: object
       properties:
-        oldPassword: {type: string, minLength: 8}
-        newPassword: {type: string, minLength: 8}
+        oldPassword: {type: string}
+        newPassword: {type: string}
       required: [oldPassword, newPassword]
     AdminResetPasswordRequest:
       type: object
@@ -523,18 +487,16 @@ components:
         admin 重置他人密码。v1 不做邮件找回（Non-goal，见 02 §九），
         此端点是「忘记密码」的唯一兜底路径，同时是「哈希不可逆但管理员仍能重置」这一权衡的教学素材
       properties:
-        newPassword: {type: string, minLength: 8}
+        newPassword: {type: string}
       required: [newPassword]
     ProfileUpdateRequest:
       type: object
       description: 更新本人资料。email 唯一，冲突返回 409 / code 3002
       properties:
-        nickname: {type: string, maxLength: 32}
-        avatar: {type: string, nullable: true, maxLength: 512}
+        nickname: {type: string}
+        avatar: {type: string, nullable: true}
         email:
           type: string
-          format: email
-          maxLength: 255
           description: 可选。v1 无邮箱验证流程（Non-goal），改后立即生效，仅做唯一性校验
       required: []
     OAuthCallbackRequest:
@@ -550,31 +512,31 @@ components:
       description: 站点基础配置（站点名称/标题/描述/关键词/Logo/版权）。单条记录，由 admin 经 PATCH /admin/site/settings 维护；前台经 GET /site/settings 读取用于页头/页脚/SEO。
       properties:
         id: {type: integer}
-        siteName: {type: string, maxLength: 100, description: 站点名称（品牌短名，用于页头、Logo alt、文章页标题拼接）}
-        siteTitle: {type: string, nullable: true, maxLength: 200, description: "站点标题（浏览器标签/SEO `<title>` 主页默认标题；文章详情页由前端拼接为「{文章标题} · {siteName}」）"}
-        siteDescription: {type: string, maxLength: 500, description: 站点描述（SEO meta description / 页脚简介）}
-        siteKeywords: {type: string, nullable: true, maxLength: 200, description: "站点关键词（meta keywords，逗号分隔，如「全栈,前端,React」）"}
-        logoUrl: {type: string, nullable: true, maxLength: 512, description: Logo 图片地址（经上传端点获得）}
-        copyright: {type: string, nullable: true, maxLength: 200, description: 版权信息（页脚展示，如「© 2026 成为全栈开发工程师」）}
+        siteName: {type: string, description: 站点名称（品牌短名，用于页头、Logo alt、文章页标题拼接）}
+        siteTitle: {type: string, nullable: true, description: "站点标题（浏览器标签/SEO `<title>` 主页默认标题；文章详情页由前端拼接为「{文章标题} · {siteName}」）"}
+        siteDescription: {type: string, description: 站点描述（SEO meta description / 页脚简介）}
+        siteKeywords: {type: string, nullable: true, description: "站点关键词（meta keywords，逗号分隔，如「全栈,前端,React」）"}
+        logoUrl: {type: string, nullable: true, description: Logo 图片地址（经上传端点获得）}
+        copyright: {type: string, nullable: true, description: 版权信息（页脚展示，如「© 2026 成为全栈开发工程师」）}
         updatedAt: {type: string, format: date-time}
       required: [id, siteName, siteDescription]
     SiteSettingUpdate:
       type: object
       description: 站点配置更新入参，字段均可选（仅传需变更项）。
       properties:
-        siteName: {type: string, maxLength: 100}
-        siteTitle: {type: string, nullable: true, maxLength: 200}
-        siteDescription: {type: string, maxLength: 500}
-        siteKeywords: {type: string, nullable: true, maxLength: 200}
-        logoUrl: {type: string, nullable: true, maxLength: 512}
-        copyright: {type: string, nullable: true, maxLength: 200}
+        siteName: {type: string}
+        siteTitle: {type: string, nullable: true}
+        siteDescription: {type: string}
+        siteKeywords: {type: string, nullable: true}
+        logoUrl: {type: string, nullable: true}
+        copyright: {type: string, nullable: true}
       required: []
     ArticleStub:
       type: object
       description: 文章精简投影，用于上一篇/下一篇、相关文章等导航场景（不含 content 全文）
       properties:
         id: {type: integer}
-        title: {type: string, maxLength: 200}
+        title: {type: string}
         slug:
           type: string
           nullable: true
@@ -597,15 +559,15 @@ components:
       description: 面包屑路径单项（从根到当前分类）
       properties:
         id: {type: integer}
-        name: {type: string, maxLength: 50}
-        slug: {type: string, pattern: "^[a-z0-9-]{1,64}$", maxLength: 64}
+        name: {type: string}
+        slug: {type: string}
       required: [id, name, slug]
     ArticleRelatedItem:
       type: object
       description: 相关文章精简投影，基于共享标签 + 同分类打分，排除自身，仅 published
       properties:
         id: {type: integer}
-        title: {type: string, maxLength: 200}
+        title: {type: string}
         slug:
           type: string
           nullable: true
@@ -625,8 +587,8 @@ components:
       description: 分类文章数统计项
       properties:
         id: {type: integer}
-        name: {type: string, maxLength: 50}
-        slug: {type: string, pattern: "^[a-z0-9-]{1,64}$", maxLength: 64}
+        name: {type: string}
+        slug: {type: string}
         articleCount: {type: integer, description: 该分类下 published 文章数}
       required: [id, name, slug, articleCount]
     TocItem:
@@ -634,8 +596,8 @@ components:
       description: 文章目录项，由正文 Markdown 标题解析生成
       properties:
         level: {type: integer, description: 标题层级 1-6}
-        text: {type: string, maxLength: 200, description: 标题文本}
-        anchor: {type: string, maxLength: 100, description: 锚点 id（slug 化标题）}
+        text: {type: string, description: 标题文本}
+        anchor: {type: string, description: 锚点 id（slug 化标题）}
       required: [level, text, anchor]
     MemberPage:
       type: object
@@ -672,9 +634,9 @@ components:
       properties:
         id: {type: integer}
         type: {type: string, enum: [article_published, comment_approved, system], description: 通知类型}
-        title: {type: string, maxLength: 200}
+        title: {type: string}
         body: {type: string, nullable: true}
-        link: {type: string, nullable: true, maxLength: 512, description: "跳转链接（如 /articles/{id}）"}
+        link: {type: string, nullable: true, description: "跳转链接（如 /articles/{id}）"}
         isRead: {type: boolean}
         createdAt: {type: string, format: date-time}
       required: [id, type, title, isRead, createdAt]
@@ -706,7 +668,6 @@ components:
         - 3003
         - 4001
         - 5000
-        - 5001
 security:
   - bearerAuth: []
 paths:
@@ -723,8 +684,6 @@ paths:
             schema:
               $ref: '#/components/schemas/RegisterRequest'
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 注册成功
           content:
@@ -781,8 +740,6 @@ paths:
             schema:
               $ref: '#/components/schemas/LoginRequest'
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 登录成功
           content:
@@ -799,23 +756,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
-              examples:
-                wrong_credentials:
-                  summary: 用户名或密码错误
-                  value:
-                    code: 1001
-                    message: 用户名或密码错误
-                    data:
-                    requestId: req_8f3a1b2c
-                    timestamp: '2026-08-10T12:00:00Z'
-                account_disabled:
-                  summary: 账号已被禁用
-                  value:
-                    code: 1005
-                    message: 账号已被禁用
-                    data:
-                    requestId: req_8f3a1b2c
-                    timestamp: '2026-08-10T12:00:00Z'
+              example:
+                code: 1001
+                message: 用户名或密码错误
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/auth/refresh:
     post:
       operationId: refreshToken
@@ -837,8 +783,6 @@ paths:
             schema:
               $ref: '#/components/schemas/RefreshRequest'
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 刷新成功（返回全新的 accessToken 与 refreshToken）
           content:
@@ -856,43 +800,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
-              examples:
-                refresh_invalid:
-                  summary: 刷新令牌失效 / 已被旋转作废 / 重放
-                  value:
-                    code: 1003
-                    message: 刷新令牌失效，请重新登录
-                    data:
-                    requestId: req_8f3a1b2c
-                    timestamp: '2026-08-10T12:00:00Z'
-                token_missing:
-                  summary: 令牌缺失
-                  value:
-                    code: 1004
-                    message: 缺少刷新令牌
-                    data:
-                    requestId: req_8f3a1b2c
-                    timestamp: '2026-08-10T12:00:00Z'
-                token_invalid:
-                  summary: 令牌无效
-                  value:
-                    code: 1002
-                    message: 令牌无效
-                    data:
-                    requestId: req_8f3a1b2c
-                    timestamp: '2026-08-10T12:00:00Z'
-                account_disabled:
-                  summary: 账号已被禁用
-                  value:
-                    code: 1005
-                    message: 账号已被禁用
-                    data:
-                    requestId: req_8f3a1b2c
-                    timestamp: '2026-08-10T12:00:00Z'
+              example:
+                code: 1003
+                message: 刷新令牌失效，请重新登录
+                data:
+                requestId: req_8f3a1b2c
+                timestamp: '2026-08-10T12:00:00Z'
   /api/v1/auth/logout:
     post:
       operationId: logout
-      x-required-roles: [member]
       tags: [Auth]
       summary: 登出，作废刷新令牌
       description: >
@@ -915,7 +831,6 @@ paths:
   /api/v1/auth/me:
     get:
       operationId: getCurrentUser
-      x-required-roles: [member]
       tags: [Auth]
       summary: 当前登录用户
       responses:
@@ -954,8 +869,6 @@ paths:
             schema:
               $ref: '#/components/schemas/OAuthCallbackRequest'
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 绑定/登录成功
           content:
@@ -1000,8 +913,6 @@ paths:
         - $ref: '#/components/parameters/FilterTag'
         - $ref: '#/components/parameters/FilterKeyword'
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功（仅 published）
           content:
@@ -1014,7 +925,6 @@ paths:
                         $ref: '#/components/schemas/ArticlePage'
     post:
       operationId: createArticle
-      x-required-roles: [member]
       tags: [Article]
       summary: 创建文章
       description: 会员创建默认 draft/pending；admin 可 published。slug 仅 admin 可指定。详见 02
@@ -1085,8 +995,6 @@ paths:
           required: true
           schema: {type: string}
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功（仅 published，或未发布的作者/管理员本人）
           content:
@@ -1112,12 +1020,10 @@ paths:
   /api/v1/articles/{id}:
     put:
       operationId: updateArticle
-      x-required-roles: [editor, admin]
-      x-owner-resource: articleId
       tags: [Article]
       summary: 更新文章
       description: >
-        作者本人，或 editor / admin。**状态副作用（显式定义，避免两实现分歧）**：
+        仅作者本人或 admin。**状态副作用（显式定义，避免两实现分歧）**：
         member 编辑自己已 published 的文章，保存后状态自动退回 `pending` 需重新审核；
         editor 与 admin 编辑不改变状态。slug 权限同创建（member 传入被忽略；editor/admin 可直接指定）。
       parameters:
@@ -1199,15 +1105,9 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     delete:
       operationId: deleteArticle
-      x-required-roles: [editor, admin]
-      x-owner-resource: articleId
-      x-cascade: soft-hide
       tags: [Article]
       summary: 删除文章（软删除）
-      description: >
-        软删除（置 deleted_at）。删除后其 slug 释放，可被新文章复用（部分唯一索引，见 02 §2.2）。
-        须作者本人或 editor / admin 调用（见 x-owner-resource）；关联评论 / 附件 / 点赞 / 收藏按
-        x-cascade: soft-hide 隔离可见性，不级联物理删除（用户的点赞、收藏历史予以保留）。
+      description: 软删除（置 deleted_at）。删除后其 slug 释放，可被新文章复用（部分唯一索引，见 02 §2.2）
       parameters:
         - name: id
           in: path
@@ -1247,8 +1147,6 @@ paths:
   /api/v1/articles/{id}/submit:
     post:
       operationId: submitArticle
-      x-required-roles: [member]
-      x-owner-resource: articleId
       tags: [Article]
       summary: 草稿→待审（会员投稿）
       description: >
@@ -1329,8 +1227,6 @@ paths:
           required: true
           schema: {type: integer}
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功
           content:
@@ -1358,7 +1254,6 @@ paths:
   /api/v1/me/articles:
     get:
       operationId: listMyArticles
-      x-required-roles: [member]
       tags: [Member]
       summary: 我的文章（全部状态，仅本人）
       description: >
@@ -1393,8 +1288,6 @@ paths:
       summary: 分类平铺列表
       security: []
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功
           content:
@@ -1409,7 +1302,6 @@ paths:
                           $ref: '#/components/schemas/Category'
     post:
       operationId: createCategory
-      x-required-roles: [editor, admin]
       tags: [Category]
       summary: 创建分类
       requestBody:
@@ -1419,8 +1311,8 @@ paths:
             schema:
               type: object
               properties:
-                name: {type: string, maxLength: 50}
-                slug: {type: string, pattern: "^[a-z0-9-]{1,64}$", maxLength: 64}
+                name: {type: string}
+                slug: {type: string}
                 description: {type: string}
                 parentId: {type: integer, nullable: true}
                 sortOrder: {type: integer}
@@ -1463,7 +1355,6 @@ paths:
   /api/v1/categories/{id}:
     put:
       operationId: updateCategory
-      x-required-roles: [editor, admin]
       tags: [Category]
       summary: 更新分类
       description: >
@@ -1481,8 +1372,8 @@ paths:
             schema:
               type: object
               properties:
-                name: {type: string, maxLength: 50}
-                slug: {type: string, pattern: "^[a-z0-9-]{1,64}$", maxLength: 64}
+                name: {type: string}
+                slug: {type: string}
                 description: {type: string}
                 parentId: {type: integer, nullable: true}
                 sortOrder: {type: integer}
@@ -1536,8 +1427,6 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     delete:
       operationId: deleteCategory
-      x-required-roles: [editor, admin]
-      x-cascade: none
       tags: [Category]
       summary: 删除分类
       description: >
@@ -1598,8 +1487,6 @@ paths:
       summary: 分类树（整树）
       security: []
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功
           content:
@@ -1619,8 +1506,6 @@ paths:
       summary: 标签列表
       security: []
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功
           content:
@@ -1635,7 +1520,6 @@ paths:
                           $ref: '#/components/schemas/Tag'
     post:
       operationId: createTag
-      x-required-roles: [editor, admin]
       tags: [Tag]
       summary: 创建标签
       requestBody:
@@ -1645,8 +1529,8 @@ paths:
             schema:
               type: object
               properties:
-                name: {type: string, maxLength: 50}
-                slug: {type: string, pattern: "^[a-z0-9-]{1,64}$", maxLength: 64}
+                name: {type: string}
+                slug: {type: string}
               required: [name, slug]
       responses:
         '200':
@@ -1686,7 +1570,6 @@ paths:
   /api/v1/tags/{id}:
     put:
       operationId: updateTag
-      x-required-roles: [editor, admin]
       tags: [Tag]
       summary: 更新标签（改名 / 改 slug）
       description: >
@@ -1704,8 +1587,8 @@ paths:
             schema:
               type: object
               properties:
-                name: {type: string, maxLength: 50}
-                slug: {type: string, pattern: "^[a-z0-9-]{1,64}$", maxLength: 64}
+                name: {type: string}
+                slug: {type: string}
               required: [name, slug]
       responses:
         '200':
@@ -1756,8 +1639,6 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     delete:
       operationId: deleteTag
-      x-required-roles: [editor, admin]
-      x-cascade: none
       tags: [Tag]
       summary: 删除标签
       description: 删除前须先清除 ArticleTag 关联（无文章引用），否则返回 409（避免孤儿中间表行）。
@@ -1832,8 +1713,6 @@ paths:
         - $ref: '#/components/parameters/Page'
         - $ref: '#/components/parameters/PageSize'
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功（仅 approved）
           content:
@@ -1858,7 +1737,6 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     post:
       operationId: createComment
-      x-required-roles: [member]
       tags: [Comment]
       summary: 发表评论（自动敏感词过滤）
       description: >
@@ -1877,7 +1755,7 @@ paths:
             schema:
               type: object
               properties:
-                content: {type: string, maxLength: 65535}
+                content: {type: string}
                 parentId: {type: integer, nullable: true}
               required: [content]
       responses:
@@ -1918,9 +1796,6 @@ paths:
   /api/v1/comments/{id}:
     delete:
       operationId: deleteComment
-      x-required-roles: [editor, admin]
-      x-owner-resource: commentId
-      x-cascade: children
       tags: [Comment]
       summary: 删除评论
       description: 删除评论时级联删除其所有子回复（parent_id 指向它的行一并删除），避免孤儿回复。
@@ -1963,15 +1838,14 @@ paths:
   /api/v1/comments/{id}/status:
     patch:
       operationId: moderateComment
-      x-required-roles: [editor, admin]
       tags: [Comment]
-      summary: 评论人工复核置位（editor / admin）
+      summary: 评论人工复核置位（admin）
       description: >
         `reviewing` 态的**唯一进出路径**。没有本端点时，reviewing 既进不去也出不来，
         是 100% 不可达的死胡同状态（第三轮复审 P1）。
 
 
-        语义：editor 与 admin 可把任意评论置为 approved / rejected / reviewing；
+        语义：admin 可把任意评论置为 approved / rejected / reviewing；
         置为当前同一状态时幂等返回 200；置为 approved 时后端清空 rejectedReason。
         自动流（发表评论）只产出 approved / rejected，reviewing 只能由本端点人工置位。
       parameters:
@@ -2023,7 +1897,6 @@ paths:
   /api/v1/admin/comments:
     get:
       operationId: listAdminComments
-      x-required-roles: [editor, admin]
       tags: [Admin]
       summary: 后台评论管理列表（可按 status 筛选）
       description: >
@@ -2070,7 +1943,6 @@ paths:
   /api/v1/upload:
     post:
       operationId: uploadFile
-      x-required-roles: [member]
       tags: [Upload]
       summary: 资源上传（R2 为主 / 本地磁盘兜底，由 STORAGE_DRIVER 配置驱动）
       description: >
@@ -2082,19 +1954,10 @@ paths:
           multipart/form-data:
             schema:
               type: object
-              x-max-size-bytes: 10485760
-              x-accepted-mime-types:
-                - image/png
-                - image/jpeg
-                - image/gif
-                - image/webp
-                - image/svg+xml
-                - application/pdf
               properties:
                 file:
                   type: string
                   format: binary
-                  description: 文件本体；大小须 <= x-max-size-bytes（10MB），类型须命中 x-accepted-mime-types，否则 400 / code 4001
                 articleId:
                   type: integer
                   nullable: true
@@ -2127,14 +1990,13 @@ paths:
                 message: 参数校验失败
                 data:
                   errors:
-                    - field: file
-                      message: 文件类型或大小不合法（须 <= 10MB 且为图片/PDF）
+                    - field: email
+                      message: 邮箱格式不正确
                 requestId: req_8f3a1b2c
                 timestamp: '2026-08-10T12:00:00Z'
   /api/v1/me/attachments:
     get:
       operationId: listMyAttachments
-      x-required-roles: [member]
       tags: [Member]
       summary: 我上传的附件（分页）
       description: Attachment 的读取路径，同时是编辑器「素材库」的数据来源（M2-10）。
@@ -2155,8 +2017,6 @@ paths:
   /api/v1/attachments/{id}:
     delete:
       operationId: deleteAttachment
-      x-required-roles: [editor, admin]
-      x-owner-resource: attachmentId
       tags: [Upload]
       summary: 删除附件（上传者本人或 admin）
       description: >
@@ -2214,8 +2074,6 @@ paths:
           required: true
           schema: {type: integer}
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功
           content:
@@ -2241,7 +2099,6 @@ paths:
   /api/v1/admin/articles:
     get:
       operationId: listAdminArticles
-      x-required-roles: [editor, admin]
       tags: [Admin]
       summary: 后台文章管理列表（鉴权，支持 draft/pending/published 筛选）
       description: >
@@ -2286,7 +2143,6 @@ paths:
   /api/v1/admin/articles/{id}/approve:
     post:
       operationId: approveArticle
-      x-required-roles: [editor, admin]
       tags: [Admin]
       summary: 待审→已发布（审核通过）
       description: >
@@ -2347,7 +2203,6 @@ paths:
   /api/v1/admin/articles/{id}/status:
     post:
       operationId: setArticleStatus
-      x-required-roles: [admin]
       tags: [Admin]
       summary: 任意状态置位（下架/退回）
       description: >
@@ -2408,7 +2263,6 @@ paths:
   /api/v1/me/favorites:
     get:
       operationId: listMyFavorites
-      x-required-roles: [member]
       tags: [Member]
       summary: 我的收藏（分页）
       parameters:
@@ -2427,8 +2281,6 @@ paths:
                         $ref: '#/components/schemas/ArticlePage'
     post:
       operationId: addFavorite
-      x-required-roles: [member]
-      x-idempotent: true
       tags: [Member]
       summary: 添加收藏
       description: 幂等：重复收藏同一篇返回 200，不报错、不重复插行（唯一约束 user_id+article_id）
@@ -2448,12 +2300,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 0
-                message: ok
-                data:
-                requestId: req_8f3a1b2c
-                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 文章不存在或未发布（不可收藏未发布文章）
           content:
@@ -2469,8 +2315,6 @@ paths:
   /api/v1/me/favorites/{articleId}:
     delete:
       operationId: removeFavorite
-      x-required-roles: [member]
-      x-idempotent: true
       tags: [Member]
       summary: 取消收藏
       description: 幂等：取消一条本不存在的收藏同样返回 200
@@ -2489,7 +2333,6 @@ paths:
   /api/v1/me/history:
     get:
       operationId: listMyHistory
-      x-required-roles: [member]
       tags: [Member]
       summary: 阅读历史（分页）
       description: 按 lastReadAt 倒序返回
@@ -2509,7 +2352,6 @@ paths:
                         $ref: '#/components/schemas/HistoryPage'
     post:
       operationId: reportReadingProgress
-      x-required-roles: [member]
       tags: [Member]
       summary: 上报阅读进度（写入/更新 ReadingLog）
       description: >
@@ -2546,7 +2388,6 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     delete:
       operationId: clearMyHistory
-      x-required-roles: [member]
       tags: [Member]
       summary: 清空阅读历史
       description: 隐私诉求的兜底路径。ReadingLog 由此具备完整生命周期（写入/读取/删除）。
@@ -2560,7 +2401,6 @@ paths:
   /api/v1/me/history/{articleId}:
     delete:
       operationId: removeHistoryItem
-      x-required-roles: [member]
       tags: [Member]
       summary: 删除单条阅读历史
       description: 幂等：删除一条本不存在的记录同样返回 200
@@ -2579,7 +2419,6 @@ paths:
   /api/v1/me/profile:
     get:
       operationId: getMyProfile
-      x-required-roles: [member]
       tags: [Member]
       summary: 个人资料
       responses:
@@ -2595,7 +2434,6 @@ paths:
                         $ref: '#/components/schemas/User'
     patch:
       operationId: updateMyProfile
-      x-required-roles: [member]
       tags: [Member]
       summary: 更新资料（昵称 / 头像 / 邮箱）
       description: >
@@ -2652,7 +2490,6 @@ paths:
   /api/v1/me/change-password:
     post:
       operationId: changePassword
-      x-required-roles: [member]
       tags: [Member]
       summary: 修改密码
       description: >
@@ -2694,7 +2531,6 @@ paths:
   /api/v1/users:
     get:
       operationId: listUsers
-      x-required-roles: [admin]
       tags: [Admin]
       summary: 用户列表（分页）
       parameters:
@@ -2741,9 +2577,8 @@ paths:
   /api/v1/users/{id}:
     get:
       operationId: getUser
-      x-required-roles: [admin]
       tags: [Admin]
-      summary: 用户详情（admin 专用；查他人公开资料请走 GET /members/{id}）
+      summary: 用户详情
       parameters:
         - name: id
           in: path
@@ -2786,7 +2621,6 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     patch:
       operationId: updateUser
-      x-required-roles: [admin]
       tags: [Admin]
       summary: 变更角色 / 状态 / 会员等级
       description: >
@@ -2855,7 +2689,6 @@ paths:
   /api/v1/admin/users/{id}/reset-password:
     post:
       operationId: adminResetPassword
-      x-required-roles: [admin]
       tags: [Admin]
       summary: 管理员重置用户密码
       description: >
@@ -2934,8 +2767,6 @@ paths:
         站点级配置，单条记录，始终返回最新已发布配置。
       security: []
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功
           content:
@@ -2957,7 +2788,6 @@ paths:
   /api/v1/admin/site/settings:
     get:
       operationId: adminGetSiteSettings
-      x-required-roles: [admin]
       tags: [Admin]
       summary: 管理员读取站点配置（全量）
       description: admin 专用。返回站点配置当前值，供后台设置页回填。
@@ -2984,7 +2814,6 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     patch:
       operationId: adminUpdateSiteSettings
-      x-required-roles: [admin]
       tags: [Admin]
       summary: 管理员更新站点配置
       description: >
@@ -3042,8 +2871,6 @@ paths:
           required: true
           schema: {type: integer}
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功
           content:
@@ -3087,8 +2914,6 @@ paths:
             minimum: 1
             maximum: 10
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功
           content:
@@ -3126,8 +2951,6 @@ paths:
           required: true
           schema: {type: integer}
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功
           content:
@@ -3155,11 +2978,9 @@ paths:
   /api/v1/articles/{id}/like:
     post:
       operationId: likeArticle
-      x-required-roles: [member]
-      x-idempotent: true
       tags: [Article]
       summary: 点赞文章
-      description: 当前登录用户对文章点赞；幂等，重复点赞返回 200 与当前状态（liked=true + likeCount 当前值），不重复计数。
+      description: 当前登录用户对文章点赞；幂等，重复点赞返回 200 与当前状态。
       parameters:
         - name: id
           in: path
@@ -3176,14 +2997,6 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/LikeStatus'
-              example:
-                code: 0
-                message: ok
-                data:
-                  liked: true
-                  likeCount: 42
-                requestId: req_8f3a1b2c
-                timestamp: '2026-08-10T12:00:00Z'
         '401':
           description: 未登录（code 1002）
           content:
@@ -3210,11 +3023,9 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     delete:
       operationId: unlikeArticle
-      x-required-roles: [member]
-      x-idempotent: true
       tags: [Article]
       summary: 取消点赞
-      description: 当前登录用户取消对文章的点赞；幂等，未点赞时返回 200 且 liked=false，不报错。
+      description: 当前登录用户取消对文章的点赞；幂等，未点赞时返回 200 且 liked=false。
       parameters:
         - name: id
           in: path
@@ -3231,14 +3042,6 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/LikeStatus'
-              example:
-                code: 0
-                message: ok
-                data:
-                  liked: false
-                  likeCount: 41
-                requestId: req_8f3a1b2c
-                timestamp: '2026-08-10T12:00:00Z'
         '401':
           description: 未登录（code 1002）
           content:
@@ -3276,8 +3079,6 @@ paths:
           required: true
           schema: {type: integer}
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功
           content:
@@ -3288,14 +3089,6 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/LikeStatus'
-              example:
-                code: 0
-                message: ok
-                data:
-                  liked: true
-                  likeCount: 42
-                requestId: req_8f3a1b2c
-                timestamp: '2026-08-10T12:00:00Z'
         '404':
           description: 文章不存在（code 3001）
           content:
@@ -3321,8 +3114,6 @@ paths:
           required: true
           schema: {type: integer}
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功
           content:
@@ -3355,8 +3146,6 @@ paths:
       description: 返回每个分类的 published 文章数，供导航侧栏展示。
       security: []
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功
           content:
@@ -3377,8 +3166,6 @@ paths:
       description: 返回站点级聚合统计，供页脚/后台概览展示。
       security: []
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功
           content:
@@ -3430,8 +3217,6 @@ paths:
               - "-createdAt"
             default: "-publishedAt"
       responses:
-        '429':
-          $ref: '#/components/responses/RateLimited'
         '200':
           description: 成功
           content:
@@ -3457,7 +3242,6 @@ paths:
   /api/v1/me/likes:
     get:
       operationId: listMyLikes
-      x-required-roles: [member]
       tags: [Member]
       summary: 获取我的点赞列表
       description: 返回当前用户点赞过的文章（published），按点赞时间倒序。
@@ -3498,7 +3282,6 @@ paths:
   /api/v1/me/notifications:
     get:
       operationId: listMyNotifications
-      x-required-roles: [member]
       tags: [Member]
       summary: 获取我的通知
       description: 返回当前用户通知，按创建时间倒序。
@@ -3541,7 +3324,6 @@ paths:
   /api/v1/me/notifications/unread-count:
     get:
       operationId: getUnreadNotificationCount
-      x-required-roles: [member]
       tags: [Member]
       summary: 获取未读通知数
       description: 返回当前用户未读通知数量。
@@ -3574,7 +3356,6 @@ paths:
   /api/v1/me/notifications/read-all:
     post:
       operationId: readAllNotifications
-      x-required-roles: [member]
       tags: [Member]
       summary: 全部标记为已读
       description: 将当前用户全部未读通知置为已读。
@@ -3600,8 +3381,6 @@ paths:
   /api/v1/me/notifications/{id}:
     patch:
       operationId: updateNotification
-      x-required-roles: [member]
-      x-owner-resource: notificationId
       tags: [Member]
       summary: 更新通知（标记已读）
       description: 将指定通知标记为已读；仅本人通知可操作。

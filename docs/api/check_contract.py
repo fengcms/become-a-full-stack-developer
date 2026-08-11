@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 """
-契约语义自查脚本（第三轮复审整改配套）
+契约语义自查脚本（后端架构师评审 R1-R11 整改配套）
 
 openapi-spec-validator 只保证「结构合法」。本脚本补上「逻辑无漏洞」的机器断言：
   A. 结构完整性：$ref 可解析、200 响应含 schema、无非法嵌套状态码
-  B. operationId：全量存在且唯一（P9）
-  C. 孤儿实体：每个 schema 都被至少一个端点可达引用（P2 类问题）
-  D. 死胡同状态：枚举态都有写入路径（P1 类问题）
-  E. 机器强制约束：sort 枚举、可选鉴权写法（P4/P5/P7/P12）
-  F. 错误码机器强制（F1/F6）：每个错误响应挂 code 示例、码落在 ErrorCode 枚举、枚举非零码均落地
+  B. operationId：全量存在且唯一
+  C. 孤儿实体：每个 schema 都被至少一个端点可达引用
+  D. 死胡同状态：枚举态都有写入路径
+  E. 机器强制约束：sort 枚举、可选鉴权写法
+  F. 错误码机器强制：每个错误响应必须挂**结构化** code（example / examples 均可机读），
+     码落在 ErrorCode 枚举、枚举非零码均在结构化示例中落地（不再以 description 兜底）
+  R1. 授权角色机器化：每个需登录端点必须声明 x-required-roles，取值 ∈ member/editor/admin
+  R5. 限流声明：info.x-rate-limit + components.responses.RateLimited + ErrorCode 5001 三者齐备
+  G.  扩展约束结构合法：x-cascade / x-max-depth / x-max-size-bytes / x-accepted-mime-types /
+      x-owner-resource / x-idempotent 取值与挂载位置正确
 
 用法：python3 docs/api/check_contract.py docs/api/openapi.v1.yaml
 """
@@ -16,6 +21,9 @@ import sys
 import yaml
 
 HTTP_METHODS = {"get", "post", "put", "patch", "delete", "head", "options", "trace"}
+ROLES = {"member", "editor", "admin"}
+CASCADE_VALUES = {"none", "children", "soft-hide"}
+ERR_HTTP = {"400", "401", "403", "404", "409", "500", "501"}
 
 failures = []
 notes = []
@@ -42,7 +50,6 @@ def iter_operations(spec):
 
 
 def collect_refs(node, acc):
-    """递归收集所有 $ref 字符串"""
     if isinstance(node, dict):
         for k, v in node.items():
             if k == "$ref" and isinstance(v, str):
@@ -52,6 +59,18 @@ def collect_refs(node, acc):
     elif isinstance(node, list):
         for v in node:
             collect_refs(v, acc)
+
+
+def find_keys(node, key, acc):
+    """递归收集所有名为 key 的扩展字段值"""
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k == key:
+                acc.append(v)
+            find_keys(v, key, acc)
+    elif isinstance(node, list):
+        for v in node:
+            find_keys(v, key, acc)
 
 
 def resolve(spec, ref):
@@ -65,8 +84,52 @@ def resolve(spec, ref):
     return node
 
 
+# ---------- 错误码提取（兼容 example 单数 与 examples 复数）----------
+def resp_structured_codes(resp):
+    codes = set()
+    if not isinstance(resp, dict):
+        return codes
+    aj = resp.get("content", {}).get("application/json", {})
+    ex = aj.get("example")
+    if isinstance(ex, dict) and isinstance(ex.get("code"), int):
+        codes.add(ex["code"])
+    exs = aj.get("examples")
+    if isinstance(exs, dict):
+        for v in exs.values():
+            val = v.get("value", v) if isinstance(v, dict) else v
+            if isinstance(val, dict) and isinstance(val.get("code"), int):
+                codes.add(val["code"])
+    return codes
+
+
+def resp_desc_codes(resp):
+    d = (resp.get("description", "") if isinstance(resp, dict) else "") or ""
+    import re
+    return {int(m) for m in re.findall(r"code (\d{4})", d)}
+
+
+def effective_security(item, op):
+    if "security" in op:
+        return op["security"]
+    if "security" in item:
+        return item["security"]
+    return spec_global_security
+
+
+def is_public(sec):
+    if sec is None:
+        return False
+    if sec == []:
+        return True
+    if isinstance(sec, list) and any(s == {} for s in sec):
+        return True
+    return False
+
+
 def main(path):
+    global spec_global_security
     spec = load(path)
+    spec_global_security = spec.get("security")
     ops = list(iter_operations(spec))
 
     print(f"契约文件：{path}")
@@ -83,7 +146,6 @@ def main(path):
     else:
         ok(f"全部 {len(all_refs)} 个 $ref 均可解析")
 
-    # 200 响应必须有 content.schema
     missing_schema = []
     for p, m, op in ops:
         r200 = op.get("responses", {}).get("200")
@@ -102,7 +164,6 @@ def main(path):
     else:
         ok(f"全部 {len(ops)} 个操作的 200 响应均含 content.schema")
 
-    # 非法嵌套：状态码键出现在 responses 以外的层级（第二轮 N1 的假通过根因）
     nested = []
     for p, m, op in ops:
         for code, resp in op.get("responses", {}).items():
@@ -133,7 +194,6 @@ def main(path):
     # ---------- C. 孤儿实体 ----------
     endpoint_refs = set()
     collect_refs(spec.get("paths", {}), endpoint_refs)
-    # 端点直接引用的 schema，再递归展开其内部引用（如 ArticlePage -> ArticleSummary）
     reachable = set()
     frontier = {r for r in endpoint_refs if r.startswith("#/components/schemas/")}
     while frontier:
@@ -154,7 +214,6 @@ def main(path):
         ok(f"全部 {len(declared)} 个 schema 均被端点可达引用，无孤儿实体")
 
     # ---------- D. 死胡同状态 ----------
-    # 评论 status 三态：每个态都必须能被某个端点写入
     comment_states = set(spec["components"]["schemas"]["Comment"]["properties"]["status"]["enum"])
     writable = set()
     for p, m, op in ops:
@@ -174,7 +233,6 @@ def main(path):
     else:
         ok(f"评论三态 {sorted(comment_states)} 均有端点可写入")
 
-    # 文章 status 三态可写
     article_states = set(spec["components"]["schemas"]["Article"]["properties"]["status"]["enum"])
     art_blob = yaml.safe_dump(
         {p: i for p, i in spec["paths"].items() if "article" in p.lower()}, allow_unicode=True
@@ -192,7 +250,6 @@ def main(path):
     else:
         ok(f"Sort 已枚举 {len(sort_param['enum'])} 个合法组合，默认 {sort_param.get('default')}")
 
-    # 可选鉴权写法：security 中同时含 {} 与 bearerAuth
     optional_auth = []
     for p, m, op in ops:
         sec = op.get("security")
@@ -203,7 +260,6 @@ def main(path):
     else:
         fail("E2", "无端点使用可选鉴权标准写法，view/详情的登录分支不可机读")
 
-    # 过滤参数必须有 description 说明匹配口径
     silent = []
     for name in ("FilterCategory", "FilterTag", "FilterKeyword"):
         prm = spec["components"]["parameters"].get(name)
@@ -214,42 +270,164 @@ def main(path):
     else:
         ok("category/tag/keyword 三个过滤参数均已定义匹配口径（共享 $ref，两实现无解释空间）")
 
-    # ---------- F. 错误码机器强制（F1/F6 整改：把错误码纳入机器校验）----------
-    # 第三轮复审的语义门不校验错误码，导致 §六 表与契约实际码值长期不一致、
-    # 且大量 4xx/5xx 响应无结构化 code —— 直接动摇「七端复用同一张错误码表」承诺。
-    # 本段把错误码锁死：每个错误响应必须挂 code 示例、且码必须落在 ErrorCode 枚举内、
-    # 枚举内每个非零码都必须在契约某处出现（保证 §六 表与契约不漂移）。
-    errorcode_enum = spec["components"]["schemas"].get("ErrorCode", {}).get("enum", [])
-    err_codes_used = set()       # 出现在 example.code（机器强约束）
-    err_codes_documented = set()  # 出现在响应 description 的 "code N"（散文兜底）
-    ERR_HTTP = {"400", "401", "403", "404", "409", "500", "501"}
-    import re as _re
+    # ---------- F. 错误码机器强制（收紧：不再以 description 兜底）----------
+    errorcode_enum = set(spec["components"]["schemas"].get("ErrorCode", {}).get("enum", []))
+    err_struct = set()
+    err_desc = set()
+
+    def sweep(respmap):
+        nonlocal err_struct, err_desc
+        for st, resp in respmap.items():
+            if str(st) not in ERR_HTTP and str(st) != "default":
+                continue
+            err_struct |= resp_structured_codes(resp)
+            err_desc |= resp_desc_codes(resp)
+
+    for p, m, op in ops:
+        sweep(op.get("responses", {}))
+    # 组件响应（如 RateLimited）本身即是一个响应对象，其键是组件名而非 HTTP 状态码，
+    # 不能套用 ERR_HTTP 过滤，直接抽取其结构化 code。
+    for name, r in spec.get("components", {}).get("responses", {}).items():
+        err_struct |= resp_structured_codes(r)
+        err_desc |= resp_desc_codes(r)
+
+    missing = []
     for p, m, op in ops:
         for st, resp in op.get("responses", {}).items():
-            s = str(st)
-            if s not in ERR_HTTP and s != "default":
+            if str(st) not in ERR_HTTP and str(st) != "default":
                 continue
-            aj = (resp or {}).get("content", {}).get("application/json", {})
-            ex = aj.get("example")
-            if isinstance(ex, dict) and ex.get("code") is not None:
-                err_codes_used.add(ex["code"])
-            else:
-                fail("F1", f"{m.upper()} {p} -> {st} 错误响应未挂 code 示例（机器不可读）")
-            desc = (resp or {}).get("description", "") or ""
-            for mm in _re.findall(r"code (\d{4})", desc):
-                err_codes_documented.add(int(mm))
-    # 一个枚举码只要「在 example 出现」或「在 description 出现」即视为已在契约落地
-    represented = err_codes_used | err_codes_documented
-    bad = [c for c in err_codes_used if c not in errorcode_enum]
+            if not resp_structured_codes(resp):
+                missing.append(f"{m.upper()} {p} -> {st}")
+    if missing:
+        fail("F1", f"以下错误响应未挂结构化 code 示例（机器不可读，仅靠 description 兜底）：{missing}")
+    else:
+        ok("全部错误响应均挂结构化 code 示例（example / examples 均可机读）")
+
+    bad = [c for c in err_struct if c not in errorcode_enum]
     if bad:
         fail("F2", f"错误响应使用了未定义于 ErrorCode 枚举的码：{sorted(bad)}")
     else:
-        ok(f"全部 {len(err_codes_used)} 种错误码示例均落在 ErrorCode 枚举内")
-    missing = [c for c in errorcode_enum if c != 0 and c not in represented]
-    if missing:
-        fail("F3", f"ErrorCode 枚举中以下非零码未在契约任何错误响应的 example/description 出现（§六与契约漂移）：{missing}")
+        ok(f"全部 {len(err_struct)} 种结构化错误码均落在 ErrorCode 枚举内")
+
+    missing_enum = [c for c in errorcode_enum if c != 0 and c not in err_struct]
+    if missing_enum:
+        fail("F3", f"ErrorCode 枚举中以下非零码未在契约任何错误响应的结构化 example/value 出现（§六与契约漂移）：{missing_enum}")
     else:
-        ok(f"ErrorCode 枚举全部非零码（{len([c for c in errorcode_enum if c != 0])} 个）均已在契约中落地")
+        ok(f"ErrorCode 枚举全部非零码（{len([c for c in errorcode_enum if c != 0])} 个）均已在结构化错误响应中落地")
+
+    desc_only = err_desc - err_struct
+    if desc_only:
+        notes.append(f"  NOTE 以下码仅出现在响应 description 中（未结构化，F3 不认其落地，须补 example）：{sorted(desc_only)}")
+
+    # ---------- R1. 授权角色机器化 ----------
+    r1_missing = []
+    r1_bad = []
+    r1_public_role = []
+    n_login = 0
+    for path, item in spec.get("paths", {}).items():
+        for m, op in item.items():
+            if m not in HTTP_METHODS:
+                continue
+            sec = effective_security(item, op)
+            if is_public(sec):
+                if op.get("x-required-roles") is not None:
+                    r1_public_role.append(f"{m.upper()} {path}")
+                continue
+            n_login += 1
+            roles = op.get("x-required-roles")
+            if not isinstance(roles, list) or not roles:
+                r1_missing.append(f"{m.upper()} {path}")
+            else:
+                for r in roles:
+                    if r not in ROLES:
+                        r1_bad.append(f"{m.upper()} {path} -> {r}")
+    if r1_missing:
+        fail("R1a", f"需登录端点未声明 x-required-roles：{r1_missing}")
+    else:
+        ok(f"全部 {n_login} 个需登录端点均声明了 x-required-roles（授权角色已机器化）")
+    if r1_bad:
+        fail("R1b", f"x-required-roles 含非法角色（须 ∈ member/editor/admin）：{r1_bad}")
+    else:
+        ok("x-required-roles 取值均合法（member/editor/admin）")
+    if r1_public_role:
+        notes.append(f"  NOTE 以下公开端点带了 x-required-roles（通常不必要，供人工复核）：{r1_public_role}")
+
+    # ---------- R5. 限流声明 ----------
+    rl = spec["info"].get("x-rate-limit")
+    has_rl_comp = "RateLimited" in spec.get("components", {}).get("responses", {})
+    pub_with_429 = [
+        f"{m.upper()} {p}"
+        for p, item in spec.get("paths", {}).items()
+        for m, op in item.items()
+        if m in HTTP_METHODS and is_public(effective_security(item, op)) and "429" in op.get("responses", {})
+    ]
+    if rl and has_rl_comp and 5001 in errorcode_enum:
+        ok(f"限流已机器化：info.x-rate-limit + components.responses.RateLimited + ErrorCode 5001；{len(pub_with_429)} 个公开端点挂 429")
+    else:
+        fail("R5", "限流声明不完整（需 info.x-rate-limit + RateLimited 响应组件 + ErrorCode 5001）")
+
+    # ---------- G. 扩展约束结构合法 ----------
+    g_cascade = []
+    g_owner = []
+    g_idem_409 = []
+    g_size = []
+    g_mime = []
+    g_depth = []
+    for path, item in spec.get("paths", {}).items():
+        for m, op in item.items():
+            if m not in HTTP_METHODS:
+                continue
+            xc = op.get("x-cascade")
+            if xc is not None and xc not in CASCADE_VALUES:
+                g_cascade.append(f"{m.upper()} {path} -> {xc}")
+            xo = op.get("x-owner-resource")
+            if xo is not None:
+                if not isinstance(xo, str) or not xo:
+                    g_owner.append(f"{m.upper()} {path} -> {xo!r}")
+                elif is_public(effective_security(item, op)):
+                    g_owner.append(f"{m.upper()} {path} 带 x-owner-resource 却是公开端点")
+            if op.get("x-idempotent") is True and "409" in op.get("responses", {}):
+                g_idem_409.append(f"{m.upper()} {path}")
+    for name, sch in spec.get("components", {}).get("schemas", {}).items():
+        if isinstance(sch, dict) and "x-max-depth" in sch:
+            md = sch["x-max-depth"]
+            if not (isinstance(md, int) and md >= 1):
+                g_depth.append(f"{name} -> {md}")
+    sizes = []
+    find_keys(spec, "x-max-size-bytes", sizes)
+    for s in sizes:
+        if not (isinstance(s, int) and s >= 1):
+            g_size.append(s)
+    mimes = []
+    find_keys(spec, "x-accepted-mime-types", mimes)
+    for mm in mimes:
+        if not (isinstance(mm, list) and all(isinstance(x, str) for x in mm)):
+            g_mime.append(mm)
+
+    if g_cascade:
+        fail("G1", f"x-cascade 取值非法（须 ∈ none/children/soft-hide）：{g_cascade}")
+    else:
+        ok("x-cascade 取值均合法（none/children/soft-hide）")
+    if g_depth:
+        fail("G2", f"x-max-depth 非法（须为整数≥1）：{g_depth}")
+    else:
+        ok("Category.x-max-depth 合法（整数≥1）")
+    if g_size:
+        fail("G3", f"x-max-size-bytes 非法：{g_size}")
+    else:
+        ok("上传 x-max-size-bytes 合法")
+    if g_mime:
+        fail("G4", f"x-accepted-mime-types 非法（须为字符串列表）：{g_mime}")
+    else:
+        ok("上传 x-accepted-mime-types 合法（字符串列表）")
+    if g_owner:
+        fail("G5", f"x-owner-resource 异常：{g_owner}")
+    else:
+        ok("x-owner-resource 均非空字符串且只挂在需登录端点")
+    if g_idem_409:
+        fail("G6", f"x-idempotent 端点不应声明 409（重复调用须返回 200）：{g_idem_409}")
+    else:
+        ok("x-idempotent 端点均未声明 409（幂等语义已机器化）")
 
     # ---------- 输出 ----------
     print("\n".join(notes))
@@ -259,7 +437,7 @@ def main(path):
         for f in failures:
             print("  FAIL", f)
         sys.exit(1)
-    print("语义自查全部通过（结构 + operationId + 孤儿实体 + 死胡同状态 + 机器强制约束 + 错误码）")
+    print("语义自查全部通过（结构+operationId+孤儿实体+死胡同状态+机器强制约束+错误码+R1角色机器化+R5限流+G扩展约束）")
 
 
 if __name__ == "__main__":

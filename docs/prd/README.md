@@ -6,10 +6,10 @@
 
 | 编号 | 文档 | 作用 | 状态 |
 |---|---|---|---|
-| 00 | [项目章程](./00-项目章程.md) | 定位、读者、成功标准、非目标、推进节奏、文风约定、技术方向与产品决策 | ✅ 已确认（v1.10） |
-| 01 | [内容路线图](./01-内容路线图.md) | 文章系列完整大纲（八段式 M0–M8 + 支线），项目北极星 | ✅ 已确认（v1.10） |
-| 02 | [领域模型与 API 契约](./02-领域模型与API契约.md) | 文章系统实体/关系、API 设计原则、端点目录、错误码 | ✅ 已定稿（v1.10） |
-| — | [API 契约（OpenAPI v1）](../api/openapi.v1.yaml) | 机器可读的接口单一事实来源，七端复用（契约版本 1.7.0，文档修订 v1.10）；经 openapi-spec-validator 严格校验 + 语义自查 `check_contract.py` 双门通过 | ✅ 已定稿（v1.10） |
+| 00 | [项目章程](./00-项目章程.md) | 定位、读者、成功标准、非目标、推进节奏、文风约定、技术方向与产品决策 | ✅ 已确认（v1.11） |
+| 01 | [内容路线图](./01-内容路线图.md) | 文章系列完整大纲（八段式 M0–M8 + 支线），项目北极星 | ✅ 已确认（v1.11） |
+| 02 | [领域模型与 API 契约](./02-领域模型与API契约.md) | 文章系统实体/关系、API 设计原则、端点目录、错误码 | ✅ 已定稿（v1.11） |
+| — | [API 契约（OpenAPI v1）](../api/openapi.v1.yaml) | 机器可读的接口单一事实来源，七端复用（契约版本 1.8.0，文档修订 v1.11）；经 openapi-spec-validator 严格校验 + 语义自查 `check_contract.py` 双门通过（含 R1 角色机器化 / R5 限流 / G 扩展约束） | ✅ 已定稿（v1.11） |
 | 03 | M1 PRD（Node 后端） | 第一件实现的功能规格 | ⬜ 未开始 |
 | 04 | M2 PRD（React 管理后台） | 第二件实现的功能规格 | ⬜ 未开始 |
 | 05 | M3 PRD（Next.js 前台） | 第三件实现的功能规格 | ⬜ 未开始 |
@@ -81,15 +81,15 @@
 4. ✅ 两门全绿：结构门 `docs/api/openapi.v1.yaml: OK`；语义门 37 路径 / 49 操作 / 30 schema，0 孤儿、0 死胡同状态
 5. 🟡 产出 `docs/review/回应第三次复审.md` 交评审 AI 终审
 
-当前状态（规划更新至 v1.10 · 补常用辅助接口）：
+当前状态（规划更新至 v1.11 · 后端架构师评审整改）：
 
-> 第十轮（v1.10）补齐文章系统「好用」所需的常用辅助接口，规划基线更新：
-> - **纯计算 / 聚合类**：`GET /articles/{id}/adjacent`（上一篇/下一篇）、`GET /articles/{id}/related`（相关文章）、`GET /articles/{id}/toc`（目录）、`GET /categories/{id}/breadcrumb`（面包屑）、`GET /categories/stats`（分类计数）、`GET /stats`（站点统计）、`GET /search`（全文搜索）
-> - **互动类（2 个新实体）**：`POST/DELETE /articles/{id}/like` + `GET /articles/{id}/like/status` + `GET /me/likes`（Like 实体）；`GET /me/notifications` + `GET /me/notifications/unread-count` + `POST /me/notifications/read-all` + `PATCH /me/notifications/{id}`（Notification 实体）；`Article`/`ArticleSummary` 加 `likeCount`
-> - **不重复造**：标签云计数已由 `GET /tags` 的 `Tag.articleCount` 覆盖；热门/最新复用 `Sort` 枚举；RSS/sitemap/robots 列为 M3 实现笔记不进 JSON 契约
-> - 00/01/02 统一为 v1.10，契约 1.6.0→1.7.0；主线 105→112、总计 119→126、应急集 37→41
+> 第十一轮（v1.11）针对后端架构师专项评审 R1–R11 做「约束机器化」整改，规划基线更新：
+> - **授权角色机器化（R1）**：契约新增 `x-required-roles`（member/editor/admin）覆盖全部 46 个需登录端点，`x-owner-resource` 标注归属敏感端点；语义门新增 R1 段强制校验
+> - **幂等 / 归属 / 级联 / 限流 / 上传 / 字段约束机器化（R2–R5、R10）**：`x-idempotent`、`x-cascade`、`x-max-depth`、`x-max-size-bytes`/`x-accepted-mime-types`、字符串 `maxLength`/`format`/`pattern`，新增 `ErrorCode 5001` + `RateLimited` + 21 个公开端点挂 429
+> - **错误码校验收紧（R9）**：F 段去掉 `description` 兜底、改认结构化 `example`/`examples`；顺带修正 02 文档自身角色不一致
+> - 00/01/02 统一为 v1.11，契约 1.7.0→1.8.0
 >
-> 双门校验（结构门 `openapi-spec-validator` + 语义门 `check_contract.py`）**全绿**（契约 53 路径 / 67 操作 / 45 schema）。
+> 双门校验（结构门 `openapi-spec-validator` + 语义门 `check_contract.py`）**全绿**（契约 53 路径 / 67 操作 / 45 schema / 46 角色声明 / 22 条 OK 断言）。
 
 下一步待决策：
 
