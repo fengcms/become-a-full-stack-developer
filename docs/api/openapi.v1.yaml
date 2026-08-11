@@ -23,7 +23,7 @@ info:
 
     可选鉴权端点采用 OpenAPI 标准写法 `security: [{}, {bearerAuth: []}]`
     （空安全需求对象表示允许匿名），各端生成客户端须配置「持有令牌则自动附加」，实现细节见 02 §3.3（以本契约为准）。
-  version: 1.10.0
+  version: 1.11.0
   x-api-version: 1
   x-rate-limit:
     description: >
@@ -75,29 +75,6 @@ components:
             data:
             requestId: req_8f3a1b2c
             timestamp: '2026-08-10T12:00:00Z'
-    Unauthorized:
-      description: 未携带或携带无效/过期的访问令牌。code 1002 = 令牌无效或已过期；code 1004 = 未携带令牌（匿名访问受保护端点）
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiResponse'
-          examples:
-            token_missing:
-              summary: 未携带访问令牌
-              value:
-                code: 1004
-                message: 未携带访问令牌
-                data:
-                requestId: req_8f3a1b2c
-                timestamp: '2026-08-10T12:00:00Z'
-            token_invalid:
-              summary: 令牌无效或已过期
-              value:
-                code: 1002
-                message: 令牌无效或已过期
-                data:
-                requestId: req_8f3a1b2c
-                timestamp: '2026-08-10T12:00:00Z'
     Unauthorized:
       description: 未携带或携带无效/过期的访问令牌。code 1002 = 令牌无效或已过期；code 1004 = 未携带令牌（匿名访问受保护端点）
       content:
@@ -321,6 +298,13 @@ components:
         status:
           type: string
           enum: [draft, pending, published]
+          x-allowed-transitions:
+            - {from: draft, to: pending}
+            - {from: draft, to: published}
+            - {from: pending, to: published}
+            - {from: pending, to: draft}
+            - {from: published, to: draft}
+            - {from: published, to: pending}
         viewCount: {type: integer}
         likeCount: {type: integer, description: 文章总赞数}
         publishedAt: {type: string, format: date-time, nullable: true}
@@ -3373,17 +3357,7 @@ paths:
                 requestId: req_8f3a1b2c
                 timestamp: '2026-08-10T12:00:00Z'
         '401':
-          description: 未登录（code 1002）
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 1002
-                message: 令牌缺失或无效
-                data:
-                requestId: req_8f3a1b2c
-                timestamp: '2026-08-10T12:00:00Z'
+          $ref: '#/components/responses/Unauthorized'
         '404':
           description: 文章不存在（code 3001）
           content:
@@ -3429,17 +3403,7 @@ paths:
                 requestId: req_8f3a1b2c
                 timestamp: '2026-08-10T12:00:00Z'
         '401':
-          description: 未登录（code 1002）
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 1002
-                message: 令牌缺失或无效
-                data:
-                requestId: req_8f3a1b2c
-                timestamp: '2026-08-10T12:00:00Z'
+          $ref: '#/components/responses/Unauthorized'
         '404':
           description: 文章不存在（code 3001）
           content:
@@ -3674,17 +3638,7 @@ paths:
                         items:
                           $ref: '#/components/schemas/ArticleSummary'
         '401':
-          description: 未登录（code 1002）
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 1002
-                message: 令牌缺失或无效
-                data:
-                requestId: req_8f3a1b2c
-                timestamp: '2026-08-10T12:00:00Z'
+          $ref: '#/components/responses/Unauthorized'
   /api/v1/me/notifications:
     get:
       operationId: listMyNotifications
@@ -3718,17 +3672,7 @@ paths:
                       data:
                         $ref: '#/components/schemas/NotificationPage'
         '401':
-          description: 未登录（code 1002）
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 1002
-                message: 令牌缺失或无效
-                data:
-                requestId: req_8f3a1b2c
-                timestamp: '2026-08-10T12:00:00Z'
+          $ref: '#/components/responses/Unauthorized'
   /api/v1/me/notifications/unread-count:
     get:
       operationId: getUnreadNotificationCount
@@ -3752,17 +3696,7 @@ paths:
                           count: {type: integer}
                         required: [count]
         '401':
-          description: 未登录（code 1002）
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 1002
-                message: 令牌缺失或无效
-                data:
-                requestId: req_8f3a1b2c
-                timestamp: '2026-08-10T12:00:00Z'
+          $ref: '#/components/responses/Unauthorized'
   /api/v1/me/notifications/read-all:
     post:
       operationId: readAllNotifications
@@ -3779,17 +3713,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
         '401':
-          description: 未登录（code 1002）
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 1002
-                message: 令牌缺失或无效
-                data:
-                requestId: req_8f3a1b2c
-                timestamp: '2026-08-10T12:00:00Z'
+          $ref: '#/components/responses/Unauthorized'
   /api/v1/me/notifications/{id}:
     patch:
       operationId: updateNotification
@@ -3827,17 +3751,7 @@ paths:
                       data:
                         $ref: '#/components/schemas/Notification'
         '401':
-          description: 未登录（code 1002）
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-              example:
-                code: 1002
-                message: 令牌缺失或无效
-                data:
-                requestId: req_8f3a1b2c
-                timestamp: '2026-08-10T12:00:00Z'
+          $ref: '#/components/responses/Unauthorized'
         '404':
           description: 通知不存在或非本人（code 3001）
           content:

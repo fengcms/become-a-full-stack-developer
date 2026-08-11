@@ -409,6 +409,7 @@ def main(path):
     n7_missing_403 = []
     n8_owner_note = []
     n7_inline_401 = []
+    n10_bad = []
     for path, item in spec.get("paths", {}).items():
         for m, op in item.items():
             if m not in HTTP_METHODS:
@@ -424,12 +425,24 @@ def main(path):
                 n7_missing_401.append(f"{m.upper()} {path}")
             else:
                 r401 = resp["401"]
-                if isinstance(r401, dict) and r401.get("$ref") != "#/components/responses/Unauthorized":
-                    n7_inline_401.append(f"{m.upper()} {path}")
+                if isinstance(r401, dict):
+                    if r401.get("$ref") == "#/components/responses/Unauthorized":
+                        pass  # 通用 401，已规范化引用共享组件
+                    else:
+                        # 内联 401：若为裸 {1002}（缺 1004 分支）即 N10 回归
+                        codes = resp_structured_codes(r401)
+                        n7_inline_401.append(f"{m.upper()} {path} codes={sorted(codes)}")
+                        if codes == {1002}:
+                            n10_bad.append(f"{m.upper()} {path}")
             if az.get("minRole") in ("editor", "admin") and "403" not in resp:
                 n7_missing_403.append(f"{m.upper()} {path}")
             if path.startswith("/api/v1/me/") and "{" in path and "ownerOverride" not in az:
                 n8_owner_note.append(f"{m.upper()} {path}")
+    # 共享 Unauthorized 组件 code 集合规范性（N10 守护）
+    unauth = spec.get("components", {}).get("responses", {}).get("Unauthorized")
+    unauth_codes = resp_structured_codes(unauth) if isinstance(unauth, dict) else set()
+    if unauth_codes != {1002, 1004}:
+        fail("N10", f"共享 Unauthorized 组件 code 集合应为 {{1002,1004}}，实际 {sorted(unauth_codes)}")
     if n7_missing_401:
         fail("N7a", f"需登录端点未声明 401（Unauthorized）：{n7_missing_401}")
     else:
@@ -438,12 +451,38 @@ def main(path):
         fail("N7b", f"minRole∈{{editor,admin}} 端点未声明 403（Forbidden）：{n7_missing_403}")
     else:
         ok("editor/admin 受限端点均声明 403（Forbidden 线协议完整）")
+    if n10_bad:
+        fail("N10", f"内联 401 仅声明 code 1002（缺 1004 分支，与共享 Unauthorized 不一致，N10 回归）：{n10_bad}")
+    else:
+        ok("全部内联 401 的 code 集合均与共享 Unauthorized（1002/1004）一致，无 N10 回归")
     if n7_inline_401:
-        notes.append(f"  NOTE N7c：以下 {len(n7_inline_401)} 个端点 401 为内联声明（未 $ref Unauthorized 共享组件，建议后续统一）：{n7_inline_401}")
+        notes.append(f"  NOTE N7c：以下 {len(n7_inline_401)} 个端点 401 为内联且带鉴权专用码（login/refresh 的 1001/1003/1005），属设计有意，非 N10 通用 401：{n7_inline_401}")
     if n8_owner_note:
         notes.append(f"  NOTE N8：以下 /me/* 子资源端点依赖规则⑤隐式归属（未显式 ownerOverride）：{n8_owner_note}")
     else:
         ok("/me/* 子资源端点均已显式声明 ownerOverride（表征一致）")
+
+    # ---------- N9-2. 文章状态转移矩阵机器化（回应四审 N9 残留）----------
+    article_status = (
+        spec.get("components", {}).get("schemas", {}).get("Article", {})
+        .get("properties", {}).get("status", {})
+    )
+    at = article_status.get("x-allowed-transitions")
+    enum_vals = article_status.get("enum", [])
+    n9_edges = {(e["from"], e["to"]) for e in at} if isinstance(at, list) else set()
+    expected_edges = {
+        ("draft", "pending"), ("draft", "published"),
+        ("pending", "published"), ("pending", "draft"),
+        ("published", "draft"), ("published", "pending"),
+    }
+    if not isinstance(at, list) or len(at) == 0:
+        fail("N9-2", "Article.status 缺少 x-allowed-transitions（状态转移矩阵未机器化）")
+    elif not all(isinstance(e, dict) and e.get("from") in enum_vals and e.get("to") in enum_vals for e in at):
+        fail("N9-2", f"x-allowed-transitions 含非法状态值，enum={enum_vals}")
+    elif expected_edges - n9_edges:
+        fail("N9-2", f"x-allowed-transitions 缺失 02 §2.3 合法转移：{sorted(expected_edges - n9_edges)}")
+    else:
+        ok("Article.status.x-allowed-transitions 覆盖 02 §2.3 全部 6 条合法状态转移（状态图已机器化，N9 残留收敛）")
 
     # ---------- R5. 限流声明 ----------
     rl = spec["info"].get("x-rate-limit")

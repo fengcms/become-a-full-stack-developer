@@ -19,9 +19,9 @@ M0 开篇/M1 Node/M2 React/M3 Next(含会员中心)/M4 Flutter/M5 Taro/M6 Go/M7 
 ## 规模
 主线 112 + 支线 14 = 126 篇（最小可交付 41 篇）；周更 2 篇，全量约 14 个月。
 
-## 文档位置（v1.13）
-- 00-项目章程 / 01-内容路线图 / 02-领域模型与API契约（均 v1.13）
-- 契约 `docs/api/openapi.v1.yaml`（**1.10.0**，OpenAPI 3.1）
+## 文档位置（v1.14）
+- 00-项目章程 / 01-内容路线图 / 02-领域模型与API契约（均 v1.14）
+- 契约 `docs/api/openapi.v1.yaml`（**1.11.0**，OpenAPI 3.1）
 - 语义自查 `docs/api/check_contract.py`（双门之一）
 - `docs/prd/README.md` 索引
 
@@ -37,18 +37,23 @@ M0 开篇/M1 Node/M2 React/M3 Next(含会员中心)/M4 Flutter/M5 Taro/M6 Go/M7 
 | v1.12 | 1.9.0 | N1–N6 整改（x-authz 自包含） | 28 OK |
 | 三审 | — | N7/N8/N9（401 完整性/ownerOverride 一致/02 措辞） | 不可冻结 |
 | **v1.13** | **1.10.0** | **N7/N8/N9 整改 + 语义门硬化** | **31 OK** |
+| 四审（后端架构师） | 1.10.0 | N7/N8/N9 复验 + 盲区穿透 | **可冻结（N10 + N9 尾非阻塞）** |
+| **v1.14** | **1.11.0** | **N10 清零 + N9-2 状态转移机器化 + 语义门硬化** | **33 OK** |
 
-## 当前基线（v1.13 / 契约 1.10.0）
-- **双门全绿**：结构门 `openapi-spec-validator` → OK；语义门 `check_contract.py` → **31 OK**（53 路径 / 67 操作 / 45 schema / 46 x-authz / 21 公开 429 / 13 值错误码）。
-- **机器化约束**：`x-authz`（minRole+ownerOverride）授权求值自包含（第 4 铁律，02 反向引用闭环）；`Unauthorized`(401)+`RateLimited`(429) 共享组件；`x-idempotent`/`x-cascade`/`x-max-depth`/上传约束/限流粒度均机器字段；N2 URL/展示字段约束；N7 401/403 完整性；N8 ownerOverride 一致性。语义门已覆盖 N7a/N7b/N8 与 `$ref` 响应错误码解析。
-- **N1–N9 全部清零**，可作为 M1 动手前冻结基线。
+## 当前基线（v1.14 / 契约 1.11.0）
+- **双门全绿**：结构门 `openapi-spec-validator` → OK；语义门 `check_contract.py` → **33 OK**（53 路径 / 67 操作 / 45 schema / 46 x-authz / 21 公开 429 / 13 值错误码）。
+- **机器化约束**：`x-authz`（minRole+ownerOverride）授权求值自包含（第 4 铁律，02 反向引用闭环）；`Unauthorized`(401)+`RateLimited`(429) 共享组件；`x-idempotent`/`x-cascade`/`x-max-depth`/上传约束/限流粒度均机器字段；N2 URL/展示字段约束；N7 401/403 完整性；N8 ownerOverride 一致性；N9-2 `Article.status.x-allowed-transitions` 状态转移矩阵；N10 401 code 集合一致性。语义门已覆盖 N7a/N7b/N8/N10/N9-2 与 `$ref` 响应错误码解析。
+- **N1–N10 全部清零，契约可冻结作为 M1 基线**：四审独立复验确认 N1–N9 真清零；v1.14 进一步清零 N10（7 内联 401 → `$ref Unauthorized`，code 含 1002/1004）并机器化 N9-2（Article.status.x-allowed-transitions 覆盖 §2.3 六条转移）。§2.2 树环检测 / §3.3 阅读去重两处实现细节刻意留契约外（登记为 TODO，由对应后端篇目 PRD 层落地）。
 
-## 非阻塞 TODO
-1. N7c：7 个内联 401 统一为 `$ref` Unauthorized（纯风格）。
+## 非阻塞 TODO（N10/N9-2 已于 v1.14 清零）
+1. **§2.2 树环检测 / §3.3 阅读去重**：两处行为约束（分类环检测、阅读量去重算法）刻意留契约外，由其对应后端篇目 PRD 层落地（避免过度下沉算法实现，契合"文章是产品、代码是素材"铁律）。
 2. F2：应急集 33/35 计数复核（三处引用对齐）。
-3. M1 前由非作者跑穿透式独立终审（呼应 N6 方法学）。
+3. M1 动手前由非作者跑穿透式独立终审（呼应 N6 方法学，双门已硬但人工终审补漏）。
 4. OAuth redirect 白名单 M3-09 显式声明。
 5. M6-09 一致性校验增补「授权行为」断言。
+6. **（可选一致性观察，非缺陷）Comment 状态机未机器化**：`Comment.status`（approved/rejected/reviewing）未配 `x-allowed-transitions`，N9-2 范围本就限定 Article §2.3；评论状态机与 §2.2/§3.3 同源，可一并归入 TODO 1 的 PRD 层处理，不构成权威模糊。
+
+> **【评审终结裁定 · 2026-08-11 晚】** 历经「内容审阅→后端架构师一审(R1–R11)→二审(N1–N6)→三审(N7–N9)→四审(N10/N9-2)→终评结案」六轮，F1 一脉（错误码→授权求值→线协议→状态机）五层约束已全部机器化且经双门（33 OK）硬校验。第四轮回复经独立穿透脚本复验**属实、无假修复、未引入新高危缺陷**，**评审正式终结，契约冻结为 M1 动手前基线（v1.11.0 / 文档 v1.14）**，无需第五轮评审。
 
 ## 注意事项
 - 用户 FungLeo，CSDN 前端专家。文风以本项目章程第九节为准（克制结构化，区别于全局 BLOG_STYLE_GUIDE），动笔前仍读全局脱敏规则。

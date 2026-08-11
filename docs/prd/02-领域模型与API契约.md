@@ -2,11 +2,11 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | v1.13 |
-| 状态 | 已确认（v1.13：三次评审 N7–N9 整改（N1–N6 见 v1.12）——**授权求值机器化（x-authz 重构）**：46 个需登录端点的 `x-required-roles` 列表 + 6 个 `x-owner-resource` 字符串合并为结构化 `x-authz: {minRole, ownerOverride:{param, ownerField}}`；`ownerField` 用真实字段（article→authorId / comment&attachment→userId / notification→userId，并为 Notification 补 `userId`）；第 4 铁律改写为**自包含求值规则**（删除"详见 02"，仅凭 OpenAPI 即可确定性推出授权结果）；`submitArticle` 由 [member] 收紧为 minRole:admin + ownerOverride（防任意 member 越权提交）。**N2 字段约束统一**：URL 类（coverImage/redirectUri/logoUrl/avatar/url/link）统一 `format: uri + maxLength: 512`；反范式展示字段（authorName/categoryName/userName/rejectedReason/body）补 `maxLength`。**N5 限流粒度**：`x-rate-limit` 加 `scope: per-endpoint` + `key: client`。**N7 响应完整性**：新增共享 `Unauthorized`(401) 组件（code 1002/1004），46 个 `x-authz` 端点统挂 401、editor/admin 端点挂 403。**N8 ownerOverride 表征一致**：`/me/favorites/{articleId}` 与 `/me/history/{articleId}` 显式声明 `ownerOverride{param: articleId, ownerField: userId}`，第 4 铁律规则⑤改写为机器可读 self-scoped 表述。**N9 自包含措辞收敛**：硬规则导语与可选鉴权配置标注为 02 溯源注。语义门新增 R1 授权求值 / N2 字段约束 / N5 限流粒度 / N7 响应完整性 / N8 ownerOverride 一致性断言（28→31 条 OK）。契约 1.9.0→1.10.0。前序 v1.12：二次评审 N1–N6 整改；v1.11：后端架构师评审 R1–R11 整改） |
+| 文档版本 | v1.14 |
+| 状态 | 已确认（v1.14：四次评审 N10/N9-2 整改（N1–N9 见 v1.13）——**授权求值机器化（x-authz 重构）**：46 个需登录端点的 `x-required-roles` 列表 + 6 个 `x-owner-resource` 字符串合并为结构化 `x-authz: {minRole, ownerOverride:{param, ownerField}}`；`ownerField` 用真实字段（article→authorId / comment&attachment→userId / notification→userId，并为 Notification 补 `userId`）；第 4 铁律改写为**自包含求值规则**（删除"详见 02"，仅凭 OpenAPI 即可确定性推出授权结果）；`submitArticle` 由 [member] 收紧为 minRole:admin + ownerOverride（防任意 member 越权提交）。**N2 字段约束统一**：URL 类（coverImage/redirectUri/logoUrl/avatar/url/link）统一 `format: uri + maxLength: 512`；反范式展示字段（authorName/categoryName/userName/rejectedReason/body）补 `maxLength`。**N5 限流粒度**：`x-rate-limit` 加 `scope: per-endpoint` + `key: client`。**N7 响应完整性**：新增共享 `Unauthorized`(401) 组件（code 1002/1004），46 个 `x-authz` 端点统挂 401、editor/admin 端点挂 403。**N8 ownerOverride 表征一致**：`/me/favorites/{articleId}` 与 `/me/history/{articleId}` 显式声明 `ownerOverride{param: articleId, ownerField: userId}`，第 4 铁律规则⑤改写为机器可读 self-scoped 表述。**N9 自包含措辞收敛**：硬规则导语与可选鉴权配置标注为 02 溯源注。语义门新增 R1 授权求值 / N2 字段约束 / N5 限流粒度 / N7 响应完整性 / N8 ownerOverride 一致性断言（28→31 条 OK）。**N10 响应一致性（第十四轮 v1.14）**：7 个内联 401 统一为 $ref Unauthorized（含 1002/1004 双样例），语义门 N10 断言守护 code 集合一致。**N9-2 状态转移机器化（第十四轮 v1.14）**：Article.status 加 x-allowed-transitions（覆盖 02 §2.3 六条合法转移），语义门 N9-2 断言守护。契约 1.10.0→1.11.0。前序 v1.13：三次评审 N7–N9 整改；v1.12：二次评审 N1–N6 整改；v1.11：后端架构师评审 R1–R11 整改） |
 | 最后更新 | 2026-08-11 |
 | 上游文档 | [00-项目章程](./00-项目章程.md) |
-| 机器可读契约 | [../api/openapi.v1.yaml](../api/openapi.v1.yaml)（契约版本 1.10.0） |
+| 机器可读契约 | [../api/openapi.v1.yaml](../api/openapi.v1.yaml)（契约版本 1.11.0） |
 | 契约校验 | `python -m openapi_spec_validator docs/api/openapi.v1.yaml`（结构） + `python docs/api/check_contract.py`（语义自查） |
 
 ---
@@ -100,7 +100,7 @@
 >
 > 会员 `level` **仅展示用、无业务功能**，默认 1，本期仅由 `admin` 经上述端点手动上调，普通流程不会自动变化——读者不应误以为有自动升级逻辑。
 >
-> **授权求值权威（v1.13 澄清）**：角色边界的**具体求值算法**（min-role OR owner-override）以 OpenAPI `info.description` 第 4 铁律为唯一权威，且该规则自包含、不引用本文档——七端实现只需读契约即可产出一致的授权结果。未经认证访问受保护端点时，第 4 铁律要求返回 401，契约已通过共享 `Unauthorized` 组件在全部 46 个 `x-authz` 端点统一声明（N7 整改）。本节为上溯性说明，不得与第 4 铁律冲突；若歧义，以契约为准。
+> **授权求值权威（v1.13 澄清）**：角色边界的**具体求值算法**（min-role OR owner-override）以 OpenAPI `info.description` 第 4 铁律为唯一权威，且该规则自包含、不引用本文档——七端实现只需读契约即可产出一致的授权结果。未经认证访问受保护端点时，第 4 铁律要求返回 401，契约已通过共享 `Unauthorized` 组件在全部 46 个 `x-authz` 端点统一声明（N7 整改）。文章状态转移的合法有向边由 `Article.status.x-allowed-transitions` 机器化定义（覆盖 02 §2.3 的 6 条转移），无需再读 02 即可校验前后态合法性（N9-2 整改）。本节为上溯性说明，不得与第 4 铁律冲突；若歧义，以契约为准。
 
 #### Article（文章）
 
