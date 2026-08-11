@@ -10,10 +10,10 @@ openapi-spec-validator 只保证「结构合法」。本脚本补上「逻辑无
   E. 机器强制约束：sort 枚举、可选鉴权写法
   F. 错误码机器强制：每个错误响应必须挂**结构化** code（example / examples 均可机读），
      码落在 ErrorCode 枚举、枚举非零码均在结构化示例中落地（不再以 description 兜底）
-  R1. 授权角色机器化：每个需登录端点必须声明 x-required-roles，取值 ∈ member/editor/admin
-  R5. 限流声明：info.x-rate-limit + components.responses.RateLimited + ErrorCode 5001 三者齐备
-  G.  扩展约束结构合法：x-cascade / x-max-depth / x-max-size-bytes / x-accepted-mime-types /
-      x-owner-resource / x-idempotent 取值与挂载位置正确
+  R1/N1. 授权求值机器化：每个需登录端点必须声明 x-authz{minRole, 可选 ownerOverride{param,ownerField}}；minRole ∈ member/editor/admin；ownerOverride.param 须为本操作 path 参数、ownerField 须属主实体真实字段
+  R5/N5. 限流声明：info.x-rate-limit + components.responses.RateLimited + ErrorCode 5001 + scope/key 齐备
+  G.  扩展约束结构合法：x-cascade / x-max-depth / x-max-size-bytes / x-accepted-mime-types / x-idempotent
+  N2. URL 类字段（format:uri + maxLength）与反范式展示字段（maxLength）约束统一，防止两实现分裂
 
 用法：python3 docs/api/check_contract.py docs/api/openapi.v1.yaml
 """
@@ -319,38 +319,80 @@ def main(path):
     if desc_only:
         notes.append(f"  NOTE 以下码仅出现在响应 description 中（未结构化，F3 不认其落地，须补 example）：{sorted(desc_only)}")
 
-    # ---------- R1. 授权角色机器化 ----------
+    # ---------- R1/N1. 授权求值机器化（x-authz）----------
     r1_missing = []
     r1_bad = []
-    r1_public_role = []
+    r1_owner_param = []
+    r1_owner_field = []
+    r1_legacy = []
     n_login = 0
+    # 收集所有 schema 的 property 名（用于 ownerField 存在性粗校验）
+    all_props = set()
+    for sname, sch in spec.get("components", {}).get("schemas", {}).items():
+        if isinstance(sch, dict):
+            all_props |= set((sch.get("properties") or {}).keys())
+    # 端点 operationId -> 主实体 schema（用于 ownerField 精确校验）
+    OWNER_ENTITY = {
+        "updateArticle": "Article",
+        "deleteArticle": "Article",
+        "submitArticle": "Article",
+        "deleteComment": "Comment",
+        "deleteAttachment": "Attachment",
+        "updateNotification": "Notification",
+    }
     for path, item in spec.get("paths", {}).items():
         for m, op in item.items():
             if m not in HTTP_METHODS:
                 continue
+            if op.get("x-required-roles") is not None or op.get("x-owner-resource") is not None:
+                r1_legacy.append(f"{m.upper()} {path}")
             sec = effective_security(item, op)
             if is_public(sec):
-                if op.get("x-required-roles") is not None:
-                    r1_public_role.append(f"{m.upper()} {path}")
                 continue
             n_login += 1
-            roles = op.get("x-required-roles")
-            if not isinstance(roles, list) or not roles:
+            az = op.get("x-authz")
+            if not isinstance(az, dict) or "minRole" not in az:
                 r1_missing.append(f"{m.upper()} {path}")
-            else:
-                for r in roles:
-                    if r not in ROLES:
-                        r1_bad.append(f"{m.upper()} {path} -> {r}")
+                continue
+            if az["minRole"] not in ROLES:
+                r1_bad.append(f"{m.upper()} {path} -> minRole={az['minRole']}")
+            oo = az.get("ownerOverride")
+            if oo is not None:
+                if not isinstance(oo, dict) or "param" not in oo or "ownerField" not in oo:
+                    r1_owner_field.append(f"{m.upper()} {path} -> ownerOverride 结构非法")
+                    continue
+                op_params = [p.get("name") for p in op.get("parameters", []) if isinstance(p, dict)]
+                item_params = [p.get("name") for p in item.get("parameters", []) if isinstance(p, dict)]
+                if oo["param"] not in op_params + item_params:
+                    r1_owner_param.append(f"{m.upper()} {path} -> ownerOverride.param={oo['param']} 非本操作 path 参数")
+                if oo["ownerField"] not in all_props:
+                    r1_owner_field.append(f"{m.upper()} {path} -> ownerOverride.ownerField={oo['ownerField']} 非已知字段")
+                oid = op.get("operationId")
+                ent = OWNER_ENTITY.get(oid)
+                if ent:
+                    ent_props = (spec["components"]["schemas"].get(ent, {}) or {}).get("properties", {})
+                    if oo["ownerField"] not in ent_props:
+                        r1_owner_field.append(f"{m.upper()} {path} -> ownerField={oo['ownerField']} 不属于 {ent}")
     if r1_missing:
-        fail("R1a", f"需登录端点未声明 x-required-roles：{r1_missing}")
+        fail("R1a", f"需登录端点未声明 x-authz.minRole：{r1_missing}")
     else:
-        ok(f"全部 {n_login} 个需登录端点均声明了 x-required-roles（授权角色已机器化）")
+        ok(f"全部 {n_login} 个需登录端点均声明了 x-authz.minRole（授权角色已机器化）")
     if r1_bad:
-        fail("R1b", f"x-required-roles 含非法角色（须 ∈ member/editor/admin）：{r1_bad}")
+        fail("R1b", f"x-authz.minRole 非法（须 ∈ member/editor/admin）：{r1_bad}")
     else:
-        ok("x-required-roles 取值均合法（member/editor/admin）")
-    if r1_public_role:
-        notes.append(f"  NOTE 以下公开端点带了 x-required-roles（通常不必要，供人工复核）：{r1_public_role}")
+        ok("x-authz.minRole 取值均合法（member/editor/admin）")
+    if r1_owner_param:
+        fail("R1c", f"ownerOverride.param 非本操作 path 参数：{r1_owner_param}")
+    else:
+        ok("ownerOverride.param 均指向本操作真实 path 参数（6 个归属端点统一为 id）")
+    if r1_owner_field:
+        fail("R1d", f"ownerOverride.ownerField 非法或不属于主实体：{r1_owner_field}")
+    else:
+        ok("ownerOverride.ownerField 均指向主实体真实归属字段（article→authorId / comment&attachment→userId / notification→userId）")
+    if r1_legacy:
+        fail("R1e", f"仍存在遗留 x-required-roles / x-owner-resource（应已重构为 x-authz）：{r1_legacy}")
+    else:
+        ok("无遗留 x-required-roles / x-owner-resource（已全量重构为 x-authz）")
 
     # ---------- R5. 限流声明 ----------
     rl = spec["info"].get("x-rate-limit")
@@ -368,7 +410,6 @@ def main(path):
 
     # ---------- G. 扩展约束结构合法 ----------
     g_cascade = []
-    g_owner = []
     g_idem_409 = []
     g_size = []
     g_mime = []
@@ -380,12 +421,6 @@ def main(path):
             xc = op.get("x-cascade")
             if xc is not None and xc not in CASCADE_VALUES:
                 g_cascade.append(f"{m.upper()} {path} -> {xc}")
-            xo = op.get("x-owner-resource")
-            if xo is not None:
-                if not isinstance(xo, str) or not xo:
-                    g_owner.append(f"{m.upper()} {path} -> {xo!r}")
-                elif is_public(effective_security(item, op)):
-                    g_owner.append(f"{m.upper()} {path} 带 x-owner-resource 却是公开端点")
             if op.get("x-idempotent") is True and "409" in op.get("responses", {}):
                 g_idem_409.append(f"{m.upper()} {path}")
     for name, sch in spec.get("components", {}).get("schemas", {}).items():
@@ -420,14 +455,62 @@ def main(path):
         fail("G4", f"x-accepted-mime-types 非法（须为字符串列表）：{g_mime}")
     else:
         ok("上传 x-accepted-mime-types 合法（字符串列表）")
-    if g_owner:
-        fail("G5", f"x-owner-resource 异常：{g_owner}")
-    else:
-        ok("x-owner-resource 均非空字符串且只挂在需登录端点")
     if g_idem_409:
         fail("G6", f"x-idempotent 端点不应声明 409（重复调用须返回 200）：{g_idem_409}")
     else:
         ok("x-idempotent 端点均未声明 409（幂等语义已机器化）")
+
+    # ---------- N2. URL 类与展示字段约束统一（防止两实现约束分裂）----------
+    schemas = spec.get("components", {}).get("schemas", {})
+
+    def prop(schema_name, pname):
+        s = schemas.get(schema_name)
+        if not isinstance(s, dict):
+            return None
+        return (s.get("properties") or {}).get(pname)
+
+    url_fields = [
+        ("Article", "coverImage"), ("ArticleSummary", "coverImage"),
+        ("ArticleCreate", "coverImage"), ("OAuthCallbackRequest", "redirectUri"),
+        ("SiteSetting", "logoUrl"), ("ProfileUpdateRequest", "avatar"),
+        ("Attachment", "url"), ("Notification", "link"),
+    ]
+    n2_url = []
+    for sn, pn in url_fields:
+        p = prop(sn, pn)
+        if p is None:
+            n2_url.append(f"{sn}.{pn} 缺失")
+        elif p.get("format") != "uri" or not isinstance(p.get("maxLength"), int):
+            n2_url.append(f"{sn}.{pn} 须 format:uri + 整数 maxLength")
+    if n2_url:
+        fail("N2a", f"URL 类字段约束缺失（须统一 format:uri + maxLength）：{n2_url}")
+    else:
+        ok("URL 类字段（coverImage/redirectUri/logoUrl/avatar/url/link）均 format:uri + maxLength（约束统一）")
+
+    display_fields = [
+        ("Article", "authorName"), ("ArticleSummary", "authorName"),
+        ("Article", "categoryName"), ("ArticleSummary", "categoryName"),
+        ("Comment", "userName"), ("Comment", "rejectedReason"),
+        ("Notification", "body"),
+    ]
+    n2_disp = []
+    for sn, pn in display_fields:
+        p = prop(sn, pn)
+        if p is None:
+            n2_disp.append(f"{sn}.{pn} 缺失")
+        elif not isinstance(p.get("maxLength"), int):
+            n2_disp.append(f"{sn}.{pn} 缺 maxLength")
+    if n2_disp:
+        fail("N2b", f"反范式/展示字段缺 maxLength（与源字段长度可能不一致）：{n2_disp}")
+    else:
+        ok("反范式展示字段（authorName/categoryName/userName/rejectedReason/body）均设 maxLength（与源字段对齐）")
+
+    # ---------- N5. 限流粒度声明 ----------
+    rl = spec["info"].get("x-rate-limit")
+    if isinstance(rl, dict) and rl.get("scope") in ("per-endpoint", "per-client-global") and rl.get("key"):
+        ok(f"限流粒度已声明：scope={rl['scope']}，key={rl['key']}（消除单桶/每端点歧义）")
+    else:
+        fail("N5", "info.x-rate-limit 未声明 scope / key（限流粒度歧义）")
 
     # ---------- 输出 ----------
     print("\n".join(notes))
@@ -437,7 +520,7 @@ def main(path):
         for f in failures:
             print("  FAIL", f)
         sys.exit(1)
-    print("语义自查全部通过（结构+operationId+孤儿实体+死胡同状态+机器强制约束+错误码+R1角色机器化+R5限流+G扩展约束）")
+    print("语义自查全部通过（结构+operationId+孤儿实体+死胡同状态+机器强制约束+错误码+R1授权求值机器化+R5/N5限流+G扩展约束+N2字段约束）")
 
 
 if __name__ == "__main__":

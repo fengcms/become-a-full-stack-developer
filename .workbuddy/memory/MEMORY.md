@@ -17,8 +17,8 @@
    - M4 Flutter / M5 Taro / M6 Go 后端重写 / M7 Vue3 后台重写 / M8 收官
    - **会员中心归入 M3**（同属一个 Next.js 应用），不单独占 M。
    - M3 结束即为完整交付点；M4–M7（含 Go/Vue 同契约重写）是可延后加分项，其中 M6/M7 为差异化王牌。
-7. **唯一硬地基**：领域模型 + API 契约。已定稿为 `docs/prd/02-领域模型与API契约.md` 与 `docs/api/openapi.v1.yaml`（**契约版本 1.8.0**，OpenAPI 3.1；文档 00/01/02/README 统一 **v1.11**）。**双门校验均已独立复验 PASS（第十一轮 v1.11 整改后复跑确认）**：结构门 `openapi-spec-validator` → OK；语义门 `python docs/api/check_contract.py` → 53 路径 / 67 操作 / **45 schema** 全绿（22 条 OK 断言：无孤儿 schema、状态机闭环、operationId 唯一、Sort 带符号枚举化、可选鉴权标准写法、**错误码机器强制校验**、**RBAC 角色机器化 R1**、**限流声明 R5**、**扩展约束 G**）。**错误码已机器化**：`ErrorCode` 枚举（13 值：0 + 12 错误码，v1.11 新增 5001）+ 每个 4xx/5xx 响应钉死 `code` 示例，语义门 F 段强制校验（枚举码须在结构化 `example`/`examples` 落地、禁未定义码，已去 `description` 兜底）。**授权角色 RBAC 已机器化（v1.11 清零后端架构师评审 R1–R11）**：`x-required-roles`（member/editor/admin，层级 member<editor<admin）覆盖全部 46 需登录端点；`x-owner-resource`（articleId/commentId/attachmentId/notificationId）×6 标归属；`x-idempotent`/`x-cascade`(none/children/soft-hide)/`x-max-depth:4`/上传 `x-max-size-bytes`+`x-accepted-mime-types`/`ErrorCode 5001` + `RateLimited` 组件 + `info.x-rate-limit`（21 公开端点挂 429）均下沉为机器字段；语义门新增 R1/R5/G 段强制；02 文档自身角色矛盾（端点目录误标 categories/tags/评论审核/approve"仅 admin"）已统一为 `editor/admin`（以角色定义段为权威）。Go 后端实现完全一致的接口，Vue3 后台对接完全一致的接口。契约变更必须先改 OpenAPI 再改实现。**`SiteSetting` 站点配置字段（v1.9 扩展后）：siteName / siteTitle / siteDescription / siteKeywords / logoUrl / copyright / updatedAt**，端点 `GET /site/settings`（公开）+ `GET/PATCH /admin/site/settings`（admin）。**v1.10 新增辅助接口**：纯计算/聚合类 `adjacent`/`related`/`toc`/`categories/{id}/breadcrumb`/`categories/stats`/`stats`/`search`；互动类 `like`（`Like` 实体）+ `notifications`（`Notification` 实体），`Article`/`ArticleSummary` 加 `likeCount`。标签云计数已由 `GET /tags` 的 `Tag.articleCount` 覆盖不重复造；RSS/sitemap/robots 列为 M3 实现笔记不进 JSON 契约。
-   - ~~⚠️ 版本号错位（已修）~~：00/01/02/README 已统一为 **v1.11**，契约 1.8.0，三文档与契约版本完全对齐。
+7. **唯一硬地基**：领域模型 + API 契约。已定稿为 `docs/prd/02-领域模型与API契约.md` 与 `docs/api/openapi.v1.yaml`（**契约版本 1.9.0**，OpenAPI 3.1；文档 00/01/02/README 统一 **v1.12**）。**双门校验均已独立复验 PASS（第十二轮 v1.12 整改后复跑确认）**：结构门 `openapi-spec-validator` → OK；语义门 `python docs/api/check_contract.py` → 53 路径 / 67 操作 / **45 schema** 全绿（28 条 OK 断言：无孤儿 schema、状态机闭环、operationId 唯一、Sort 带符号枚举化、可选鉴权标准写法、**错误码机器强制校验**、**授权求值机器化 R1/N1**、**限流声明 R5/N5**、**扩展约束 G**、**字段约束 N2**）。**错误码已机器化**：`ErrorCode` 枚举（13 值：0 + 12 错误码，v1.11 新增 5001）+ 每个 4xx/5xx 响应钉死 `code` 示例，语义门 F 段强制校验（枚举码须在结构化 `example`/`examples` 落地、禁未定义码，已去 `description` 兜底）。**授权求值 RBAC 已机器化（v1.12 清零二次评审 N1–N6）**：46 需登录端点全部声明结构化 `x-authz:{minRole, ownerOverride?:{param,ownerField}}`；minRole 单字段（member/editor/admin，无列表歧义，顺带解决 N3），6 个归属端点带 `ownerOverride`（param 为真实 path 参数 `id`，ownerField 用真实字段：article→authorId、comment&attachment→userId、notification→userId——并为 Notification 补 `userId` 字段，顺带解决 N4）；第 4 铁律改写为**自包含求值规则**（admin 始终放行；min-role **或** ownerOverride 归属，删除"详见 02"，仅凭 OpenAPI 即可确定性推出授权结果）；`x-idempotent`/`x-cascade`(none/children/soft-hide)/`x-max-depth:4`/上传 `x-max-size-bytes`+`x-accepted-mime-types`/`ErrorCode 5001` + `RateLimited` 组件 + `info.x-rate-limit`（scope:per-endpoint,key:client，21 公开端点挂 429）均下沉为机器字段；语义门 R1 段升级校验 ownerOverride.param 真实 path 参数 + ownerField 真实归属字段，并新增 N2 URL/展示字段约束、N5 限流粒度断言（22→28 条 OK）；02 文档自身角色矛盾（端点目录误标 categories/tags/评论审核/approve"仅 admin"）已统一为 `editor/admin`（以角色定义段为权威）。Go 后端实现完全一致的接口，Vue3 后台对接完全一致的接口。契约变更必须先改 OpenAPI 再改实现。**`SiteSetting` 站点配置字段（v1.9 扩展后）：siteName / siteTitle / siteDescription / siteKeywords / logoUrl / copyright / updatedAt**，端点 `GET /site/settings`（公开）+ `GET/PATCH /admin/site/settings`（admin）。**v1.10 新增辅助接口**：纯计算/聚合类 `adjacent`/`related`/`toc`/`categories/{id}/breadcrumb`/`categories/stats`/`stats`/`search`；互动类 `like`（`Like` 实体）+ `notifications`（`Notification` 实体），`Article`/`ArticleSummary` 加 `likeCount`。标签云计数已由 `GET /tags` 的 `Tag.articleCount` 覆盖不重复造；RSS/sitemap/robots 列为 M3 实现笔记不进 JSON 契约。
+   - ~~⚠️ 版本号错位（已修）~~：00/01/02/README 已统一为 **v1.12**，契约 1.9.0，三文档与契约版本完全对齐。
    - **公开内容可见性铁律（N2，安全硬约束）**：公开列表（`GET /articles`）忽略 `status`、只返 `published`；未发布详情/评论对匿名返回 404；后台管理筛选走鉴权端点 `GET /admin/articles`。照契约实现不会泄露草稿/待审。
 8. **后端技术栈（M1，已定）**：Hono + Drizzle ORM + Cloudflare D1（数据库）+ Cloudflare R2（对象存储），**同时兼容部署在普通 Linux 服务器**。由此必须写"适配层"让同一份业务逻辑在边缘（CF）与自管 Linux 上都能跑——这是高价值内容题材（M0-03、M1-24）。
 9. **文章状态机（极简三态）**：`draft / pending / published`。会员投稿默认 `pending`（待审核）；管理员发布直接 `published`（已审核）。详见 02 文档 §2.3。去掉了 `archived`。
@@ -48,30 +48,36 @@
 
 ## 文档位置
 
-- `docs/prd/00-项目章程.md` — 定位、非目标、风险、文风约定、技术方向与产品决策（**v1.8**）
-- `docs/prd/01-内容路线图.md` — 八段式完整大纲（北极星文档，**v1.8**）
-- `docs/prd/02-领域模型与API契约.md` — 实体/关系/端点/错误码（**v1.8**，与 00/01 同轮）
-- `docs/api/openapi.v1.yaml` — 机器可读 API 契约（**契约版本 1.7.0**，双门校验 PASS）
+- `docs/prd/00-项目章程.md` — 定位、非目标、风险、文风约定、技术方向与产品决策（**v1.12**）
+- `docs/prd/01-内容路线图.md` — 八段式完整大纲（北极星文档，**v1.12**）
+- `docs/prd/02-领域模型与API契约.md` — 实体/关系/端点/错误码（**v1.12**，与 00/01 同轮）
+- `docs/api/openapi.v1.yaml` — 机器可读 API 契约（**契约版本 1.9.0**，双门校验 PASS）
 - `docs/prd/README.md` — 文档索引与进度
 
 ## 审阅发现（持续更新 · 截止 2026-08-11）
 
 **历史审阅（内容视角，已清零）**：v1.7 冻结时清零 F1–F4——错误码机器化（定义 `ErrorCode` 12 值枚举 + 每错误响应钉 `code` 示例 + 语义门 F 段强制校验）、应急集 33→35、§三 ?status 矛盾修正、三文档版本对齐 v1.7；v1.8 加 editor 角色 + 站点配置 + Sort 带符号，应急集 35→37。F5–F7 为可选散文优化，冻结不阻塞。
 
-**本次复审（后端架构师视角 · 2026-08-11 · 独立跑双门 + 脚本深剖）**：结论 **不可冻结**。结构/错误码已扎实，但暴露比 F1 更隐蔽的系统性缺陷——**授权（RBAC）完全未机器化**，且文档 §3.2 自身铁律（约束须下沉、不许只写散文）在"角色"上被违反；另有多处 doc/contract 漂移。完整报告：`docs/review/API契约专项审阅-后端架构师视角.md`。
+**一审复审（后端架构师视角 · 2026-08-11 上午 · 独立跑双门 + 脚本深剖）**：结论 **不可冻结**。结构/错误码已扎实，但暴露比 F1 更隐蔽的系统性缺陷——**授权（RBAC）完全未机器化**，且文档 §3.2 自身铁律（约束须下沉、不许只写散文）在"角色"上被违反；另有多处 doc/contract 漂移。完整报告：`docs/review/API契约专项审阅-后端架构师视角.md`。R1–R11 明细见该报告。
 
-- **🔴 R1（致命）RBAC 角色未机器化**：`securitySchemes` 仅 `bearerAuth`、0 个 scope；所有 admin/editor 端点一律 `security:[bearerAuth]`（继承全局），契约无法表达"需 admin 角色"。02 §三 line 96–99 定义三角色边界、§3.2 line 479 明令约束机器化，却对角色网开一面。→ Node/Go 必分歧、M6-09 验不出、前端不知隐藏按钮。`check_contract.py` 不查 RBAC 致全绿假象。修复：securitySchemes 加 oauth2 scopes 或 `x-required-roles`，脚本加断言。
-- **🔴 R2（致命/高）点赞幂等漂移**：02 line 589 称"点赞幂等，重复返回当前态"，但 `POST /articles/{id}/like` 仅 200/401/404、无示例、无 409；`POST /me/favorites` 重复收藏未定义。
-- **🟠 R3（高）85 字符串字段零约束**：email 无 format、password 无 minLength、slug 无 pattern、title 无 maxLength 等。
-- **🟠 R4（高）`POST /upload` 无文件大小/类型约束**；**🟠 R5（高）无 429 限流**。
-- **🟡 R6–R11（中/低）**：ownership/状态副作用只在散文（R6）、删除级联未契约化（R7）、`GET /users/{id}` 权限模糊（R8）、错误码 1004/1005 缺 example 且校验门 description 兜底过松（R9）、分类无最大深度（R10）、无版本废弃策略（R11）。
-- **冻结建议**：清零 R1–R5 方可冻结；R6–R8 高优先；R9–R11 可延后。
+**产品 AI 回复（2026-08-11）**：`docs/review/API契约专项审阅-回复报告.md` 声称 R1–R11 全清零、契约 1.8.0、双门 22 断言全绿、可冻结；四文档升 v1.11、F4 顺带清零。
+
+**二次评审（Backend Architect · 2026-08-11 晚 · 独立复验回复 + 穿透脚本核验）**：结论 **仍不可冻结**。回复"字段已声明"层面基本属实（R1 角色覆盖 46 端点、R2 幂等示例、R3 主体、R4/R5、R6–R11、F4 均脚本核验真实落地），但 R1 只修了一半、R3 有遗漏。完整报告：`docs/review/API契约专项审阅-二次评审.md`。
+- **🔴 N1（原 R1 残留·高）授权"求值"未机器化 + 硬规则外置**：`x-required-roles` 只编码"最小角色"，完整判定（min-role OR owner-override）只活在 info.description 散文，且末尾"详见 02 文档角色边界段"把规则指向另一文档 → OpenAPI 不自包含，七端授权行为仍会漂移；与 F1 同一缺陷家族（约束在散文）。修复：内联 `x-authz:{minRole, ownerOverride:{param, ownerField}}` 或把求值规则完整写进契约、去掉"详见 02"。
+- **🟠 N2（原 R3 残留·中）URL 类字段约束不一致**：`logoUrl` 有 `maxLength:512`，但 `coverImage`(Article/ArticleSummary/ArticleCreate×3) 与 `OAuthCallbackRequest.redirectUri` 仅 `type:string,nullable` 零约束；`authorName/categoryName/userName` 等反范式展示字段亦无限长。同是 URL 待遇分裂；redirectUri 无 `format:uri` 且开放重定向白名单未在契约声明。
+- **🟡 N3（低）`x-required-roles` 用列表编码最小角色语义模糊** → 建议改 `x-min-role` 单字段（与 N4 合并）。
+- **🟡 N4（中低）`x-owner-resource` 只标参数名未标归属字段**：如 `articleId` 未说 Article 归属字段是 `authorId`；实现端须猜/翻 02。建议 `{param, ownerField}`。
+- **🟡 N5（低）限流粒度未声明**：`info.x-rate-limit` "所有公开端点 60/1m" 未说 per-endpoint 还是 per-client-global，两种实现行为差异大。
+- **🟡 N6（方法学·中）双门"全绿"是作者自证非独立验证**：`check_contract.py` 为验自身修复而写，只验字段存在/语法合法，验不了取值正确/逻辑完整；N1/N2/N4 均落其盲区。冻结前应由非作者跑穿透核验或把 N1 求值、N2 字段约束纳入语义门断言。
+- **冻结建议**：N1 是动摇"七端一致"承诺的硬伤，须清零；N2 建议同期清零；N3/N4/N5 设计增强可一并处理；N6 不改文档、改写验证方式。
+- **二审已排除的误报/不成立疑点**：① `POST /admin/articles/{id}/status`(admin) 与 `.../approve`(editor/admin) 非矛盾，是权限分层；② "鉴权端点不设限流"仅豁免已登录的 logout/auth-me，爆破高危的 login/register/refresh/callback 均已挂 429，爆破担忧不成立。
 - **🟠 F2 应急集计数不一致**：01 §13 文字「以下 33 篇」，代码块实列 35 条唯一项（脚本核验）。README、00 亦引用 33。需统一为 33 或 35，并复核三处引用。
 - **🟠 F3 §三 与 N2 矛盾**：§三「过滤 | 列表支持 ?category=、?tag=、?status=、?keyword=」把 `?status=` 列为公开列表通用过滤器；但 N2 + §五 + 契约均表明公开 `GET /articles` 忽略 status（契约该端点无 status 参数，参数仅 page/pageSize/sort/category/tag/keyword）。§三 需改为「?status= 仅用于鉴权后台列表 GET /admin/articles」。
 - **🟠 F4 三份核心文档版本号错位**：00/01=v1.6，02=v1.5，但 02 的 v1.5 内容正对应 00/01 的 v1.6 轮次（见上「版本号错位」）。建议冻结前统一。
 - **🟡 F5 散文细节**：§3.3 笔误 `POST /articles/{id}/view}`（多余 `}`）；§2.2 User.email「用于注册与找回」但「找回」是 Non-goal(P10)，应改述；§3 命名边界举例 `Article / Member / Comment` 中 Member 非 schema（实体是 User，公开投影为 MemberProfile）；00 §十二 变更记录顺序乱（v1.4 排在 v1.6 之后）。
 - **🟡 F6 语义门覆盖盲区（元发现）**：`check_contract.py` 的 D 项「死胡同状态」是子串启发式而非真可达性分析；且整脚本**完全不检查错误码**——而错误码恰是仍「只活在散文里」的约束，也是新不一致滋生处。建议加一项：扫描所有 4xx/5xx 响应，断言其 description/示例含落在「已定义错误码集合」内的 code，且 §六 表里的码在 yaml 至少出现一次。
 - **🟡 F7（可选）**：49 端点已覆盖，但少数（admin reset-password、OAuth callback→M3-09、reading-history-delete→M3-10、attachment-delete→M1-18/M2-10）建议在路线图显式标注对应篇目。基本 OK，仅供参考。
+- **产品 AI 二次回复（2026-08-11 晚）**：`docs/review/API契约专项审阅-二次评审-回复报告.md` 声称 N1–N6 全清零、契约 1.9.0、双门 28 断言全绿、可冻结；四文档升 v1.12。N1 通过 `x-authz` 结构化 + 第 4 铁律自包含解决（授权求值不再外置 02）；N2 URL/展示字段统一约束；N3/N4/N5 一并处理；N6 方法论盲区已通过升级语义门收窄，并登记 M1 前独立终审。修正了二审 N4 的两处误判（Attachment 归属字段实为 `userId` 非 `uploaderId`；Notification 原无归属字段，已补 `userId`）；顺带收紧 `submitArticle` 越权隐患（原 [member] 会让任意 member 凭角色提交他人草稿，现 minRole:admin + ownerOverride）。
 
 ## 待办（按顺序）
 

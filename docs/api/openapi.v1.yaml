@@ -16,18 +16,23 @@ info:
 
     3. 约束尽量机器化：可枚举的约束一律下沉到 enum / security / responses，不靠散文自觉（02 §3.2 机器强制约束清单）。
 
-    4. 授权角色机器化：每个需登录的端点通过 `x-required-roles`（取值 member / editor / admin，层级 member < editor < admin）声明**允许的最小角色**；归属敏感端点另用 `x-owner-resource` 标注资源归属字段（owner 或 elevated 角色可操作）。公开端点 `security: []` 或可选鉴权 `security: [{}, {bearerAuth: []}]`。鉴权评估规则：admin 始终放行；其余角色当且仅当其层级 ≥ 端点 `x-required-roles` 最小层级，或与 `x-owner-resource` 指向的资源存在归属关系时放行。详见 02 文档角色边界段。
+    4. 授权求值（自包含，无需参照其他文档）：每个请求按下列确定性规则求值——① 角色层级 member(1) < editor(2) < admin(3)；② 匿名仅可访问未声明 `x-authz` 的公开端点（`security: []` 或可选鉴权 `[{}, {bearerAuth: []}]`）；③ 已登录且角色为 admin → 始终放行；④ 否则当且仅当满足以下任一条件时放行：(a) 用户角色层级 ≥ 端点 `x-authz.minRole` 层级，或 (b) 端点声明了 `x-authz.ownerOverride` 且用户对该 `ownerOverride.param` 指向的资源具有归属关系（即资源的 `ownerOverride.ownerField` 字段值 == 当前用户 id）；⑤ `/me/*` 端点为自我作用域（self-scoped），ownerOverride 字段显式声明归属判定，路径主体恒为当前登录用户。非 owner 角色仅在满足 ④(a)/④(b) 时放行，否则返回 403 / code 2001。端点 `x-authz` 示例：minRole: editor + ownerOverride: {param: id, ownerField: authorId}。
 
 
     可选鉴权端点采用 OpenAPI 标准写法 `security: [{}, {bearerAuth: []}]`
     （空安全需求对象表示允许匿名），各端生成客户端须配置「持有令牌则自动附加」，见 02 §3.3。
-  version: 1.8.0
+  version: 1.9.0
   x-api-version: 1
   x-rate-limit:
-    description: 所有公开（未登录可访问）端点受网关层统一限流保护；超限返回 HTTP 429，带 Retry-After 头，业务 code 5001。鉴权端点不设此限。
+    description: >
+      所有公开（未登录可访问）端点受网关层统一限流保护；超限返回 HTTP 429，
+      带 Retry-After 头，业务 code 5001。鉴权端点不设此限。
+      粒度：每个公开端点各自独立计数（非全局共享单桶）。限流键按客户端区分（按 IP 或令牌）。
     limit: 60
     window: 1m
     code: 5001
+    scope: per-endpoint
+    key: client
 servers:
   - url: http://localhost:3000
     description: 本地开发（Node 后端）
@@ -213,7 +218,7 @@ components:
           maxLength: 255
           description: 邮箱，唯一。仅本人（/me/profile）与 admin（/users）可见，公开端点不返回
         nickname: {type: string, maxLength: 32}
-        avatar: {type: string, nullable: true, maxLength: 512}
+        avatar: {type: string, nullable: true, format: uri, maxLength: 512}
         role:
           type: string
           enum: [admin, editor, member]
@@ -234,7 +239,7 @@ components:
       properties:
         id: {type: integer}
         nickname: {type: string, maxLength: 32}
-        avatar: {type: string, nullable: true, maxLength: 512}
+        avatar: {type: string, nullable: true, format: uri, maxLength: 512}
         level: {type: integer}
         articleCount: {type: integer}
         articles:
@@ -257,11 +262,11 @@ components:
           description: URL 别名，可选；留空时前台用 id 路由。仅管理员手动填且需唯一
         summary: {type: string, nullable: true, maxLength: 500}
         content: {type: string, maxLength: 65535}
-        coverImage: {type: string, nullable: true}
+        coverImage: {type: string, format: uri, maxLength: 512, nullable: true}
         authorId: {type: integer}
-        authorName: {type: string}
+        authorName: {type: string, maxLength: 64}
         categoryId: {type: integer, nullable: true}
-        categoryName: {type: string, nullable: true}
+        categoryName: {type: string, maxLength: 64, nullable: true}
         tags:
           type: array
           items: {type: string}
@@ -286,11 +291,11 @@ components:
           pattern: "^[a-z0-9-]{1,64}$"
           maxLength: 64
         summary: {type: string, nullable: true, maxLength: 500}
-        coverImage: {type: string, nullable: true}
+        coverImage: {type: string, format: uri, maxLength: 512, nullable: true}
         authorId: {type: integer}
-        authorName: {type: string}
+        authorName: {type: string, maxLength: 64}
         categoryId: {type: integer, nullable: true}
-        categoryName: {type: string, nullable: true}
+        categoryName: {type: string, maxLength: 64, nullable: true}
         tags:
           type: array
           items: {type: string}
@@ -342,7 +347,7 @@ components:
         id: {type: integer}
         articleId: {type: integer}
         userId: {type: integer}
-        userName: {type: string}
+        userName: {type: string, maxLength: 64}
         parentId: {type: integer, nullable: true}
         content:
           type: string
@@ -355,7 +360,7 @@ components:
             approved=通过（转义后展示）；rejected=违规比率超阈值不予展示；reviewing=人工复核中。
             自动流只产出 approved / rejected；reviewing 仅能由 `PATCH /comments/{id}/status`（admin）置位与移出。
             公开列表 `GET /articles/{idOrSlug}/comments` 只返回 approved
-        rejectedReason: {type: string, nullable: true}
+        rejectedReason: {type: string, maxLength: 200, nullable: true}
         createdAt: {type: string, format: date-time}
       required: [id, articleId, userId, content, status]
     CommentModerateRequest:
@@ -407,7 +412,7 @@ components:
           type: integer
           nullable: true
           description: 可选关联的文章；由上传时的表单字段 articleId 写入（编辑器内上传场景）
-        url: {type: string, maxLength: 512}
+        url: {type: string, format: uri, maxLength: 512}
         storage:
           type: string
           enum: [r2, local]
@@ -482,7 +487,7 @@ components:
         title: {type: string, maxLength: 200}
         summary: {type: string, nullable: true, maxLength: 500}
         content: {type: string, maxLength: 65535}
-        coverImage: {type: string, nullable: true}
+        coverImage: {type: string, format: uri, maxLength: 512, nullable: true}
         categoryId: {type: integer, nullable: true}
         tags:
           type: array
@@ -530,7 +535,7 @@ components:
       description: 更新本人资料。email 唯一，冲突返回 409 / code 3002
       properties:
         nickname: {type: string, maxLength: 32}
-        avatar: {type: string, nullable: true, maxLength: 512}
+        avatar: {type: string, nullable: true, format: uri, maxLength: 512}
         email:
           type: string
           format: email
@@ -543,7 +548,7 @@ components:
       properties:
         code: {type: string, description: 第三方授权码}
         state: {type: string, nullable: true}
-        redirectUri: {type: string, nullable: true}
+        redirectUri: {type: string, format: uri, maxLength: 512, nullable: true}
       required: [code]
     SiteSetting:
       type: object
@@ -554,7 +559,7 @@ components:
         siteTitle: {type: string, nullable: true, maxLength: 200, description: "站点标题（浏览器标签/SEO `<title>` 主页默认标题；文章详情页由前端拼接为「{文章标题} · {siteName}」）"}
         siteDescription: {type: string, maxLength: 500, description: 站点描述（SEO meta description / 页脚简介）}
         siteKeywords: {type: string, nullable: true, maxLength: 200, description: "站点关键词（meta keywords，逗号分隔，如「全栈,前端,React」）"}
-        logoUrl: {type: string, nullable: true, maxLength: 512, description: Logo 图片地址（经上传端点获得）}
+        logoUrl: {type: string, nullable: true, format: uri, maxLength: 512, description: Logo 图片地址（经上传端点获得）}
         copyright: {type: string, nullable: true, maxLength: 200, description: 版权信息（页脚展示，如「© 2026 成为全栈开发工程师」）}
         updatedAt: {type: string, format: date-time}
       required: [id, siteName, siteDescription]
@@ -671,10 +676,11 @@ components:
       description: 通知实体。由系统事件（评论审核通过、文章发布等）服务端生成，客户端不可直接创建
       properties:
         id: {type: integer}
+        userId: {type: integer, description: 通知接收者（所属用户 id），由系统事件服务端写入}
         type: {type: string, enum: [article_published, comment_approved, system], description: 通知类型}
         title: {type: string, maxLength: 200}
-        body: {type: string, nullable: true}
-        link: {type: string, nullable: true, maxLength: 512, description: "跳转链接（如 /articles/{id}）"}
+        body: {type: string, maxLength: 2000, nullable: true}
+        link: {type: string, nullable: true, format: uri, maxLength: 512, description: "跳转链接（如 /articles/{id}）"}
         isRead: {type: boolean}
         createdAt: {type: string, format: date-time}
       required: [id, type, title, isRead, createdAt]
@@ -892,7 +898,8 @@ paths:
   /api/v1/auth/logout:
     post:
       operationId: logout
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Auth]
       summary: 登出，作废刷新令牌
       description: >
@@ -915,7 +922,8 @@ paths:
   /api/v1/auth/me:
     get:
       operationId: getCurrentUser
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Auth]
       summary: 当前登录用户
       responses:
@@ -1014,7 +1022,8 @@ paths:
                         $ref: '#/components/schemas/ArticlePage'
     post:
       operationId: createArticle
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Article]
       summary: 创建文章
       description: 会员创建默认 draft/pending；admin 可 published。slug 仅 admin 可指定。详见 02
@@ -1112,8 +1121,11 @@ paths:
   /api/v1/articles/{id}:
     put:
       operationId: updateArticle
-      x-required-roles: [editor, admin]
-      x-owner-resource: articleId
+      x-authz:
+        minRole: editor
+        ownerOverride:
+          param: id
+          ownerField: authorId
       tags: [Article]
       summary: 更新文章
       description: >
@@ -1199,14 +1211,17 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     delete:
       operationId: deleteArticle
-      x-required-roles: [editor, admin]
-      x-owner-resource: articleId
+      x-authz:
+        minRole: editor
+        ownerOverride:
+          param: id
+          ownerField: authorId
       x-cascade: soft-hide
       tags: [Article]
       summary: 删除文章（软删除）
       description: >
         软删除（置 deleted_at）。删除后其 slug 释放，可被新文章复用（部分唯一索引，见 02 §2.2）。
-        须作者本人或 editor / admin 调用（见 x-owner-resource）；关联评论 / 附件 / 点赞 / 收藏按
+        须作者本人或 editor / admin 调用（见 x-authz.ownerOverride）；关联评论 / 附件 / 点赞 / 收藏按
         x-cascade: soft-hide 隔离可见性，不级联物理删除（用户的点赞、收藏历史予以保留）。
       parameters:
         - name: id
@@ -1247,8 +1262,11 @@ paths:
   /api/v1/articles/{id}/submit:
     post:
       operationId: submitArticle
-      x-required-roles: [member]
-      x-owner-resource: articleId
+      x-authz:
+        minRole: admin
+        ownerOverride:
+          param: id
+          ownerField: authorId
       tags: [Article]
       summary: 草稿→待审（会员投稿）
       description: >
@@ -1358,7 +1376,8 @@ paths:
   /api/v1/me/articles:
     get:
       operationId: listMyArticles
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Member]
       summary: 我的文章（全部状态，仅本人）
       description: >
@@ -1409,7 +1428,8 @@ paths:
                           $ref: '#/components/schemas/Category'
     post:
       operationId: createCategory
-      x-required-roles: [editor, admin]
+      x-authz:
+        minRole: editor
       tags: [Category]
       summary: 创建分类
       requestBody:
@@ -1463,7 +1483,8 @@ paths:
   /api/v1/categories/{id}:
     put:
       operationId: updateCategory
-      x-required-roles: [editor, admin]
+      x-authz:
+        minRole: editor
       tags: [Category]
       summary: 更新分类
       description: >
@@ -1536,7 +1557,8 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     delete:
       operationId: deleteCategory
-      x-required-roles: [editor, admin]
+      x-authz:
+        minRole: editor
       x-cascade: none
       tags: [Category]
       summary: 删除分类
@@ -1635,7 +1657,8 @@ paths:
                           $ref: '#/components/schemas/Tag'
     post:
       operationId: createTag
-      x-required-roles: [editor, admin]
+      x-authz:
+        minRole: editor
       tags: [Tag]
       summary: 创建标签
       requestBody:
@@ -1686,7 +1709,8 @@ paths:
   /api/v1/tags/{id}:
     put:
       operationId: updateTag
-      x-required-roles: [editor, admin]
+      x-authz:
+        minRole: editor
       tags: [Tag]
       summary: 更新标签（改名 / 改 slug）
       description: >
@@ -1756,7 +1780,8 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     delete:
       operationId: deleteTag
-      x-required-roles: [editor, admin]
+      x-authz:
+        minRole: editor
       x-cascade: none
       tags: [Tag]
       summary: 删除标签
@@ -1858,7 +1883,8 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     post:
       operationId: createComment
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Comment]
       summary: 发表评论（自动敏感词过滤）
       description: >
@@ -1918,8 +1944,11 @@ paths:
   /api/v1/comments/{id}:
     delete:
       operationId: deleteComment
-      x-required-roles: [editor, admin]
-      x-owner-resource: commentId
+      x-authz:
+        minRole: editor
+        ownerOverride:
+          param: id
+          ownerField: userId
       x-cascade: children
       tags: [Comment]
       summary: 删除评论
@@ -1963,7 +1992,8 @@ paths:
   /api/v1/comments/{id}/status:
     patch:
       operationId: moderateComment
-      x-required-roles: [editor, admin]
+      x-authz:
+        minRole: editor
       tags: [Comment]
       summary: 评论人工复核置位（editor / admin）
       description: >
@@ -2023,7 +2053,8 @@ paths:
   /api/v1/admin/comments:
     get:
       operationId: listAdminComments
-      x-required-roles: [editor, admin]
+      x-authz:
+        minRole: editor
       tags: [Admin]
       summary: 后台评论管理列表（可按 status 筛选）
       description: >
@@ -2070,7 +2101,8 @@ paths:
   /api/v1/upload:
     post:
       operationId: uploadFile
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Upload]
       summary: 资源上传（R2 为主 / 本地磁盘兜底，由 STORAGE_DRIVER 配置驱动）
       description: >
@@ -2134,7 +2166,8 @@ paths:
   /api/v1/me/attachments:
     get:
       operationId: listMyAttachments
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Member]
       summary: 我上传的附件（分页）
       description: Attachment 的读取路径，同时是编辑器「素材库」的数据来源（M2-10）。
@@ -2155,8 +2188,11 @@ paths:
   /api/v1/attachments/{id}:
     delete:
       operationId: deleteAttachment
-      x-required-roles: [editor, admin]
-      x-owner-resource: attachmentId
+      x-authz:
+        minRole: editor
+        ownerOverride:
+          param: id
+          ownerField: userId
       tags: [Upload]
       summary: 删除附件（上传者本人或 admin）
       description: >
@@ -2241,7 +2277,8 @@ paths:
   /api/v1/admin/articles:
     get:
       operationId: listAdminArticles
-      x-required-roles: [editor, admin]
+      x-authz:
+        minRole: editor
       tags: [Admin]
       summary: 后台文章管理列表（鉴权，支持 draft/pending/published 筛选）
       description: >
@@ -2286,7 +2323,8 @@ paths:
   /api/v1/admin/articles/{id}/approve:
     post:
       operationId: approveArticle
-      x-required-roles: [editor, admin]
+      x-authz:
+        minRole: editor
       tags: [Admin]
       summary: 待审→已发布（审核通过）
       description: >
@@ -2347,7 +2385,8 @@ paths:
   /api/v1/admin/articles/{id}/status:
     post:
       operationId: setArticleStatus
-      x-required-roles: [admin]
+      x-authz:
+        minRole: admin
       tags: [Admin]
       summary: 任意状态置位（下架/退回）
       description: >
@@ -2408,7 +2447,8 @@ paths:
   /api/v1/me/favorites:
     get:
       operationId: listMyFavorites
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Member]
       summary: 我的收藏（分页）
       parameters:
@@ -2427,7 +2467,8 @@ paths:
                         $ref: '#/components/schemas/ArticlePage'
     post:
       operationId: addFavorite
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       x-idempotent: true
       tags: [Member]
       summary: 添加收藏
@@ -2469,7 +2510,8 @@ paths:
   /api/v1/me/favorites/{articleId}:
     delete:
       operationId: removeFavorite
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       x-idempotent: true
       tags: [Member]
       summary: 取消收藏
@@ -2489,7 +2531,8 @@ paths:
   /api/v1/me/history:
     get:
       operationId: listMyHistory
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Member]
       summary: 阅读历史（分页）
       description: 按 lastReadAt 倒序返回
@@ -2509,7 +2552,8 @@ paths:
                         $ref: '#/components/schemas/HistoryPage'
     post:
       operationId: reportReadingProgress
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Member]
       summary: 上报阅读进度（写入/更新 ReadingLog）
       description: >
@@ -2546,7 +2590,8 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     delete:
       operationId: clearMyHistory
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Member]
       summary: 清空阅读历史
       description: 隐私诉求的兜底路径。ReadingLog 由此具备完整生命周期（写入/读取/删除）。
@@ -2560,7 +2605,8 @@ paths:
   /api/v1/me/history/{articleId}:
     delete:
       operationId: removeHistoryItem
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Member]
       summary: 删除单条阅读历史
       description: 幂等：删除一条本不存在的记录同样返回 200
@@ -2579,7 +2625,8 @@ paths:
   /api/v1/me/profile:
     get:
       operationId: getMyProfile
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Member]
       summary: 个人资料
       responses:
@@ -2595,7 +2642,8 @@ paths:
                         $ref: '#/components/schemas/User'
     patch:
       operationId: updateMyProfile
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Member]
       summary: 更新资料（昵称 / 头像 / 邮箱）
       description: >
@@ -2652,7 +2700,8 @@ paths:
   /api/v1/me/change-password:
     post:
       operationId: changePassword
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Member]
       summary: 修改密码
       description: >
@@ -2694,7 +2743,8 @@ paths:
   /api/v1/users:
     get:
       operationId: listUsers
-      x-required-roles: [admin]
+      x-authz:
+        minRole: admin
       tags: [Admin]
       summary: 用户列表（分页）
       parameters:
@@ -2741,7 +2791,8 @@ paths:
   /api/v1/users/{id}:
     get:
       operationId: getUser
-      x-required-roles: [admin]
+      x-authz:
+        minRole: admin
       tags: [Admin]
       summary: 用户详情（admin 专用；查他人公开资料请走 GET /members/{id}）
       parameters:
@@ -2786,7 +2837,8 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     patch:
       operationId: updateUser
-      x-required-roles: [admin]
+      x-authz:
+        minRole: admin
       tags: [Admin]
       summary: 变更角色 / 状态 / 会员等级
       description: >
@@ -2855,7 +2907,8 @@ paths:
   /api/v1/admin/users/{id}/reset-password:
     post:
       operationId: adminResetPassword
-      x-required-roles: [admin]
+      x-authz:
+        minRole: admin
       tags: [Admin]
       summary: 管理员重置用户密码
       description: >
@@ -2957,7 +3010,8 @@ paths:
   /api/v1/admin/site/settings:
     get:
       operationId: adminGetSiteSettings
-      x-required-roles: [admin]
+      x-authz:
+        minRole: admin
       tags: [Admin]
       summary: 管理员读取站点配置（全量）
       description: admin 专用。返回站点配置当前值，供后台设置页回填。
@@ -2984,7 +3038,8 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     patch:
       operationId: adminUpdateSiteSettings
-      x-required-roles: [admin]
+      x-authz:
+        minRole: admin
       tags: [Admin]
       summary: 管理员更新站点配置
       description: >
@@ -3155,7 +3210,8 @@ paths:
   /api/v1/articles/{id}/like:
     post:
       operationId: likeArticle
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       x-idempotent: true
       tags: [Article]
       summary: 点赞文章
@@ -3210,7 +3266,8 @@ paths:
                 timestamp: '2026-08-10T12:00:00Z'
     delete:
       operationId: unlikeArticle
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       x-idempotent: true
       tags: [Article]
       summary: 取消点赞
@@ -3457,7 +3514,8 @@ paths:
   /api/v1/me/likes:
     get:
       operationId: listMyLikes
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Member]
       summary: 获取我的点赞列表
       description: 返回当前用户点赞过的文章（published），按点赞时间倒序。
@@ -3498,7 +3556,8 @@ paths:
   /api/v1/me/notifications:
     get:
       operationId: listMyNotifications
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Member]
       summary: 获取我的通知
       description: 返回当前用户通知，按创建时间倒序。
@@ -3541,7 +3600,8 @@ paths:
   /api/v1/me/notifications/unread-count:
     get:
       operationId: getUnreadNotificationCount
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Member]
       summary: 获取未读通知数
       description: 返回当前用户未读通知数量。
@@ -3574,7 +3634,8 @@ paths:
   /api/v1/me/notifications/read-all:
     post:
       operationId: readAllNotifications
-      x-required-roles: [member]
+      x-authz:
+        minRole: member
       tags: [Member]
       summary: 全部标记为已读
       description: 将当前用户全部未读通知置为已读。
@@ -3600,8 +3661,11 @@ paths:
   /api/v1/me/notifications/{id}:
     patch:
       operationId: updateNotification
-      x-required-roles: [member]
-      x-owner-resource: notificationId
+      x-authz:
+        minRole: member
+        ownerOverride:
+          param: id
+          ownerField: userId
       tags: [Member]
       summary: 更新通知（标记已读）
       description: 将指定通知标记为已读；仅本人通知可操作。

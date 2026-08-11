@@ -2,11 +2,11 @@
 
 | 项 | 内容 |
 |---|---|
-| 文档版本 | v1.11 |
-| 状态 | 已确认（v1.11：后端架构师评审 R1–R11 整改——**授权角色机器化**（每个需登录端点声明 `x-required-roles` ∈ member/editor/admin，语义门 R1 段强制）；幂等 `x-idempotent`、归属 `x-owner-resource`、级联 `x-cascade`、分类深度 `x-max-depth`、上传 `x-max-size-bytes`/`x-accepted-mime-types` 全部下沉为机器字段；85 字符串字段补 `format`/`maxLength`/`pattern`；新增 429 限流（`ErrorCode` 5001 + `RateLimited` 响应组件 + `info.x-rate-limit`）；错误码校验收紧（去 description 兜底，`examples` 复数亦机读）。契约 1.7.0→1.8.0。前序 v1.10：补常用辅助接口） |
+| 文档版本 | v1.12 |
+| 状态 | 已确认（v1.12：二次评审 N1–N6 整改——**授权求值机器化（x-authz 重构）**：46 个需登录端点的 `x-required-roles` 列表 + 6 个 `x-owner-resource` 字符串合并为结构化 `x-authz: {minRole, ownerOverride:{param, ownerField}}`；`ownerField` 用真实字段（article→authorId / comment&attachment→userId / notification→userId，并为 Notification 补 `userId`）；第 4 铁律改写为**自包含求值规则**（删除"详见 02"，仅凭 OpenAPI 即可确定性推出授权结果）；`submitArticle` 由 [member] 收紧为 minRole:admin + ownerOverride（防任意 member 越权提交）。**N2 字段约束统一**：URL 类（coverImage/redirectUri/logoUrl/avatar/url/link）统一 `format: uri + maxLength: 512`；反范式展示字段（authorName/categoryName/userName/rejectedReason/body）补 `maxLength`。**N5 限流粒度**：`x-rate-limit` 加 `scope: per-endpoint` + `key: client`。语义门新增 R1 授权求值 / N2 字段约束 / N5 限流粒度断言（22→28 条 OK）。契约 1.8.0→1.9.0。前序 v1.11：后端架构师评审 R1–R11 整改） |
 | 最后更新 | 2026-08-11 |
 | 上游文档 | [00-项目章程](./00-项目章程.md) |
-| 机器可读契约 | [../api/openapi.v1.yaml](../api/openapi.v1.yaml)（契约版本 1.8.0） |
+| 机器可读契约 | [../api/openapi.v1.yaml](../api/openapi.v1.yaml)（契约版本 1.9.0） |
 | 契约校验 | `python -m openapi_spec_validator docs/api/openapi.v1.yaml`（结构） + `python docs/api/check_contract.py`（语义自查） |
 
 ---
@@ -99,6 +99,8 @@
 > - `admin`：后台管理员，含 `editor` 的全部内容权 + 用户/角色/站点配置等系统权。
 >
 > 会员 `level` **仅展示用、无业务功能**，默认 1，本期仅由 `admin` 经上述端点手动上调，普通流程不会自动变化——读者不应误以为有自动升级逻辑。
+>
+> **授权求值权威（v1.12 澄清）**：角色边界的**具体求值算法**（min-role OR owner-override）以 OpenAPI `info.description` 第 4 铁律为唯一权威，且该规则自包含、不引用本文档——七端实现只需读契约即可产出一致的授权结果。本节为上溯性说明，不得与第 4 铁律冲突；若歧义，以契约为准。
 
 #### Article（文章）
 
@@ -489,7 +491,7 @@ published --作者编辑自己的已发布文章--> pending      (自动，需�
 | 关键词搜索范围 | `FilterKeyword` 匹配 `title + summary`，**不含** `content` 全文 | `GET /articles` |
 | 评论公开列表状态 | 仅返回 `approved`（管理视图另走 `GET /admin/comments`） | `GET .../comments` |
 | 可选鉴权 | `security: [{}, {bearerAuth: []}]`（空安全需求 = 匿名也允许；见 §3.3） | 文章详情 / view / 评论列表 |
-| 授权角色（RBAC） | 每个需登录端点声明 `x-required-roles`（取值 member / editor / admin，层级 member < editor < admin）；归属敏感端点另标 `x-owner-resource`（资源归属者即便为 member 亦可操作）；公开端点 `security: []` 或可选鉴权写法 | 全部需登录端点（46 个，语义门 R1 段强制） |
+| 授权求值（RBAC） | 每个需登录端点声明结构化 `x-authz: {minRole: member|editor|admin, ownerOverride?: {param, ownerField}}`；`minRole` 为放行的最小角色层级，`ownerOverride` 显式声明归属资源的 path 参数名与归属字段（authorId/userId）；完整求值规则见 OpenAPI `info.description` 第 4 铁律（自包含，不依赖本文档） | 全部需登录端点（46 个，语义门 R1 段强制） |
 | 点赞 / 收藏幂等 | `x-idempotent: true` + 重复调用返回 200（不 409、不重复计数，返回当前态） | like/unlike/addFavorite/removeFavorite |
 | 限流 | `info.x-rate-limit`（limit/window/code）+ `components.responses.RateLimited`（429 + `Retry-After` + `code 5001`） | 公开端点（21 个挂 429，网关层施加） |
 | 上传约束 | requestBody schema 上的 `x-max-size-bytes: 10485760` + `x-accepted-mime-types`（6 类：png/jpeg/gif/webp/svg/pdf） | `POST /upload` |
@@ -572,7 +574,7 @@ security:
 > 完整请求/响应 schema 见 `docs/api/openapi.v1.yaml`。此处只列方法、路径与用途。
 > 路径记号说明：本目录用 Express 风格 `:param`，与 OpenAPI 的 `{param}` **完全等价**（如 `:idOrSlug` ≡ `{idOrSlug}`），阅读时无需区分。
 
-> **鉴权列读法（v1.11 机器化）**：`公开`=匿名可访问；`member`=任意登录用户即可；`editor/admin`=最小角色为 editor（admin 含其权）；`admin`=仅 admin。若带「作者本人 / 上传者本人」字样，表示该端点同时标了 `x-owner-resource`——资源归属者（member）亦可操作，与 `x-required-roles` 的最小角色取并集。每个需登录端点的角色都已下沉到契约 `x-required-roles`，不再只活在散文里（语义门 R1 段强制校验）。
+> **鉴权列读法（v1.12 机器化）**：`公开`=匿名可访问；`member`=任意登录用户（minRole: member）；`editor/admin`=minRole: editor（admin 含其权）；`admin`=仅 admin（minRole: admin）。若带「作者本人 / 上传者本人 / 本人」字样，表示该端点声明了 `x-authz.ownerOverride`——资源归属者（member）亦可操作，与 `x-authz.minRole` 取「最小角色 **或** 归属」的并集。授权求值规则以 OpenAPI `info.description` 第 4 铁律为唯一权威（自包含，无需跨读本文档）；每个需登录端点的 `x-authz` 都已下沉到契约，语义门 R1 段强制校验。
 
 ### 认证 Auth
 | 方法 | 路径 | 用途 | 鉴权 |
@@ -590,7 +592,7 @@ security:
 | GET | `/api/v1/articles` | 公开文章列表（仅 published，忽略 status 参数） | 否（公开，仅 published） |
 | GET | `/api/v1/articles/:idOrSlug` | 文章详情（id 或 slug 均可解析） | 否 |
 | POST | `/api/v1/articles` | 创建文章（会员默认 draft/pending；editor/admin 可 published） | 是（member/editor/admin） |
-| PUT | `/api/v1/articles/:id` | 更新文章 | 是（作者本人或 editor/admin；`x-owner-resource: articleId`） |
+| PUT | `/api/v1/articles/:id` | 更新文章 | 是（作者本人或 editor/admin；`x-authz.ownerOverride: {param: id, ownerField: authorId}`） |
 | DELETE | `/api/v1/articles/:id` | 删除（`x-cascade: soft-hide` 隔离可见性，不物理删） | 是（作者本人或 editor/admin） |
 | POST | `/api/v1/articles/:id/submit` | 草稿→待审（会员投稿） | 是（作者本人） |
 | GET | `/api/v1/articles/:id/adjacent` | 上一篇/下一篇（同 `-publishedAt` 相邻，仅 published） | 否（公开） |
@@ -630,7 +632,7 @@ security:
 | 方法 | 路径 | 用途 | 鉴权 |
 |---|---|---|---|
 | POST | `/api/v1/upload` | 图片/资源上传，返回完整 `Attachment` | 是（member） |
-| DELETE | `/api/v1/attachments/:id` | 删除附件（上传者本人或 editor/admin；`x-owner-resource: attachmentId`） | 是（上传者本人或 editor/admin） |
+| DELETE | `/api/v1/attachments/:id` | 删除附件（上传者本人或 editor/admin；`x-authz.ownerOverride: {param: id, ownerField: userId}`） | 是（上传者本人或 editor/admin） |
 
 ### 搜索 Search
 | 方法 | 路径 | 用途 | 鉴权 |
@@ -774,3 +776,4 @@ security:
 | 2026-08-11 | v1.9 | **站点配置字段扩展**：`SiteSetting` 在 v1.8 的 siteName/siteDescription/logoUrl 基础上新增 `siteTitle`（浏览器标签/SEO 标题）、`siteKeywords`（meta 关键词）、`copyright`（页脚版权）；`SiteSettingUpdate` 同步可填；契约 1.5.0→1.6.0 |
 | 2026-08-11 | v1.10 | **补常用辅助接口**：纯计算/聚合类新增 `GET /articles/{id}/adjacent`（上一篇/下一篇）、`GET /articles/{id}/related`（相关文章）、`GET /articles/{id}/toc`（目录）、`GET /categories/{id}/breadcrumb`（面包屑）、`GET /categories/stats`（分类计数）、`GET /stats`（站点统计）、`GET /search`（全文搜索）；互动类新增 `POST/DELETE /articles/{id}/like`、`GET /articles/{id}/like/status`、`GET /me/likes`（Like 实体）与 `GET /me/notifications`、`GET /me/notifications/unread-count`、`POST /me/notifications/read-all`、`PATCH /me/notifications/{id}`（Notification 实体）；`Article`/`ArticleSummary` 加 `likeCount`。标签云计数已由 `GET /tags` 的 `Tag.articleCount` 覆盖，不重复造；RSS/sitemap/robots 列为 M3 实现笔记不进 JSON 契约。契约 1.6.0→1.7.0，双门校验全绿（53 路径 / 67 操作 / 45 schema） |
 | 2026-08-11 | v1.11 | **后端架构师评审整改（清零 R1–R11）**：🔴 R1 授权角色机器化——46 个需登录端点全部声明 `x-required-roles`（member/editor/admin，层级 member<editor<admin），6 个归属敏感端点标 `x-owner-resource`，语义门新增 R1 段强制（缺声明/非法角色即 FAIL）；顺带修正本文档自身角色不一致（§端点目录把 categories/tags/评论审核/approve 误标"仅 admin"，与§角色边界段矛盾，现统一为 `editor/admin`——**以角色定义段为权威**）。🔴 R2 幂等机器化——like/unlike/addFavorite/removeFavorite 标 `x-idempotent: true` 并补当前态示例，语义门断言幂等端点不得声明 409。🟠 R3 字符串约束下沉——85 处补 `maxLength`/`format: email`/`pattern`（slug `^[a-z0-9-]{1,64}$`）/`minLength`（密码 ≥8）。🟠 R4 上传约束——`x-max-size-bytes: 10485760` + `x-accepted-mime-types`（6 类）。🟠 R5 限流——`ErrorCode` 加 5001、新增 `RateLimited` 响应组件（429 + `Retry-After`）、`info.x-rate-limit`，21 个公开端点挂 429。🟡 R6/R7/R8 ownership 与级联下沉 `x-owner-resource`/`x-cascade`（none/children/soft-hide），`GET /users/{id}` 明确 admin 专用（查他人公开资料走 `GET /members/{id}`）。🟡 R9 错误码校验收紧——F 段去掉 `description` 兜底、改认结构化 `example`/`examples`，refresh 401 补 1003/1004/1002/1005 四例，login 401 补 1001/1005 两例。🟡 R10 `Category.x-max-depth: 4`。🟡 R11 `info.x-api-version` + §八 版本废弃策略。语义门新增 G 段校验扩展字段取值合法性。契约 1.7.0→1.8.0，双门校验全绿（53 路径 / 67 操作 / 45 schema / 46 角色声明 / 22 条 OK 断言） |
+| 2026-08-11 | v1.12 | **二次评审整改（清零 N1–N6）**：🔴 N1 授权求值机器化——46 个 `x-required-roles`（列表编码最小角色）与 6 个 `x-owner-resource`（仅标参数名）合并为结构化 `x-authz: {minRole, ownerOverride:{param, ownerField}}`；`ownerOverride.ownerField` 用真实字段（article→authorId / comment&attachment→userId；Notification 补 `userId` 字段）；第 4 铁律改写为**自包含求值规则**（删除"详见 02"，仅凭 OpenAPI 即可确定性推出每个请求的授权结果）。`submitArticle` 由 [member] 收紧为 minRole:admin + ownerOverride（防任意 member 越权提交他人文章）。🟠 N2 URL 类字段（coverImage/redirectUri/logoUrl/avatar/url/link）统一 `format: uri + maxLength: 512`；反范式展示字段（authorName/categoryName/userName/rejectedReason/body）补 `maxLength`。🟡 N3 `x-required-roles` 列表歧义消除（minRole 单字段）；N4 `x-owner-resource` 只标参数名→`ownerOverride` 显式 `param`+`ownerField`；N5 限流粒度 `x-rate-limit` 加 `scope: per-endpoint` + `key: client`。语义门新增 R1 授权求值 / N2 字段约束 / N5 限流粒度断言（22→28 条 OK）；N6 回应：把 N1 求值与 N2 约束纳入语义门，降低"作者自证"盲区。契约 1.8.0→1.9.0，双门校验全绿（53 路径 / 67 操作 / 45 schema / 46 x-authz / 28 条 OK 断言） |
