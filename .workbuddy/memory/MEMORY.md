@@ -78,6 +78,11 @@
 - **🟡 F6 语义门覆盖盲区（元发现）**：`check_contract.py` 的 D 项「死胡同状态」是子串启发式而非真可达性分析；且整脚本**完全不检查错误码**——而错误码恰是仍「只活在散文里」的约束，也是新不一致滋生处。建议加一项：扫描所有 4xx/5xx 响应，断言其 description/示例含落在「已定义错误码集合」内的 code，且 §六 表里的码在 yaml 至少出现一次。
 - **🟡 F7（可选）**：49 端点已覆盖，但少数（admin reset-password、OAuth callback→M3-09、reading-history-delete→M3-10、attachment-delete→M1-18/M2-10）建议在路线图显式标注对应篇目。基本 OK，仅供参考。
 - **产品 AI 二次回复（2026-08-11 晚）**：`docs/review/API契约专项审阅-二次评审-回复报告.md` 声称 N1–N6 全清零、契约 1.9.0、双门 28 断言全绿、可冻结；四文档升 v1.12。N1 通过 `x-authz` 结构化 + 第 4 铁律自包含解决（授权求值不再外置 02）；N2 URL/展示字段统一约束；N3/N4/N5 一并处理；N6 方法论盲区已通过升级语义门收窄，并登记 M1 前独立终审。修正了二审 N4 的两处误判（Attachment 归属字段实为 `userId` 非 `uploaderId`；Notification 原无归属字段，已补 `userId`）；顺带收紧 `submitArticle` 越权隐患（原 [member] 会让任意 member 凭角色提交他人草稿，现 minRole:admin + ownerOverride）。
+- **三次评审（Backend Architect · 2026-08-11 晚 · 独立复验二次回复 + 穿透脚本核验）**：结论 **仍不建议冻结**，但性质与二审有质的区别——N1 硬伤已**实质清零**（授权求值第 4 铁律自包含 + 02 文档反向引用第 4 铁律为权威，双向闭环均脚本核验属实；N2/N3/N4/N5/遗留清理/submitArticle/版本对齐全真修复）。新增 **N7/N8/N9** 均落在双门盲区：
+  - **🟠 N7（中·应清零）16 个 `minRole:member` 需登录端点缺 401 响应声明**（含 `/auth/logout`、`/auth/me`、`/articles`、`/upload`、`/me/*` 等）；第 4 铁律要求鉴权却不在 schema 列 401，与"自包含授权"承诺内部不一致，严格 OpenAPI linter 会报错。editor/admin 受限端点 403 已全部声明（0 遗漏），说明是"选择性补齐"遗漏。修复极廉价：共享 `Unauthorized`(401) 组件挂全部 46 个 `x-authz` 端点。
+  - **🟡 N8（低）`/me/*` 资源端点 `ownerOverride` 表征不一致**：`PATCH /me/notifications/{id}` 声明 `ownerOverride{userId}`，其余 `/me/favorites`、`/me/history`、`/me/profile` 仅靠规则 ⑤ `/me/` 前缀约定未声明；与 §3.2「不靠约定自觉」自相矛盾（后端能兜住，但契约未显式锁死）。
+  - **🟡 N9（中低）契约仍含 12 处对 02 的引用**（硬规则导语「详见 02 文档」、可选鉴权「见 02 §3.3」、8 处域名交叉引用「见 02 §2.2/2.3/2.5/2.6」）；授权*结果*可仅凭契约推出（N1 真达成），但"无需再读 02 / 唯一自包含地基"措辞对契约整体言过其实。建议收敛措辞或下沉行为性引用。
+  - **冻结建议**：N1 已真清零（关键里程碑）；冻结前清零 N7 即可作为 M1 基线；N8/N9 为表征/措辞完善。语义门建议补两条断言固化盲区：① 每个 `x-authz` 端点须挂 401（minRole∈{editor,admin} 须 403）；② 契约 `info.description` 的「详见/见 02」引用计数降至 0 或显式标「溯源注，以本契约为准」。完整报告：`docs/review/API契约专项审阅-三次评审.md`。
 
 ## 待办（按顺序）
 
