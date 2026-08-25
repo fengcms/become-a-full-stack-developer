@@ -342,6 +342,46 @@ B2 门禁自陈 tsc 0 / biome 42 / vitest 51，我独立复跑**全绿**。但 B
 
 ---
 
+## 架构裁定 · B4 范围冲突 与 article_tags 回填缺口（2026-08-25，审阅后澄清）
+
+### 0. 背景：开发 AI 在开工前举手问"B4 走哪条"
+- 我 B3 审阅 §七 写的是「放行 B4（文章提交增强 / article_tags 回填，11 端点）」，且说 B4 会改 `articles.ts` 的 create/update 并顺手拆它。
+- 但编号批次包 `docs/prd/m1-tasks/04-comments.md` 把 B4 定义为「评论（comments），5 端点」，且评论不碰 `articles.ts`。
+- 两者指向完全不同的实现，开发 AI 不敢选边，向我（架构师）确认。
+
+### 1. 先认错：是我 B3 §七 误挂了范围
+- **批次编号是范围契约，无歧义**：`00 scaffold → 01 auth → 02 articles → 03 categories-tags → 04 comments → 05 users-upload → 06 favorites → 07 aux`。`04-comments.md` 第一行就是「M1 后端 · 批次 B4：评论（Comments）」，端点清单 5 个、依赖 B1/B2。
+- 开发 AI 选「B 按编号」是对的；我 §七 把"article_tags 回填"这个**待办**错当成 B4 的**范围**，还写了"11 端点"（文章提交增强根本不是 11 端点）——属于没核对编号批次包就下笔。
+- **元认知教训**：审阅里提到"下一步该做 X"时，必须回编号批次包确认 X 是不是下一棒的 scope，不能凭印象顺手挂。批次文件名即范围契约。
+
+### 2. 但"回填"不是我瞎想——它是个真实缺口（磁盘取证）
+`grep` 全代码 `articleTags` 引用结论：
+- `article_tags` 表已在 B3 建好（`schema.ts:181` + `migrate.ts:93`），但**全代码无任何 INSERT** → 死表。
+- `tag.ts:8-9` 开发 AI 自陈："回填入口属文章提交逻辑、B3 禁止项不在此实现，故 junction 恒为空、articleCount 恒为 0"。
+- 文章列表标签过滤 `article.ts:158-159` **至今仍用 B2 的 `articles.tags LIKE '%"tag"%'`**，没切到关联表。
+- 后果（真缺陷，非洁癖）：① 标签云 `articleCount` 恒 0（可见错误）；② `tags.ts:100` 删除守卫用空表判"有无引用"→ **仍可删被文章引用的标签**（数据不一致）；③ B2 P3 子串误匹配仍在。
+- 即：这张表目前除了让 articleCount 永远为 0，毫无用处。我 §七 想指的就是它，只是挂错了批次。
+
+### 3. 裁定：选 C 并 refined —— 插入专门回填批次，B4 严格 = 评论
+- **B4 = 评论（04-comments.md），不碰 `articles.ts`**。混进文章写逻辑会破坏"单批次单关注点"纪律（B0–B3 一直靠它稳）。
+- 在 B4 之前插入**专门的 `article_tags` 回填批次**（可叫 B3.5 / `tags-sync`），它就是"文章提交增强"该待的地方：
+  | 项 | 内容 | 必要性 |
+  |---|---|---|
+  | 1 | article `create/update` 同步写 `article_tags`（增则插、减则删） | 必须 |
+  | 2 | 一次性回填存量文章（`parse(articles.tags)` → 插 `article_tags`） | 必须（否则 articleCount 仍 0） |
+  | 3 | 列表标签过滤从 `articles.tags LIKE` 切 `article_tags JOIN` | 强烈建议（让表真正有用 + 关掉 B2 P3） |
+  | 4 | 借改 `articles.ts` 契机拆 `articles-read.ts`+`articles-write.ts` | 建议（还 358 行欠债，上次挂账的） |
+- 为什么不能拖后：B5/B6/B7 都不自然碰文章写逻辑 → 表会永远空。
+- **B3 P2-1（移动带子孙超 `x-max-depth:4`）修复**：B4 不碰分类，请开发 AI 在回填批次**之前单独发一个小 commit** 收掉（`categories-write.ts`，与 articles 改动无关）。
+
+### 4. 给用户的回复要点（已草拟直发开发 AI）
+- 认错：§七 的 B4 范围描述有误，以编号批次包为准，B4 = 评论。
+- B4 严格按 `04-comments.md`，不要碰 `articles.ts`。
+- 先做一个专门的 `article_tags` 回填批次（见上 4 项），再开 B4。
+- B3 P2-1 单独小 commit 先收。
+
+---
+
 ## 总复盘：这套审阅打法给我（和接手 AI）留下的最硬的几条
 
 1. **审阅者的存在意义 = 破除"作者自证盲区"**。同一人写代码、写门禁、写修复说明，他的注意力天然覆盖不到"自己没想到的维度"。独立审阅者用另一套逻辑重新证伪，是成本最低的防漂移手段。呼应 N6：冻结前应由**非作者**跑穿透式核验。
