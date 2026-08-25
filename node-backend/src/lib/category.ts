@@ -100,15 +100,52 @@ export const buildTree = (rows: CategoryRow[]): CategoryNode[] => {
     if (bucket) bucket.push(r);
     else childrenOf.set(key, [r]);
   }
-  const toNode = (r: CategoryRow): CategoryNode => ({
-    id: r.id,
-    name: r.name,
-    slug: r.slug,
-    description: r.description ?? null,
-    sortOrder: r.sortOrder,
-    children: (childrenOf.get(r.id) ?? []).sort(bySort).map(toNode),
-  });
+  // 防御：数据腐化成环时 seen 集截断，避免递归死循环（与 depthOf/toBreadcrumb 同款防御）。
+  const seen = new Set<number>();
+  const toNode = (r: CategoryRow): CategoryNode => {
+    if (seen.has(r.id)) {
+      return {
+        id: r.id,
+        name: r.name,
+        slug: r.slug,
+        description: r.description ?? null,
+        sortOrder: r.sortOrder,
+        children: [],
+      };
+    }
+    seen.add(r.id);
+    return {
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      description: r.description ?? null,
+      sortOrder: r.sortOrder,
+      children: (childrenOf.get(r.id) ?? []).sort(bySort).map(toNode),
+    };
+  };
   return (childrenOf.get(null) ?? []).sort(bySort).map(toNode);
+};
+
+/**
+ * 计算以 id 为根的子树高度（含自身，单节点=1）。
+ * 用于「移动带子孙的子树」时校验整棵被移子树的深度不越过 x-max-depth。
+ * @param rows 全量分类
+ * @param id 子树根 id（不存在时按单节点计 1）
+ */
+export const subtreeHeight = (rows: CategoryRow[], id: number): number => {
+  const childrenOf = new Map<number | null, CategoryRow[]>();
+  for (const r of rows) {
+    const key = r.parentId ?? null;
+    const bucket = childrenOf.get(key);
+    if (bucket) bucket.push(r);
+    else childrenOf.set(key, [r]);
+  }
+  const height = (nodeId: number): number => {
+    const kids = childrenOf.get(nodeId) ?? [];
+    if (kids.length === 0) return 1;
+    return 1 + Math.max(...kids.map((k) => height(k.id)));
+  };
+  return height(id);
 };
 
 /**

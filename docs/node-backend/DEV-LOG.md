@@ -210,3 +210,8 @@ B3 写权限测试严格沿用 `register → elevate → tokenOf`（elevate 必�
 
 
 
+
+### B3-R7. 复批 P2-1/P3-1：移动子树深度要算子孙高度，buildTree 要防数据环
+B3 复批（2026-08-25 晚）指出两处：P2-1 变更 parentId 仅校验 `depthOf(新父)+1`（被移动节点自身新深度），漏算其**子孙子树高度**——把「A(深3)→B(深4)」挂到另一深3节点下，A 变4、B 变5 越过 x-max-depth:4；P3-1 `buildTree` 递归无 `seen` 集，数据腐化成环会死循环。
+修复：`lib/category.ts` 增纯函数 `subtreeHeight(rows,id)`（含自身、单节点=1）；`categories-write.ts` PUT 校验改为 `depthOf(新父) + subtreeHeight(被移动节点) ≤ MAX`；`buildTree` 递归内持 `seen` 集命中自身即截断。`test/lib/category.test.ts` 锁两修复 + `test/routes/categories.test.ts` 增「移动带子孙的子树使子孙超界 → 409」集成测试（含「叶子移到同深父允许」正对照）。
+**核心认知**：x-max-depth 约束的是「树中任意节点深度」，移动子树时整棵被移子树的底最深节点都会跟着下沉，必须按子树高度整体校验，不能只看被移根。同时「交付说明过度声称已覆盖」是 P2-1 的放大器——不采信自陈不仅针对门禁，也针对 NOTES 的措辞。

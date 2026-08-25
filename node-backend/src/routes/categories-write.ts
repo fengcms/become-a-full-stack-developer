@@ -12,7 +12,13 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { getDb } from '@/db/client';
 import { articles, type CategoryRow, categories } from '@/db/schema';
-import { depthOf, MAX_CATEGORY_DEPTH, toCategory, wouldCreateCycle } from '@/lib/category';
+import {
+  depthOf,
+  MAX_CATEGORY_DEPTH,
+  subtreeHeight,
+  toCategory,
+  wouldCreateCycle,
+} from '@/lib/category';
 import { ErrCode } from '@/lib/codes';
 import { isUniqueConstraintError } from '@/lib/db-error';
 import { AppError } from '@/lib/http-error';
@@ -124,7 +130,8 @@ categoriesWriteRoute.put(
         if (wouldCreateCycle(rows, id, newParent)) {
           throw new AppError(ErrCode.CONFLICT, 409); // 3002 成环
         }
-        if (depthOf(rows, parent.id) + 1 > MAX_CATEGORY_DEPTH) {
+        // 整棵被移动子树的深度 = 新父深度 + 被移动子树高度（含自身），须 ≤ MAX
+        if (depthOf(rows, parent.id) + subtreeHeight(rows, id) > MAX_CATEGORY_DEPTH) {
           throw new AppError(ErrCode.CONFLICT, 409); // 3002 超出最大嵌套深度
         }
       }

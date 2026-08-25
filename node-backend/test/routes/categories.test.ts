@@ -213,6 +213,50 @@ describe('B3 分类 · 写操作权限与冲突', () => {
     expect(cycle.status).toBe(409);
   });
 
+  it('移动带子孙的子树使子孙超界 → 409（subtreeHeight 校验）', async () => {
+    await register('mv_ed');
+    await elevate('mv_ed', 'editor');
+    const ed = await tokenOf('mv_ed');
+
+    // P 链：p0(1) → p1(2) → P(3)
+    const p0 = await json<CategoryResp>(await createCategory(ed, { name: 'p0', slug: 'p0' }));
+    const p1 = await json<CategoryResp>(
+      await createCategory(ed, { name: 'p1', slug: 'p1', parentId: p0.data.id }),
+    );
+    const P = await json<CategoryResp>(
+      await createCategory(ed, { name: 'P', slug: 'pp', parentId: p1.data.id }),
+    );
+
+    // A 链：a0(1) → a1(2) → A(3) → B(4)
+    const a0 = await json<CategoryResp>(await createCategory(ed, { name: 'a0', slug: 'a0' }));
+    const a1 = await json<CategoryResp>(
+      await createCategory(ed, { name: 'a1', slug: 'a1', parentId: a0.data.id }),
+    );
+    const A = await json<CategoryResp>(
+      await createCategory(ed, { name: 'A', slug: 'aa', parentId: a1.data.id }),
+    );
+    const B = await json<CategoryResp>(
+      await createCategory(ed, { name: 'B', slug: 'bb', parentId: A.data.id }),
+    );
+
+    // 把 A（含子孙 B）移到 P 下：P 深度 3 + 子树高度 2 = 5 > 4 → 拒绝
+    const move = await app.request(`${BASE}/${A.data.id}`, {
+      method: 'PUT',
+      headers: authH(ed),
+      body: JSON.stringify({ name: 'A', slug: 'aa', parentId: P.data.id }),
+    });
+    expect(move.status).toBe(409);
+    expect((await json<ErrResp>(move)).code).toBe(3002);
+
+    // 对照：把 B（depth4 叶子）移到 P 下应允许（3 + 高度1 = 4 ≤ 4）
+    const moveB = await app.request(`${BASE}/${B.data.id}`, {
+      method: 'PUT',
+      headers: authH(ed),
+      body: JSON.stringify({ name: 'B', slug: 'bb', parentId: P.data.id }),
+    });
+    expect(moveB.status).toBe(200);
+  });
+
   it('删除守卫：有子节点 → 409；干净叶子 → 200 并不可再查', async () => {
     await register('del_ed');
     await elevate('del_ed', 'editor');
