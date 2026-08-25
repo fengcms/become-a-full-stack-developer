@@ -8,7 +8,8 @@ JWT_SECRET = "change-me-in-prod"
 NODE_ENV = "production"
 DB_FILE = ":memory:"
 STORAGE_DRIVER = "local"
-CORS_ORIGINS = "*"
+# 生产必须填具体白名单（逗号分隔）；留空或 '*' 将被拒绝跨域（不返回 CORS 头，审阅 B05）
+CORS_ORIGINS = "https://admin.example.com,https://www.example.com"
 
 # Cloudflare D1 绑定（deploy 时启用并填入 database_id）
 # [[d1_databases]]

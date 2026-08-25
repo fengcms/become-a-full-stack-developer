@@ -6,22 +6,26 @@
  *   否则 → 2001 无权限
  */
 import type { Context, MiddlewareHandler } from 'hono';
-import { getActiveEnv } from '../config/env';
-import { ErrCode } from '../lib/codes';
-import { AppError } from '../lib/http-error';
-import { verifyAccessToken } from '../lib/jwt';
+import { getActiveEnv } from '@/config/env';
+import { ErrCode } from '@/lib/codes';
+import { AppError } from '@/lib/http-error';
+import { type Role, verifyAccessToken } from '@/lib/jwt';
 
 /** 当前登录用户（注入到 c.get('user')）。 */
 export interface AuthUser {
   id: string;
-  role: string;
+  role: Role;
 }
 
 /** Hono 上下文变量声明，供带类型的 c.get('user') 使用。 */
 export type AuthVars = { Variables: { user: AuthUser } };
 
-/** 角色层级：数值越大权限越高。 */
-const ROLE_RANK: Record<string, number> = { member: 0, editor: 1, admin: 2 };
+/**
+ * 角色层级：内部 0-based（member=0 / editor=1 / admin=2），
+ * 对应契约文档「第 4 铁律」的 member(1) < editor(2) < admin(3) 口径，仅表示法不同，语义等价。
+ * 数值越大权限越高。
+ */
+const ROLE_RANK: Record<Role, number> = { member: 0, editor: 1, admin: 2 };
 
 /**
  * 解析 Authorization: Bearer <token>，校验后注入 c.set('user')。
@@ -44,7 +48,7 @@ export const authMiddleware: MiddlewareHandler<AuthVars> = async (c, next) => {
  */
 export const guard =
   (
-    minRole: string,
+    minRole: Role,
     resolveOwner?: (c: Context<AuthVars>) => string | null | Promise<string | null>,
   ): MiddlewareHandler<AuthVars> =>
   async (c, next) => {

@@ -7,7 +7,7 @@
 import Database from 'better-sqlite3';
 import { type BetterSQLite3Database, drizzle } from 'drizzle-orm/better-sqlite3';
 import { drizzle as drizzleD1 } from 'drizzle-orm/d1';
-import * as schema from './schema';
+import * as schema from '@/db/schema';
 
 /** 本地 SQLite（better-sqlite3）的 Drizzle 数据库类型，作为全局统一类型。 */
 export type Db = BetterSQLite3Database<typeof schema>;

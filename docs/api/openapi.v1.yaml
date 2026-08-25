@@ -1010,8 +1010,8 @@ paths:
                   - properties:
                       data:
                         $ref: '#/components/schemas/AuthResult'
-        '501':
-          description: 该第三方登录尚未实现（扩展点占位）
+        '500':
+          description: 该第三方登录尚未实现（扩展点占位，内部错误口径）
           content:
             application/json:
               schema:

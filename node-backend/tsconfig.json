@@ -16,6 +16,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
+    "paths": { "@/*": ["./src/*"] },
     "outDir": "dist",
     "rootDir": ".",
     "noEmit": true

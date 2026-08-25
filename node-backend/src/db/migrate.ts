@@ -3,9 +3,12 @@
  * 本地 / 测试建表执行器。生产（Cloudflare D1）迁移走 drizzle-kit，deploy 阶段应用，不在此处。
  *
  * 注意：better-sqlite3 的 prepare 不支持多条语句，故按 ';' 拆成单条语句逐条执行。
+ *
+ * 审阅 B08：本文件的 raw SQL 与 db/schema.ts 是"双源真值"，易漂移。
+ * 约定 db/schema.ts 为单一事实源，此处 STATEMENTS 的任何改动都须与 schema.ts 同步。
  */
 import { sql } from 'drizzle-orm';
-import type { Db } from './client';
+import type { Db } from '@/db/client';
 
 /** 建表语句清单（与 schema.ts 保持同步；新增表在此追加）。 */
 const STATEMENTS: readonly string[] = [

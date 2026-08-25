@@ -6,8 +6,8 @@
  */
 import { zValidator } from '@hono/zod-validator';
 import type { ZodTypeAny } from 'zod';
-import { ErrCode } from '../lib/codes';
-import { failResponse } from '../lib/response';
+import { ErrCode } from '@/lib/codes';
+import { failResponse } from '@/lib/response';
 
 /** 将校验失败转成契约 4001 响应（hook 复用，避免重复构造）。 */
 const toValidationResponse = (error: {
@@ -17,7 +17,7 @@ const toValidationResponse = (error: {
     field: issue.path.join('.') || '_',
     message: issue.message,
   }));
-  return failResponse(ErrCode.VALIDATION, 422, { errors });
+  return failResponse(ErrCode.VALIDATION, 400, { errors });
 };
 
 /** 校验辅助对象：json / query / param 三种目标。 */

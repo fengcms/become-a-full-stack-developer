@@ -8,3 +8,10 @@ dist
 # Claude Code 本地配置(scratch/launch),不跟踪
 .claude/
 test-results/
+
+# ── node-backend（审阅 B06：防止密钥 / 运行时产物泄露）──
+.env
+node-backend/uploads/
+node-backend/data/
+*.db
+

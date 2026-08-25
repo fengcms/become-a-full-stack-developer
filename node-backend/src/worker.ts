@@ -3,9 +3,9 @@
  * Cloudflare Workers 入口（裁决 Q5）。复用同一套 Hono app，实现"一套代码双部署"。
  * D1 迁移在 deploy 阶段通过 drizzle-kit 应用，运行时不再迁移。
  */
-import { createApp } from './app';
-import { type AppEnv, readEnv } from './config/env';
-import { createD1Db, setDb } from './db/client';
+import { createApp } from '@/app';
+import { type AppEnv, readEnv } from '@/config/env';
+import { createD1Db, setDb } from '@/db/client';
 
 export default {
   /**

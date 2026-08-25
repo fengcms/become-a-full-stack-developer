@@ -6,9 +6,9 @@
 process.env.JWT_SECRET ??= 'test-secret';
 process.env.NODE_ENV ??= 'test';
 
-import { readEnv, setActiveEnv } from '../src/config/env';
-import { createLocalDb, setDb } from '../src/db/client';
-import { migrate } from '../src/db/migrate';
+import { readEnv, setActiveEnv } from '@/config/env';
+import { createLocalDb, setDb } from '@/db/client';
+import { migrate } from '@/db/migrate';
 
 const env = readEnv(process.env as Record<string, string | undefined>);
 setActiveEnv(env);

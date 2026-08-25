@@ -4,13 +4,17 @@
  * 刷新令牌见 B1（有状态 refresh_tokens 表，支持旋转 / 作废）。
  */
 import { sign, verify } from 'hono/jwt';
-import { ErrCode } from './codes';
-import { AppError } from './http-error';
+import { ErrCode } from '@/lib/codes';
+import { AppError } from '@/lib/http-error';
+
+/** 角色字面量联合（与契约「第 4 铁律」member < editor < admin 对应）。 */
+export const ROLES = ['member', 'editor', 'admin'] as const;
+export type Role = (typeof ROLES)[number];
 
 /** 访问令牌载荷。sub = 用户 ID，role = 角色。 */
 export interface AccessToken {
   sub: string;
-  role: string;
+  role: Role;
 }
 
 /**
@@ -26,14 +30,17 @@ export const signAccessToken = (
 ): Promise<string> => sign({ ...payload, exp: Math.floor(Date.now() / 1000) + expSeconds }, secret);
 
 /**
- * 校验访问令牌。失效 / 篡改 / 缺字段一律抛 1002（令牌无效或已过期）。
+ * 校验访问令牌。失效 / 篡改 / 缺字段 / 角色非法一律抛 1002（令牌无效或已过期）。
+ * 审阅 B11：role 收敛为字面量联合并做运行时断言，杜绝 role 注入类隐患。
  * @param token 待校验令牌
  * @param secret 签名密钥
  */
 export const verifyAccessToken = async (token: string, secret: string): Promise<AccessToken> => {
   try {
     const decoded = (await verify(token, secret, 'HS256')) as unknown as AccessToken;
-    if (!decoded.sub || !decoded.role) throw new Error('malformed token');
+    if (!decoded.sub || !decoded.role || !ROLES.includes(decoded.role)) {
+      throw new Error('malformed token');
+    }
     return { sub: decoded.sub, role: decoded.role };
   } catch {
     throw new AppError(ErrCode.TOKEN_INVALID, 401, '令牌无效或已过期');

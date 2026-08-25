@@ -3,7 +3,7 @@
  * 统一响应信封构造器（对齐契约 components.schemas.ApiResponse）。
  * 返回原生 Response，与 Hono 解耦，便于单测与跨运行时复用。
  */
-import { type BizErrorCode, ErrorMessages } from './codes';
+import { type BizErrorCode, ErrorMessages } from '@/lib/codes';
 
 /** 分页元数据。契约要求 page / pageSize / total / totalPages 四件套。 */
 export interface Pagination {
