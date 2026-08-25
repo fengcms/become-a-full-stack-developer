@@ -101,8 +101,10 @@ export type ArticleRow = typeof articles.$inferSelect;
 export type NewArticle = typeof articles.$inferInsert;
 
 /**
- * 阅读量去重表（02 §2.4）。(article_id, dedup_key) 唯一约束防同用户/IP 短时间重复计数；
- * 24h 冷却由应用层按 created_at 判定（写分离降级为同步保真，B2 够用）。
+ * 阅读量去重表（02 §2.4）。(article_id, dedup_key) 唯一约束防同用户/IP 短时间重复计数。
+ * 24h 冷却编码进 dedup_key 的时间桶（baseKey#bucket，bucket=floor(now/24h)），
+ * 冷却过后桶号变化 → 不再撞旧记录 → 根除「永久唯一约束 vs 24h 冷却」的 500；
+ * 同窗口并发撞唯一约束时由应用层 isUniqueConstraintError 兜底下发 200（见 routes/articles.ts）。
  */
 export const articleViewDedup = sqliteTable(
   'article_view_dedup',

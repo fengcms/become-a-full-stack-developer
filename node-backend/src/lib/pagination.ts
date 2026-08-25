@@ -24,7 +24,9 @@ export const parsePage = (c: Context): { page: number; pageSize: number; offset:
 
 /** 解析排序为 SQL 片段（白名单字段 + 方向，末位追加 id DESC 稳定键）。 */
 export const buildSortSql = (sort?: string): SQL => {
-  const raw = sort && sort in SORT_COLUMNS ? sort : '-publishedAt';
+  // 先剥离可选的 '-' 前缀得到裸字段名，再查白名单；未知字段回退默认 -publishedAt
+  const bare = sort?.startsWith('-') ? sort.slice(1) : sort;
+  const raw = bare && bare in SORT_COLUMNS ? (sort ?? '-publishedAt') : '-publishedAt';
   const desc = raw.startsWith('-');
   const field = desc ? raw.slice(1) : raw;
   const column = SORT_COLUMNS[field] ?? 'COALESCE(published_at, created_at)';

@@ -2,7 +2,7 @@
 
 > 批次：B2（文章 Articles，11 端点）｜依赖：B1 已通过（第二轮复审批复放行）
 > 代码落点：`node-backend/src/{lib,db,routes}`，测试：`node-backend/test/routes/{articles,articles-admin}.test.ts`
-> 门禁证据：`tsc --noEmit` ✅ 0 / `biome check` ✅ 0 / `vitest run` ✅ 51（B2 新增 18：articles 10 + articles-admin 8）
+> 门禁证据：`tsc --noEmit` ✅ 0 / `biome check` ✅ 0 / `vitest run` ✅ 54（B2 新增 21：articles 13 + articles-admin 8；其中 3 条为复批 P1/P2 针对性回归）
 
 ## 一、端点 ↔ 契约映射（11 端点，全部闭合）
 
@@ -24,7 +24,7 @@
 
 ### 1. 阅读量去重（02 §3.3 落地）
 - **去重键**：登录用户用 `u:${userId}`；匿名用 `a:${fnv1a(ip|userAgent)}`（FNV-1a 哈希，32 位定长，避免 UA 过长）。落 `article_view_dedup` 表，`unique(articleId, dedupKey)`。
-- **24h 冷却**：查询 `createdAt >= now - 24h` 是否已有记录；命中则不计，未命中才走「插去重记录 + `UPDATE view_count = view_count + 1`」。
+- **24h 冷却（时间桶）**：冷却编码进 `dedupKey` 的 `bucket`（`floor(now/24h)`），`dedupKey = baseKey#bucket`。判定时只 `eq(dedupKey)`；冷却过后 bucket 变化 → 新 key 不撞旧记录 → **根除「永久唯一约束 vs 24h 冷却」的结构性 500**。同窗口并发插入撞永久唯一约束时，由 `isUniqueConstraintError` 兜底下发 200（跳过增量、不重复计数）。详见 `articles.ts` view 处理器 + `schema.ts` 注释。
 - **计数与去重解耦**：计数用 `sql\`${articles.viewCount} + 1\`` 的 SQL 表达式原地自增，避免「读-改-写」竞态；去重判定与计数写入分离，可同步、亦可降级为最终一致（当前同步实现已满足契约语义）。
 - **可见性前置**：`view` 端点先判 `status === 'published'`，否则 404（未发布不计数、不暴露存在性）。
 
@@ -62,7 +62,7 @@
 |---|---|
 | `pnpm exec tsc --noEmit` | ✅ 0 error（strict + verbatimModuleSyntax + paths） |
 | `pnpm exec biome check .` | ✅ Checked 42 files, No fixes applied（0 error / 0 warning） |
-| `pnpm exec vitest run` | ✅ Test Files 9 / Tests 51（B2 新增 18：articles 10 + articles-admin 8） |
+| `pnpm exec vitest run` | ✅ Test Files 9 / Tests 54（B2 新增 21：articles 13 + articles-admin 8；3 条为复批 P1/P2 针对性回归） |
 | 契约双门（B0 基线） | 未改动契约，仅 B2 实现层；结构门 `STRUCTURAL_OK` + 语义门「语义自查全部通过」均全绿 |
 
 ## 五、后续建议
@@ -71,3 +71,18 @@
 - **B5 评论批次**：`Comment.status`（approved/rejected/reviewing）目前未机器化 N9-2，可一并落地状态转移矩阵，与本文 §5 的 `submit/approve` 思路一致。
 - **阅读量高并发**：当前同步写「去重记录 + 计数自增」已满足契约「24h 冷却 + 去重」语义；若上线后读多写多，可将计数写入改为事件/队列最终一致，去重判定逻辑不变。
 - **建议 commit 信息**：`M1 B2 文章核心端点 + 测试`（与计划交付物一致）。本批代码已落地工作区，待总把控独立复验通过后提交。
+
+## 六、复批修复（B2-后端代码审阅报告）
+
+后端架构师首轮裁定 **B2 不通过**，退回修复 1 项 P1 + 建议 P2 后复批。全部确证真修复、零回归，复批放行 B3。详见 `docs/node-backend/review/B2-代码审阅-复审批复.md`。
+
+| 项 | 严重度 | 修复落点 | 关键改动 |
+|---|---|---|---|
+| /view 去重：永久唯一约束 vs 24h 冷却错配 → 500 | 🔴 P1 | `articles.ts:290-339` + `schema.ts:103-107` | 冷却编码进 `dedupKey` 时间桶（`baseKey#bucket`）+ 并发 `isUniqueConstraintError` 兜底；`recent` 由 `gte(createdAt,...)` 改为 `eq(dedupKey)` |
+| 排序白名单符号 bug | 🟡 P2 | `pagination.ts:29` | 先剥 `-` 取裸字段查白名单，命中保留原 `sort`（含方向） |
+| 缺 scanLimit（DB-01） | 🟡 P2 | `article.ts:141,191-203` | keyword 计数套 `SCAN_LIMIT=2000` 封顶（`.select({id}).limit().all()` 取长度，类型安全） |
+| 列表 SELECT 含 content（投影） | 🟡 P2 | `article.ts:165-189` | 列表仅 `select` 摘要列，新增 `ArticleSummaryRow` Pick 类型，`toArticleSummary` 签名收窄 |
+| tag 子串误匹配 | 🟡 P3 | — | 保留，归 B3 `article_tags` 关联表 |
+| articles.ts 超 200 行 | 🟡 P3 | — | 保留，文件头已说明特殊情况 |
+
+**复批新增针对性测试（3 条，命中门禁漏网边界）**：`24h 冷却过后重访仍成功计数`、`并发同 key view 均 200 不 500`、`sort=-viewCount 按阅读量真降序`。

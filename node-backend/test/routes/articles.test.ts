@@ -12,7 +12,8 @@ import { createApp } from '@/app';
 import { readEnv } from '@/config/env';
 import { createLocalDb, getDb, setDb } from '@/db/client';
 import { migrate } from '@/db/migrate';
-import { users } from '@/db/schema';
+import { articles, articleViewDedup, users } from '@/db/schema';
+import { fnv1a } from '@/lib/article';
 
 const app = createApp(readEnv(process.env as Record<string, string | undefined>));
 
@@ -240,5 +241,92 @@ describe('B2 更新 / 软删 / submit / 阅读量', () => {
     const did = (await json<ArticleResp>(draft)).data.id;
     const dv = await app.request(`${BASE}/${did}/view`, { method: 'POST' });
     expect(dv.status).toBe(404);
+  });
+});
+
+// P1 复验：修复「永久唯一约束 vs 24h 冷却」错配后，回访与并发场景不应再 500。
+describe('B2 阅读量去重边界（P1 复验）', () => {
+  const IP = '203.0.113.7';
+  const UA = 'Mozilla/5.0-revisit';
+  const anon = () => ({
+    method: 'POST' as const,
+    headers: { 'x-forwarded-for': IP, 'user-agent': UA },
+  });
+  const viewCountOf = async (res: Response): Promise<number> =>
+    (await json<ArticleResp>(res)).data.viewCount;
+
+  it('24h 冷却过后重访仍成功计数（不再 500）', async () => {
+    await register('revisit_admin');
+    await elevate('revisit_admin', 'admin');
+    const admin = await tokenOf('revisit_admin');
+    const created = await createArticle(admin, {
+      title: '重访',
+      content: 'x',
+      status: 'published',
+    });
+    const id = (await json<ArticleResp>(created)).data.id;
+
+    // 模拟「上一窗口已看过一次」：插入旧桶去重记录（桶号 = 当前-1）；viewCount 仍为 0
+    const baseKey = `a:${fnv1a(`${IP}|${UA}`)}`;
+    const bucket = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+    await getDb()
+      .insert(articleViewDedup)
+      .values({
+        articleId: id,
+        dedupKey: `${baseKey}#${bucket - 1}`,
+        createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
+      })
+      .run();
+
+    // 冷却过后（当前桶）重访 → 新 key 不在库 → 成功计数 +1，绝不再 500
+    const v = await app.request(`${BASE}/${id}/view`, anon());
+    expect(v.status).toBe(200);
+    expect(await viewCountOf(v)).toBe(1);
+  });
+
+  it('并发同 key view 均 200 不 500，且不重复计数', async () => {
+    await register('conc_admin');
+    await elevate('conc_admin', 'admin');
+    const admin = await tokenOf('conc_admin');
+    const created = await createArticle(admin, {
+      title: '并发',
+      content: 'x',
+      status: 'published',
+    });
+    const id = (await json<ArticleResp>(created)).data.id;
+
+    const [r1, r2] = await Promise.all([
+      app.request(`${BASE}/${id}/view`, anon()),
+      app.request(`${BASE}/${id}/view`, anon()),
+    ]);
+    expect(r1.status).toBe(200);
+    expect(r2.status).toBe(200);
+    // 同窗口同 key：至多计 1 次（去重或并发唯一约束兜底），绝不 500
+    const v = await viewCountOf(r1);
+    expect(v).toBeGreaterThanOrEqual(1);
+    expect(v).toBeLessThanOrEqual(1);
+  });
+});
+
+// P2-1 复验：排序白名单应支持「带符号字段名」，降序非默认字段不被静默忽略。
+describe('B2 列表排序（P2-1 复验）', () => {
+  it('sort=-viewCount 按阅读量真降序', async () => {
+    await register('sort_admin');
+    await elevate('sort_admin', 'admin');
+    const admin = await tokenOf('sort_admin');
+    const a = await createArticle(admin, { title: 'A', content: 'x', status: 'published' });
+    const b = await createArticle(admin, { title: 'B', content: 'x', status: 'published' });
+    const idA = (await json<ArticleResp>(a)).data.id;
+    const idB = (await json<ArticleResp>(b)).data.id;
+
+    // 直接置阅读量以验证排序（不走 /view 去重）：A=10, B=30
+    await getDb().update(articles).set({ viewCount: 10 }).where(eq(articles.id, idA)).run();
+    await getDb().update(articles).set({ viewCount: 30 }).where(eq(articles.id, idB)).run();
+
+    const res = await app.request(`${BASE}?sort=-viewCount`);
+    const list = (await json<ListResp>(res)).data.list;
+    expect(list.length).toBe(2);
+    expect(list[0]?.id).toBe(idB); // 阅读量高者在前
+    expect(list[1]?.id).toBe(idA);
   });
 });

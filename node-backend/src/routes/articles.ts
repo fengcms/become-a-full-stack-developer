@@ -11,7 +11,7 @@
  * - submit(draft→pending) 非法前态→3003；阅读量去重 24h 冷却。
  * - member 创建/更新传入 published → 降级 pending；member 传入 slug → 忽略。
  */
-import { and, eq, gte, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { getDb } from '@/db/client';
@@ -286,7 +286,10 @@ articlesRoute.post(
   },
 );
 
-/** POST /:id/view — 阅读量 +1（带去重）；仅 published 可计数，否则 404。 */
+/** POST /:id/view — 阅读量 +1（带去重）；仅 published 可计数，否则 404。
+ * 去重采用「24h 时间桶」：dedupKey = baseKey#bucket，bucket = floor(now/WINDOW)。
+ * 冷却过后桶号自然变化 → 不再撞旧记录，根除「永久唯一约束 vs 24h 冷却」的 500；
+ * 同窗口并发插入撞唯一约束 → isUniqueConstraintError 兜底，跳过增量、返回 200，不重复计数。 */
 articlesRoute.post('/:id/view', optionalAuthMiddleware, async (c) => {
   const id = Number(c.req.param('id'));
   const db = getDb();
@@ -303,25 +306,38 @@ articlesRoute.post('/:id/view', optionalAuthMiddleware, async (c) => {
   const me = c.get('user') as AuthVars['Variables']['user'] | undefined;
   const ip =
     c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? c.req.header('x-real-ip') ?? '';
-  const dedupKey = me ? `u:${me.id}` : `a:${fnv1a(`${ip}|${c.req.header('user-agent') ?? ''}`)}`;
+  const ua = c.req.header('user-agent') ?? '';
+  const baseKey = me ? `u:${me.id}` : `a:${fnv1a(`${ip}|${ua}`)}`;
+  const bucket = Math.floor(Date.now() / VIEW_DEDUP_MS); // 每 24h 一个桶
+  const dedupKey = `${baseKey}#${bucket}`;
 
   const recent = await db
     .select({ id: articleViewDedup.id })
     .from(articleViewDedup)
-    .where(
-      and(
-        eq(articleViewDedup.articleId, id),
-        eq(articleViewDedup.dedupKey, dedupKey),
-        gte(articleViewDedup.createdAt, new Date(Date.now() - VIEW_DEDUP_MS)),
-      ),
-    )
+    .where(and(eq(articleViewDedup.articleId, id), eq(articleViewDedup.dedupKey, dedupKey)))
     .limit(1)
     .all();
   if (recent.length === 0) {
-    await db
-      .insert(articleViewDedup)
-      .values({ articleId: id, dedupKey, createdAt: new Date() })
-      .run();
+    try {
+      await db
+        .insert(articleViewDedup)
+        .values({ articleId: id, dedupKey, createdAt: new Date() })
+        .run();
+    } catch (err) {
+      if (isUniqueConstraintError(err)) {
+        // 同窗口并发重复插入：视作已计数，跳过增量（不重复计数、不抛 500）
+        const cur = (
+          await db
+            .select({ viewCount: articles.viewCount })
+            .from(articles)
+            .where(eq(articles.id, id))
+            .limit(1)
+            .all()
+        )[0];
+        return ok({ viewCount: cur?.viewCount ?? existing.viewCount });
+      }
+      throw err;
+    }
     await db
       .update(articles)
       .set({ viewCount: sql`${articles.viewCount} + 1` })

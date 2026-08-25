@@ -70,8 +70,29 @@ export const canTransition = (from: ArticleStatus, to: ArticleStatus): boolean =
 /** 解析存储的 tags JSON 字符串为字符串数组（NULL → 空数组）。 */
 const parseTags = (raw: string | null): string[] => (raw ? (JSON.parse(raw) as string[]) : []);
 
+/** 列表/摘要所需列的子集（投影：不取 content 等长文本，对应 BE11「投影」护栏）。 */
+export type ArticleSummaryRow = Pick<
+  ArticleRow,
+  | 'id'
+  | 'title'
+  | 'slug'
+  | 'summary'
+  | 'coverImage'
+  | 'authorId'
+  | 'authorName'
+  | 'categoryId'
+  | 'categoryName'
+  | 'tags'
+  | 'status'
+  | 'viewCount'
+  | 'likeCount'
+  | 'publishedAt'
+  | 'createdAt'
+  | 'updatedAt'
+>;
+
 /** DB 行 → 契约 ArticleSummary（不含 content 全文）。 */
-export const toArticleSummary = (a: ArticleRow) => ({
+export const toArticleSummary = (a: ArticleSummaryRow) => ({
   id: a.id,
   title: a.title,
   slug: a.slug ?? null,
@@ -116,6 +137,9 @@ export interface ArticlePage {
   pagination: Pagination;
 }
 
+/** 模糊搜索计数扫描量上限（DB-01，见 BE11）：超出仅显示封顶值，防全表 LIKE 扫描。 */
+const SCAN_LIMIT = 2000;
+
 /**
  * 统一列表查询：组合过滤条件 + 分页 + 排序，返回摘要数组与分页元数据。
  * 过滤：deleted_at IS NULL 基础条件；公开/后台/我的文章通过 forcedStatus / status / authorId 区分。
@@ -137,18 +161,50 @@ export const queryArticles = async (q: ArticleQuery): Promise<ArticlePage> => {
   if (q.category) conds.push(eq(articles.categorySlug, q.category));
 
   const where = and(...conds);
+  // 投影：列表仅取摘要所需列，不拉 content 长文本（BE11 投影护栏）
   const rows = await getDb()
-    .select()
+    .select({
+      id: articles.id,
+      title: articles.title,
+      slug: articles.slug,
+      summary: articles.summary,
+      coverImage: articles.coverImage,
+      authorId: articles.authorId,
+      authorName: articles.authorName,
+      categoryId: articles.categoryId,
+      categoryName: articles.categoryName,
+      tags: articles.tags,
+      status: articles.status,
+      viewCount: articles.viewCount,
+      likeCount: articles.likeCount,
+      publishedAt: articles.publishedAt,
+      createdAt: articles.createdAt,
+      updatedAt: articles.updatedAt,
+    })
     .from(articles)
     .where(where)
     .orderBy(buildSortSql(q.c.req.query('sort')))
     .limit(pageSize)
     .offset(offset)
     .all();
-  const totalRow = (
-    await getDb().select({ count: sql<number>`count(*)` }).from(articles).where(where).all()
-  )[0];
-  const total = Number(totalRow?.count ?? 0);
+
+  // 计数：keyword 触发 LIKE 模糊扫描时套 DB-01 护栏，扫描量封顶 SCAN_LIMIT，
+  // 命中超量总数显示封顶值（搜索可用性 vs 性能取舍，见 BE11）。
+  let total: number;
+  if (q.keyword) {
+    const scanned = await getDb()
+      .select({ id: articles.id })
+      .from(articles)
+      .where(where)
+      .limit(SCAN_LIMIT)
+      .all();
+    total = scanned.length;
+  } else {
+    const totalRow = (
+      await getDb().select({ count: sql<number>`count(*)` }).from(articles).where(where).all()
+    )[0];
+    total = Number(totalRow?.count ?? 0);
+  }
 
   return { list: rows.map(toArticleSummary), pagination: meta(page, pageSize, total) };
 };
