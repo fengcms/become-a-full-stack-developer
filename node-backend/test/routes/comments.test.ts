@@ -141,6 +141,24 @@ describe('B4 发表评论（自动敏感词过滤）', () => {
     const res = await postComment(draft.data.id, member, 'hi');
     expect(res.status).toBe(404);
   });
+
+  it('parentId 指向不存在评论 → 404', async () => {
+    const admin = await tokenOf('c4b', 'admin');
+    const artId = await publishArticle(admin, 'Db');
+    const member = await tokenOf('c4bm', 'member');
+    const res = await postComment(artId, member, '回复一条幽灵评论', 999999);
+    expect(res.status).toBe(404);
+  });
+
+  it('parentId 指向他文评论 → 404', async () => {
+    const admin = await tokenOf('c4c', 'admin');
+    const artA = await publishArticle(admin, 'Dc-A');
+    const artB = await publishArticle(admin, 'Dc-B');
+    const member = await tokenOf('c4cm', 'member');
+    const parent = await json<CommentResp>(await postComment(artA, member, 'A 下的评论'));
+    const res = await postComment(artB, member, '挂在 B 下却指向 A 的评论', parent.data.id);
+    expect(res.status).toBe(404);
+  });
 });
 
 describe('B4 公开评论列表（仅 approved）', () => {

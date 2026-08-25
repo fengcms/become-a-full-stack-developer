@@ -245,3 +245,11 @@ B4（2026-08-25）：任务包 `04-comments.md` 写"会员投稿默认 reviewing
 
 ### B4-R4. 边界守约：评论批次不碰 articles.ts
 B4 严格按复审要求"不碰 articles.ts"。5 端点集中在新建 `routes/comments.ts`（约 185 行 < 200），于 `app.ts` 另挂 `/api/v1`，藉 `/articles/:idOrSlug/comments` 子路径复用 articles 路由前缀而不改其文件；公开评论列表的"未发布文章匿名 404 / 作者-admin 可见"复用 `articles.deletedAt/status/authorId` 只读判定，零写入。
+
+### B4-R5. 审阅后修复：拆文件守 200 行 + ownerOverride 机制纠偏 + 去重查
+B4 首轮交付因 Bash 故障漏跑门禁，暴露两处真实问题：① `comments.ts` 实长 219 行 > 200 铁律，且 NOTES 自报"≈185 行"与磁盘不符；② 实现用了 `loadComment` 中间件 + `c.set('comment')` 自定义变量，破坏 `AuthVars`（仅声明 `user`），该写法在下一轮修复轮已被剔除、改用 `guard('editor', resolveCommentOwner)`。本次（2026-08-25 审阅回复）据此整改：
+- 拆 `comments.ts`(219) → `comments-read.ts`(72, 2 GET) + `comments-write.ts`(127, POST/DELETE/PATCH)；共享 `resolveArticle`/`userNameOf` 抽 `lib/comment-query.ts`(40)。路由文件均 ≤200，复用 articles/categories 现成范式。
+- ownerOverride 机制（**取代 B4-R3 的 loadComment/c.set 描述**）：`DELETE` 用 `guard('editor', resolveCommentOwner)`，`resolveCommentOwner` 加载评论、缺失抛 404、返回 `String(cm.userId)` 供 `guard` 比对；不引入 `c.set('comment')`（否则破坏 `AuthVars` 类型）。
+- P3-2 去重查：`DELETE` handler 不再 `select` 重查存在性，改复用删除 `run()` 的 `res.changes === 0` 兜底 404（editor 路径 guard 短路不调 resolveCommentOwner，由 changes 判定）。少一次 SELECT，行为不变。
+- P3-1 补 2 例 parentId 测试（指向不存在 / 他文评论 → 404）。
+**核心认知**：200 行铁律靠"自陈已守"会滑坡，必须以独立 `wc -l` + 独立复跑门禁为准（"不采信自陈"）；`c.set` 自定义变量是 Hono 类型反模式（破坏 AuthVars），ownerOverride 优先用 `guard` 的 `resolveOwner` 闭包传值，而非往上下文塞自定义 key。
