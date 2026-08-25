@@ -23,6 +23,7 @@ M0 开篇/M1 Node/M2 React/M3 Next(含会员中心)/M4 Flutter/M5 Taro/M6 Go/M7 
 - 00-项目章程（v1.14）/ 02-领域模型与API契约（v1.14）/ 01-内容路线图（**v1.15**，2026-08-12 成长弧打磨）
 - 契约 `docs/api/openapi.v1.yaml`（**1.11.0**，OpenAPI 3.1）
 - 语义自查 `docs/api/check_contract.py`（双门之一）
+- **M1 后端实现计划** `docs/prd/M1-后端实现计划.md`（v1.0，2026-08-25）+ 8 个自包含批次任务包 `docs/prd/m1-tasks/00~07`（含复制即用提示词）。开发 AI 据此施工，总把控验门禁证据，不读每一行代码。
 - `docs/prd/README.md` 索引
 
 ## 契约演进与评审时间线（截止 2026-08-11）
