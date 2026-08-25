@@ -121,3 +121,77 @@ export const articleViewDedup = sqliteTable(
 
 /** article_view_dedup 行 → 查询结果类型。 */
 export type ArticleViewDedupRow = typeof articleViewDedup.$inferSelect;
+
+/**
+ * 分类表（B3 分类/标签批次，对齐契约 Category 实体）。
+ * 无限级自关联树：parentId 指向自身 id；NULL 表示根分类。
+ * 最大嵌套深度 4 级（契约 Category.x-max-depth），由应用层在创建/变更 parentId 时校验。
+ * slug 唯一索引：SQLite 对 NULL 允许多行，但分类 slug 必填，故等价于非空唯一。
+ */
+export const categories = sqliteTable(
+  'categories',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    name: text('name').notNull(),
+    slug: text('slug').notNull(),
+    description: text('description'),
+    // 自关联父节点；SQLite 自引用 FK 会造成 Drizzle 类型成环，且 FK 默认不强制，
+    // 父存在性 / 成环 / 级联由应用层（lib/category.ts + 删除守卫）保证，故此处不声明 references。
+    parentId: integer('parent_id'),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (table) => [uniqueIndex('uniq_category_slug').on(table.slug)],
+);
+
+/** categories 行 → 查询结果类型。 */
+export type CategoryRow = typeof categories.$inferSelect;
+/** 插入 categories 的入参类型。 */
+export type NewCategory = typeof categories.$inferInsert;
+
+/**
+ * 标签表（B3，对齐契约 Tag 实体）。扁平集合，无层级。
+ * articleCount 不存表，运行时由 article_tags 关联实时聚合（见 lib/tag.ts）。
+ */
+export const tags = sqliteTable(
+  'tags',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    name: text('name').notNull(),
+    slug: text('slug').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (table) => [uniqueIndex('uniq_tag_slug').on(table.slug)],
+);
+
+/** tags 行 → 查询结果类型。 */
+export type TagRow = typeof tags.$inferSelect;
+/** 插入 tags 的入参类型。 */
+export type NewTag = typeof tags.$inferInsert;
+
+/**
+ * 文章-标签关联表（B3 落地，对齐 02 §二「标签改为关联表」演进方向）。
+ * 作为标签与文章的规范关联；Tag.articleCount 由本表 JOIN 已发布文章精确聚合。
+ * 附注：文章打标签的写入入口（创建/更新文章时同步本表）属 B2/B4 文章提交逻辑，
+ * 按 B3「禁止项」不在此批次实现——故当前 junction 为空，articleCount 自然为 0，
+ * 待 B2/B4 增强文章提交时回填，计数即自动生效（详见 B3-NOTES）。
+ */
+export const articleTags = sqliteTable(
+  'article_tags',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    articleId: integer('article_id')
+      .notNull()
+      .references(() => articles.id),
+    tagId: integer('tag_id')
+      .notNull()
+      .references(() => tags.id),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (table) => [uniqueIndex('uniq_article_tag').on(table.articleId, table.tagId)],
+);
+
+/** article_tags 行 → 查询结果类型。 */
+export type ArticleTagRow = typeof articleTags.$inferSelect;

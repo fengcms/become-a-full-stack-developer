@@ -184,4 +184,29 @@ P2-3（测试"501 占位"实为 500）与 auth.ts 头注释"首波返回 501"都
 ### B2-R8. BE11 列表 DSL 文章在本项目是真有用，不是摆设
 复批对照用户《BE11 通用列表查询 DSL》文章，补了两道该文明确主张的护栏：(1) **DB-01 scanLimit**——keyword 模糊搜索的 count 必须封顶（本项目 `SCAN_LIMIT=2000`，用 `.select({id}).limit(2000).all()` 取长度，类型安全且语义与子查询 count 封顶等价；注意 better-sqlite3 Drizzle 无顶层 `db.get()` 裸 SQL，别臆测 API）；(2) **投影**——列表只 `select` 摘要列，不拉 `content` 长文本（新增 `ArticleSummaryRow` Pick 类型，`toArticleSummary` 签名收窄，详情接口仍走完整 `toArticle`）。文章"白名单优于黑名单""base 永远 AND""MAX_SIZE 封顶"三条 B2 本就做对了（给 credit）。**判断：本项目公开列表只有 4 个固定维度，不上通用 `field__op` DSL 是对的（避免过度下沉）；但 B3+ 后台列表（用户/评论/订单类）一多，就该抽 `buildListQuery` 纯函数 + `runList` 执行器把白名单/scanLimit/投影/base AND 一次性收口，`queryArticles` 迁移为特例。** 这条是"用户文章 → 本项目落地"的示范，值得在 B3 评审时复述。
 
+---
+
+## B3 分类 / 标签批次（2026-08-25 夜）
+
+> 11 端点全部落地；门禁 tsc/biome/vitest 全绿；68 测试（B3 新增 14：categories 9 + tags 5）。B2 第二轮复审批复正式放行本批次。
+
+### B3-R1. Drizzle 自引用 FK 会让生成类型"成环"，自关联树别用 `.references`
+`categories.parentId` 若写成 `.references(() => categories.id)`，TS 推断时 `categories` 在自身初始化器内被引用 → `TS7022` 隐式 any，并连带下游 insert 链报 `DrizzleTypeError(".all() cannot be used without .returning()")`（类型崩坏后 `.returning().all()` 也判错）。**经验：无限级自关联树（parentId 指向自身）不要在 schema 里声明 `.references`**——SQLite FK 默认不强制，父存在性/成环/级联由应用层保证（本项目删除守卫已查子节点与文章引用）。同理 `articleTags` 引用 `articles/tags`（已定义表）则正常，只有"指向自身"才成环。迁移 raw SQL 的 `FOREIGN KEY` 子句同步去掉，保持 schema 单一事实源一致。
+
+### B3-R2. 树/环/深度/面包屑都是"先取全量再纯函数算"
+`buildTree` / `wouldCreateCycle` / `depthOf` / `toBreadcrumb` 全部吃**全量分类数组**做纯函数（无 DB 调用），好处：可单测、可组合、删除/更新时一次 `allCategories()` 复用。深度与成环都在"变更 parentId 之前"用这份全量校验，避免 N 次递归查库。**经验：自关联树的运算别在 SQL 里递归（SQLite 无 CTE 递归友好生态），一次取全量在内存里算，万级数据内毫无压力，代码还更易测。**
+
+### B3-R3. 删除守卫用"引用存在即拒"（x-cascade: none）而非"先查后删"
+分类/标签删除前先查"有没有子节点 / 有没有文章(关联)引用"，有则 409（3002）拒绝；无则硬删。这是契约 `x-cascade: none` 的语义（不让后端替调用方级联），也避免悬空 `parent_id` 或孤儿中间表行。**注意：查引用要用 `isNull(deletedAt)` 排除软删文章，否则已删文章仍算"引用"会误拒。** 标签则查 `article_tags` 关联行（该表本身无软删概念）。
+
+### B3-R4. articleCount 走"关联表 JOIN 已发布文章"才是精确计数
+`Tag.articleCount` 由 `article_tags` JOIN `articles`（仅 `status='published' AND deleted_at IS NULL`）`GROUP BY tag_id` 得到，彻底告别 B2 的 `articles.tags` JSON 子串匹配（B2 P3 的 tag 子串误匹配根源）。**本批按 B3「禁止项」未引入"文章打标签"写入入口，故 junction 暂空、计数自然为 0**；计数是"前向兼容"设计——待 B2/B4 增强文章提交时同步 `article_tags`，articleCount 自动生效，本批零改动。测试用白盒直插 `article_tags` 验证聚合正确性（含"草稿不计入"断言）。**经验：计数/统计类字段优先从规范关联表聚合，别从去规范化 JSON 里 substring；即便当前上游未回填，查询层先就位，回填只是数据问题。**
+
+### B3-R5. 测试提权顺序 + 共享内存库 仍是铁律（与 B2-R2/R4 一致）
+B3 写权限测试严格沿用 `register → elevate → tokenOf`（elevate 必须在 login 前，因 JWT 角色是登录快照），每用例 `beforeEach` 重建 `:memory:` 库防污染。**新增认知：断言删除守卫时，要先想清"引用到底还在不在"**——初版测试把"有文章引用的目录"再次删除期望 200，忘了引用仍在 → 假绿转红；拆成"有子节点 409 / 有引用 409 / 干净叶子 200"三个独立用例才稳。
+
+### B3-R6. 单文件 ≤200 行是硬门禁，超限要主动拆分而非硬挤
+初版 `routes/categories.ts` 实写 **235 行**（>200 铁律），险些随自验报告一起漏报。正确做法是按"公开读 vs editor 写"职责切分：`categories-read.ts`（75 行，4 个 GET）+ `categories-write.ts`（192 行，3 个写端点），二者在 `app.ts` 同挂 `/api/v1/categories`，`allCategories` 抽到 read 侧由 write 复用。**教训：自验收尾必须 `wc -l` 过一遍所有新文件**，门禁清单里补一行"文件粒度"，不让行数超限悄悄溜过复验。
+
+
 

@@ -71,6 +71,34 @@ const STATEMENTS: readonly string[] = [
     FOREIGN KEY (article_id) REFERENCES articles(id)
   )`,
   `CREATE UNIQUE INDEX IF NOT EXISTS uniq_article_dedup ON article_view_dedup (article_id, dedup_key)`,
+  `CREATE TABLE IF NOT EXISTS categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL,
+    description TEXT,
+    parent_id INTEGER,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS uniq_category_slug ON categories (slug)`,
+  `CREATE TABLE IF NOT EXISTS tags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS uniq_tag_slug ON tags (slug)`,
+  `CREATE TABLE IF NOT EXISTS article_tags (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    article_id INTEGER NOT NULL,
+    tag_id INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (article_id) REFERENCES articles(id),
+    FOREIGN KEY (tag_id) REFERENCES tags(id)
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS uniq_article_tag ON article_tags (article_id, tag_id)`,
 ];
 
 /**
