@@ -20,6 +20,7 @@ import { categoriesReadRoute } from '@/routes/categories-read';
 import { categoriesWriteRoute } from '@/routes/categories-write';
 import { commentsReadRoute } from '@/routes/comments-read';
 import { commentsWriteRoute } from '@/routes/comments-write';
+import { filesRoute } from '@/routes/files';
 import { healthRoute } from '@/routes/health';
 import { meRoute } from '@/routes/me';
 import { membersRoute } from '@/routes/members';
@@ -55,6 +56,8 @@ export const createApp = (env: AppEnv): Hono => {
   app.route('/api/v1/me', meRoute);
   app.route('/api/v1/members', membersRoute);
   app.route('/api/v1', uploadRoute);
+  // 本地文件直出（仅 STORAGE_DRIVER=local 生效；生产走 CDN），供本地开发预览上传素材（B5 P3-1）
+  app.route('/files', filesRoute);
 
   return app;
 };

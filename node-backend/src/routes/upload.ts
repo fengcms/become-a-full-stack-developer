@@ -32,10 +32,12 @@ const ACCEPTED = new Set([
   'application/pdf',
 ]);
 
-/** 信任边界：校验上传文件大小/类型，返回 buffer 与扩展名。 */
-const parseUpload = async (c: Context): Promise<{ buffer: Buffer; ext: string; mime: string }> => {
+/** 信任边界：校验上传文件大小/类型，返回 buffer、扩展名、mime 与可选 articleId（一次性解析）。 */
+const parseUpload = async (
+  c: Context,
+): Promise<{ buffer: Buffer; ext: string; mime: string; articleId: number | null }> => {
   const form = await c.req.parseBody({ all: true });
-  const file = form['file'];
+  const file = form.file;
   if (typeof file === 'string' || Array.isArray(file) || !(file instanceof File)) {
     throw new AppError(ErrCode.VALIDATION, 400, undefined, {
       errors: [{ field: 'file', message: '缺少文件' }],
@@ -54,21 +56,21 @@ const parseUpload = async (c: Context): Promise<{ buffer: Buffer; ext: string; m
   }
   const name = file.name ?? 'file';
   const ext = name.includes('.') ? `.${name.split('.').pop()}` : '.bin';
-  return { buffer: buf, ext, mime: file.type };
-};
-
-/** POST /upload — 上传文件（member，StorageProvider 双存储）。 */
-uploadRoute.post('/upload', authMiddleware, async (c) => {
-  const me = c.get('user');
-  const { buffer, ext, mime } = await parseUpload(c);
-  const form = await c.req.parseBody({ all: true });
-  const raw = form['articleId'];
-  const articleId = typeof raw === 'string' && raw !== '' ? Number(raw) : null;
+  // P3-3：articleId 与 file 同一份 multipart 内一并解析，避免二次 parseBody 浪费 IO。
+  const rawId = form.articleId;
+  const articleId = typeof rawId === 'string' && rawId !== '' ? Number(rawId) : null;
   if (articleId !== null && !Number.isInteger(articleId)) {
     throw new AppError(ErrCode.VALIDATION, 400, undefined, {
       errors: [{ field: 'articleId', message: 'articleId 须为整数' }],
     });
   }
+  return { buffer: buf, ext, mime: file.type, articleId };
+};
+
+/** POST /upload — 上传文件（member，StorageProvider 双存储）。 */
+uploadRoute.post('/upload', authMiddleware, async (c) => {
+  const me = c.get('user');
+  const { buffer, ext, mime, articleId } = await parseUpload(c);
 
   const env = getActiveEnv();
   const storage = createStorage(env);

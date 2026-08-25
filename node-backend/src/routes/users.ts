@@ -73,6 +73,35 @@ usersRoute.patch('/:id', authMiddleware, guard('admin'), v.json(updateUserSchema
   const db = getDb();
   const existing = (await db.select().from(users).where(eq(users.id, id)).limit(1).all())[0];
   if (!existing) throw new AppError(ErrCode.NOT_FOUND, 404);
+
+  const privileged = body.role !== undefined || body.status !== undefined;
+  // P3-4：禁止管理员变更自身角色/状态，避免自我降级 / 自我封禁导致锁死（最后 admin 与自我操作护栏）。
+  if (privileged && Number(c.get('user').id) === id) {
+    throw new AppError(ErrCode.FORBIDDEN, 403, undefined, {
+      errors: [{ field: 'id', message: '不能变更自己的角色或状态' }],
+    });
+  }
+  // P3-4：最后 admin 保护——被操作者当前是 admin 且本次会失去 admin 或遭封禁时，
+  // 若活跃 admin 仅剩 1 名，拒绝（防系统无可用管理员）。
+  if (privileged && existing.role === 'admin') {
+    const wouldLoseAdmin = body.role !== undefined && body.role !== 'admin';
+    const wouldDisable = body.status !== undefined && body.status === 'disabled';
+    if (wouldLoseAdmin || wouldDisable) {
+      const activeAdmins = (
+        await db
+          .select({ count: sql<number>`count(*)` })
+          .from(users)
+          .where(and(eq(users.role, 'admin'), eq(users.status, 'active')))
+          .all()
+      )[0];
+      if (Number(activeAdmins?.count ?? 0) <= 1) {
+        throw new AppError(ErrCode.CONFLICT, 409, undefined, {
+          errors: [{ field: 'role', message: '至少保留一名活跃 admin' }],
+        });
+      }
+    }
+  }
+
   const patch: Record<string, unknown> = {};
   if (body.role !== undefined) patch.role = body.role;
   if (body.status !== undefined) patch.status = body.status;

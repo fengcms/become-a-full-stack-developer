@@ -265,3 +265,13 @@ B5 严格按 `05-users-upload.md`：users 管理（admin 列表/详情/PATCH 升
 - **门禁（自跑）**：tsc 0 / biome 0（69 文件）/ vitest 104 passed（B5 14 例）/ 契约双门 OK（openapi.v1.yaml 未动）。
 - **新增**：`attachments` 表（schema+migrate）；`lib/attachment.ts`；`routes/users.ts`(87)/`users-admin.ts`(47)/`me.ts`(119)/`members.ts`(59)/`upload.ts`(148)；`test/routes/users.test.ts`；`node-backend/.gitignore`（`/uploads/`）。
 - **结论**：11 端点全实现，门禁全绿，待总把控复验后进 B6（收藏/历史/点赞/通知）。
+
+### B5-R（P3 整改，用户要求优化后补）
+审阅报告 `review/B5-后端代码审阅报告.md` 裁定放行 B6，并给 5 项 P3。用户要求逐项优化，全部真修：
+- **P3-1**：新增 `routes/files.ts`(52) + `app.ts` 挂 `app.route('/files', filesRoute)`；仅 `STORAGE_DRIVER==='local'` 直出 `./uploads/{key}`，`SAFE_KEY` 防路径遍历；生产 r2 直接 404 不服务。本地预览上传素材不再 404。
+- **P3-2**：`members.ts`(59→37) 弃 `.all()` 全量，改复用 `queryArticles({c,authorId,forcedStatus:'published'})`；`articleCount` 取 `page.pagination.total`。
+- **P3-3**：`upload.ts` 内 `parseUpload` 单次 `parseBody` 一并返回 `articleId`，删 POST handler 二次 `parseBody`；`form['x']`→`form.x` 清 biome info（148→150）。
+- **P3-4**：`users.ts`(87→116) PATCH 加双护栏——① 自我护栏：对自身做 role/status 变更 → 403(FORBIDDEN 2001)；② 最后 admin 保护：被操作者为 admin 且将失去 admin/被禁用、活跃 admin ≤1 → 409(CONFLICT 3002)。纯 level 变更不受限。
+- **P3-5**：`files.ts` 对 svg 强制 `Content-Disposition: attachment` + 统一 `X-Content-Type-Options: nosniff`；CDN 侧策略另行运维配置。
+- **门禁（自跑）**：tsc 0 / biome 0（70 文件，0 info）/ vitest **108 passed**（B5 18 例，P3 新增 4）/ 契约双门 OK（openapi.v1.yaml 未动）。
+- **回复文档**：`review/B5-代码审阅-回复.md`（仿 B4 回复格式：逐项回应 + 门禁表 + 文件清单）。

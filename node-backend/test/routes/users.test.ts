@@ -82,6 +82,13 @@ const createUser = async (
   return { id: r.data.user.id, token: r.data.accessToken };
 };
 
+/** 构造一个合法的图片上传表单（png，内容 hello-world）。 */
+const buildForm = (): FormData => {
+  const fd = new FormData();
+  fd.append('file', new File([Buffer.from('hello-world')], 'test.png', { type: 'image/png' }));
+  return fd;
+};
+
 describe('B5 用户管理（admin）', () => {
   it('admin 提升 member → editor', async () => {
     const admin = await createUser('b5admin', 'admin');
@@ -209,12 +216,6 @@ describe('B5 个人资料与密码', () => {
 });
 
 describe('B5 上传与附件', () => {
-  const buildForm = (): FormData => {
-    const fd = new FormData();
-    fd.append('file', new File([Buffer.from('hello-world')], 'test.png', { type: 'image/png' }));
-    return fd;
-  };
-
   it('upload 返回 URL 且可再查到', async () => {
     const u = await createUser('b5up');
     const res = await app.request(`${BASE}/upload`, {
@@ -303,5 +304,64 @@ describe('B5 公开会员主页', () => {
     const res = await app.request(`${BASE}/members/${id}`, { method: 'GET' });
     expect(res.status).toBe(404);
     expect((await json<ErrResp>(res)).code).toBe(3001);
+  });
+});
+
+describe('B5 用户管理护栏（P3-4）', () => {
+  it('admin 不能变更自己的角色/状态 → 403', async () => {
+    const admin = await createUser('b5selfadmin', 'admin');
+    const res = await app.request(`${BASE}/users/${admin.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${admin.token}` },
+      body: JSON.stringify({ status: 'disabled' }),
+    });
+    expect(res.status).toBe(403);
+    expect((await json<ErrResp>(res)).code).toBe(2001);
+  });
+
+  it('两位 admin 时降级另一位 → 200', async () => {
+    const a = await createUser('b5adminA', 'admin');
+    const { id: bId } = await createUser('b5adminB', 'admin');
+    const res = await app.request(`${BASE}/users/${bId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${a.token}` },
+      body: JSON.stringify({ role: 'editor' }),
+    });
+    expect(res.status).toBe(200);
+    expect((await json<UserResp>(res)).data.role).toBe('editor');
+  });
+});
+
+describe('B5 本地文件直出（P3-1 / P3-5）', () => {
+  const pathOf = (url: string): string => new URL(url, 'http://localhost').pathname;
+
+  it('本地 /files/{key} 可直接访问上传文件', async () => {
+    const u = await createUser('b5files');
+    const up = await app.request(`${BASE}/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${u.token}` },
+      body: buildForm(),
+    });
+    const { data } = await json<{ data: { url: string } }>(up);
+    const res = await app.request(pathOf(data.url), { method: 'GET' });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    expect(res.headers.get('Content-Type')).toBe('image/png');
+    expect(await res.text()).toBe('hello-world');
+  });
+
+  it('SVG 经 /files 返回强制下载头（XSS 缓解）', async () => {
+    const u = await createUser('b5svg');
+    const fd = new FormData();
+    fd.append('file', new File([Buffer.from('<svg/>')], 'a.svg', { type: 'image/svg+xml' }));
+    const up = await app.request(`${BASE}/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${u.token}` },
+      body: fd,
+    });
+    const { data } = await json<{ data: { url: string } }>(up);
+    const res = await app.request(pathOf(data.url), { method: 'GET' });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Content-Disposition')).toBe('attachment');
   });
 });
