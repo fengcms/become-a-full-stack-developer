@@ -27,6 +27,18 @@ const STATEMENTS: readonly string[] = [
     updated_at INTEGER NOT NULL
   )`,
   `CREATE UNIQUE INDEX IF NOT EXISTS uniq_username ON users (username)`,
+  // email 唯一（领域模型 02 要求；SQLite 唯一索引对 null 不冲突，注册 email 必填故等价非空唯一）
+  `CREATE UNIQUE INDEX IF NOT EXISTS uniq_email ON users (email)`,
+  `CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    token_hash TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL,
+    revoked_at INTEGER,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS uniq_token_hash ON refresh_tokens (token_hash)`,
 ];
 
 /**

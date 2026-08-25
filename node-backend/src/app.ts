@@ -9,10 +9,9 @@
  */
 import { Hono } from 'hono';
 import { type AppEnv, setActiveEnv } from '@/config/env';
-import { ok } from '@/lib/response';
-import { authMiddleware, guard } from '@/middleware/auth';
 import { corsMiddleware } from '@/middleware/cors';
 import { errorHandler } from '@/middleware/error';
+import { authRoute } from '@/routes/auth';
 import { healthRoute } from '@/routes/health';
 
 /**
@@ -27,9 +26,7 @@ export const createApp = (env: AppEnv): Hono => {
   app.use('*', corsMiddleware(env));
 
   app.route('/api/v1/health', healthRoute);
-
-  // 受保护占位路由：仅用于验收门禁 3（无 token 应得 401 包络）。B1 起替换为真实鉴权端点。
-  app.get('/api/v1/protected-ping', authMiddleware, guard('member'), () => ok({ pong: true }));
+  app.route('/api/v1/auth', authRoute);
 
   return app;
 };
