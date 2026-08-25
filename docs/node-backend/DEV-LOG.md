@@ -148,4 +148,28 @@ P2-2 中 refresh"令牌缺失"在描述写 1003、在示例/共享组件/代码�
 ### B1-F4. 注释随契约演进而 stale，是沉默的技术债
 P2-3（测试"501 占位"实为 500）与 auth.ts 头注释"首波返回 501"都是 B0 把契约 501→500 后没同步的残留。这类 stale 注释不报错却误导，属于"只在散文"类缺陷的近亲。**经验：凡改契约语义，grep 全仓相关文案（注释/文档/测试描述）一并更新，别只改代码。**
 
+---
+
+## B2 文章核心批次（2026-08-25 晚）
+
+> 11 端点全部落地；门禁 tsc/biome/vitest 全绿；51 测试（B2 新增 18：articles 10 + articles-admin 8）。B1 第二轮复审批复正式放行本批次。
+
+### B2-R1. 写操作 `.run()` 与读操作 `.all()` 的 Drizzle 分野（最值钱的坑）
+`create` 端点用了 `.returning().all()` 一直正常，让人误以为所有写都能 `.all()`。实际 Drizzle better-sqlite3 里：`SELECT` 与 `INSERT...RETURNING` 才返回行集（`.all()`），而 `UPDATE...SET` / `INSERT...VALUES`（无 returning）是写语句，必须 `.run()`。`.all()` 在写语句上抛 `This statement does not return data. Use run() instead`，**且只在运行时暴露**——tsc、biome、契约双门全拦不住，只有 vitest 抓到。B2 的 `submit/view/update/delete/approve/setStatus` 共 7 处写语句全部踩中，统一改成 `.run()`。**铁律记死：写 `.run()`、读 `.all()`、要回读 `.returning().all()`。** 这比"记住某次报错"更稳，因为后续 B3/B5 写操作一多极易复发。
+
+### B2-R2. JWT 角色是"登录快照"，提权必须先于签发
+`authMiddleware`/`guard` 直接读 `claims.role`，登录后改库里的 `role` 不会反映到已签发的令牌。测试里若 `tokenOf`（登录）后再 `elevate`（改库），令牌仍持旧 `member` 角色，admin/editor 受保护端点必 403。**因此任何"提权后再发请求"的用例，顺序必须是 `register → elevate → tokenOf`（elevate 在 login 之前）。** 这条对"用直接改库模拟提权"的测试套路是普适约束，B3/B5 写权限测试时照做。
+
+### B2-R3. 测试 `tokenOf` 必须自包含（先 register 再 login）
+早期 `tokenOf` 只 `login`，但用例从未 `register` 该用户名 → `login` 命中"用户不存在→1001→`data:null`"，连累 `r.data.accessToken` 抛 `TypeError`。修正为 `tokenOf` 内先 `register`（409 可忽略）再 `login`，幂等且自包含。**经验：测试 helper 不要依赖"调用方先做了某步"，把前置动作收进 helper 内部，调用处才不会漏。**
+
+### B2-R4. 共享 `:memory:` 库的用例污染
+`setup.ts` 每测试文件建一份内存库，文件内用例共享。计数断言（`total === N`）会被前置用例的文章干扰。B2 两测试文件各自加 `beforeEach` 重建全新 `:memory:` 库并 `migrate`，用例间零污染。**经验：路由/状态类测试默认每用例重建 DB，比"相信文件内顺序"稳得多；也避免 test 间隐含时序耦合。**
+
+### B2-R5. 领域规则正确 ≠ 测试假设正确
+「公开列表仅返回 published」「关键词过滤」两测试最初以 member 创建 `status:'published'`，被 `resolveNewStatus` 降级成 `pending`，公开列表 0 条。这是**测试假设**（"member 能发 published"）与领域规则（"member 不可自发布"）冲突，领域规则本身正确，改的是测试（改用 admin 创建已发布）。**经验：测试失败时先确认"挂的是断言还是领域规则"，别一红就改实现——很可能错的是测试的假设。**
+
+### B2-R6. slug 部分唯一索引的"伪唯一"是特性不是 bug
+`uniq_article_slug` 建在可空 slug 列，SQLite 允许多行 `NULL` 共存 → 天然"部分唯一索引"，软删后 slug 释放可复用（与 B1-R5 的 email 可空唯一是同一机理）。B5 涉及附件/评论唯一性时复用此认知：**可空唯一索引对 NULL 不冲突，是预期行为，不是缺陷。**
+
 

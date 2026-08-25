@@ -64,3 +64,22 @@ export const guard =
     }
     throw new AppError(ErrCode.FORBIDDEN, 403);
   };
+
+/**
+ * 可选鉴权中间件：携带有效 Bearer 则注入 c.set('user')，否则按匿名继续（不抛错）。
+ * 用于契约 `security: [{}, {bearerAuth: []}]` 端点（如文章详情 / 阅读量），
+ * 实现「可匿名、也可携带令牌」的标准语义；令牌无效时静默降级为匿名，不阻断请求。
+ */
+export const optionalAuthMiddleware: MiddlewareHandler<AuthVars> = async (c, next) => {
+  const header = c.req.header('authorization') ?? '';
+  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+  if (token) {
+    try {
+      const claims = await verifyAccessToken(token, getActiveEnv().JWT_SECRET);
+      c.set('user', { id: claims.sub, role: claims.role });
+    } catch {
+      // 可选鉴权：无效令牌按匿名处理，不抛错
+    }
+  }
+  await next();
+};

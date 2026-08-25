@@ -39,6 +39,38 @@ const STATEMENTS: readonly string[] = [
     FOREIGN KEY (user_id) REFERENCES users(id)
   )`,
   `CREATE UNIQUE INDEX IF NOT EXISTS uniq_token_hash ON refresh_tokens (token_hash)`,
+  `CREATE TABLE IF NOT EXISTS articles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    slug TEXT,
+    summary TEXT,
+    content TEXT NOT NULL,
+    cover_image TEXT,
+    author_id INTEGER NOT NULL,
+    author_name TEXT,
+    category_id INTEGER,
+    category_name TEXT,
+    category_slug TEXT,
+    status TEXT NOT NULL DEFAULT 'draft',
+    tags TEXT,
+    view_count INTEGER NOT NULL DEFAULT 0,
+    like_count INTEGER NOT NULL DEFAULT 0,
+    published_at INTEGER,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL,
+    deleted_at INTEGER,
+    FOREIGN KEY (author_id) REFERENCES users(id)
+  )`,
+  // slug 唯一索引：SQLite 对 NULL 允许多行，天然等价于「部分唯一索引」（软删除后 slug 释放可复用）
+  `CREATE UNIQUE INDEX IF NOT EXISTS uniq_article_slug ON articles (slug)`,
+  `CREATE TABLE IF NOT EXISTS article_view_dedup (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    article_id INTEGER NOT NULL,
+    dedup_key TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (article_id) REFERENCES articles(id)
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS uniq_article_dedup ON article_view_dedup (article_id, dedup_key)`,
 ];
 
 /**

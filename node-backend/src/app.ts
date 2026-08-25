@@ -11,6 +11,9 @@ import { Hono } from 'hono';
 import { type AppEnv, setActiveEnv } from '@/config/env';
 import { corsMiddleware } from '@/middleware/cors';
 import { errorHandler } from '@/middleware/error';
+import { articlesRoute } from '@/routes/articles';
+import { adminArticlesRoute } from '@/routes/articles-admin';
+import { meArticlesRoute } from '@/routes/articles-me';
 import { authRoute } from '@/routes/auth';
 import { healthRoute } from '@/routes/health';
 
@@ -27,6 +30,9 @@ export const createApp = (env: AppEnv): Hono => {
 
   app.route('/api/v1/health', healthRoute);
   app.route('/api/v1/auth', authRoute);
+  app.route('/api/v1/articles', articlesRoute);
+  app.route('/api/v1/me/articles', meArticlesRoute);
+  app.route('/api/v1/admin/articles', adminArticlesRoute);
 
   return app;
 };
