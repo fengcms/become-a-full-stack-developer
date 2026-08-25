@@ -222,3 +222,26 @@ export const comments = sqliteTable('comments', {
 
 /** comments 行 → 查询结果类型。 */
 export type CommentRow = typeof comments.$inferSelect;
+
+/**
+ * 附件表（B5 上传批次，对齐契约 Attachment 实体）。
+ * 上传即落本表；storage 记录实际落盘后端（r2 / local），storageKey 为底层存储内部 key，
+ * 供删除时定位并尽力删除底层对象（删除失败不阻塞行删除，双存储适配层真实边界）。
+ * articleId 不声明 references，避免 Drizzle 类型成环，存在性由业务层保证。
+ */
+export const attachments = sqliteTable('attachments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id),
+  articleId: integer('article_id'),
+  storageKey: text('storage_key').notNull(),
+  url: text('url').notNull(),
+  storage: text('storage', { enum: ['r2', 'local'] }).notNull(),
+  mimeType: text('mime_type').notNull(),
+  size: integer('size').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
+/** attachments 行 → 查询结果类型。 */
+export type AttachmentRow = typeof attachments.$inferSelect;

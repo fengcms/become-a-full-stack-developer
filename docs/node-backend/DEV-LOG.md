@@ -253,3 +253,15 @@ B4 首轮交付因 Bash 故障漏跑门禁，暴露两处真实问题：① `com
 - P3-2 去重查：`DELETE` handler 不再 `select` 重查存在性，改复用删除 `run()` 的 `res.changes === 0` 兜底 404（editor 路径 guard 短路不调 resolveCommentOwner，由 changes 判定）。少一次 SELECT，行为不变。
 - P3-1 补 2 例 parentId 测试（指向不存在 / 他文评论 → 404）。
 **核心认知**：200 行铁律靠"自陈已守"会滑坡，必须以独立 `wc -l` + 独立复跑门禁为准（"不采信自陈"）；`c.set` 自定义变量是 Hono 类型反模式（破坏 AuthVars），ownerOverride 优先用 `guard` 的 `resolveOwner` 闭包传值，而非往上下文塞自定义 key。
+
+### B5-R1. 用户 / 资料 / 上传批次（11 端点）
+B5 严格按 `05-users-upload.md`：users 管理（admin 列表/详情/PATCH 升 editor）、`me` 资料 + 改密码、公开 `members/{id}` 脱敏主页、`upload` + 附件管理。
+- **角色边界**：用户管理端点全 `guard('admin')`，editor 自然被拒（与 §3.3 一致）；`PATCH /users/{id}` 可改 `role/status/level`，admin 经此升 member→editor。
+- **脱敏**：`GET /members/{id}` 仅返 MemberProfile（id/nickname/avatar/level/articleCount/articles），不含 email/passwordHash/role/status；`disabled` 会员 404 防枚举；`me/profile` 与 admin 列表/详情返完整 User（含 email）。
+- **双存储**：`POST /upload` 经 `createStorage(env)` 落 `attachments` 表，`storage` 记实际后端、`storageKey` 仅供删除定位（不进响应）；local 兜底落 `./uploads`，url=`/files/{key}`；R2 分支 Node 测试抛错（D10/B10 deferred）。
+- **删除附件**：`guard('editor', resolveAttachmentOwner)`（member 须本人），`res.changes===0` 兜底 404；底层 `storage.delete` 尽力执行、失败不阻塞行删（双存储真实边界）。
+- **幂等号**：沿用 B4 的 `changes===0` 兜底 + `resolveOwner` 抛 404 模式，未引入 `c.set`。
+- **文件校验**：multipart 在信任边界手动校验（类型白名单 + 10MB），不合法 → 4001 `data.errors`。
+- **门禁（自跑）**：tsc 0 / biome 0（69 文件）/ vitest 104 passed（B5 14 例）/ 契约双门 OK（openapi.v1.yaml 未动）。
+- **新增**：`attachments` 表（schema+migrate）；`lib/attachment.ts`；`routes/users.ts`(87)/`users-admin.ts`(47)/`me.ts`(119)/`members.ts`(59)/`upload.ts`(148)；`test/routes/users.test.ts`；`node-backend/.gitignore`（`/uploads/`）。
+- **结论**：11 端点全实现，门禁全绿，待总把控复验后进 B6（收藏/历史/点赞/通知）。

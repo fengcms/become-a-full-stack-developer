@@ -112,6 +112,18 @@ const STATEMENTS: readonly string[] = [
     FOREIGN KEY (article_id) REFERENCES articles(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
   )`,
+  `CREATE TABLE IF NOT EXISTS attachments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    article_id INTEGER,
+    storage_key TEXT NOT NULL,
+    url TEXT NOT NULL,
+    storage TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  )`,
 ];
 
 /**

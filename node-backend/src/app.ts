@@ -21,7 +21,12 @@ import { categoriesWriteRoute } from '@/routes/categories-write';
 import { commentsReadRoute } from '@/routes/comments-read';
 import { commentsWriteRoute } from '@/routes/comments-write';
 import { healthRoute } from '@/routes/health';
+import { meRoute } from '@/routes/me';
+import { membersRoute } from '@/routes/members';
 import { tagsRoute } from '@/routes/tags';
+import { uploadRoute } from '@/routes/upload';
+import { usersRoute } from '@/routes/users';
+import { usersAdminRoute } from '@/routes/users-admin';
 
 /**
  * 创建应用实例（纯工厂，无副作用之外的全局状态依赖）。
@@ -45,6 +50,11 @@ export const createApp = (env: AppEnv): Hono => {
   app.route('/api/v1/tags', tagsRoute);
   app.route('/api/v1', commentsReadRoute);
   app.route('/api/v1', commentsWriteRoute);
+  app.route('/api/v1/users', usersRoute);
+  app.route('/api/v1/admin/users', usersAdminRoute);
+  app.route('/api/v1/me', meRoute);
+  app.route('/api/v1/members', membersRoute);
+  app.route('/api/v1', uploadRoute);
 
   return app;
 };
