@@ -195,3 +195,30 @@ export const articleTags = sqliteTable(
 
 /** article_tags 行 → 查询结果类型。 */
 export type ArticleTagRow = typeof articleTags.$inferSelect;
+
+/**
+ * 评论表（B4 评论批次，对齐契约 Comment 实体 + 02 §二评论三态）。
+ * 三态：approved / rejected / reviewing；自动流（发表）只产出 approved/rejected，
+ * reviewing 仅能由 `PATCH /comments/{id}/status`（editor/admin）置位与移出。
+ * parentId 指向同表另一行（单层回复）；自关联同 B3 不声明 references，避免 Drizzle 类型成环，
+ * 父存在性 / 级联删除由应用层（routes/comments.ts 级联删除子回复）保证。
+ * content 存已做敏感词转星号处理后的展示文本（见 lib/comment.ts moderateContent）。
+ */
+export const comments = sqliteTable('comments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  articleId: integer('article_id')
+    .notNull()
+    .references(() => articles.id),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id),
+  userName: text('user_name').notNull(),
+  parentId: integer('parent_id'),
+  content: text('content').notNull(),
+  status: text('status').notNull().default('approved'),
+  rejectedReason: text('rejected_reason'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
+/** comments 行 → 查询结果类型。 */
+export type CommentRow = typeof comments.$inferSelect;

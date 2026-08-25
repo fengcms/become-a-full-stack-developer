@@ -99,6 +99,19 @@ const STATEMENTS: readonly string[] = [
     FOREIGN KEY (tag_id) REFERENCES tags(id)
   )`,
   `CREATE UNIQUE INDEX IF NOT EXISTS uniq_article_tag ON article_tags (article_id, tag_id)`,
+  `CREATE TABLE IF NOT EXISTS comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    article_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    user_name TEXT NOT NULL,
+    parent_id INTEGER,
+    content TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'approved',
+    rejected_reason TEXT,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (article_id) REFERENCES articles(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  )`,
 ];
 
 /**

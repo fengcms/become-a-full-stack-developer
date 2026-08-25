@@ -230,3 +230,18 @@ B3.5（2026-08-25）：B3 建了 `article_tags` 但全代码零 INSERT，是死�
 ### B3.5-R3. articles.ts 拆分（358→123+147）与共享逻辑下沉
 按「公开读 vs 登录写」拆为 `articles-read.ts`(123) + `articles-write.ts`(147)，`app.ts` 同挂 `/api/v1/articles`。写侧四端点各自带权限/状态/标签同步逻辑，强拆会迫使 slug 校验/状态解析/标签同步在 files 间重复，故下沉到 `lib/article-mutation.ts`（状态/slug 解析 + `createArticleRow`/`updateArticleRow`）+ `lib/article-tags.ts`，路由退化为薄委托层。`articles-write.ts` 147 行 < 200，达标。
 **核心认知**：200 行铁律不是「每个文件都拆到 200 内」的教条，而是「超出要有可辩护理由或已抽出共享层」；本批把重复逻辑抽到 lib 后路由自然瘦身，比机械切两半更稳。
+
+### B4-R1. 评论默认态冲突：以冻结契约为准，任务包"默认 reviewing"被覆盖
+B4（2026-08-25）：任务包 `04-comments.md` 写"会员投稿默认 reviewing"，但**冻结契约** `Comment` schema 与 `createComment` 描述明确"自动流只产出 approved / rejected，reviewing 仅由 PATCH 人工置位"。项目纪律"实现不得偏离契约"优先，故发表走敏感词自动流 → approved/rejected，reviewing 仅 PATCH 进出。任务包口径视为被契约取代，已在 B4-NOTES 登记偏差。
+**核心认知**：当批次任务包与冻结契约表述冲突时，契约是单一事实源，偏差要在 NOTES 显式登记而非默默二选一，否则复验者无从判断意图。
+
+### B4-R2. 敏感词过滤"等长城号 + 比率阈值"双动作
+`lib/comment.ts` 的 `moderateContent`：命中词整体替换为等长 `*`；算违规比率 `命中字符数/原文长度`，>0.3 → rejected 否则 approved。存库即转义后展示文本，原文不落库。阈值 0.3 为可解释默认：短评论命中即易超阈，长评论零星命中仍放行。
+**核心认知**：自动审核不要二元"有脏词即删"，用"比率"区分偶发口误与刷屏广告；展示层先转义再存，避免回显原始违规文本。
+
+### B4-R3. ownerOverride + 404 的协作：先 loadComment 再 guard
+`DELETE /comments/:id` 用 `loadComment` 中间件预载评论到 `c.set('comment')`，缺失直接 404；`guard('editor', c => String(cm.userId))` 据此判归属。若先 guard 后查，缺失资源会错返 403 而非契约规定的 404——顺序决定错误码正确性。
+**核心认知**：x-authz 的 ownerOverride 与"资源存在性 404"是两个正交关注点；用预载中间件把存在性检查提前，guard 只管归属，错误码才不会被串台。
+
+### B4-R4. 边界守约：评论批次不碰 articles.ts
+B4 严格按复审要求"不碰 articles.ts"。5 端点集中在新建 `routes/comments.ts`（约 185 行 < 200），于 `app.ts` 另挂 `/api/v1`，藉 `/articles/:idOrSlug/comments` 子路径复用 articles 路由前缀而不改其文件；公开评论列表的"未发布文章匿名 404 / 作者-admin 可见"复用 `articles.deletedAt/status/authorId` 只读判定，零写入。

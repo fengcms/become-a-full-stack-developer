@@ -18,6 +18,7 @@ import { articlesWriteRoute } from '@/routes/articles-write';
 import { authRoute } from '@/routes/auth';
 import { categoriesReadRoute } from '@/routes/categories-read';
 import { categoriesWriteRoute } from '@/routes/categories-write';
+import { commentsRoute } from '@/routes/comments';
 import { healthRoute } from '@/routes/health';
 import { tagsRoute } from '@/routes/tags';
 
@@ -41,6 +42,7 @@ export const createApp = (env: AppEnv): Hono => {
   app.route('/api/v1/categories', categoriesReadRoute);
   app.route('/api/v1/categories', categoriesWriteRoute);
   app.route('/api/v1/tags', tagsRoute);
+  app.route('/api/v1', commentsRoute);
 
   return app;
 };
