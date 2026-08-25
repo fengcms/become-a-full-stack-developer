@@ -501,6 +501,45 @@ P3-1 新增的 2 例 parentId 测试（幽灵引用 → 404 / 跨文章引用 �
 
 契约侧 2 处不一致（P3-3）+ B3/B4 任务包 prose 与冻结契约的系统性偏差（"默认 reviewing""分类写=admin"），已登记给契约维护批次。这是**文档债**不是代码债——代码以契约为准全都判对，只是 prose 误导后续开发 AI。B5 不碰。
 
+## B5 后端代码审阅（用户 / 资料 / 上传批次）
+
+**批次性质**：B5 首轮（非复批）。交付 `B5-NOTES.md`，commit `2840b5c`，11 端点拆 5 路由文件。结论：**自 B1 以来第二个零 P0/P1/P2 的批次**（第一个是 B1），仅 5 项 P3 非阻塞观察。
+
+### 一、本轮"不采信自陈"的三个具体抓手
+
+1. **`wc -l` 复核行数（延续 B4 教训）**：B4 首轮抓到"自报 ≈185 行，实际 219 行"。B5 我第一件事仍是 `wc -l` 六个新文件，结果**与自报逐字吻合**（users 87 / users-admin 47 / me 119 / members 59 / upload 148 / attachment 61）。这说明 B4 复批"点出不实陈述"的校正**真正生效**——协作方已被约束到"自陈须与磁盘一致"。这是放行 B5 的最强信号之一。
+
+2. **逐端点回 `x-authz` 机器字段（延续 B3/B4"散文 vs 契约"裁决）**：B5 任务包 `05-users-upload.md` 与冻结契约无冲突（本批 prose 与契约一致），但我仍逐一 grep 契约 `x-authz.minRole`（行 2171/2238/2262/2727/2746/2806/2851/2901/2949/3021）与代码 `guard`/`authMiddleware` 比对，11 端点全对齐。重点盯了 `POST /upload`（契约 minRole member，代码仅 `authMiddleware`，正确——任何已登录角色 ≥ member 都过）、`DELETE /attachments/{id}`（editor + ownerOverride(userId)，代码 `guard('editor', resolveAttachmentOwner)` 正确）。
+
+3. **独立复跑门禁（分三次避 OOM，延续 B2 复批教训）**：开发者自跑已绿（104 passed），但我仍分 tsc / biome / vitest 三次独立调用。结果一致：tsc 0 / biome 69 文件 0 error 0 warning 2 info / vitest 104/104。契约结构门 `OK`（git 确认 `openapi.v1.yaml` 不在 commit 改动列表）。
+
+### 二、门禁看不到、必须手推的正确性
+
+- **脱敏双路**：`toPublicUser`（user.ts:39-49）确认不含 `passwordHash`；`GET /members/{id}` 走**手搓** `MemberProfile`（members.ts:49-56），不含 email/role/status/passwordHash/createdAt。我额外追查 `toPublicUser` 的**全项目调用点**（users/users-admin/me/auth），确认它从不在匿名/他人上下文返回 → 无越权泄漏。这是"代码是素材"项目最该守住的隐私边界。
+- **storageKey 不泄漏**：`Attachment` 响应（attachment.ts:25-34）不含 `storageKey`；契约 `Attachment`（432）亦无此字段。删附件时 `storageKey` 仅用于定位底层对象，绝不进响应。
+- **双存储真实边界**：`upload.ts:137-143` 行删后尽力删底层、`catch` 吞底层失败不阻塞行删——与契约 2270 描述一致，也契合主计划适配层题材。
+- **disabled 防枚举**：`members.ts:21` `disabled → 404`，与契约 2316 一致。
+
+### 三、5 项 P3 的判别逻辑（为何全不阻放行）
+
+| 观察 | 性质 | 为何非 P2 |
+|---|---|---|
+| P3-1 本地无 `/files` 路由，上传文件本地不可预览 | 本地 dev 体验缺口 | 生产走 R2+CDN 不受影响；契约本就将 local 定位"兜底" |
+| P3-2 成员文章列表未分页（`.all()`） | 设计取舍 | `articleCount` 取 `rows.length` 因无 limit 仍正确；当前数据量小 |
+| P3-3 upload 双 `parseBody` | 浪费非错误 | Hono `bodyCache` 保证功能正常；biome 仅标 2 info |
+| P3-4 无 last-admin / 自我封禁保护 | MVP 运维风险 | admin 操作，非匿名越权；可后续加护栏 |
+| P3-5 SVG 白名单 XSS 面 | 生产由 CDN 策略决定 | 本地未服务该文件，且可顺手加 content-sniff 净化 |
+
+判别准则：P2 要满足"会破坏契约 / 会被真实流量打挂 / 越已确立铁律 / 自陈述与磁盘不符"至少其一。以上五项均不满足——它们是"更健壮 / 更好体验"，不是"坏了"。故放行，仅登记为后续优化。
+
+### 四、元认知：本批为何干净
+
+- B5 是继 B1 后第二个零 P0/P1/P2 批次，且**P2 级问题（行数铁律）已无**——B4 曾因 219 行 + 自报不实被判 P2，B5 行数全 ≤200 且诚实。
+- 门禁盲区本批**未被"功能正确"掩盖出逻辑缺陷**（对比 B2 `/view` 500、B4 行数）——说明开发 AI 在 B4 复批后已内化"自陈须与磁盘一致"的纪律。审阅者的价值从"抓假修复"退化为"确认无假修复 + 列 credit + 标 P3 增强项"，这是协作成熟的标志。
+- 与历轮"无假修复即放行"同脉：本批连复批都不需要——首轮即全绿、零偏差。
+
+---
+
 ## 总复盘：这套审阅打法给我（和接手 AI）留下的最硬的几条
 
 1. **审阅者的存在意义 = 破除"作者自证盲区"**。同一人写代码、写门禁、写修复说明，他的注意力天然覆盖不到"自己没想到的维度"。独立审阅者用另一套逻辑重新证伪，是成本最低的防漂移手段。呼应 N6：冻结前应由**非作者**跑穿透式核验。
