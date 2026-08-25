@@ -2,11 +2,15 @@
  * src/lib/article.ts
  * 文章领域纯逻辑（与路由解耦，便于单测）：序列化、slug 校验、状态转移矩阵、列表查询。
  * 所有 DB 行 snake_case → 契约 camelCase 在此统一完成。
+ *
+ * 注：本文件约 252 行，略超 200 行软上限——它集中承载「序列化 + slug 黑名单 + 状态机
+ * + 统一列表查询」四类紧密相关的领域逻辑，拆分反而会割裂这些单一职责的协作（如状态机被
+ * 序列化与更新共用）。按项目纪律「特殊情况需注释说明」显式标注；routes 层仍严守 ≤200。
  */
 import { and, eq, isNull, like, or, type SQL, sql } from 'drizzle-orm';
 import type { Context } from 'hono';
 import { getDb } from '@/db/client';
-import { type ArticleRow, articles } from '@/db/schema';
+import { type ArticleRow, articles, articleTags, tags } from '@/db/schema';
 import { ErrCode } from '@/lib/codes';
 import { AppError } from '@/lib/http-error';
 import { buildSortSql, meta, parsePage } from '@/lib/pagination';
@@ -67,8 +71,16 @@ export const canTransition = (from: ArticleStatus, to: ArticleStatus): boolean =
   return allowed.some(([f, t]) => f === from && t === to);
 };
 
-/** 解析存储的 tags JSON 字符串为字符串数组（NULL → 空数组）。 */
-const parseTags = (raw: string | null): string[] => (raw ? (JSON.parse(raw) as string[]) : []);
+/** 解析存储的 tags JSON 字符串为字符串数组（NULL / 非法 → 空数组）。 */
+export const parseTags = (raw: string | null): string[] => {
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw) as unknown;
+    return Array.isArray(arr) ? (arr.filter((t) => typeof t === 'string') as string[]) : [];
+  } catch {
+    return [];
+  }
+};
 
 /** 列表/摘要所需列的子集（投影：不取 content 等长文本，对应 BE11「投影」护栏）。 */
 export type ArticleSummaryRow = Pick<
@@ -155,14 +167,27 @@ export const queryArticles = async (q: ArticleQuery): Promise<ArticlePage> => {
     const kw = or(like(articles.title, `%${q.keyword}%`), like(articles.summary, `%${q.keyword}%`));
     if (kw) conds.push(kw); // or() 在全部参数为 undefined 时返回 undefined，此处恒有值但需收窄类型
   }
-  // tags 为 JSON 数组字符串，按 "tag" 子串匹配（slug==name 约定；B3 改造为 article_tags 关联后更精确）
-  if (q.tag) conds.push(sql`${articles.tags} LIKE ${`%"${q.tag}"%`}`);
+  // 标签过滤：从 articles.tags 子串 LIKE 改为 article_tags 关联精确匹配（B3.5，关闭 B2 P3 子串误匹配）。
+  // q.tag 约定为 catalog 标签的 slug 或 name；解析不到对应 catalog 标签 → 直接返回空列表
+  // （精确语义：未收录的标签不再「碰巧」子串命中，且避免了 `js` 误匹配 `json` 这类问题）。
+  if (q.tag) {
+    const tagRow = (
+      await getDb()
+        .select({ id: tags.id })
+        .from(tags)
+        .where(or(eq(tags.slug, q.tag), eq(tags.name, q.tag)))
+        .limit(1)
+        .all()
+    )[0];
+    if (!tagRow) return { list: [], pagination: meta(page, pageSize, 0) };
+    conds.push(eq(articleTags.tagId, tagRow.id));
+  }
   // category 按 slug 匹配（B2 仅透传存储 category_slug，B3 补全分类表后生效）
   if (q.category) conds.push(eq(articles.categorySlug, q.category));
 
   const where = and(...conds);
   // 投影：列表仅取摘要所需列，不拉 content 长文本（BE11 投影护栏）
-  const rows = await getDb()
+  const rowsQuery = getDb()
     .select({
       id: articles.id,
       title: articles.title,
@@ -181,7 +206,9 @@ export const queryArticles = async (q: ArticleQuery): Promise<ArticlePage> => {
       createdAt: articles.createdAt,
       updatedAt: articles.updatedAt,
     })
-    .from(articles)
+    .from(articles);
+  if (q.tag) rowsQuery.innerJoin(articleTags, eq(articleTags.articleId, articles.id));
+  const rows = await rowsQuery
     .where(where)
     .orderBy(buildSortSql(q.c.req.query('sort')))
     .limit(pageSize)
@@ -192,17 +219,14 @@ export const queryArticles = async (q: ArticleQuery): Promise<ArticlePage> => {
   // 命中超量总数显示封顶值（搜索可用性 vs 性能取舍，见 BE11）。
   let total: number;
   if (q.keyword) {
-    const scanned = await getDb()
-      .select({ id: articles.id })
-      .from(articles)
-      .where(where)
-      .limit(SCAN_LIMIT)
-      .all();
+    const scannedQuery = getDb().select({ id: articles.id }).from(articles);
+    if (q.tag) scannedQuery.innerJoin(articleTags, eq(articleTags.articleId, articles.id));
+    const scanned = await scannedQuery.where(where).limit(SCAN_LIMIT).all();
     total = scanned.length;
   } else {
-    const totalRow = (
-      await getDb().select({ count: sql<number>`count(*)` }).from(articles).where(where).all()
-    )[0];
+    const totalQuery = getDb().select({ count: sql<number>`count(*)` }).from(articles);
+    if (q.tag) totalQuery.innerJoin(articleTags, eq(articleTags.articleId, articles.id));
+    const totalRow = (await totalQuery.where(where).all())[0];
     total = Number(totalRow?.count ?? 0);
   }
 

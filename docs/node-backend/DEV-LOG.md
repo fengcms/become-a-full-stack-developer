@@ -215,3 +215,18 @@ B3 写权限测试严格沿用 `register → elevate → tokenOf`（elevate 必�
 B3 复批（2026-08-25 晚）指出两处：P2-1 变更 parentId 仅校验 `depthOf(新父)+1`（被移动节点自身新深度），漏算其**子孙子树高度**——把「A(深3)→B(深4)」挂到另一深3节点下，A 变4、B 变5 越过 x-max-depth:4；P3-1 `buildTree` 递归无 `seen` 集，数据腐化成环会死循环。
 修复：`lib/category.ts` 增纯函数 `subtreeHeight(rows,id)`（含自身、单节点=1）；`categories-write.ts` PUT 校验改为 `depthOf(新父) + subtreeHeight(被移动节点) ≤ MAX`；`buildTree` 递归内持 `seen` 集命中自身即截断。`test/lib/category.test.ts` 锁两修复 + `test/routes/categories.test.ts` 增「移动带子孙的子树使子孙超界 → 409」集成测试（含「叶子移到同深父允许」正对照）。
 **核心认知**：x-max-depth 约束的是「树中任意节点深度」，移动子树时整棵被移子树的底最深节点都会跟着下沉，必须按子树高度整体校验，不能只看被移根。同时「交付说明过度声称已覆盖」是 P2-1 的放大器——不采信自陈不仅针对门禁，也针对 NOTES 的措辞。
+
+### B3.5-R1. article_tags 从死表变生效：写同步 + 存量回填双路
+B3.5（2026-08-25）：B3 建了 `article_tags` 但全代码零 INSERT，是死表。本批补两条写入路径：
+(1) 写同步——`lib/article-tags.ts` 的 `syncArticleTags(articleId, names)`：清旧 + 按 `slug==name` 解析出的已存在 Tag.id 覆盖插（`onConflictDoNothing`），create/update/软删均接入（软删一并清关联）；仅链接已存在 Tag，不自动建 catalog 标签（越权）。
+(2) 存量回填——`scripts/backfill-article-tags.ts` 包装 `lib/article-backfill.ts` 的 `backfillArticleTags(db)`，扫未删文章 `parseTags`→`resolveTagIds`→`INSERT OR IGNORE`，依赖唯一索引幂等可重跑；运行方式选「部署后由人跑一次」（`pnpm backfill`），D1 走 `wrangler d1 execute` 等价 SQL（脚本注释给出）。
+**核心认知**：去规范化 JSON 字段（articles.tags）与关联表（article_tags）并存时，必须有一个「规范写入入口」否则关联永远落后；回填脚本是存量债的一次性清偿，增量靠 create/update 同步，二者共用 `resolveTagIds` 保证语义一致。
+
+### B3.5-R2. 列表标签过滤切 JOIN + 排序歧义修复
+`lib/article.ts` 的 `queryArticles` 把 `q.tag` 从 `articles.tags LIKE` 改为 `article_tags innerJoin` 精确匹配；无对应 catalog 标签直接返回空列表（关 B2 P3 子串误匹配，如 `js` 误命中 `json`）。
+连带坑：`from(articles)` 再 `innerJoin(articleTags)` 后，`created_at`/`published_at`/`id` 出现歧义列，`buildSortSql` 的排序片段（含默认 `-publishedAt`→`COALESCE(published_at, created_at)` 与稳定键 `id DESC`）报 `ambiguous column` 500。修复：`pagination.ts` 的排序列统一加 `articles.` 限定（含 `articles.id DESC`）。
+**核心认知**：凡在查询里 `JOIN` 同名表（都有 `created_at`/`id`），所有裸列引用（尤其 ORDER BY 与聚合）都必须显式限定基表，否则只在 JOIN 分支偶发 500。
+
+### B3.5-R3. articles.ts 拆分（358→123+147）与共享逻辑下沉
+按「公开读 vs 登录写」拆为 `articles-read.ts`(123) + `articles-write.ts`(147)，`app.ts` 同挂 `/api/v1/articles`。写侧四端点各自带权限/状态/标签同步逻辑，强拆会迫使 slug 校验/状态解析/标签同步在 files 间重复，故下沉到 `lib/article-mutation.ts`（状态/slug 解析 + `createArticleRow`/`updateArticleRow`）+ `lib/article-tags.ts`，路由退化为薄委托层。`articles-write.ts` 147 行 < 200，达标。
+**核心认知**：200 行铁律不是「每个文件都拆到 200 内」的教条，而是「超出要有可辩护理由或已抽出共享层」；本批把重复逻辑抽到 lib 后路由自然瘦身，比机械切两半更稳。

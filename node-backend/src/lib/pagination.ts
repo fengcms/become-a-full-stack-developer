@@ -8,11 +8,13 @@ import { type SQL, sql } from 'drizzle-orm';
 import type { Context } from 'hono';
 import type { Pagination } from '@/lib/response';
 
-/** 允许排序的字段 → 实际列表达式（白名单，杜绝注入）。 */
+/** 允许排序的字段 → 实际列表达式（白名单，杜绝注入）。
+ * 统一以 articles. 限定基表列：queryArticles 恒以 articles 为基表，
+ * 标签 JOIN（B3.5 article_tags）后 created_at / id 等会歧义，限定基表可根除。 */
 const SORT_COLUMNS: Record<string, string> = {
-  publishedAt: 'COALESCE(published_at, created_at)',
-  viewCount: 'view_count',
-  createdAt: 'created_at',
+  publishedAt: 'COALESCE(articles.published_at, articles.created_at)',
+  viewCount: 'articles.view_count',
+  createdAt: 'articles.created_at',
 };
 
 /** 解析页码与页大小（带边界钳制，page≥1、pageSize∈[1,100]）。 */
@@ -29,9 +31,9 @@ export const buildSortSql = (sort?: string): SQL => {
   const raw = bare && bare in SORT_COLUMNS ? (sort ?? '-publishedAt') : '-publishedAt';
   const desc = raw.startsWith('-');
   const field = desc ? raw.slice(1) : raw;
-  const column = SORT_COLUMNS[field] ?? 'COALESCE(published_at, created_at)';
+  const column = SORT_COLUMNS[field] ?? 'COALESCE(articles.published_at, articles.created_at)';
   const dir = desc ? 'DESC' : 'ASC';
-  return sql`${sql.raw(column)} ${sql.raw(dir)}, id DESC`;
+  return sql`${sql.raw(column)} ${sql.raw(dir)}, articles.id DESC`;
 };
 
 /** 构造分页元数据（契约 Pagination 四件套）。 */
