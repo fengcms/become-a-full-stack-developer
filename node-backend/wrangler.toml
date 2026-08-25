@@ -1,0 +1,22 @@
+name = "node-backend"
+main = "src/worker.ts"
+compatibility_date = "2025-01-01"
+
+# 本地开发 / Node 侧由 .env 提供；此处为 CF 部署变量示例
+[vars]
+JWT_SECRET = "change-me-in-prod"
+NODE_ENV = "production"
+DB_FILE = ":memory:"
+STORAGE_DRIVER = "local"
+CORS_ORIGINS = "*"
+
+# Cloudflare D1 绑定（deploy 时启用并填入 database_id）
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "node-backend"
+# database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+# Cloudflare R2 绑定（STORAGE_DRIVER=r2 时启用）
+# [[r2_buckets]]
+# binding = "R2_BUCKET"
+# bucket_name = "node-backend"

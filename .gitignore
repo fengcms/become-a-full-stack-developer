@@ -1,0 +1,10 @@
+node_modules
+.next
+out
+dist
+*.tsbuildinfo
+.env*.local
+.trae/
+# Claude Code 本地配置(scratch/launch),不跟踪
+.claude/
+test-results/
