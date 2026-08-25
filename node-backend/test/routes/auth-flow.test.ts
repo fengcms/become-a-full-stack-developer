@@ -143,7 +143,7 @@ describe('B1 当前用户 / 登出', () => {
 });
 
 describe('B1 第三方登录占位', () => {
-  it('合法 provider → 501 占位（500 + code 5000）', async () => {
+  it('合法 provider → 500 占位（B0 已将契约 501 修正为 500，code 5000）', async () => {
     const res = await app.request(`${BASE}/wechat/callback`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

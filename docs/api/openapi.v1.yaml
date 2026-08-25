@@ -861,7 +861,7 @@ paths:
       summary: 刷新访问令牌
       description: >
         浏览器端通过 HttpOnly Cookie 携带 refreshToken；移动端将 refreshToken 置于请求体。
-        读取优先级：Cookie 优先，缺失取请求体，两者皆无 → 401 / code 1003。
+        读取优先级：Cookie 优先，缺失取请求体，两者皆无 → 401 / code 1004（令牌缺失）。
 
 
         **旋转策略（强制）**：每次刷新成功即作废旧 refreshToken 并签发新值（响应体与 Set-Cookie 同时更新）。

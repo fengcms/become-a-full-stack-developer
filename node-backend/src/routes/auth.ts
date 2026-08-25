@@ -18,8 +18,9 @@ import type { Context } from 'hono';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { getDb } from '@/db/client';
-import { users } from '@/db/schema';
+import { type User, users } from '@/db/schema';
 import { ErrCode } from '@/lib/codes';
+import { isUniqueConstraintError } from '@/lib/db-error';
 import { AppError } from '@/lib/http-error';
 import { hashPassword, verifyPassword } from '@/lib/password';
 import { REFRESH_TTL_MS, revokeUserTokens, rotateRefreshToken } from '@/lib/refresh';
@@ -75,23 +76,31 @@ authRoute.post('/register', v.json(registerSchema), async (c) => {
     .from(users)
     .where(or(eq(users.username, username), eq(users.email, email)))
     .all();
-  if (dup.length > 0) throw new AppError(ErrCode.CONFLICT, 409); // 3002 用户名/邮箱冲突
+  if (dup.length > 0) throw new AppError(ErrCode.CONFLICT, 409); // 3002 用户名/邮箱冲突（常见路径）
 
-  const inserted = await db
-    .insert(users)
-    .values({
-      username,
-      email,
-      passwordHash: await hashPassword(password),
-      displayName: nickname ?? username,
-      role: 'member',
-      status: 'active',
-      level: 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .returning()
-    .all();
+  // 并发竞态：两次同用户名请求可能都通过上面的查重，其一插入命中唯一约束。
+  // 用 try/catch 兜底，把底层 SQLITE_CONSTRAINT_UNIQUE 收敛回契约约定的 409/3002，而非落到 500。
+  let inserted: User[];
+  try {
+    inserted = await db
+      .insert(users)
+      .values({
+        username,
+        email,
+        passwordHash: await hashPassword(password),
+        displayName: nickname ?? username,
+        role: 'member',
+        status: 'active',
+        level: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning()
+      .all();
+  } catch (err) {
+    if (isUniqueConstraintError(err)) throw new AppError(ErrCode.CONFLICT, 409); // 3002 并发重复注册
+    throw err;
+  }
   const user = inserted[0];
   if (!user) throw new AppError(ErrCode.INTERNAL, 500);
 
@@ -163,7 +172,7 @@ authRoute.get('/me', authMiddleware, async (c) => {
   return ok(toPublicUser(dbUser));
 });
 
-/** POST /:provider/callback — 第三方登录占位，首波返回 501（内部错误口径 5000）。 */
+/** POST /:provider/callback — 第三方登录占位，首波返回 500（内部错误口径 5000，B0 已将契约 501 修正为 500）。 */
 authRoute.post('/:provider/callback', v.param(providerSchema), async () => {
   // M3-09 扩展点：真实 OAuth 对接在后续批次；provider 已校验合法，此处仅占位
   throw new AppError(ErrCode.INTERNAL, 500, '第三方登录尚未实现（M3-09 扩展点）');
