@@ -114,24 +114,40 @@ export const getAttachmentOwnerId = async (id: number): Promise<string | null> =
   return String(row.userId);
 };
 
-/** DELETE /attachments/:id — 删行；尽可能删底层对象，失败不阻塞行删除（双存储真实边界）。 */
+/** DELETE /attachments/:id — 同步事务内删行 + 数同 storageKey 兄弟行；仅 0 引用才真删物理文件（去重后防孤儿文件）。 */
 export const deleteAttachment = async (id: number): Promise<void> => {
-  const db = getDb();
-  const row = (
-    await db
-      .select({ storageKey: attachments.storageKey })
-      .from(attachments)
-      .where(eq(attachments.id, id))
-      .limit(1)
-      .all()
-  )[0];
-  const res = await db.delete(attachments).where(eq(attachments.id, id)).run();
-  if (res.changes === 0) throw new AppError(ErrCode.NOT_FOUND, 404);
-  if (row) {
-    try {
-      await createStorage(getActiveEnv()).delete(row.storageKey);
-    } catch {
-      // 底层删除失败不阻塞行删除（双存储适配层真实边界）
-    }
+  // better-sqlite3 事务回调须同步（不能 async）：DB 的「删行 + 数兄弟」原子化，消除并发交错窗口。
+  // 异步的文件删除放到事务外做 best-effort（失败不阻塞行删除，与双存储边界一致）。
+  const result = getDb().transaction(
+    (tx): { found: boolean; storageKey?: string; remaining: number } => {
+      const row = (
+        tx
+          .select({ storageKey: attachments.storageKey })
+          .from(attachments)
+          .where(eq(attachments.id, id))
+          .limit(1)
+          .all() as { storageKey: string }[]
+      )[0];
+      if (!row) return { found: false, remaining: 0 };
+      const res = tx.delete(attachments).where(eq(attachments.id, id)).run();
+      if (res.changes === 0) throw new AppError(ErrCode.NOT_FOUND, 404);
+      const remaining =
+        (
+          tx
+            .select({ c: sql<number>`count(*)` })
+            .from(attachments)
+            .where(eq(attachments.storageKey, row.storageKey))
+            .all() as { c: number }[]
+        )[0]?.c ?? 0;
+      return { found: true, storageKey: row.storageKey, remaining };
+    },
+  );
+
+  if (!result.found || result.remaining !== 0) return; // 行不存在 / 仍有引用 → 不删物理文件
+  // 仅无人引用才真删物理文件（双存储适配层：失败不阻塞行删除）
+  try {
+    await createStorage(getActiveEnv()).delete(result.storageKey as string);
+  } catch {
+    // 底层删除失败不阻塞行删除（双存储适配层真实边界）
   }
 };

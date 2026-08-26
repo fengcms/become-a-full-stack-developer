@@ -4,7 +4,7 @@
  * local = 本地磁盘（开发 / 测试 / 兜底）；r2 = Cloudflare R2（生产，需绑定）。
  * 业务代码只依赖 StorageProvider 接口，不直接接触具体驱动。
  */
-import { randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { AppEnv } from '@/config/env';
@@ -21,8 +21,8 @@ export interface StorageProvider {
 
 /**
  * 安全 key 约束：仅允许基础文件名字符。
- * put 生成的 key 已是 randomUUID + 扩展名，天然合法；此处约束的是 get/delete 入参，
- * 防御路径遍历（如 '../../etc/passwd'）越权读写 root 之外文件（审阅 B04）。
+ * put 生成的 key 是 `sha256(内容) + 扩展名`（内容寻址，同字节恒同 key），由 hex + 点 + 小写扩展名组成，
+ * 天然合法；此处约束的是 get/delete 入参，防御路径遍历（如 '../../etc/passwd'）越权读写 root 之外文件（审阅 B04）。
  */
 const SAFE_KEY = /^[A-Za-z0-9._-]+$/;
 
@@ -40,7 +40,9 @@ class LocalStorage implements StorageProvider {
   }
 
   async put(buffer: Buffer, ext: string): Promise<{ key: string; url: string }> {
-    const key = `${randomUUID()}${ext}`;
+    const key = `${createHash('sha256').update(buffer).digest('hex')}${ext}`; // 内容寻址：同字节 → 同 key
+    const existing = await this.get(key); // 命中则复用，跳过写盘（省 I/O，R2 省 PUT）
+    if (existing) return { key, url: `${this.baseUrl}/${key}` };
     await mkdir(this.root, { recursive: true });
     await writeFile(join(this.root, key), buffer);
     return { key, url: `${this.baseUrl}/${key}` };
