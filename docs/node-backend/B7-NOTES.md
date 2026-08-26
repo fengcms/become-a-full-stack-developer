@@ -14,7 +14,7 @@
 | `GET /api/v1/stats` | 公开（security: []） | getSiteStats | `routes/aux.ts` + `lib/stats.ts` |
 | `GET /api/v1/search` | 公开（security: []） | search | `routes/aux.ts` + `lib/search.ts` |
 | `GET /api/v1/site/settings` | 公开（security: []） | getSiteSettings | `routes/site.ts` |
-| `GET /api/v1/admin/site/settings` | admin | getAdminSiteSettings | `routes/site.ts` |
+| `GET /api/v1/admin/site/settings` | admin | adminGetSiteSettings | `routes/site.ts` |
 | `PATCH /api/v1/admin/site/settings` | admin | updateSiteSettings | `routes/site.ts` |
 
 **文件拆分说明（铁律 ≤200）**：原 `lib/aux.ts` 聚合 4 个独立领域达 316 行，越界。按职责拆为 4 个聚焦模块，全部 ≤200：
@@ -30,7 +30,7 @@
 1. **公开可见性铁律**：`adjacent` / `related` / `toc` 仅对 `published` 文章有效；文章不存在 **或** `status !== 'published'` 一律 404（`getPublishedArticle` 统一抛 `NOT_FOUND`），与 B2/B4 公开列表口径一致（不泄露未发布文章存在性）。
 2. **adjacent（上一篇/下一篇）**：以 `publishedAt` 排序——`prev` 取 `publishedAt < 当前` 中最新一篇，`next` 取 `published_at > 当前` 中最早一篇，均限 `published` + `deleted_at IS NULL`；无则 `null`。`publishedAt` 为 `null`（如草稿被误查，实际已被铁律拦截）时双 `null`。
 3. **related（相关文章）打分**：`共享标签数 × 2 + 同分类 × 1`，排除自身，仅 `published`，按 `score` 降序、`viewCount` 次降序，`slice(0, limit)`。`?limit` 默认 5、封顶 10（下限 1）。
-   - **依赖 denormalized `articles.tags`**：`article_tags` 关联表按 B3 禁止项暂未回填，故相关推荐直接读取文章的 `tags` JSON 列；回填 junction 后无需改此逻辑（打分仍基于标签集合）。这是「文章是产品、代码是素材」铁律下对关联表未就绪的务实兜底。
+   - **依赖 denormalized `articles.tags`**：标签取自 `articles.tags` 去规范化 JSON 列（B2 创建文章即填充），与 `article_tags` 关联表是否回填无关。打分基于标签集合，即便未来改用 junction 查询，打分逻辑不变。
 4. **toc（目录）边界**：解析 `content`（Markdown）标题层级（`#`~`######`）；**跳过代码围栏内的 `#` 行**（避免把代码里的 `# 注释` 当成标题）；锚点经 `slugify`（保留字母/数字/中文、截断 100、空则回退 `'heading'`），**重复锚点追加 `-n` 去重**；展示 `text` 截断 200，不改写原文。
 5. **stats（全站统计）**：`articleCount` = `published` 文章数；`commentCount` = `approved` 评论数；`memberCount` = `active` 用户数；`viewTotal` = `published` 文章 `view_count` 累计（`coalesce(sum, 0)`）。四项 `Promise.all` 并发查询。
 6. **search（搜索）**：`?q` 必填，空白 → `4001 VALIDATION`（`VALIDATION`/400）；`?type` 默认 `article`，`=member` 走会员搜索。文章命中 `title` / `summary` / `content` 三处 `LIKE`（限 `published`）；会员命中 `display_name` / `username` 的 `LIKE`（排除 `disabled`），并附各人 `published` 文章数。响应为互斥结构：`{ articles: ArticlePage | null, members: MemberPage | null }`，仅一侧有值。`?sort` 仅文章生效（透传 `buildSortSql` 白名单）。

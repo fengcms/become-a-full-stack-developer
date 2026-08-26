@@ -375,6 +375,24 @@ describe('B7 站点设置', () => {
     expect(part.data.siteName).toBe('新站名');
     expect(part.data.siteDescription).toBe('新简介');
 
+    // 设置 logoUrl 后，显式传 null 清空
+    const withLogo = await json<SiteSettingResp>(
+      await app.request(`${BASE}/admin/site/settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${admin}` },
+        body: JSON.stringify({ logoUrl: 'https://example.com/logo.png' }),
+      }),
+    );
+    expect(withLogo.data.logoUrl).toBe('https://example.com/logo.png');
+    const cleared = await json<SiteSettingResp>(
+      await app.request(`${BASE}/admin/site/settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${admin}` },
+        body: JSON.stringify({ logoUrl: null }),
+      }),
+    );
+    expect(cleared.data.logoUrl).toBeNull();
+
     // 匿名改 → 401（缺令牌）
     expect(
       (

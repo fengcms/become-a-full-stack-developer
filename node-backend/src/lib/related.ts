@@ -3,8 +3,8 @@
  * 文章关联查询（B7）：取已发布文章、上一篇/下一篇、相关文章。
  * 纯查询逻辑，不触碰 HTTP 层；DB 行 snake_case → 契约 camelCase 在此完成。
  *
- * related 基于「共享标签 + 同分类」打分；标签取 articles.tags 去规范化 JSON
- * （article_tags 关联表按 B3 禁止项暂未回填，故用 denormalized 列保证相关推荐可工作）。
+ * related 基于「共享标签 + 同分类」打分；标签取 articles.tags 去规范化 JSON 列
+ * （B2 创建文章即填充，与 article_tags 关联表回填状态无关）。
  */
 import { and, asc, desc, eq, gt, isNull, lt, ne } from 'drizzle-orm';
 import { getDb } from '@/db/client';

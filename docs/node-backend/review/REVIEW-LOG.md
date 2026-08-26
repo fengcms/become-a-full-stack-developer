@@ -596,6 +596,16 @@ P3-1 新增的 2 例 parentId 测试（幽灵引用 → 404 / 跨文章引用 �
 - **判定**：维持放行 B7。这是生命周期第 **6** 次「无假修复即放行」（B1-2/B2-2/B3.5/B4-2/B5-2/B6-2），开发 AI 自 B4 复批后稳定内化纪律，可沉淀 M1 后端审阅 skill。
 - **元认知补强**：x-idempotent 同 x-authz 是第4铁律机器字段，审阅须追问「实现是否真幂等（DB 层 onConflict / 原子更新）」，不能只看顺序单测绿。
 
+## B7 后端代码审阅（辅助/站点，8 端点，2026-08-26）
+
+- **背景**：收尾批，8 端点。`B7-NOTES.md` 自报全绿、契约零改动。用户特别提示「开发 AI 压缩记忆、思考乱」→ 我把重心放在压缩记忆最易丢的边界：nullable 全字段、关联表回填状态、operationId 命名。
+- **独立取证**：commit `8e0ce4a`（工作树干净），改动 12 文件、`openapi.v1.yaml` 不在集。门禁分三次跑：tsc 0 / biome 91 文件 0 / vitest **126 passed**；契约双门 OK + 字节级未改。行数诚实（66/79/118/46/42/132/357/198/76 吻合）。
+- **抓到 1×P2（阻塞）**：`PATCH /admin/site/settings` 的 `logoUrl` 入参漏 `.nullable()`（`site.ts:54` `z.string().max(512).optional()`），但契约 `SiteSettingUpdate.logoUrl`（606 行）是 `nullable: true` → 传 `null` 清空会被 zod 拒成 4001，功能不可达。同 schema 的 siteTitle/siteKeywords/copyright 都正确加了 `.nullable()`，唯独 logoUrl 漏——典型压缩记忆丢细节。**且 NOTES §二.7 自述「null 清空（如 siteTitle、logoUrl）」与代码矛盾**（自陈不实红线）。
+- **P3 非阻塞**：① related.ts:6-7 + NOTES §二.3 事实错误称「article_tags 未回填」——实际 B3.5 已回填 junction；related 读的是 `articles.tags` denormalized 列（schema.ts:87「B2 去规范化」已填充），逻辑正确，仅陈述错；② NOTES §一 operationId `getAdminSiteSettings` 与契约 `adminGetSiteSettings`（3124 行）不符（笔误）；③ MemberProfile.articles 可选未返回；④ toc anchor 去重后缀极边界超 100；⑤ adjacent 同 publishedAt 无 tie-breaker。
+- **全对齐项**：授权矩阵 8 端点（6 公开 + 2 admin）逐一对齐 x-authz/security；响应 schema（ArticleAdjacent/ArticleRelatedItem/TocItem/SiteStats/SearchResult/SiteSetting）逐字段吻合；search 的 `sort` 透传 `buildSortSql`，白名单 `{publishedAt,viewCount,createdAt}` 正确处理契约 6 个 enum（含 `-` 前缀），**B2 排序白名单 P2 修复已正确复用于 B7，无回归**；错误码无新增。
+- **裁定：首轮不通过（P2-1 阻塞）**。收尾冻结批契约一致性须清零；要求开发 AI 修 logoUrl `.nullable()` + 补 `logoUrl:null` 清空测试 + 修正 P3-1/P3-2 NOTES 事实错误，复批后放行冻结 M1 后端。
+- **元认知**：用户「压缩记忆会乱」的预判正中——P2-1 漏改 logoUrl nullable（5/6 字段对，1 个漏）+ related/junction 事实误述 + operationId 笔误，三点同源（记忆压缩丢细节）。后续收尾批审阅要额外盯「契约 requestBody 全字段 nullable/required 与代码 zod 逐字对齐」+「NOTES 陈述与已知批次（如 B3.5）史实一致性」。
+
 ## 总复盘：这套审阅打法给我（和接手 AI）留下的最硬的几条
 
 1. **审阅者的存在意义 = 破除"作者自证盲区"**。同一人写代码、写门禁、写修复说明，他的注意力天然覆盖不到"自己没想到的维度"。独立审阅者用另一套逻辑重新证伪，是成本最低的防漂移手段。呼应 N6：冻结前应由**非作者**跑穿透式核验。

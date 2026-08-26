@@ -51,7 +51,7 @@ const updateSchema = z.object({
   siteTitle: z.string().max(200).nullable().optional(),
   siteDescription: z.string().max(500).optional(),
   siteKeywords: z.string().max(200).nullable().optional(),
-  logoUrl: z.string().max(512).optional(),
+  logoUrl: z.string().max(512).nullable().optional(),
   copyright: z.string().max(200).nullable().optional(),
 });
 type UpdateInput = z.infer<typeof updateSchema>;
