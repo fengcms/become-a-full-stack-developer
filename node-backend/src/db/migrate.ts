@@ -9,6 +9,7 @@
  */
 import { sql } from 'drizzle-orm';
 import type { Db } from '@/db/client';
+import { siteSettings } from '@/db/schema';
 
 /** 建表语句清单（与 schema.ts 保持同步；新增表在此追加）。 */
 const STATEMENTS: readonly string[] = [
@@ -163,6 +164,16 @@ const STATEMENTS: readonly string[] = [
     created_at INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
   )`,
+  `CREATE TABLE IF NOT EXISTS site_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    site_name TEXT NOT NULL,
+    site_title TEXT,
+    site_description TEXT NOT NULL,
+    site_keywords TEXT,
+    logo_url TEXT,
+    copyright TEXT,
+    updated_at INTEGER NOT NULL
+  )`,
 ];
 
 /**
@@ -173,4 +184,15 @@ export const migrate = async (db: Db): Promise<void> => {
   for (const statement of STATEMENTS) {
     await db.run(sql.raw(statement));
   }
+  // 站点配置单条默认值（id=1），幂等：已存在则跳过（onConflictDoNothing）
+  await db
+    .insert(siteSettings)
+    .values({
+      id: 1,
+      siteName: '成为全栈开发工程师',
+      siteDescription: '全栈开发工程师的成长笔记与实战专栏',
+      updatedAt: new Date(),
+    })
+    .onConflictDoNothing()
+    .run();
 };

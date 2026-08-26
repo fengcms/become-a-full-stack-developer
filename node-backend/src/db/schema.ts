@@ -334,3 +334,24 @@ export const notifications = sqliteTable('notifications', {
 
 /** notifications 行 → 查询结果类型。 */
 export type NotificationRow = typeof notifications.$inferSelect;
+
+/**
+ * 站点配置表（B7 辅助/站点批次，对齐 02 §二 SiteSetting 实体）。
+ * 单条记录（id 恒为 1），由 admin 经 PATCH /admin/site/settings 维护；
+ * 前台经 GET /site/settings 读取用于页头/页脚/SEO。
+ */
+export const siteSettings = sqliteTable('site_settings', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  siteName: text('site_name').notNull(),
+  siteTitle: text('site_title'),
+  siteDescription: text('site_description').notNull(),
+  siteKeywords: text('site_keywords'),
+  logoUrl: text('logo_url'),
+  copyright: text('copyright'),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
+/** site_settings 行 → 查询结果类型。 */
+export type SiteSettingRow = typeof siteSettings.$inferSelect;
+/** 插入 site_settings 的入参类型。 */
+export type NewSiteSetting = typeof siteSettings.$inferInsert;
