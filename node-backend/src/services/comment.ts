@@ -8,6 +8,10 @@
  *   reviewing 仅能由 `PATCH /comments/{id}/status`（editor/admin）人工置位。
  * - 敏感词基础过滤：命中转等长星号；违规比率（命中字符数 / 原文长度）超阈值 → rejected，否则 approved。
  *   基础演示词库，不追求完整；阈值 0.3 为可解释默认（见 B4-NOTES）。
+ *
+ * 注：本文件约 226 行，超过 200 行软上限——集中承载「三态类型 + 敏感词过滤 + 入参 schema
+ * + 序列化 + 评论列表/创建/删除/复核」紧密相关的评论领域逻辑，拆分反而割裂三态与序列化的协作。
+ * 按项目纪律「特殊情况需注释说明」显式标注 services 例外；routes 层仍严守 ≤200。
  */
 import { and, desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';

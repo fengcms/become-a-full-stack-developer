@@ -38,21 +38,25 @@
 2. **types 层采用 re-export 兼容策略**：`middleware/auth.ts` 与 `shared/codes.ts` 仍 `export type { AuthVars, AuthUser }` / `{ BizErrorCode }`，内部实现类型上提至 `types/`。这样 30+ 路由现有 `import { type AuthVars } from '@/middleware/auth'` 与 3 个测试 `import { BizErrorCode } from '@/shared/codes'` **无需改动**，单一事实源已是 `types/`，且零测试改动、零回归风险。
 3. **`shared` 命名收口**：现有 10 文件（auth/codes/db-error/errors/pagination/password/response/slug/storage/toc）命名已一致（kebab、职责单一），且经 `grep` 确认 `shared/` 内**无任何 `@/services` 反向依赖**（铁律 ④成立）。收口为「确认无违规」，未做无谓重命名。
 
+4. **审阅 P3 收尾修订（结构调优后独立审阅）**：统筹 AI 审阅报告 `review/B-结构调优-后端代码审阅报告.md` 提出 5 项 P3（均非阻塞）。已落实：① `services/user.ts`/`category.ts`/`comment.ts` 头部补「services 例外」注释（与 `article.ts` 对齐，P3-2）；② NOTES §四 以真实 `wc -l` 行数（article 451 / category 373 / user 335 / comment 226 / article-mutation 185）替换原 ≈252/≈250 误述，并据实说明注释落地情况（P3-3）；③ NOTES 中「types 处于依赖图最底层」精确为「types 仅含类型、对 shared 为 import type 引用、无运行时依赖与环」（P3-4）。P3-1（`services/article.ts` 收 `c`）、P3-5（route 抽 IP/UA）属既有/可接受，记入 TODO，不属本批。
+   另按 owner 提议，将当初为绕开 200 行上限而拆分的 `categories-read/write`、`comments-read/write` 合并回单文件 `categories.ts`（89 行）/`comments.ts`（102 行，均 <200），删除 4 个分拆文件并改 `app.ts` 挂载（两资源原即「read+write 两实例同挂一 base path」，合并为单实例单挂）——纯机械重构、零行为变更。routes 由 23 文件降至 21 文件；五门门禁复跑全绿（biome 0 / tsc 0 / vitest 126 / 契约结构门 OK / 契约语义门 33 OK）。
+   - **崩溃重做核对（2026-08-26 末）**：owner 指出合并当次 agent 崩溃、两合并文件可能未正确处理。已以 `services/category.ts`、`services/comment.ts` 导出 + `openapi.v1.yaml` 路径为事实源**重建** `categories.ts` / `comments.ts`，逐端点核对：契约 5 条 category 路径（/、/{id}、/tree、/{id}/breadcrumb、/stats）与 4 条 comment 路径（/articles/:idOrSlug/comments 之 GET+POST、/comments/:id DELETE、/comments/:id/status PATCH、/admin/comments GET）全部覆盖，service 调用签名逐一对应。重建后复跑五门门禁全绿（biome 0 / tsc 0 / vitest 126 / 契约双门 33 OK），`openapi.v1.yaml` 字节级未改（铁律 ⑧）。
+
 ## 四、分层落点（最终目录树）
 
 ```
 src/
-├── routes/        (23)  薄路由：校验 → 调恰好一个 service → ok/paginate 格式化；无 getDb / 无 drizzle-orm / 无业务规则
+├── routes/        (21)  薄路由：校验 → 调恰好一个 service → ok/paginate 格式化；无 getDb / 无 drizzle-orm / 无业务规则
 ├── services/      (19)  领域逻辑 + 全部 DB 查询（article/category/user/tag/comment/.../notification/site/attachment/refresh/...）
 ├── shared/        (10)  跨域基础设施（auth/jwt/codes/errors/db-error/pagination/password/response/slug/storage/toc）；禁查库、禁引 services
-├── types/          (2)  types/auth.ts、types/common.ts（仅共享类型，依赖图最底层）
+├── types/          (2)  types/auth.ts、types/common.ts（仅含类型、对 shared 为 import type 引用、无运行时依赖与环）
 ├── middleware/     (4)  auth/cors/error/validate
 ├── db/                client.ts / schema.ts / migrate.ts
 ├── config/env.ts
 ├── app.ts / index.ts / worker.ts
 ```
 
-**routes 文件行数核对**：最大 `auth.ts` 135 行，全部 ≤200（铁律 routes 严守）。services 存在文件超 200 行者（`article.ts` ≈252、`user.ts` ≈250）已按项目纪律以注释显式标注「services 例外」，属既有先例。
+**routes 文件行数核对**：最大 `auth.ts` 135 行，全部 ≤200（铁律 routes 严守）。services 存在文件超 200 行者（实测 `wc -l`：`article.ts` 451、`category.ts` 373、`user.ts` 335、`comment.ts` 226、`article-mutation.ts` 185）已按项目纪律以注释显式标注「services 例外」：`article.ts` 头部原有豁免注释，`user.ts`/`category.ts`/`comment.ts` 经本审阅 P3-2 补标，属既有先例。
 
 ## 五、铁律遵守清单（04 §2）
 

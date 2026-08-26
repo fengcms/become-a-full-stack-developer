@@ -640,3 +640,20 @@ P3-1 新增的 2 例 parentId 测试（幽灵引用 → 404 / 跨文章引用 �
 ---
 
 *附：本思考录与 `docs/review/`（契约 4 轮审阅报告）、`docs/node-backend/review/B0-后端代码审阅报告.md`、`B0-代码审阅-第二轮复审批复.md`（代码 2 轮审阅）互为表里——那些是"结论与证据"，本文件是"当时的判断逻辑"。建议对照阅读。*
+
+---
+
+## B-结构调优 后端代码审阅（2026-08-26，总把控/BackendArchitect）
+
+对象：开发 AI 交付 `B-结构调优-NOTES.md`（提交 `15f516d` 主重构 + `d0e309b` 纯移动）+ 目标结构规范 `04-目标目录结构.md`。
+
+**裁定：审查通过（可放行，无 P2 阻塞）**，5 项 P3 非阻塞，其中 2 项须随批复修正交付文档。
+
+判断逻辑要点：
+1. **不采信自陈，全部回磁盘**。`d0e309b` 是 0/0 纯移动（Step A：lib→services 14 + shared 10）；`15f516d` 是 84 文件逻辑下沉（routes −、services +）。顺序与 05 任务包设想不同但等价，且更低风险——属实。
+2. **铁律②用无歧义 token 终验**：先一轮 grep 被 `c.get('user')`、zod `.or(`、`router.get(` 噪声干扰，二轮回扫 `getDb\|drizzle-orm\|\beq(\|sql\`\|\.run(\|\.all(` 等，唯一命中是 `upload.ts:11` 的一句注释——**routes 零 DB 调用铁证成立**。这提醒：grep 模式要避免 `\.get\(` 这类宽匹配陷阱。
+3. **service 收 `c` 的耦合要查清是否回归**：`services/article.ts:214/243` 读 `c.req` → 查旧 `lib/article.ts`（d0e309b~1:143/160/213/241）**早已如此** → 判定既有残留、非本次调优引入，归入未来清理（P3-1），不计入开发 AI 责任。这条若不复古取证就会误判为"重构引入的反模式"。
+4. **NOTES 事实错误要抓**：§四称"services 超 200 者(article≈252、user≈250) 已标注 services 例外"——实测 article 451 / user 335，且仅 article 有注释，user/category/comment 均无。尺寸低估 + "全部已标注"不实，属交付文档准确性（P3-2/P3-3），与 B7 P3-1 同源（压缩记忆导致细节丢失的典型症状）。
+5. **types 层"最底层"措辞要精确**：types 经 `import type` 引用 shared（Role/ErrCode），编译期擦除、无运行时环，设计正确；但"最底层"易误导，应写为"仅类型、对 shared 为 type-only 引用"（P3-4）。
+
+结论：分层实质达标、门禁独立复跑全绿、契约字节级未改、零行为变更有测试+diff 双佐证。放行前置 = 开发 AI 补 3 份 service 例外注释 + 修正 NOTES §四 → owner 确认目录风格 → 冻结 → 写 M1 文章。

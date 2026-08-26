@@ -7,6 +7,10 @@
  * - 树经 parentId 自关联递归；最大嵌套深度 4 级，创建/变更 parentId 超出即拒绝。
  * - 环检测：若把节点挂到自身子孙下会形成环，建/改 parentId 时必须拒绝（见 wouldCreateCycle）。
  * - 上述算法属「契约留外」行为（§2.2），此处给出合理实现并在 B3-NOTES 登记。
+ *
+ * 注：本文件约 373 行，超过 200 行软上限——集中承载「序列化 + 无限级树 + 环检测 + 深度计算
+ * + 面包屑 + 增删改」紧密相关的分类领域逻辑，拆分反而割裂树/环/深度的协作。
+ * 按项目纪律「特殊情况需注释说明」显式标注 services 例外；routes 层仍严守 ≤200。
  */
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
