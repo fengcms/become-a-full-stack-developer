@@ -294,3 +294,118 @@ B5 严格按 `05-users-upload.md`：users 管理（admin 列表/详情/PATCH 升
 - **门禁（自跑）**：tsc 0 / biome 0（80 文件）/ vitest **117 passed**（B6 行为级 9 例 + 存量 108，新增并发双发回归测试稳定 3/3）/ 契约双门 OK / **未改契约**。
 - 交付：`review/B6-代码审阅-回复.md`；`test/routes/interactions.test.ts` 增并发回归测试。
 - 结论：B6 全部实质性问题清零，放行 **B7（辅助接口 / 站点，07-*.md）**。
+
+---
+
+## B7 辅助接口 / 站点批次（2026-08-26，简述）
+
+> 本批次落地 辅助接口（adjacent / related / toc / breadcrumb / categories-stats / stats / search + like / notifications 端点）与 站点配置（SiteSetting：`GET /site/settings` 公开 + `GET/PATCH /admin/site/settings` admin）。
+> 详细逐决策 reasoning 未在本窗口内捕获（属早期开发），这里只记已验证结论，深推演见 `docs/node-backend/B7-NOTES.md`。
+> **门禁（自跑）**：tsc 0 / biome 0 / vitest **126 passed**（B7 行为级 9 例 + 存量 117）/ 契约双门 OK（openapi.v1.yaml 未动）。
+> 后端架构师独立复验结论：**功能验收通过、冻结暂缓、待调优（未冻结）**——即"功能完备 ≠ 可冻结"，目录结构与组织风格需先经 owner 视觉确认。
+
+---
+
+## 结构调优 · 水平分层重构（2026-08-26）
+
+> 触发：用户作为 master coordinating AI，与 统筹AI + 后端架构师AI 协作产出 `04-目标目录结构.md`（水平分层 routes/services/shared/types）+ `05-结构调优任务包.md` + `03-统筹AI复审批复.md`。开发 AI 据此施工，统筹 AI 独立复验门禁证据。
+> **两条绝对铁律**：① 零行为变更（只移动/重命名/抽层，**不改任何请求-响应与领域规则**）；② 契约只读（`docs/api/openapi.v1.yaml` 字节级零变更）。
+
+### T-R1. 分层边界是"职责边界"不是"目录装饰"
+重构把 `src/lib/*` 拆进三层，每层有清晰禁令：
+- **routes（薄）**：只解析参数、调 service、包信封。**禁止 `getDb` / 写查询 / 写业务规则**。
+- **services（领域 + DB）**：承载查询、事务、领域规则。**禁止拼 HTTP 响应**（返回领域对象/DTO，由 routes 包信封）。
+- **shared（基础设施）**：`storage` / `jwt` / `config` / `db-error` 等。**禁止引 services、禁止查库**。
+- **types（共享类型）**：`AuthVars` / `AuthUser` / `ErrorCode` / `Envelope` 等纯类型。
+**核心认知**：分层重构的价值不在"文件挪了窝"，而在"每层能说什么不能说什么"被机械强制；routes 一旦碰 `getDb`，单测就必须起 DB，分层即破产。门禁里加一条隐式校验——`grep routes -l getDb` 必须空。
+
+### T-R2. 机械迁移安全的前提：lib 内部零相对导入
+全局把 `src/lib/*` → `src/{services,shared}` 能安全做，前提是 lib 内部**全部用 `@/` 或 `./` 同目录**，没有 `../../` 跨目录引用。若有相对引用，移动文件会牵一发动全身且 tsc 不即时报错（要到具体引用处才爆）。**经验：`@/* → ./src/*` 别名 + 相对引用仅限同目录，是大规模重命名的保险丝；迁移前先 `grep '\.\./\.\./'` 确认零命中。**
+
+### T-R3. `@/` 别名已在 B0 审阅修好，本批直接受益
+B0 审阅 R2 已把 `baseUrl` 删除、只留 `paths`，vitest 侧 `resolve.alias['@']` 对齐。结构调优大量移动文件却零引用断裂，正是这条纪律的红利。**印证：架构债务（如路径别名坑）早还，后面的大重构才不崩。**
+
+### T-R4. 循环依赖要提前识别，不是等 tsc 报
+`comment.ts` ↔ `comment-query.ts` 一度出现循环引用风险（comment 路由要查评论、query 层要依赖 comment 类型）。**经验：抽层时先画"谁依赖谁"的箭头，A→B 且 B→A 的环要在动手前用"类型与实现分离"或"下沉到 shared"解开，别等 50 个文件移完 tsc 才报环。**
+
+### T-R5. 单文件 ≤200 的"硬"与"软"
+routes 严守 ≤200（薄层天然短）；services 因含多领域函数易超 200，采用"注释例外"——在 `NOTES §四` 标注真实行数并说明不拆理由（如"全表单一事实源"先例）。**核心认知：200 行是"超出要有可辩护理由"，不是机械切两半；routes 必须硬守（薄），services 可软守（有理由）。**
+
+### T-R6. 五门门禁是重构的"安全带"
+tsc0 / biome0 / vitest126 / 契约结构门 OK / 契约语义门 33 OK。**核心认知：零行为变更重构的唯一可信证据就是"五门全绿 + 契约字节级 diff 为零"**——任何一门红或 yaml 被动，就是行为被悄悄改了，立刻停手回查。
+
+---
+
+## 结构调优 review（P3 修订 + 分拆合并，2026-08-26）
+
+> 审阅 `review/B-结构调优-后端代码审阅报告.md` 裁定：5 项 P3 非阻塞（可冻结前置）。逐项落实。
+
+### T-R7. P3 不是"小问题"，是文档债的显影
+P3-2/3/4 全是注释/文档不精确（services 例外注释漏 3 处、`NOTES §四` 真实行数未标、`types` 措辞含糊）。**经验：重构动的不是代码是结构，重构后的"描述结构的话"比代码更易 stale；P3 类问题本质是"代码改了、说代码的文字没改"，必须 grep 同步。**
+
+### T-R8. 分拆是"超 200 行"的应激，行数降下来就应收回
+早期 `categories` / `comments` 因超 200 行拆成 read/write 四文件。结构调优后两文件都变短（categories ~89、comments ~102），分拆反而增加阅读跳转成本。**决策：合并回单文件 `categories.ts` / `comments.ts`，`app.ts` 改单挂，删 4 个分拆文件。** 用 AskUserQuestion 先确认合并方向再动手——因为"删文件"是破坏性操作，且涉及 routes 挂载方式变更，owner 确认优于 AI 自作主张。**核心认知：分拆/合并都是手段，目标是"每文件一个清晰职责且不过长"；行数回落时应主动回收过度分拆，别让历史应激变成永久结构噪音。**
+
+---
+
+## 结构调优 · 崩溃重做（2026-08-26）
+
+### T-R9. "跑崩溃了"先信证据，不信自陈
+用户反馈"你刚把自己跑崩溃了"。复跑 biome 仅修复格式化（`.post(` / `.put(` 多行折叠，89→77 行是 biome 折叠非逻辑丢失），端点逻辑实际完整。但仍不轻信——**对"自陈已正常"保持怀疑，以 `wc -l` + 独立复跑门禁 + 实际请求抽查为证。**
+
+### T-R10. 合并文件"不正确"时，以 services + 契约为事实源重建
+用户指出 categories/comments 两合并文件"不正确，是崩溃时没处理好"。不猜哪行错，直接以 `src/services/*`（领域真相）+ `openapi.v1.yaml`（契约真相）为事实源**重建两文件**，排除任何残留。门禁全绿后确认干净。**经验：当"修过的文件是否真的对"存疑时，最稳的不是 patch，是"用权威源重写"——services 与契约就是后端的两份权威源。**
+
+---
+
+## 上传去重批次（06/07 → 08，2026-08-26）
+
+> 用户先问"同图不同时间上传，服务器存两份还是一份？"——读 `storage.ts` 答：**两份**（`key = randomUUID()`，无内容去重）。用户随即给 `06-上传去重优化方案.md` + `07-上传去重-批次任务包.md`，评估合理 → 直接开干。
+
+### U-R1. 内容寻址：key 从 randomUUID 改为 sha256(buffer)
+`LocalStorage.put` 的 key 由 `randomUUID()` 改为 `sha256(buffer) + ext`；写入前 `get(key)` 命中即复用、跳过写盘。同字节内容天然去重（同图 N 次上传 → 1 份物理文件 + N 行 attachment 记录）。**核心认知：去重的"身份"应是内容哈希而非随机 ID；内容寻址是对象存储的通用范式（S3 ETag 同理），不是本项目发明。**
+
+### U-R2. 删除用"引用计数护栏"消除孤儿文件（最值钱的坑）
+`deleteAttachment(id)` 逻辑：同步事务内查行 → 缺失抛 `NOT_FOUND` → 删行 → 数同 `storageKey` 的兄弟行 `remaining` → **事务外**仅 `remaining === 0` 才 `storage.delete(key)`（catch 吞错）。**为什么不在事务内删物理文件**：better-sqlite3 事务只管 DB，文件系统删除失败应不影响行已删（双存储真实边界）；且物理删除是"尽力"，孤儿文件风险远低于"行在文件没了的不可用态"。**核心认知：DB 行是"真值"，物理文件是"缓存"；删除顺序永远"先真值后缓存"，引用计数决定缓存何时真正释放。**
+
+### U-R3. better-sqlite3 的 transaction 必须同步回调（血泪坑）
+初写 `await getDb().transaction(async (tx) => { ... })` → 抛 **"Transaction function cannot return a promise"**。改同步回调后又误加末尾 `()`（写成 `getDb().transaction(fn)()`）→ 事务根本没执行。最终正确写法：`const result = getDb().transaction((tx) => { ... return row })()`——**同步回调、末尾必须 `()` 触发执行、返回值即同步结果，不能在回调里 `await`**。
+**经验：better-sqlite3 的 `transaction` 是同步 API 的语法糖，不是 async 事务；任何"事务里要 await"的需求（如跨存储删文件）必须挪到事务外。这条值得单独存 skill，新人必踩。**
+
+### U-R4. 测试 FOREIGN KEY 与 ESM spy 的两处坑
+- attachments.userId 外键指向 users，测试未建用户行 → 插入拒。修正：测试内先 `insert` 用户。
+- `vi.spyOn(storage, 'writeFile')` 在 ESM 命名空间上不可行 → 改用 `vi.mock` 包 `writeFile` 间谍，断言"同内容仅写盘 1 次"。
+**经验：外键测试遗忘用户行是老坑（B2-R4 同构）；ESM 下 spy 模块函数优先 `vi.mock` 而非 `vi.spyOn` 实例方法。**
+
+### U-R5. 交付文档 08 记偏差与证据
+`08-上传去重-交付文档.md`：改动清单（storage.ts / attachment.ts + 2 test）、grep 自验、五门门禁、契约零变更、6+1 测试、偏差说明（同步事务）。**门禁：tsc0 / biome0 / vitest 132 / 契约双门 OK。**
+
+---
+
+## 上传去重 review 修正（2026-08-26 下午）
+
+> 审阅 `review/B-上传去重-后端代码审阅报告.md`。三项修正，其中 P2 属冻结前置（必须改）。
+
+### U-R6. P2：缺失 id 静默 resolve→200 是契约违例，必须 404
+初版 `deleteAttachment` 对缺失 id 走 `found` 标志静默返回成功（200 + data:null），违反契约"资源不存在即 404"。修正：去掉 `found` 字段，缺失直接 `throw AppError(NOT_FOUND, 404)`。**核心认知：删除类端点的"不存在"是 404 不是 200——200 会让调用方误以为"删成功了"，幂等语义错位；这跟 B4-R3/B5-R 的 `changes===0` 兜底 404 是同一铁律。**
+
+### U-R7. P3-2：guard 工厂要区分"资源不存在"与"存在非归属"
+原 `guard` 对 `resolveOwner` 返回 `null` 也返 403，但契约要求"资源不存在→404、存在但非本人→403"是正交两态。修正：全局 `null → 404`、`非 null 非归属 → 403`。`AuthUser` / `AuthVars` 从 `@/types/auth` 重导出，避免 routes 重复 import。`guard.test.ts` 新增 `GET /missing` 路由（`() => null`）断言 404，保留非归属者→403。
+**核心认知：x-authz 的 ownerOverride 与"资源存在性 404"是两个正交关注点（B4-R3 已记）；guard 原语必须把"查不到"和"查到但不是我的"用类型区分（null vs string），否则错误码会串台。**
+
+### U-R8. P3-1：孤儿竞态只文档化，不强行加锁
+删除事务内删行后、事务外物理删除前，若并发同 `storageKey` 新上传 → 新行 committed、旧物理文件被删 → 新上传指向已删文件（瞬时孤儿）。评估：概率极低（引用计数已极大降概率）+ 加锁代价高（跨 DB/FS 分布式锁超出本项目范围）→ **仅注释文档化，不实现锁**。
+**经验：不是所有竞态都要"修"，要先算发生概率与修复代价；罕见且可逆（下次访问 404 可重试上传）的竞态，文档化优于过度工程。这与项目"文章是产品、代码是素材"的克制基调一致。**
+
+### U-R9. 越界文件零 diff 是"零行为变更"的硬证
+修正后 `git diff` 收敛为 **4 文件**（auth.ts + attachment.ts + 2 test），schema/migrate/files/upload/yaml 全部零 diff。**门禁：tsc0 / biome0 / vitest 133 passed（126 + 6 去重 + 1 guard404）/ 契约双门 33 OK。**
+**核心认知：每次"修报告里的问题"后，git diff 的范围本身就是证据——如果只动报告点名的文件、其他纹丝不动，说明没引入越界改动；若 yaml 被动了，立刻警觉"是不是又碰了契约"。**
+
+---
+
+## 当前状态（2026-08-26 收尾）
+
+- M1 后端：**开发完成 + 结构调优完成 + 上传去重完成**，五门门禁全绿、契约双门 33 OK、yaml 字节级零变更。
+- 状态：**待调优（未冻结）**——owner 需先视觉确认目录风格（routes/services/shared/types 水平分层）符合预期，**确认后才冻结**。
+- 下一步路径：owner 确认 → 冻结 M1 后端主线 → 转「写 M1 后端文章」（M1-01~M1-30）。M2/M3/M4/M6/M7 五端复用"契约→主计划→批次任务包"工作流。
+- 两处非阻塞遗留（统筹跟进，非本会话范围）：① `GET /me/likes` 契约内部矛盾（裸数组 vs page/pageSize）→ 排「契约维护批次」；② nullable 唯一索引「假唯一」→ 记入 Go/Python 跨端协调清单。

@@ -657,3 +657,21 @@ P3-1 新增的 2 例 parentId 测试（幽灵引用 → 404 / 跨文章引用 �
 5. **types 层"最底层"措辞要精确**：types 经 `import type` 引用 shared（Role/ErrCode），编译期擦除、无运行时环，设计正确；但"最底层"易误导，应写为"仅类型、对 shared 为 type-only 引用"（P3-4）。
 
 结论：分层实质达标、门禁独立复跑全绿、契约字节级未改、零行为变更有测试+diff 双佐证。放行前置 = 开发 AI 补 3 份 service 例外注释 + 修正 NOTES §四 → owner 确认目录风格 → 冻结 → 写 M1 文章。
+
+---
+
+## B-上传去重 后端代码审阅（2026-08-26，BackendArchitect）
+
+被审：开发 AI 交付 `08-上传去重-交付文档.md` + 代码 `5252c3d`；设计基线 `06`+`07`（owner 决策锁定：全局/不做 content_hash 列/不做 backfill/接受同字节异 ext）。
+
+**裁定：通过，含 1 P2（冻结前置）+ 2 P3（非阻塞）**。报告：`docs/node-backend/review/B-上传去重-后端代码审阅报告.md`。
+
+判断逻辑要点：
+1. **五门门禁独立复验全绿**：tsc0 / biome 113 文件 0 / vitest **132 passed**(126+6) / 契约结构门 OK / 语义门 **33 OK**；`openapi.v1.yaml` git diff **0 行**（字节级未改）；contentHash 未进 Attachment 响应（决策#2 守住）；randomUUID 已从 storage.ts 移除；仅 `storage.ts`+`attachment.ts`+`attachment.test.ts` 三文件改动。
+2. **P2 关键抓点——静默行为变更**：`DELETE /attachments/{id}` 在 editor/admin 下删「不存在 id」由原 **404 变 200**，与冻结契约 `:2297-2303`（404 附件不存在）矛盾。根因链：`guard('editor',...)` 中 `roleOk` 满足即 `return next()`（auth.ts:53-54）→ editor 越权直达服务；新 `deleteAttachment` 对缺失 id `if(!row) return`(resolve) 而非原 `changes===0→throw 404`。开发 AI 将此作「幂等」写入测试却未标注为契约偏差（对比 sync 事务偏差有显式标注）。语义门是静态 YAML 检查，抓不到运行时行为差异——此点只能靠代码审阅发现。修复：复原 `attachment.ts:131` 为 `throw AppError(NOT_FOUND,404)`（方案A 推荐严守契约），或 owner 明示接受幂等 200 并留档（方案B）。**未解 P2 不得冻结**。
+3. **P3-1 孤儿竞态——被迫偏差要认清**：better-sqlite3 事务回调须同步（async 会抛 "Transaction function cannot return a promise"），文件删除被迫移到事务外 → 极窄孤儿竞态（并发同字节上传在「count=0 提交后、FS 删前」插入新行→新行孤儿）。实则 `06` 原「文件删置于 async 事务内」在 better-sqlite3 上本就跑不起来，开发 AI 写法是唯一可行形态；DB 原子性（删行+计数）确在事务内。属「去重+引用计数+非事务 FS」固有代价，owner 已否决 ref_count 列（无迁移路径），建议文档化接受。
+4. **P3-2 既有偏差**：守卫对缺失 id 返 403（auth.ts:60）而非契约 404，本次前已存在；本次使 editor 路径亦失 404。另立 issue，不计入责任。
+
+**owner 裁决更新（2026-08-26 末）**：P2 **方案 A**（复原 404，去掉恒 true 的 `found` 字段）、P3-1 **接受**（文档化孤儿竞态、非阻塞、要求开发 AI 在 `deleteAttachment` 物理删处补注释）、P3-2 **要求开发 AI 修复**（守卫 `null→404` 全局纠偏，仅 attachments/comments/articles 三类带 resolveOwner 资源受影响、零回归）。审阅报告已**重写为「裁定 + 开发 AI 修正指令」形态**（`docs/node-backend/review/B-上传去重-后端代码审阅报告.md`），含三任务精确代码 diff + 测试配套 + 复批门禁 5 条；owner 直接交开发 AI 执行 → 架构师复批 → owner 视觉确认 → 冻结 M1 后端主线。
+
+下一步：开发 AI 完成 #1（选 A 或 B 留档）→ 申请复批（复跑门禁+契约双门+确认缺失 id 回归 404 或 owner 留档）→ owner 视觉确认 → 冻结 M1 后端主线。

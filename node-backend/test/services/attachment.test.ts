@@ -17,6 +17,7 @@ import {
   createAttachment,
   deleteAttachment,
 } from '@/services/attachment';
+import { ErrCode } from '@/shared/codes';
 import { createStorage } from '@/shared/storage';
 
 // better-sqlite3 走同步事务；storage.put 复用前一次落盘，需统计 writeFile 调用次数。
@@ -130,7 +131,10 @@ describe('delete reference-count guard (P3)', () => {
     expect(await storage.get(key)).toBeNull();
   });
 
-  it('deleting non-existent id is idempotent (no throw, no crash)', async () => {
-    await expect(deleteAttachment(9_999_999)).resolves.toBeUndefined();
+  it('deleting non-existent id returns 404 (contract-compliant)', async () => {
+    await expect(deleteAttachment(9_999_999)).rejects.toMatchObject({
+      code: ErrCode.NOT_FOUND,
+      httpStatus: 404,
+    });
   });
 });

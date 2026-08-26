@@ -55,9 +55,10 @@ export const guard =
 
     if (resolveOwner) {
       const ownerId = await resolveOwner(c);
-      if (ownerId && ownerId === user.id) return next();
+      if (ownerId === null) throw new AppError(ErrCode.NOT_FOUND, 404); // 资源不存在 → 404（守契约，优于 403）
+      if (ownerId === user.id) return next(); // 归属者放行（ownerOverride）
     }
-    throw new AppError(ErrCode.FORBIDDEN, 403);
+    throw new AppError(ErrCode.FORBIDDEN, 403); // 存在但非归属者 → 403（④(b)）
   };
 
 /**

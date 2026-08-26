@@ -22,6 +22,12 @@ const buildApp = (user: AuthUser): Hono<AuthVars> => {
     guard('admin', () => 'u1'),
     (c) => c.json({ ok: true }),
   );
+  // 资源不存在：resolveOwner 返回 null → 守卫应返回 404（而非 403）
+  app.get(
+    '/missing',
+    guard('admin', () => null),
+    (c) => c.json({ ok: true }),
+  );
   return app;
 };
 
@@ -49,5 +55,10 @@ describe('guard 第 4 铁律', () => {
   it('④(b) member 属主经 ownerOverride 放行 → 200', async () => {
     const res = await buildApp({ id: 'u1', role: 'member' }).request('/owner');
     expect(res.status).toBe(200);
+  });
+
+  it('④(b) 资源不存在（resolveOwner 返回 null）→ 404', async () => {
+    const res = await buildApp({ id: 'u2', role: 'member' }).request('/missing');
+    expect(res.status).toBe(404);
   });
 });

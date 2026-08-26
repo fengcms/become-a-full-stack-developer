@@ -118,35 +118,37 @@ export const getAttachmentOwnerId = async (id: number): Promise<string | null> =
 export const deleteAttachment = async (id: number): Promise<void> => {
   // better-sqlite3 事务回调须同步（不能 async）：DB 的「删行 + 数兄弟」原子化，消除并发交错窗口。
   // 异步的文件删除放到事务外做 best-effort（失败不阻塞行删除，与双存储边界一致）。
-  const result = getDb().transaction(
-    (tx): { found: boolean; storageKey?: string; remaining: number } => {
-      const row = (
+  const result = getDb().transaction((tx): { storageKey: string; remaining: number } => {
+    const row = (
+      tx
+        .select({ storageKey: attachments.storageKey })
+        .from(attachments)
+        .where(eq(attachments.id, id))
+        .limit(1)
+        .all() as { storageKey: string }[]
+    )[0];
+    if (!row) throw new AppError(ErrCode.NOT_FOUND, 404); // 缺失 → 404（守冻结契约，不静默 resolve）
+    const res = tx.delete(attachments).where(eq(attachments.id, id)).run();
+    if (res.changes === 0) throw new AppError(ErrCode.NOT_FOUND, 404);
+    const remaining =
+      (
         tx
-          .select({ storageKey: attachments.storageKey })
+          .select({ c: sql<number>`count(*)` })
           .from(attachments)
-          .where(eq(attachments.id, id))
-          .limit(1)
-          .all() as { storageKey: string }[]
-      )[0];
-      if (!row) return { found: false, remaining: 0 };
-      const res = tx.delete(attachments).where(eq(attachments.id, id)).run();
-      if (res.changes === 0) throw new AppError(ErrCode.NOT_FOUND, 404);
-      const remaining =
-        (
-          tx
-            .select({ c: sql<number>`count(*)` })
-            .from(attachments)
-            .where(eq(attachments.storageKey, row.storageKey))
-            .all() as { c: number }[]
-        )[0]?.c ?? 0;
-      return { found: true, storageKey: row.storageKey, remaining };
-    },
-  );
+          .where(eq(attachments.storageKey, row.storageKey))
+          .all() as { c: number }[]
+      )[0]?.c ?? 0;
+    return { storageKey: row.storageKey, remaining };
+  });
 
-  if (!result.found || result.remaining !== 0) return; // 行不存在 / 仍有引用 → 不删物理文件
-  // 仅无人引用才真删物理文件（双存储适配层：失败不阻塞行删除）
+  if (result.remaining !== 0) return; // 仍有引用 → 不删物理文件
+  // 仅无人引用才真删物理文件（双存储适配层：失败不阻塞行删除）。
+  // 注：文件删除置于事务外（better-sqlite3 事务回调须同步，异步删文件会抛
+  // "Transaction function cannot return a promise"），故存在极窄孤儿竞态窗口：
+  // 并发上传相同字节恰逢删除间隙 → 新行孤儿（后果轻微，重传即恢复）。若未来引入
+  // ref_count 列（需迁移，owner 当前否决）可在事务内计数并裁决删除，从根消除窗口。
   try {
-    await createStorage(getActiveEnv()).delete(result.storageKey as string);
+    await createStorage(getActiveEnv()).delete(result.storageKey);
   } catch {
     // 底层删除失败不阻塞行删除（双存储适配层真实边界）
   }
