@@ -284,3 +284,13 @@ B5 严格按 `05-users-upload.md`：users 管理（admin 列表/详情/PATCH 升
 - **门禁（自跑）**：tsc 0 / biome 0（77 文件）/ vitest **116 passed**（B6 行为级 8 例 + 存量 108）/ 契约双门 OK / **未改契约**。
 - 交付：`docs/node-backend/B6-NOTES.md`；测试 `test/routes/interactions.test.ts`（8 例）。
 - 通知生成端（文章发布/评论审核 → 写 Notification）不在本批（任务包禁止项），留对应业务批次或后续补。
+
+### B6-R（审阅整改，P2-1 / P3-1 / P3-2 清零）
+审阅 `review/B6-后端代码审阅报告.md` 裁定通过、放行 B7，建议先清零 P2-1。整改：
+- **P2-1（likeArticle 并发 500 + like_count 漂移）**：`likes.ts` 的 `likeArticle` 由「查存后裸 insert + 应用层读改写 +1」改为 `onConflictDoNothing()` + `res.changes>0` 才原子 `sql\`like_count + 1\``；`unlikeArticle` 改原子 `CASE WHEN like_count > 0 THEN like_count - 1 ELSE 0 END` 下限夹 0。并发双发不再撞 `uniq_like` → 500，`x-idempotent` 在 DB 层真成立。
+- **P3-1（history upsert 竞态）**：`history.ts:reportReadingProgress` 由「查存后 insert」改 `insert … onConflictDoUpdate({ target:[userId,articleId], set:{lastReadAt, progress?} })`，progress 仅请求携带时覆盖，与旧语义一致。
+- **P3-2**：已并入 P2-1（原子 ±1）。
+- **P3-3 / P3-4 / P3-5**：非阻塞，无代码改动。P3-3(`/me/likes` 契约参数/响应矛盾) 与 P3-5(NOTES §六 自陈过度：实际仅 addFavorite/removeFavorite/likeArticle/unlikeArticle 标 x-idempotent，clearMyHistory/removeHistoryItem 未标) 留**契约维护批次**统一；P3-5 已同步纠正 `B6-NOTES.md` §六。P3-4(`schema.ts` 336 行) 沿用「全表单一事实源」先例不拆。
+- **门禁（自跑）**：tsc 0 / biome 0（80 文件）/ vitest **117 passed**（B6 行为级 9 例 + 存量 108，新增并发双发回归测试稳定 3/3）/ 契约双门 OK / **未改契约**。
+- 交付：`review/B6-代码审阅-回复.md`；`test/routes/interactions.test.ts` 增并发回归测试。
+- 结论：B6 全部实质性问题清零，放行 **B7（辅助接口 / 站点，07-*.md）**。

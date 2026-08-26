@@ -1,11 +1,12 @@
 /**
  * src/routes/likes.ts
  * 点赞（B6 会员互动，对齐 02 §二 Like）：POST/DELETE /articles/{id}/like、GET /articles/{id}/like/status、GET /me/likes。
- * 点赞/取消均为幂等（唯一约束 + 应用层判存）；articles.like_count 由应用层维护，与 likes 行数一致。
+ * 点赞/取消均为幂等（x-idempotent:true，写入走 ON CONFLICT DO NOTHING，并发双发不致 500）；
+ * articles.like_count 由应用层维护但采用原子 SQL 增减（like_count ± 1），消除读改写竞态漂移。
  * GET /like/status 公开（匿名 liked=false）；其余需登录 member。
  * 挂载于 /api/v1（路径 /articles/{id}/like* 与 /me/likes）。
  */
-import { and, desc, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { getDb } from '@/db/client';
 import { articles, likes } from '@/db/schema';
@@ -52,25 +53,23 @@ const requireArticle = async (id: number) => {
   return a;
 };
 
-/** POST /articles/:id/like — 点赞（幂等：已赞仍返回 liked=true + 当前 likeCount）。 */
+/** POST /articles/:id/like — 点赞（幂等：x-idempotent:true，并发双发亦仅 +1，绝不一错 500）。 */
 likesRoute.post('/articles/:id/like', authMiddleware, async (c) => {
   const articleId = Number(c.req.param('id'));
   const userId = Number(c.get('user').id);
-  const article = await requireArticle(articleId);
+  await requireArticle(articleId);
   const db = getDb();
-  const existing = (
-    await db
-      .select({ id: likes.id })
-      .from(likes)
-      .where(and(eq(likes.userId, userId), eq(likes.articleId, articleId)))
-      .limit(1)
-      .all()
-  )[0];
-  if (!existing) {
-    await db.insert(likes).values({ userId, articleId, createdAt: new Date() }).run();
+  // DB 层幂等：唯一约束 ON CONFLICT DO NOTHING，并发双发不会撞约束 500。
+  const res = await db
+    .insert(likes)
+    .values({ userId, articleId, createdAt: new Date() })
+    .onConflictDoNothing()
+    .run();
+  // 仅当本次确实新增一行时才原子 +1，避免应用层读改写竞态导致的计数漂移。
+  if (res.changes > 0) {
     await db
       .update(articles)
-      .set({ likeCount: article.likeCount + 1 })
+      .set({ likeCount: sql`like_count + 1` })
       .where(eq(articles.id, articleId))
       .run();
   }
@@ -90,7 +89,7 @@ likesRoute.post('/articles/:id/like', authMiddleware, async (c) => {
 likesRoute.delete('/articles/:id/like', authMiddleware, async (c) => {
   const articleId = Number(c.req.param('id'));
   const userId = Number(c.get('user').id);
-  const article = await requireArticle(articleId);
+  await requireArticle(articleId);
   const db = getDb();
   const existing = (
     await db
@@ -102,9 +101,10 @@ likesRoute.delete('/articles/:id/like', authMiddleware, async (c) => {
   )[0];
   if (existing) {
     await db.delete(likes).where(eq(likes.id, existing.id)).run();
+    // 原子下限夹 0：-1 永不产生负数，且并发下读数陈旧也不漂移。
     await db
       .update(articles)
-      .set({ likeCount: Math.max(0, article.likeCount - 1) })
+      .set({ likeCount: sql`CASE WHEN like_count > 0 THEN like_count - 1 ELSE 0 END` })
       .where(eq(articles.id, articleId))
       .run();
   }

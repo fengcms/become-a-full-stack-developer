@@ -560,6 +560,42 @@ P3-1 新增的 2 例 parentId 测试（幽灵引用 → 404 / 跨文章引用 �
 
 ---
 
+## B6 后端代码审阅（收藏/历史/点赞/通知，2026-08-26）
+
+**背景**：B5 复批放行 B6（15 端点，收尾段）。开发 AI 交 `B6-NOTES.md`，我独立复验。
+
+**4 抓手取证**：① `wc -l` 复核（favorites 103/history 152/likes 163/notifications 108/app 71，与自报逐字吻合，诚实基线稳）；② 逐文件读 4 路由 `file:line`；③ 抓契约 B6 全部 15 个 operationId 的 `x-authz`/`x-idempotent` 机器字段（grep 契约 2525–3735 行）；④ 分三次跑门禁 + venv 跑契约双门禁。
+
+**门禁全绿**：tsc 0 / biome **78** 文件 0（回复记 77 笔误，+1 为测试文件）/ vitest **116 passed**（B6 新增 8 例）/ 结构门 `OK` + 语义全过 / `git diff` 证契约字节级未动。
+
+**授权矩阵全对齐**：15 端点 `x-authz` 与代码逐一对齐，含 3 处 ownerOverride（removeFavorite/removeHistoryItem 用 `WHERE userId=当前` 隐式本人限定；updateNotification 加载后非本人→404）+ 1 处公开（getArticleLikeStatus `optionalAuthMiddleware`）。响应 schema（ArticlePage/HistoryPage/Notification/{liked,likeCount}/{count}）与错误码（仅 3001/5000，无新增）全吻合。
+
+**唯一实质问题 —— P2-1（likeArticle 并发 500，破坏 x-idempotent 机器字段）**：
+- 关键发现：**同一批内两种写法并存**暴露不一致**。`addFavorite`（favorites.ts:87）正确用 `.onConflictDoNothing()`；但 `likeArticle`（likes.ts:70）用**裸 insert 无 onConflictDoNothing**，而契约 3331 明确标 `x-idempotent:true`。
+- 推演：用户连点两次 like（乐观 UI 双发/弱网重叠在途）→ 两个请求都通过 `if(!existing)` → 第二个 insert 撞 `uniq_like` 唯一约束 → `SQLITE_CONSTRAINT_UNIQUE` → 全局错误处理 → **500**，而非契约承诺的 200。这是"声明幂等但并发破功"——比 B1 并发注册 500 更隐蔽（单测顺序永远绿，只有并发在途才触发）。
+- 对称问题：`articles.like_count` 用"读 `article.likeCount` 再 ±1"应用层 read-modify-write（likes.ts:73/107），并发下可漂移（一次真实点赞 +2）；`unlikeArticle` 用 `Math.max(0,…)` 防负但读值仍陈旧。
+- 修复（与 favorites 同构、低风险）：`likeArticle` 改 `insert…onConflictDoNothing()` + 仅 `changes>0` 时 `sql\`like_count + 1\``；`unlikeArticle` 用 `sql\`CASE WHEN like_count>0 THEN like_count-1 ELSE 0 END\`` 原子 -1。这样 x-idempotent 在 DB 层真成立。
+- 判别：满足 P2 准则"破坏契约机器字段"（x-idempotent 承诺 200 却可 500）。与 B1 同根，favorites 已示范正确写法 → likes 漏用属不一致。低频竞态但修复成本极低，**建议 B7 前顺手修**（非立即阻塞本批功能正确性）。
+
+**P3 非阻塞**：① `reportReadingProgress`（history.ts:110）同源 read-then-insert，并发双发撞 `uniq_view_history`→500（契约未标 x-idempotent，故非契约违反，建议改 `onConflictDoUpdate`）；② like_count 漂移已并入 P2-1 修复；③ `GET /me/likes` 契约内部不一致（响应裸数组但 params 声明 page/pageSize，代码严格按契约返回裸数组，登记契约维护批次）；④ `schema.ts` 336 行 >200（单一事实源，B2–B5 先例未列 P，沿用）；⑤ NOTES §六 自陈偏差（称 clearMyHistory/removeHistoryItem 契约标 x-idempotent，实测未标；DELETE 天然幂等、代码正确，无害，但属"散文 vs 契约"同源过度声称，仅记录）。
+
+**裁定：B6 通过，放行 B7；建议先清零 P2-1（likeArticle 并发 500 + 计数漂移）后再开 B7。** 元认知补强：**x-idempotent 同 x-authz 是第4铁律机器字段，审阅不能只看"顺序单测绿"，要追问"实现是否真幂等（DB 层 onConflict / 原子更新）"**——这是 B6 给本审阅打法新增的一把尺。
+
+---
+
+## B6 第二轮复批（P2-1/P3-1 真修核验，2026-08-26）
+
+- **背景**：首轮我提 P2-1（likeArticle 并发 500 破坏 x-idempotent 机器字段）+ P3-1（reportReadingProgress upsert 竞态）+ P3-2/3/4/5。开发 AI 给回复文档 + 更新 NOTES，要求复批。
+- **重要取证细节**：修复是**工作树未提交改动**（最新 commit 仍 `d7662a0`，fix 落在 `likes.ts`/`history.ts`/`interactions.test.ts` 三个 modified）。复批基于工作树当前状态，已提醒开发 AI 修复确认后单独 commit。
+- **逐项真修（读 file:line，非仅测试绿）**：
+  - P2-1：`likes.ts:63-75` `likeArticle` 改 `onConflictDoNothing()` + `res.changes>0` 才原子 `like_count+1`；`likes.ts:102-109` `unlikeArticle` 原子 `CASE WHEN like_count>0 THEN -1 ELSE 0`；`sql` 已导入(9行)。同批 favorites 与 likes 写法统一。
+  - P3-1：`history.ts:100-109` 改 `onConflictDoUpdate({target:[userId,articleId], set})`，progress 仅携带时覆盖。
+  - P3-2 已并入 P2-1；P3-3/4/5 仅登记。
+- **门禁四次独立跑（vitest 独占避 OOM）**：wc -l（163/146/103/108 与首轮吻合）/ tsc 0 / biome 81 文件 0（回复记 80 笔误，实质 0 成立）/ vitest **117 passed**（16 文件，含新增并发例）/ 契约双门 OK + 字节级未改。
+- **新增并发用例非空跑**：grep `interactions.test.ts:314-342` 实证 `Promise.all` 双发 → 两 200 + `likeCount:1` + DB 仅 1 行，旧实现必 500。
+- **判定**：维持放行 B7。这是生命周期第 **6** 次「无假修复即放行」（B1-2/B2-2/B3.5/B4-2/B5-2/B6-2），开发 AI 自 B4 复批后稳定内化纪律，可沉淀 M1 后端审阅 skill。
+- **元认知补强**：x-idempotent 同 x-authz 是第4铁律机器字段，审阅须追问「实现是否真幂等（DB 层 onConflict / 原子更新）」，不能只看顺序单测绿。
+
 ## 总复盘：这套审阅打法给我（和接手 AI）留下的最硬的几条
 
 1. **审阅者的存在意义 = 破除"作者自证盲区"**。同一人写代码、写门禁、写修复说明，他的注意力天然覆盖不到"自己没想到的维度"。独立审阅者用另一套逻辑重新证伪，是成本最低的防漂移手段。呼应 N6：冻结前应由**非作者**跑穿透式核验。

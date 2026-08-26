@@ -65,4 +65,4 @@
 
 - 所有列表端点 `data` 包络：`paginate(list, meta(...))` 产出 `{ list, pagination }`（契约 `ArticlePage` / `HistoryPage` / `NotificationPage` 一致）；`/me/likes` 例外出裸数组（见五）。
 - 错误码复用既有：`NOT_FOUND(3001)` 文章不存在/未发布/通知非本人，`FORBIDDEN` 本批未触发（ownerOverride 均经 404 短路），无新增 error.code。
-- `x-idempotent` 标注的 5 端点（addFavorite / removeFavorite / clearMyHistory / removeHistoryItem / likeArticle / unlikeArticle — 注契约对 removeFavorite、removeHistoryItem、clearMyHistory、likeArticle、unlikeArticle 均标 x-idempotent）全部实现为「重复/删不存在仍 200」。
+- `x-idempotent` 标注的 4 端点（契约实测仅 `addFavorite`/`removeFavorite`/`likeArticle`/`unlikeArticle` 标 `x-idempotent:true`，见回复 P3-5 纠正）：全部实现为「重复/删不存在仍 200」。`clearMyHistory`/`removeHistoryItem` 契约**未标** `x-idempotent`（DELETE 天然幂等），实现同样幂等。注：原稿此处过度声称 6 端点，已据实测契约纠正。

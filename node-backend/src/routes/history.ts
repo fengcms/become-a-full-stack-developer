@@ -94,25 +94,19 @@ historyRoute.post('/me/history', authMiddleware, v.json(historySchema), async (c
   )[0];
   if (article?.status !== 'published') throw new AppError(ErrCode.NOT_FOUND, 404);
   const db = getDb();
-  const existing = (
-    await db
-      .select({ id: viewHistory.id })
-      .from(viewHistory)
-      .where(and(eq(viewHistory.userId, userId), eq(viewHistory.articleId, articleId)))
-      .limit(1)
-      .all()
-  )[0];
   const now = new Date();
-  if (existing) {
-    const patch: Record<string, unknown> = { lastReadAt: now };
-    if (progress !== undefined) patch.progress = progress;
-    await db.update(viewHistory).set(patch).where(eq(viewHistory.id, existing.id)).run();
-  } else {
-    await db
-      .insert(viewHistory)
-      .values({ userId, articleId, lastReadAt: now, progress: progress ?? null })
-      .run();
-  }
+  // DB 层 upsert：并发双发不会再撞 uniq_view_history → 500（P3-1）。
+  // 冲突时仅更新 lastReadAt；progress 仅在请求显式携带时才覆盖。
+  const onConflictSet: { lastReadAt: Date; progress?: number | null } = { lastReadAt: now };
+  if (progress !== undefined) onConflictSet.progress = progress;
+  await db
+    .insert(viewHistory)
+    .values({ userId, articleId, lastReadAt: now, progress: progress ?? null })
+    .onConflictDoUpdate({
+      target: [viewHistory.userId, viewHistory.articleId],
+      set: onConflictSet,
+    })
+    .run();
   const row = (
     await db
       .select({

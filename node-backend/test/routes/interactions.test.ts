@@ -7,13 +7,13 @@
 process.env.JWT_SECRET ??= 'test-secret';
 process.env.NODE_ENV ??= 'test';
 
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '@/app';
 import { readEnv } from '@/config/env';
 import { createLocalDb, getDb, setDb } from '@/db/client';
 import { migrate } from '@/db/migrate';
-import { notifications, users } from '@/db/schema';
+import { likes, notifications, users } from '@/db/schema';
 
 const app = createApp(readEnv(process.env as Record<string, string | undefined>));
 
@@ -309,6 +309,36 @@ describe('B6 点赞', () => {
       }),
     );
     expect(unliked2.data).toEqual({ liked: false, likeCount: 0 });
+  });
+
+  it('并发双发 POST /like 不 500（x-idempotent 真幂等，P2-1 修复）', async () => {
+    const u = await tokenOf('b6l8');
+    const admin = await tokenOf('b6l9', 'admin');
+    const aid = await publishArticle(admin, 'LikeConc');
+    const fire = () =>
+      app.request(`${BASE}/articles/${aid}/like`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${u}` },
+      });
+    // 两请求同时起飞：旧实现（裸 insert + 先查判存）会在两个 select 都读到"无记录"后，
+    // 第二个 insert 撞 uniq_like 约束 → 500；新实现 ON CONFLICT DO NOTHING → 均 200 且计数仅 +1。
+    const [a, b] = await Promise.all([fire(), fire()]);
+    expect(a.status).toBe(200);
+    expect(b.status).toBe(200);
+    const status = await json<LikeStatusResp>(
+      await app.request(`${BASE}/articles/${aid}/like/status`, {
+        headers: { Authorization: `Bearer ${u}` },
+      }),
+    );
+    expect(status.data).toEqual({ liked: true, likeCount: 1 });
+    // DB 仅 1 行 like 记录。
+    const myId = await userIdOf('b6l8');
+    const rows = await getDb()
+      .select({ id: likes.id })
+      .from(likes)
+      .where(and(eq(likes.userId, myId), eq(likes.articleId, aid)))
+      .all();
+    expect(rows).toHaveLength(1);
   });
 
   it('like/status 公开（匿名 liked=false）；点赞不存在文章 → 404', async () => {

@@ -60,3 +60,4 @@ M0 开篇/M1 Node/M2 React/M3 Next(含会员中心)/M4 Flutter/M5 Taro/M6 Go/M7 
 - 用户 FungLeo，CSDN 前端专家。文风以本项目章程第九节为准（克制结构化，区别于全局 BLOG_STYLE_GUIDE），动笔前仍读全局脱敏规则。
 - 领域模型+API 契约是七端共同地基，实现不得偏离；变更先改 OpenAPI 再改实现。
 - 双门校验为唯一硬地基，任何契约改动后须复跑（venv：`/Users/fungleo/.workbuddy/binaries/python/envs/default` 含 pyyaml + openapi-spec-validator）。
+- **评审角色铁律（2026-08-26 用户明确）**：后端架构师专家（BackendArchitect）**只做审查、给结论、写审阅报告与复审批复**；**不编写代码、不修复 BUG、不代写开发 AI 的回复文档**——这些全是开发 AI 的活。若收到「去把报告里的问题修了 + 写回复文档」类指令，须**先判断是不是用户发错了**（正确流向：报告交回开发 AI 整改 → 开发 AI 给回复文档 → 我复批）。用户已确认上一条「解决报告问题并写回复文档」属误发，越界未执行任何代码改动。
