@@ -7,18 +7,13 @@
  */
 import type { Context, MiddlewareHandler } from 'hono';
 import { getActiveEnv } from '@/config/env';
-import { ErrCode } from '@/lib/codes';
-import { AppError } from '@/lib/http-error';
-import { type Role, verifyAccessToken } from '@/lib/jwt';
+import { type Role, verifyAccessToken } from '@/shared/auth';
+import { ErrCode } from '@/shared/codes';
+import { AppError } from '@/shared/errors';
+import type { AuthVars } from '@/types/auth';
 
-/** 当前登录用户（注入到 c.get('user')）。 */
-export interface AuthUser {
-  id: string;
-  role: Role;
-}
-
-/** Hono 上下文变量声明，供带类型的 c.get('user') 使用。 */
-export type AuthVars = { Variables: { user: AuthUser } };
+// 鉴权上下文类型（AuthUser / AuthVars）上提至 types/auth.ts 作为单一事实源；此处透出以保持路由现有 import 不变。
+export type { AuthUser, AuthVars } from '@/types/auth';
 
 /**
  * 角色层级：内部 0-based（member=0 / editor=1 / admin=2），

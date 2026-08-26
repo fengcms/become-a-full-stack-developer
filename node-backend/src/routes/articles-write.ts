@@ -1,31 +1,31 @@
 /**
  * src/routes/articles-write.ts
  * 文章写路由（B2 核心 /articles 子树写侧）：创建 / 更新 / 软删 / submit。
- * 读侧见 articles-read.ts，二者在 app.ts 同挂 /api/v1/articles。
- * 共享写逻辑（状态/slug 解析、创建/更新 DB 操作、标签同步）已抽到 lib/article-mutation.ts。
+ * 薄路由：鉴权 + 校验入参 → 调 services/article(-mutation) → ok/toArticle 格式化。读侧见 articles-read.ts。
  *
  * 关键纪律（对齐契约与 02 §2.2/§2.3/§3.3）：
  * - member 创建/更新传入 published → 降级 pending；member 传入 slug → 忽略（见 article-mutation）。
- * - 写标签同步：创建/更新文章时一并维护 article_tags 关联（B3.5，见 lib/article-tags）。
+ * - 写标签同步：创建/更新文章时一并维护 article_tags 关联（B3.5，见 services/article-tags）。
  * - 软删：置 deleted_at，并清理 article_tags 关联，保持 junction 与文章生命周期一致。
  */
-import { and, eq, isNull } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { getDb } from '@/db/client';
-import { type ArticleRow, articles, articleTags } from '@/db/schema';
-import { resolveArticleOwner, toArticle } from '@/lib/article';
+import { type AuthVars, authMiddleware, guard } from '@/middleware/auth';
+import { v } from '@/middleware/validate';
+import {
+  getArticleOr404,
+  resolveArticleOwner,
+  softDeleteArticle,
+  submitArticle,
+  toArticle,
+} from '@/services/article';
 import {
   type ArticleCreateInput,
   type ArticleUpdateInput,
   createArticleRow,
   updateArticleRow,
-} from '@/lib/article-mutation';
-import { ErrCode } from '@/lib/codes';
-import { AppError } from '@/lib/http-error';
-import { ok } from '@/lib/response';
-import { type AuthVars, authMiddleware, guard } from '@/middleware/auth';
-import { v } from '@/middleware/validate';
+} from '@/services/article-mutation';
+import { ok } from '@/shared/response';
 
 const createArticleSchema = z.object({
   title: z.string().min(1).max(200),
@@ -70,16 +70,7 @@ articlesWriteRoute.put(
   async (c) => {
     const me = c.get('user');
     const id = Number(c.req.param('id'));
-    const db = getDb();
-    const existing = (
-      await db
-        .select()
-        .from(articles)
-        .where(and(eq(articles.id, id), isNull(articles.deletedAt)))
-        .limit(1)
-        .all()
-    )[0];
-    if (!existing) throw new AppError(ErrCode.NOT_FOUND, 404);
+    const existing = await getArticleOr404(id);
     const input = c.req.valid('json') as ArticleUpdateInput;
     const privileged = me.role === 'editor' || me.role === 'admin';
     const updated = await updateArticleRow(id, input, existing, privileged);
@@ -94,22 +85,7 @@ articlesWriteRoute.delete(
   guard('editor', resolveArticleOwner),
   async (c) => {
     const id = Number(c.req.param('id'));
-    const db = getDb();
-    const existing = (
-      await db
-        .select({ id: articles.id })
-        .from(articles)
-        .where(and(eq(articles.id, id), isNull(articles.deletedAt)))
-        .limit(1)
-        .all()
-    )[0];
-    if (!existing) throw new AppError(ErrCode.NOT_FOUND, 404);
-    await db.delete(articleTags).where(eq(articleTags.articleId, id)).run();
-    await db
-      .update(articles)
-      .set({ deletedAt: new Date(), updatedAt: new Date() })
-      .where(eq(articles.id, id))
-      .run();
+    await softDeleteArticle(id);
     return ok({ success: true });
   },
 );
@@ -121,26 +97,7 @@ articlesWriteRoute.post(
   guard('admin', resolveArticleOwner),
   async (c) => {
     const id = Number(c.req.param('id'));
-    const db = getDb();
-    const existing = (
-      await db
-        .select()
-        .from(articles)
-        .where(and(eq(articles.id, id), isNull(articles.deletedAt)))
-        .limit(1)
-        .all()
-    )[0];
-    if (!existing) throw new AppError(ErrCode.NOT_FOUND, 404);
-    if (existing.status !== 'draft') throw new AppError(ErrCode.STATE_CONFLICT, 409); // 3003 非法前态
-    await db
-      .update(articles)
-      .set({ status: 'pending', updatedAt: new Date() })
-      .where(eq(articles.id, id))
-      .run();
-    const rows = await db.select().from(articles).where(eq(articles.id, id)).limit(1).all();
-    const updated = rows[0] as ArticleRow;
-    if (!updated) throw new AppError(ErrCode.INTERNAL, 500);
-    return ok(toArticle(updated));
+    return ok(await submitArticle(id));
   },
 );
 

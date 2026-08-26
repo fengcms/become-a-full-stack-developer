@@ -2,7 +2,9 @@
  * src/lib/http-error.ts
  * 应用统一错误类型。任何业务失败都抛 `AppError`，由顶层 error 中间件转成契约信封。
  */
-import { type BizErrorCode, ErrorMessages, HttpForCode } from '@/lib/codes';
+
+import { ErrorMessages, HttpForCode } from '@/shared/codes';
+import type { BizErrorCode } from '@/types/common';
 
 /** 应用层错误：携带业务码、HTTP 状态码与可选的明细负载（如 4001 的 errors）。 */
 export class AppError extends Error {

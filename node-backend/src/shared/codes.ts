@@ -2,6 +2,8 @@
  * src/lib/codes.ts
  * 契约错误码单一事实源（对齐 docs/api/openapi.v1.yaml v1.11.0 的 ErrorCode 枚举）。
  * 所有业务错误都必须从这里取值，禁止在别处硬编码数字。
+ *
+ * 注：错误码联合类型（ErrorCode / BizErrorCode）已上提至 types/common.ts（共享类型层）。
  */
 
 /** 错误码常量。`as const` 让字面量类型被保留，可被 ErrorMessages / HttpForCode 用作键。 */
@@ -21,10 +23,10 @@ export const ErrCode = {
   RATE_LIMITED: 5001,
 } as const;
 
-/** 所有错误码的字面量联合类型。 */
-export type ErrorCode = (typeof ErrCode)[keyof typeof ErrCode];
-/** 非零业务码（即"出错了"的那一族）。 */
-export type BizErrorCode = Exclude<ErrorCode, 0>;
+import type { BizErrorCode } from '@/types/common';
+
+// 错误码类型（ErrorCode / BizErrorCode）的单一事实源在 types/common.ts；此处透出以保持既有 import 不变。
+export type { BizErrorCode } from '@/types/common';
 
 /**
  * 业务码 → 中文文案。运行时返回给用户，取契约 example 中的描述文案。

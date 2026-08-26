@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import type { CategoryRow } from '@/db/schema';
-import { buildTree, type CategoryNode, subtreeHeight } from '@/lib/category';
+import { buildTree, type CategoryNode, subtreeHeight } from '@/services/category';
 
 /** 构造最小 CategoryRow（纯函数只读取 id/name/slug/description/parentId/sortOrder）。 */
 const row = (id: number, slug: string, parentId: number | null): CategoryRow =>

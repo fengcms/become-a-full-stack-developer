@@ -7,18 +7,21 @@
  *
  * 文件校验在信任边界内手动完成（multipart 无 JSON schema），不合法返回契约 4001（data.errors）。
  * Hono 4.x 用 `c.req.parseBody({ all: true })` 解析 multipart（文件以 File 形式呈现）。
+ * 薄路由：仅做「信任边界校验（parseUpload）/ 授权（guard 调 service 解析归属）/ 调 service / 格式化」。
+ * 双存储写入与删行逻辑已下沉到 services/attachment.ts，本路由不出现 getDb / storage 直接调用。
  */
-import { eq } from 'drizzle-orm';
-import { type Context, Hono } from 'hono';
-import { getActiveEnv } from '@/config/env';
-import { getDb } from '@/db/client';
-import { type AttachmentRow, attachments } from '@/db/schema';
-import { queryMyAttachments, toAttachment } from '@/lib/attachment';
-import { ErrCode } from '@/lib/codes';
-import { AppError } from '@/lib/http-error';
-import { ok, paginate } from '@/lib/response';
-import { createStorage } from '@/lib/storage';
+import type { Context } from 'hono';
+import { Hono } from 'hono';
 import { type AuthVars, authMiddleware, guard } from '@/middleware/auth';
+import {
+  createAttachment,
+  deleteAttachment,
+  getAttachmentOwnerId,
+  queryMyAttachments,
+} from '@/services/attachment';
+import { ErrCode } from '@/shared/codes';
+import { AppError } from '@/shared/errors';
+import { ok, paginate } from '@/shared/response';
 
 const uploadRoute = new Hono<AuthVars>();
 
@@ -71,29 +74,14 @@ const parseUpload = async (
 uploadRoute.post('/upload', authMiddleware, async (c) => {
   const me = c.get('user');
   const { buffer, ext, mime, articleId } = await parseUpload(c);
-
-  const env = getActiveEnv();
-  const storage = createStorage(env);
-  const { key, url } = await storage.put(buffer, ext);
-
-  const db = getDb();
-  const inserted = (await db
-    .insert(attachments)
-    .values({
-      userId: Number(me.id),
-      articleId,
-      storageKey: key,
-      url,
-      storage: env.STORAGE_DRIVER,
-      mimeType: mime,
-      size: buffer.byteLength,
-      createdAt: new Date(),
-    })
-    .returning()
-    .all()) as AttachmentRow[];
-  const row = inserted[0];
-  if (!row) throw new AppError(ErrCode.INTERNAL, 500);
-  return ok(toAttachment(row));
+  const att = await createAttachment({
+    userId: Number(me.id),
+    articleId,
+    buffer,
+    ext,
+    mime,
+  });
+  return ok(att);
 });
 
 /** GET /me/attachments — 我的附件（分页）。 */
@@ -106,16 +94,9 @@ uploadRoute.get('/me/attachments', authMiddleware, async (c) => {
 /** 解析附件归属：加载并校验存在性（缺失 → 404），返回 userId 供 ownerOverride。 */
 const resolveAttachmentOwner = async (c: Context<AuthVars>): Promise<string | null> => {
   const id = Number(c.req.param('id'));
-  const row = (
-    await getDb()
-      .select({ userId: attachments.userId })
-      .from(attachments)
-      .where(eq(attachments.id, id))
-      .limit(1)
-      .all()
-  )[0];
-  if (!row) throw new AppError(ErrCode.NOT_FOUND, 404);
-  return String(row.userId);
+  const ownerId = await getAttachmentOwnerId(id);
+  if (ownerId === null) throw new AppError(ErrCode.NOT_FOUND, 404);
+  return ownerId;
 };
 
 /** DELETE /attachments/:id — 上传者本人或 admin 删；尽力删底层对象。 */
@@ -125,24 +106,7 @@ uploadRoute.delete(
   guard('editor', resolveAttachmentOwner),
   async (c) => {
     const id = Number(c.req.param('id'));
-    const db = getDb();
-    const row = (
-      await db
-        .select({ storageKey: attachments.storageKey })
-        .from(attachments)
-        .where(eq(attachments.id, id))
-        .limit(1)
-        .all()
-    )[0];
-    const res = await db.delete(attachments).where(eq(attachments.id, id)).run();
-    if (res.changes === 0) throw new AppError(ErrCode.NOT_FOUND, 404);
-    if (row) {
-      try {
-        await createStorage(getActiveEnv()).delete(row.storageKey);
-      } catch {
-        // 底层删除失败不阻塞行删除（双存储适配层真实边界）
-      }
-    }
+    await deleteAttachment(id);
     return ok({});
   },
 );

@@ -8,7 +8,12 @@
  * - 环检测：若把节点挂到自身子孙下会形成环，建/改 parentId 时必须拒绝（见 wouldCreateCycle）。
  * - 上述算法属「契约留外」行为（§2.2），此处给出合理实现并在 B3-NOTES 登记。
  */
-import type { CategoryRow } from '@/db/schema';
+import { and, eq, isNull, sql } from 'drizzle-orm';
+import { getDb } from '@/db/client';
+import { articles, type CategoryRow, categories } from '@/db/schema';
+import { ErrCode } from '@/shared/codes';
+import { isUniqueConstraintError } from '@/shared/db-error';
+import { AppError } from '@/shared/errors';
 
 /** 分类树最大嵌套深度（契约 Category.x-max-depth）。 */
 export const MAX_CATEGORY_DEPTH = 4;
@@ -166,4 +171,203 @@ export const toBreadcrumb = (rows: CategoryRow[], id: number): CategoryBreadcrum
     cur = byId.get(cur.parentId);
   }
   return path;
+};
+
+/** 分类创建/更新入参（结构与 routes/categories-write 的 categorySchema 对齐）。 */
+export interface CategoryInput {
+  name: string;
+  slug: string;
+  description?: string | null;
+  parentId?: number | null;
+  sortOrder?: number;
+}
+
+/** 取全量分类（环检测 / 深度 / 树 / 面包屑均依赖完整父链）。 */
+export const allCategories = async (): Promise<CategoryRow[]> =>
+  getDb().select().from(categories).all();
+
+/** GET / — 公开平铺列表。 */
+export const listCategories = async (): Promise<ReturnType<typeof toCategory>[]> => {
+  const rows = await allCategories();
+  return rows.map(toCategory);
+};
+
+/** GET /tree — 无限级树（公开）。 */
+export const getCategoryTree = async (): Promise<CategoryNode[]> =>
+  buildTree(await allCategories());
+
+/** GET /:id/breadcrumb — 当前分类到根的面包屑（公开）；不存在 → 404。 */
+export const getCategoryBreadcrumb = async (id: number): Promise<CategoryBreadcrumbItem[]> => {
+  const rows = await allCategories();
+  const target = rows.find((r) => r.id === id);
+  if (!target) throw new AppError(ErrCode.NOT_FOUND, 404);
+  return toBreadcrumb(rows, id);
+};
+
+/** GET /stats — 各分类已发布文章数（公开）。 */
+export const getCategoryStats = async (): Promise<
+  { id: number; name: string; slug: string; articleCount: number }[]
+> => {
+  const rows = await getDb()
+    .select({
+      id: categories.id,
+      name: categories.name,
+      slug: categories.slug,
+      articleCount: sql<number>`count(${articles.id})`,
+    })
+    .from(categories)
+    .leftJoin(
+      articles,
+      and(
+        eq(articles.categoryId, categories.id),
+        eq(articles.status, 'published'),
+        isNull(articles.deletedAt),
+      ),
+    )
+    .groupBy(categories.id)
+    .all();
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    slug: r.slug,
+    articleCount: Number(r.articleCount),
+  }));
+};
+
+/** POST / — 创建分类（editor/admin）；深度 / slug 占用校验。 */
+export const createCategory = async (
+  input: CategoryInput,
+): Promise<ReturnType<typeof toCategory>> => {
+  const db = getDb();
+  const dup = (
+    await db
+      .select({ id: categories.id })
+      .from(categories)
+      .where(eq(categories.slug, input.slug))
+      .limit(1)
+      .all()
+  )[0];
+  if (dup) throw new AppError(ErrCode.CONFLICT, 409); // 3002 slug 占用
+
+  // 深度校验：挂到父下后深度 = 父深度 + 1，须 ≤ MAX
+  if (input.parentId != null) {
+    const rows = await allCategories();
+    const parent = rows.find((r) => r.id === input.parentId);
+    if (!parent) throw new AppError(ErrCode.NOT_FOUND, 404); // 父分类不存在
+    if (depthOf(rows, parent.id) + 1 > MAX_CATEGORY_DEPTH) {
+      throw new AppError(ErrCode.CONFLICT, 409); // 3002 超出最大嵌套深度
+    }
+  }
+
+  const now = new Date();
+  let inserted: CategoryRow[];
+  try {
+    inserted = await db
+      .insert(categories)
+      .values({
+        name: input.name,
+        slug: input.slug,
+        description: input.description ?? null,
+        parentId: input.parentId ?? null,
+        sortOrder: input.sortOrder ?? 0,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning()
+      .all();
+  } catch (err) {
+    if (isUniqueConstraintError(err)) throw new AppError(ErrCode.CONFLICT, 409); // 3002 并发冲突
+    throw err;
+  }
+  const created = inserted[0];
+  if (!created) throw new AppError(ErrCode.INTERNAL, 500);
+  return toCategory(created);
+};
+
+/** PUT /:id — 更新分类（editor/admin）；变更 parentId 须防环 + 限深。 */
+export const updateCategory = async (
+  id: number,
+  input: CategoryInput,
+): Promise<ReturnType<typeof toCategory>> => {
+  const db = getDb();
+  const existing = (
+    await db.select().from(categories).where(eq(categories.id, id)).limit(1).all()
+  )[0];
+  if (!existing) throw new AppError(ErrCode.NOT_FOUND, 404);
+
+  const dup = (
+    await db
+      .select({ id: categories.id })
+      .from(categories)
+      .where(eq(categories.slug, input.slug))
+      .limit(1)
+      .all()
+  )[0];
+  if (dup && dup.id !== id) throw new AppError(ErrCode.CONFLICT, 409); // 3002 slug 占用
+
+  const newParent = input.parentId ?? null;
+  if (newParent !== existing.parentId) {
+    const rows = await allCategories();
+    if (newParent != null) {
+      const parent = rows.find((r) => r.id === newParent);
+      if (!parent) throw new AppError(ErrCode.NOT_FOUND, 404);
+      if (wouldCreateCycle(rows, id, newParent)) {
+        throw new AppError(ErrCode.CONFLICT, 409); // 3002 成环
+      }
+      // 整棵被移动子树的深度 = 新父深度 + 被移动子树高度（含自身），须 ≤ MAX
+      if (depthOf(rows, parent.id) + subtreeHeight(rows, id) > MAX_CATEGORY_DEPTH) {
+        throw new AppError(ErrCode.CONFLICT, 409); // 3002 超出最大嵌套深度
+      }
+    }
+  }
+
+  const now = new Date();
+  await db
+    .update(categories)
+    .set({
+      name: input.name,
+      slug: input.slug,
+      description: input.description ?? null,
+      parentId: newParent,
+      sortOrder: input.sortOrder ?? existing.sortOrder,
+      updatedAt: now,
+    })
+    .where(eq(categories.id, id))
+    .run();
+  const updated = (
+    await db.select().from(categories).where(eq(categories.id, id)).limit(1).all()
+  )[0];
+  if (!updated) throw new AppError(ErrCode.INTERNAL, 500);
+  return toCategory(updated);
+};
+
+/** DELETE /:id — 删除分类（editor/admin）；x-cascade:none，有子节点或文章引用则拒删。 */
+export const deleteCategory = async (id: number): Promise<void> => {
+  const db = getDb();
+  const existing = (
+    await db.select().from(categories).where(eq(categories.id, id)).limit(1).all()
+  )[0];
+  if (!existing) throw new AppError(ErrCode.NOT_FOUND, 404);
+
+  const child = (
+    await db
+      .select({ id: categories.id })
+      .from(categories)
+      .where(eq(categories.parentId, id))
+      .limit(1)
+      .all()
+  )[0];
+  if (child) throw new AppError(ErrCode.CONFLICT, 409); // 3002 仍有子分类
+
+  const ref = (
+    await db
+      .select({ id: articles.id })
+      .from(articles)
+      .where(and(eq(articles.categoryId, id), isNull(articles.deletedAt)))
+      .limit(1)
+      .all()
+  )[0];
+  if (ref) throw new AppError(ErrCode.CONFLICT, 409); // 3002 仍有文章归属
+
+  await db.delete(categories).where(eq(categories.id, id)).run();
 };

@@ -13,7 +13,7 @@ import { readEnv } from '@/config/env';
 import { createLocalDb, getDb, setDb } from '@/db/client';
 import { migrate } from '@/db/migrate';
 import { articles, articleViewDedup, users } from '@/db/schema';
-import { fnv1a } from '@/lib/article';
+import { fnv1a } from '@/services/article';
 
 const app = createApp(readEnv(process.env as Record<string, string | undefined>));
 

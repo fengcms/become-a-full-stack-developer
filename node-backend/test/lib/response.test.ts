@@ -3,8 +3,8 @@
  * 信封构造器单测（审阅 B07）：验证 ok / failResponse / paginate 的产物符合契约 ApiResponse 形状。
  */
 import { describe, expect, it } from 'vitest';
-import { type BizErrorCode, ErrCode } from '@/lib/codes';
-import { failResponse, ok, paginate } from '@/lib/response';
+import { type BizErrorCode, ErrCode } from '@/shared/codes';
+import { failResponse, ok, paginate } from '@/shared/response';
 
 /** 信封基础字段断言。 */
 const assertEnvelopeShape = (body: Record<string, unknown>): void => {

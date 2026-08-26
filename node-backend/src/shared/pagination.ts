@@ -6,7 +6,7 @@
  */
 import { type SQL, sql } from 'drizzle-orm';
 import type { Context } from 'hono';
-import type { Pagination } from '@/lib/response';
+import type { Pagination } from '@/types/common';
 
 /** 允许排序的字段 → 实际列表达式（白名单，杜绝注入）。
  * 统一以 articles. 限定基表列：queryArticles 恒以 articles 为基表，

@@ -4,9 +4,9 @@
  * member 不具备后台权限，故需此端点聚合「我的投稿 / 我的文章」，避免逐条 GET 详情遍历。
  */
 import { Hono } from 'hono';
-import { type ArticleStatus, queryArticles } from '@/lib/article';
-import { paginate } from '@/lib/response';
 import { type AuthVars, authMiddleware, guard } from '@/middleware/auth';
+import { type ArticleStatus, queryArticles } from '@/services/article';
+import { paginate } from '@/shared/response';
 
 const meArticlesRoute = new Hono<AuthVars>();
 

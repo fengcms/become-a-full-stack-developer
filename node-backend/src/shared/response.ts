@@ -3,24 +3,8 @@
  * 统一响应信封构造器（对齐契约 components.schemas.ApiResponse）。
  * 返回原生 Response，与 Hono 解耦，便于单测与跨运行时复用。
  */
-import { type BizErrorCode, ErrorMessages } from '@/lib/codes';
-
-/** 分页元数据。契约要求 page / pageSize / total / totalPages 四件套。 */
-export interface Pagination {
-  page: number;
-  pageSize: number;
-  total: number;
-  totalPages: number;
-}
-
-/** 标准信封形状。 */
-interface Envelope<T> {
-  code: number;
-  message: string;
-  data: T | null;
-  requestId: string;
-  timestamp: string;
-}
+import { ErrorMessages } from '@/shared/codes';
+import type { BizErrorCode, Envelope, Pagination } from '@/types/common';
 
 /** 生成请求 ID（优先 Web Crypto 的 UUID，降级用时间戳）。 */
 const requestId = (): string =>

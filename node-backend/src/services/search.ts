@@ -6,9 +6,9 @@
 import { and, asc, eq, inArray, isNull, like, ne, or, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { articles, users } from '@/db/schema';
-import { type ArticleSummaryRow, toArticleSummary } from '@/lib/article';
-import { buildSortSql, meta } from '@/lib/pagination';
-import type { Pagination } from '@/lib/response';
+import { type ArticleSummaryRow, toArticleSummary } from '@/services/article';
+import { buildSortSql, meta } from '@/shared/pagination';
+import type { Pagination } from '@/types/common';
 
 /** 会员公开资料（MemberProfile，搜索结果用，省略 articles 列表）。 */
 export interface MemberProfile {

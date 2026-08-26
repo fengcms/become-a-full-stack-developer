@@ -4,7 +4,7 @@
  * GET /api/v1/health → { code:0, data:{ status:'ok' }, ... }
  */
 import { Hono } from 'hono';
-import { ok } from '@/lib/response';
+import { ok } from '@/shared/response';
 
 export const healthRoute = new Hono();
 

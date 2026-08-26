@@ -12,8 +12,8 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Hono } from 'hono';
 import { getActiveEnv } from '@/config/env';
-import { ErrCode } from '@/lib/codes';
-import { AppError } from '@/lib/http-error';
+import { ErrCode } from '@/shared/codes';
+import { AppError } from '@/shared/errors';
 
 /** 安全 key 约束：仅允许基础文件名字符，防御路径遍历（与 storage.ts 同源）。 */
 const SAFE_KEY = /^[A-Za-z0-9._-]+$/;

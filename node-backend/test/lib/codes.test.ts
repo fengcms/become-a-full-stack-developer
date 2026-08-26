@@ -4,7 +4,7 @@
  * 且审阅 B01 修复后 VALIDATION 对应 HTTP 400（契约口径）。
  */
 import { describe, expect, it } from 'vitest';
-import { type BizErrorCode, ErrCode, ErrorMessages, HttpForCode } from '@/lib/codes';
+import { type BizErrorCode, ErrCode, ErrorMessages, HttpForCode } from '@/shared/codes';
 
 describe('错误码映射', () => {
   it('VALIDATION 的 HTTP 状态为 400（契约口径，审阅 B01）', () => {

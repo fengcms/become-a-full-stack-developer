@@ -6,8 +6,8 @@
  */
 import { zValidator } from '@hono/zod-validator';
 import type { ZodTypeAny } from 'zod';
-import { ErrCode } from '@/lib/codes';
-import { failResponse } from '@/lib/response';
+import { ErrCode } from '@/shared/codes';
+import { failResponse } from '@/shared/response';
 
 /** 将校验失败转成契约 4001 响应（hook 复用，避免重复构造）。 */
 const toValidationResponse = (error: {

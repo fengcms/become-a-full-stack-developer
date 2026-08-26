@@ -10,11 +10,12 @@
 import { and, eq, isNull, like, or, type SQL, sql } from 'drizzle-orm';
 import type { Context } from 'hono';
 import { getDb } from '@/db/client';
-import { type ArticleRow, articles, articleTags, tags } from '@/db/schema';
-import { ErrCode } from '@/lib/codes';
-import { AppError } from '@/lib/http-error';
-import { buildSortSql, meta, parsePage } from '@/lib/pagination';
-import type { Pagination } from '@/lib/response';
+import { type ArticleRow, articles, articleTags, articleViewDedup, tags } from '@/db/schema';
+import { ErrCode } from '@/shared/codes';
+import { isUniqueConstraintError } from '@/shared/db-error';
+import { AppError } from '@/shared/errors';
+import { buildSortSql, meta, parsePage } from '@/shared/pagination';
+import type { Pagination } from '@/types/common';
 
 /** 文章三态（与契约 Article.status 枚举一致）。 */
 export type ArticleStatus = 'draft' | 'pending' | 'published';
@@ -261,4 +262,190 @@ export const fnv1a = (str: string): string => {
     h = Math.imul(h, 0x01000193);
   }
   return (h >>> 0).toString(16);
+};
+
+const VIEW_DEDUP_MS = 24 * 60 * 60 * 1000;
+
+/** GET /:idOrSlug 详情：id 或 slug 解析；匿名仅 published；owner/admin 可见任意态。 */
+export const getArticleByKey = async (
+  key: string,
+  user: { id: string; role: string } | null,
+): Promise<ReturnType<typeof toArticle>> => {
+  const where = /^\d+$/.test(key)
+    ? and(eq(articles.id, Number(key)), isNull(articles.deletedAt))
+    : and(eq(articles.slug, key), isNull(articles.deletedAt));
+  const row = (await getDb().select().from(articles).where(where).limit(1).all())[0];
+  if (!row) throw new AppError(ErrCode.NOT_FOUND, 404);
+  const owner = user && String(row.authorId) === user.id;
+  const visible = row.status === 'published' || owner || user?.role === 'admin';
+  if (!visible) throw new AppError(ErrCode.NOT_FOUND, 404); // 未发布对非授权者隐瞒
+  return toArticle(row);
+};
+
+/** POST /:id/view 阅读量 +1（去重 24h 冷却）；仅 published 可计数，否则 404。 */
+export const incrementViewCount = async (
+  id: number,
+  userId: number | null,
+  ip: string,
+  ua: string,
+): Promise<{ viewCount: number }> => {
+  const db = getDb();
+  const existing = (
+    await db
+      .select()
+      .from(articles)
+      .where(and(eq(articles.id, id), isNull(articles.deletedAt)))
+      .limit(1)
+      .all()
+  )[0];
+  if (existing?.status !== 'published') throw new AppError(ErrCode.NOT_FOUND, 404);
+  // 去重采用「24h 时间桶」：dedupKey = baseKey#bucket，bucket = floor(now/WINDOW)。
+  // 冷却过后桶号自然变化 → 不再撞旧记录，根除「永久唯一约束 vs 24h 冷却」的 500；
+  // 同窗口并发插入撞唯一约束 → isUniqueConstraintError 兜底，跳过增量、返回 200，不重复计数。
+  const baseKey = userId != null ? `u:${userId}` : `a:${fnv1a(`${ip}|${ua}`)}`;
+  const bucket = Math.floor(Date.now() / VIEW_DEDUP_MS); // 每 24h 一个桶
+  const dedupKey = `${baseKey}#${bucket}`;
+  const recent = await db
+    .select({ id: articleViewDedup.id })
+    .from(articleViewDedup)
+    .where(and(eq(articleViewDedup.articleId, id), eq(articleViewDedup.dedupKey, dedupKey)))
+    .limit(1)
+    .all();
+  if (recent.length === 0) {
+    try {
+      await db
+        .insert(articleViewDedup)
+        .values({ articleId: id, dedupKey, createdAt: new Date() })
+        .run();
+    } catch (err) {
+      if (isUniqueConstraintError(err)) {
+        // 同窗口并发重复插入：视作已计数，跳过增量（不重复计数、不抛 500）
+        const cur = (
+          await db
+            .select({ viewCount: articles.viewCount })
+            .from(articles)
+            .where(eq(articles.id, id))
+            .limit(1)
+            .all()
+        )[0];
+        return { viewCount: cur?.viewCount ?? existing.viewCount };
+      }
+      throw err;
+    }
+    await db
+      .update(articles)
+      .set({ viewCount: sql`${articles.viewCount} + 1` })
+      .where(eq(articles.id, id))
+      .run();
+  }
+  const rows = await db
+    .select({ viewCount: articles.viewCount })
+    .from(articles)
+    .where(eq(articles.id, id))
+    .limit(1)
+    .all();
+  const updated = rows[0];
+  if (!updated) throw new AppError(ErrCode.INTERNAL, 500);
+  return { viewCount: updated.viewCount };
+};
+
+/** PUT /:id 前取现存文章行（软删过滤），不存在 → 404。 */
+export const getArticleOr404 = async (id: number): Promise<ArticleRow> => {
+  const row = (
+    await getDb()
+      .select()
+      .from(articles)
+      .where(and(eq(articles.id, id), isNull(articles.deletedAt)))
+      .limit(1)
+      .all()
+  )[0];
+  if (!row) throw new AppError(ErrCode.NOT_FOUND, 404);
+  return row;
+};
+
+/** DELETE /:id 软删：置 deleted_at，清理 article_tags 关联。 */
+export const softDeleteArticle = async (id: number): Promise<void> => {
+  const db = getDb();
+  await db.delete(articleTags).where(eq(articleTags.articleId, id)).run();
+  await db
+    .update(articles)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(eq(articles.id, id))
+    .run();
+};
+
+/** POST /:id/submit draft→pending（仅作者/owner 或 admin）。 */
+export const submitArticle = async (id: number): Promise<ReturnType<typeof toArticle>> => {
+  const db = getDb();
+  const existing = (
+    await db
+      .select()
+      .from(articles)
+      .where(and(eq(articles.id, id), isNull(articles.deletedAt)))
+      .limit(1)
+      .all()
+  )[0];
+  if (!existing) throw new AppError(ErrCode.NOT_FOUND, 404);
+  if (existing.status !== 'draft') throw new AppError(ErrCode.STATE_CONFLICT, 409); // 3003 非法前态
+  const now = new Date();
+  await db
+    .update(articles)
+    .set({ status: 'pending', updatedAt: now })
+    .where(eq(articles.id, id))
+    .run();
+  const updated = (await db.select().from(articles).where(eq(articles.id, id)).limit(1).all())[0];
+  if (!updated) throw new AppError(ErrCode.INTERNAL, 500);
+  return toArticle(updated);
+};
+
+/** POST /:id/approve pending→published（editor/admin），非 pending 前态→3003。 */
+export const approveArticle = async (id: number): Promise<ReturnType<typeof toArticle>> => {
+  const db = getDb();
+  const existing = (
+    await db
+      .select()
+      .from(articles)
+      .where(and(eq(articles.id, id), isNull(articles.deletedAt)))
+      .limit(1)
+      .all()
+  )[0];
+  if (!existing) throw new AppError(ErrCode.NOT_FOUND, 404);
+  if (existing.status !== 'pending') throw new AppError(ErrCode.STATE_CONFLICT, 409); // 3003
+  const now = new Date();
+  await db
+    .update(articles)
+    .set({ status: 'published', publishedAt: existing.publishedAt ?? now, updatedAt: now })
+    .where(eq(articles.id, id))
+    .run();
+  const updated = (await db.select().from(articles).where(eq(articles.id, id)).limit(1).all())[0];
+  if (!updated) throw new AppError(ErrCode.INTERNAL, 500);
+  return toArticle(updated);
+};
+
+/** POST /:id/status admin 任意置位（不受矩阵限制），同态幂等 200。 */
+export const setArticleStatus = async (
+  id: number,
+  status: ArticleStatus,
+): Promise<ReturnType<typeof toArticle>> => {
+  const db = getDb();
+  const existing = (
+    await db
+      .select()
+      .from(articles)
+      .where(and(eq(articles.id, id), isNull(articles.deletedAt)))
+      .limit(1)
+      .all()
+  )[0];
+  if (!existing) throw new AppError(ErrCode.NOT_FOUND, 404);
+  if (status === existing.status) return toArticle(existing); // 幂等
+  const now = new Date();
+  const publishedAt = status === 'published' ? (existing.publishedAt ?? now) : null;
+  await db
+    .update(articles)
+    .set({ status, publishedAt, updatedAt: now })
+    .where(eq(articles.id, id))
+    .run();
+  const updated = (await db.select().from(articles).where(eq(articles.id, id)).limit(1).all())[0];
+  if (!updated) throw new AppError(ErrCode.INTERNAL, 500);
+  return toArticle(updated);
 };

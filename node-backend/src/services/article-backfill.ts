@@ -12,8 +12,8 @@
 import { isNull, sql } from 'drizzle-orm';
 import { type Db, getDb } from '@/db/client';
 import { articles, articleTags } from '@/db/schema';
-import { parseTags } from '@/lib/article';
-import { resolveTagIds } from '@/lib/article-tags';
+import { parseTags } from '@/services/article';
+import { resolveTagIds } from '@/services/article-tags';
 
 /** 回填结果摘要。 */
 export interface BackfillResult {

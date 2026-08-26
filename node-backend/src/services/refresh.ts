@@ -11,8 +11,8 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { refreshTokens, type User, users } from '@/db/schema';
-import { ErrCode } from '@/lib/codes';
-import { AppError } from '@/lib/http-error';
+import { ErrCode } from '@/shared/codes';
+import { AppError } from '@/shared/errors';
 
 /** 刷新令牌有效期：7 天。 */
 export const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000;

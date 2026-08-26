@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
-import { type BizErrorCode, ErrCode, HttpForCode } from '@/lib/codes';
+import { type BizErrorCode, ErrCode, HttpForCode } from '@/shared/codes';
 
 interface Spec {
   paths?: Record<string, Record<string, { responses?: Record<string, unknown> }>>;

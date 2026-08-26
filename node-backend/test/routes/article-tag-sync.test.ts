@@ -14,7 +14,7 @@ import { readEnv } from '@/config/env';
 import { createLocalDb, getDb, setDb } from '@/db/client';
 import { migrate } from '@/db/migrate';
 import { articleTags, users } from '@/db/schema';
-import { backfillArticleTags } from '@/lib/article-backfill';
+import { backfillArticleTags } from '@/services/article-backfill';
 
 const app = createApp(readEnv(process.env as Record<string, string | undefined>));
 

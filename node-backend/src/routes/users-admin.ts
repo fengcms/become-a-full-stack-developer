@@ -3,19 +3,14 @@
  * admin 重置用户密码（忘记密码唯一兜底，v1 无邮件找回）。
  * 重置后作废该用户全部 refreshToken，强制重新登录。
  * 挂载于 /api/v1/admin/users，故完整路径 /admin/users/{id}/reset-password。
+ * 薄路由：校验入参 → 调 service → ok 格式化。无 DB 查询。
  */
-import { eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { getDb } from '@/db/client';
-import { users } from '@/db/schema';
-import { ErrCode } from '@/lib/codes';
-import { AppError } from '@/lib/http-error';
-import { hashPassword } from '@/lib/password';
-import { revokeUserTokens } from '@/lib/refresh';
-import { ok } from '@/lib/response';
 import { type AuthVars, authMiddleware, guard } from '@/middleware/auth';
 import { v } from '@/middleware/validate';
+import { resetPassword } from '@/services/user';
+import { ok } from '@/shared/response';
 
 const usersAdminRoute = new Hono<AuthVars>();
 
@@ -31,15 +26,7 @@ usersAdminRoute.post(
   async (c) => {
     const id = Number(c.req.param('id'));
     const { newPassword } = c.req.valid('json') as ResetInput;
-    const db = getDb();
-    const u = (await db.select().from(users).where(eq(users.id, id)).limit(1).all())[0];
-    if (!u) throw new AppError(ErrCode.NOT_FOUND, 404);
-    await db
-      .update(users)
-      .set({ passwordHash: await hashPassword(newPassword), updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .run();
-    await revokeUserTokens(id);
+    await resetPassword(id, newPassword);
     return ok({});
   },
 );

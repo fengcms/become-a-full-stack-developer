@@ -4,8 +4,8 @@
  * 刷新令牌见 B1（有状态 refresh_tokens 表，支持旋转 / 作废）。
  */
 import { sign, verify } from 'hono/jwt';
-import { ErrCode } from '@/lib/codes';
-import { AppError } from '@/lib/http-error';
+import { ErrCode } from '@/shared/codes';
+import { AppError } from '@/shared/errors';
 
 /** 角色字面量联合（与契约「第 4 铁律」member < editor < admin 对应）。 */
 export const ROLES = ['member', 'editor', 'admin'] as const;

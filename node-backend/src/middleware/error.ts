@@ -4,9 +4,9 @@
  * 挂载在 Hono 的 onError，是"统一包络"的最后一道闸门。
  */
 import type { ErrorHandler } from 'hono';
-import { ErrCode } from '@/lib/codes';
-import { AppError } from '@/lib/http-error';
-import { failResponse } from '@/lib/response';
+import { ErrCode } from '@/shared/codes';
+import { AppError } from '@/shared/errors';
+import { failResponse } from '@/shared/response';
 
 export const errorHandler: ErrorHandler = (err, _c) => {
   if (err instanceof AppError) {

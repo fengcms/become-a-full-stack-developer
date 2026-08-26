@@ -5,15 +5,15 @@
  * 挂载于 /api/v1（路径 /articles/{id}/adjacent|related|toc、/stats、/search）。
  */
 import { Hono } from 'hono';
-import { ErrCode } from '@/lib/codes';
-import { AppError } from '@/lib/http-error';
-import { parsePage } from '@/lib/pagination';
-import { getAdjacent, getPublishedArticle, getRelated } from '@/lib/related';
-import { ok } from '@/lib/response';
-import { searchArticles, searchMembers } from '@/lib/search';
-import { getSiteStats } from '@/lib/stats';
-import { parseToc } from '@/lib/toc';
 import type { AuthVars } from '@/middleware/auth';
+import { getAdjacent, getPublishedArticle, getRelated } from '@/services/related';
+import { searchArticles, searchMembers } from '@/services/search';
+import { getSiteStats } from '@/services/stats';
+import { ErrCode } from '@/shared/codes';
+import { AppError } from '@/shared/errors';
+import { parsePage } from '@/shared/pagination';
+import { ok } from '@/shared/response';
+import { parseToc } from '@/shared/toc';
 
 const auxRoute = new Hono<AuthVars>();
 

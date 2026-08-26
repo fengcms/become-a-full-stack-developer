@@ -31,7 +31,8 @@ M0 开篇/M1 Node/M2 React/M3 Next(含会员中心)/M4 Flutter/M5 Taro/M6 Go/M7 
 - **M1 Node 后端：开发完成 + 总把控独立复验通过 + 门禁全绿，但冻结暂缓**（代码库 `node-backend/`，根目录；文档在 `docs/node-backend/`）。
   - 复验证据：tsc 0 error / biome 96 文件 0 问题 / vitest **126 passed** / 契约双门 33 OK / 契约字节级未改。
   - 穿透确认零假修复：`refresh_tokens` 有状态表真存在（落实 Q3-A）、扁平信封真执行（落实 Q1）。
-  - 交付文档 `docs/node-backend/M1-后端交付文档.md`；复审批复 `docs/node-backend/03-统筹AI复审批复.md`（**第六节补遗：冻结暂缓，待结构调优**）。
+  - 交付文档 `docs/node-backend/M1-后端交付文档.md`；复审批复 `docs/node-backend/03-统筹AI复审批复.md`（**已统一为「功能验收通过、冻结暂缓、待调优（未冻结）」口径**）。
+  - 用户经独立架构师 AI 讨论产出 `docs/node-backend/04-目标目录结构.md`（**采用水平分层：routes/services/shared/types，零行为变更重构规范**）；统筹据此起草 `docs/node-backend/05-结构调优任务包.md` 交开发 AI 执行。
   - 两处非阻塞遗留待统筹跟进：① `GET /me/likes` 契约内部矛盾（裸数组 vs page/pageSize）→ 排「契约维护批次」整改，与 F2 计数复核并轨；② nullable 唯一索引「假唯一」→ 记入 Go/Python 跨端协调清单。
   - **当前状态：待调优（未冻结）**——用户(owner)裁决「功能完备≠可冻结」，目录结构与组织风格需先调优至符合预期再冻结。
 - **下一步**：先完成 M1 结构调优（用户预期对齐 → 重构 → 门禁复绿 → 用户确认 → 再冻结）；冻结后再进入「写 M1 后端文章」（M1-01~M1-30）。M2/M3/M4/M6/M7 五端复用「契约→主计划→批次任务包」工作流。

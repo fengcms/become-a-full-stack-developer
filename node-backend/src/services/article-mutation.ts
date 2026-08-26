@@ -9,12 +9,12 @@
 import { and, eq, isNull } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { type ArticleRow, articles, users } from '@/db/schema';
-import type { ArticleStatus } from '@/lib/article';
-import { assertValidSlug } from '@/lib/article';
-import { syncArticleTags } from '@/lib/article-tags';
-import { ErrCode } from '@/lib/codes';
-import { isUniqueConstraintError } from '@/lib/db-error';
-import { AppError } from '@/lib/http-error';
+import type { ArticleStatus } from '@/services/article';
+import { assertValidSlug } from '@/services/article';
+import { syncArticleTags } from '@/services/article-tags';
+import { ErrCode } from '@/shared/codes';
+import { isUniqueConstraintError } from '@/shared/db-error';
+import { AppError } from '@/shared/errors';
 
 /** 文章创建入参（结构与 routes/articles-write 的 createArticleSchema 对齐）。 */
 export interface ArticleCreateInput {

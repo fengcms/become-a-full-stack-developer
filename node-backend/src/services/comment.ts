@@ -9,8 +9,13 @@
  * - 敏感词基础过滤：命中转等长星号；违规比率（命中字符数 / 原文长度）超阈值 → rejected，否则 approved。
  *   基础演示词库，不追求完整；阈值 0.3 为可解释默认（见 B4-NOTES）。
  */
+import { and, desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
-import type { CommentRow } from '@/db/schema';
+import { getDb } from '@/db/client';
+import { type CommentRow, comments } from '@/db/schema';
+import { resolveArticle, userNameOf } from '@/services/comment-query';
+import { ErrCode } from '@/shared/codes';
+import { AppError } from '@/shared/errors';
 
 /** 评论状态三态。 */
 export type CommentStatus = 'approved' | 'rejected' | 'reviewing';
@@ -86,3 +91,136 @@ export const toComment = (c: CommentRow) => ({
   rejectedReason: c.rejectedReason ?? null,
   createdAt: c.createdAt.toISOString(),
 });
+
+/** 取评论归属 userId（字符串），用于 guard ownerOverride；缺失 → null。 */
+export const getCommentOwnerId = async (id: number): Promise<string | null> => {
+  const cm = (
+    await getDb()
+      .select({ userId: comments.userId })
+      .from(comments)
+      .where(eq(comments.id, id))
+      .limit(1)
+      .all()
+  )[0];
+  return cm ? String(cm.userId) : null;
+};
+
+/** POST /articles/:key/comments — 登录发表；未发布文章不可评论；自动敏感词过滤。 */
+export const createComment = async (
+  userId: number,
+  articleKey: string,
+  input: CommentInput,
+): Promise<ReturnType<typeof toComment>> => {
+  const article = await resolveArticle(articleKey);
+  if (article?.status !== 'published') throw new AppError(ErrCode.NOT_FOUND, 404);
+  if (input.parentId != null) {
+    const parent = (
+      await getDb()
+        .select({ id: comments.id, articleId: comments.articleId })
+        .from(comments)
+        .where(eq(comments.id, input.parentId))
+        .limit(1)
+        .all()
+    )[0];
+    if (!parent || parent.articleId !== article.id) throw new AppError(ErrCode.NOT_FOUND, 404);
+  }
+  const mod = moderateContent(input.content);
+  const [row] = await getDb()
+    .insert(comments)
+    .values({
+      articleId: article.id,
+      userId,
+      userName: await userNameOf(userId),
+      parentId: input.parentId ?? null,
+      content: mod.content,
+      status: mod.status,
+      createdAt: new Date(),
+    })
+    .returning()
+    .all();
+  if (!row) throw new AppError(ErrCode.INTERNAL, 500);
+  return toComment(row);
+};
+
+/** DELETE /comments/:id — owner 或 editor+ 可删；级联删其子回复（x-cascade: children）。 */
+export const deleteComment = async (id: number): Promise<void> => {
+  const db = getDb();
+  await db.delete(comments).where(eq(comments.parentId, id)).run(); // 级联删子回复
+  const res = await db.delete(comments).where(eq(comments.id, id)).run();
+  // 复用 run() 的 changes 判定存在性，避免与 guard 内 resolveCommentOwner 重复查库（P3-2）
+  if (res.changes === 0) throw new AppError(ErrCode.NOT_FOUND, 404);
+};
+
+/** PATCH /comments/:id/status — editor+ 人工复核置位；approved 时清空 rejectedReason。 */
+export const moderateComment = async (
+  id: number,
+  status: CommentStatus,
+  reason: string | null | undefined,
+): Promise<ReturnType<typeof toComment>> => {
+  const existing = (
+    await getDb().select().from(comments).where(eq(comments.id, id)).limit(1).all()
+  )[0];
+  if (!existing) throw new AppError(ErrCode.NOT_FOUND, 404);
+  const rejectedReason = status === 'approved' ? null : (reason ?? existing.rejectedReason);
+  const [row] = await getDb()
+    .update(comments)
+    .set({ status, rejectedReason })
+    .where(eq(comments.id, id))
+    .returning()
+    .all();
+  if (!row) throw new AppError(ErrCode.INTERNAL, 500);
+  return toComment(row);
+};
+
+/** GET /articles/:key/comments — 公开仅 approved；未发布文章匿名 404，作者/admin 可看（仍只 approved）。 */
+export const listArticleComments = async (
+  key: string,
+  user: { id: string; role: string } | null,
+  pageSize: number,
+  offset: number,
+): Promise<{ items: ReturnType<typeof toComment>[]; total: number }> => {
+  const article = await resolveArticle(key);
+  if (!article) throw new AppError(ErrCode.NOT_FOUND, 404);
+  const privileged = user && (String(article.authorId) === user.id || user.role === 'admin');
+  if (article.status !== 'published' && !privileged) throw new AppError(ErrCode.NOT_FOUND, 404);
+  const conds = and(eq(comments.articleId, article.id), eq(comments.status, 'approved'));
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(comments)
+    .where(conds)
+    .orderBy(comments.createdAt)
+    .limit(pageSize)
+    .offset(offset)
+    .all();
+  const total = Number(
+    (await db.select({ c: sql<number>`count(*)` }).from(comments).where(conds).all())[0]?.c ?? 0,
+  );
+  return { items: rows.map(toComment), total };
+};
+
+/** GET /admin/comments — editor+ 后台列表（全状态），可按 status / articleId 筛选。 */
+export const listAdminComments = async (
+  status: CommentStatus | undefined,
+  articleId: number | undefined,
+  pageSize: number,
+  offset: number,
+): Promise<{ items: ReturnType<typeof toComment>[]; total: number }> => {
+  const where = and(
+    status ? eq(comments.status, status) : undefined,
+    articleId != null ? eq(comments.articleId, articleId) : undefined,
+  );
+  const db = getDb();
+  const rows = await db
+    .select()
+    .from(comments)
+    .where(where)
+    .orderBy(desc(comments.createdAt))
+    .limit(pageSize)
+    .offset(offset)
+    .all();
+  const total = Number(
+    (await db.select({ c: sql<number>`count(*)` }).from(comments).where(where).all())[0]?.c ?? 0,
+  );
+  return { items: rows.map(toComment), total };
+};

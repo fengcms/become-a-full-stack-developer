@@ -9,9 +9,9 @@
 import { and, asc, desc, eq, gt, isNull, lt, ne } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { type ArticleRow, articles } from '@/db/schema';
-import { parseTags } from '@/lib/article';
-import { ErrCode } from '@/lib/codes';
-import { AppError } from '@/lib/http-error';
+import { parseTags } from '@/services/article';
+import { ErrCode } from '@/shared/codes';
+import { AppError } from '@/shared/errors';
 
 /** 上一篇/下一篇精简投影（ArticleStub）。 */
 export interface ArticleStub {
