@@ -245,3 +245,92 @@ export const attachments = sqliteTable('attachments', {
 
 /** attachments 行 → 查询结果类型。 */
 export type AttachmentRow = typeof attachments.$inferSelect;
+
+/**
+ * 收藏表（B6 会员中心，对齐 02 §二 Favorite 实体）。
+ * (user_id, article_id) 唯一：重复收藏幂等（ON CONFLICT DO NOTHING）。
+ */
+export const favorites = sqliteTable(
+  'favorites',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    articleId: integer('article_id')
+      .notNull()
+      .references(() => articles.id),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (table) => [uniqueIndex('uniq_favorite').on(table.userId, table.articleId)],
+);
+
+/** favorites 行 → 查询结果类型。 */
+export type FavoriteRow = typeof favorites.$inferSelect;
+
+/**
+ * 阅读历史表（B6 会员中心，对齐 02 §二 ReadingLog 实体）。
+ * (user_id, article_id) 唯一：POST /me/history 走 upsert（更新 last_read_at + 可选 progress）。
+ * last_read_at 即契约 ReadingHistoryItem.lastReadAt；progress 为 0-100 百分比，可空。
+ */
+export const viewHistory = sqliteTable(
+  'view_history',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    articleId: integer('article_id')
+      .notNull()
+      .references(() => articles.id),
+    lastReadAt: integer('last_read_at', { mode: 'timestamp_ms' }).notNull(),
+    progress: integer('progress'),
+  },
+  (table) => [uniqueIndex('uniq_view_history').on(table.userId, table.articleId)],
+);
+
+/** view_history 行 → 查询结果类型。 */
+export type ViewHistoryRow = typeof viewHistory.$inferSelect;
+
+/**
+ * 点赞表（B6 会员互动，对齐 02 §二 Like 实体）。
+ * (user_id, article_id) 唯一：点赞/取消均幂等；articles.like_count 由应用层维护，与行数一致。
+ */
+export const likes = sqliteTable(
+  'likes',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    articleId: integer('article_id')
+      .notNull()
+      .references(() => articles.id),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (table) => [uniqueIndex('uniq_like').on(table.userId, table.articleId)],
+);
+
+/** likes 行 → 查询结果类型。 */
+export type LikeRow = typeof likes.$inferSelect;
+
+/**
+ * 通知表（B6 会员中心，对齐 02 §二 Notification 实体）。
+ * 由系统事件服务端生成（本批仅实现读取端，生成逻辑 NOTES 登记），仅本人可读 / 标记已读。
+ * is_read 用 boolean 模式存储（sqlite 底层 0/1）；type 三态枚举。
+ */
+export const notifications = sqliteTable('notifications', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id')
+    .notNull()
+    .references(() => users.id),
+  type: text('type', { enum: ['article_published', 'comment_approved', 'system'] }).notNull(),
+  title: text('title').notNull(),
+  body: text('body'),
+  link: text('link'),
+  isRead: integer('is_read', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+});
+
+/** notifications 行 → 查询结果类型。 */
+export type NotificationRow = typeof notifications.$inferSelect;

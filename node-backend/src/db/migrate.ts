@@ -124,6 +124,45 @@ const STATEMENTS: readonly string[] = [
     created_at INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
   )`,
+  `CREATE TABLE IF NOT EXISTS favorites (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    article_id INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (article_id) REFERENCES articles(id)
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS uniq_favorite ON favorites (user_id, article_id)`,
+  `CREATE TABLE IF NOT EXISTS view_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    article_id INTEGER NOT NULL,
+    last_read_at INTEGER NOT NULL,
+    progress INTEGER,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (article_id) REFERENCES articles(id)
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS uniq_view_history ON view_history (user_id, article_id)`,
+  `CREATE TABLE IF NOT EXISTS likes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    article_id INTEGER NOT NULL,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (article_id) REFERENCES articles(id)
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS uniq_like ON likes (user_id, article_id)`,
+  `CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT,
+    link TEXT,
+    is_read INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  )`,
 ];
 
 /**

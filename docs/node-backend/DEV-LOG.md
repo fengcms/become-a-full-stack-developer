@@ -275,3 +275,12 @@ B5 严格按 `05-users-upload.md`：users 管理（admin 列表/详情/PATCH 升
 - **P3-5**：`files.ts` 对 svg 强制 `Content-Disposition: attachment` + 统一 `X-Content-Type-Options: nosniff`；CDN 侧策略另行运维配置。
 - **门禁（自跑）**：tsc 0 / biome 0（70 文件，0 info）/ vitest **108 passed**（B5 18 例，P3 新增 4）/ 契约双门 OK（openapi.v1.yaml 未动）。
 - **回复文档**：`review/B5-代码审阅-回复.md`（仿 B4 回复格式：逐项回应 + 门禁表 + 文件清单）。
+
+### B6（收藏/历史/点赞/通知，15 端点）
+- schema 新增四表 `favorites`/`view_history`/`likes`/`notifications`（均为 `(user_id, …)` 唯一或 owner 限定）；migrate 补对应 DDL + 3 唯一索引。
+- 路由拆 4 文件（铁律 ≤200）：`favorites.ts`(103) / `history.ts`(152) / `likes.ts`(163) / `notifications.ts`(108)，`app.ts` 同挂 `/api/v1`。
+- 关键：收藏/点赞写入幂等（onConflictDoNothing / 查存后写）；history upsert 唯写路径（progress 仅携带时覆盖）；`articles.like_count` 应用层维护与 likes 行数一致；like/status 公开（匿名 liked=false）；PATCH 通知非本人 → 404（不泄露存在性）。
+- 契约侧观察（登记不改）：`GET /me/likes` 响应为裸数组但声明 page/pageSize 参数（不一致），按契约返裸数组+limit/offset 截断；`schema.ts` 336 行超 200 软上限但属「全表单一事实源」，沿用 B2–B5 先例不拆（如需拆可单独立项）。
+- **门禁（自跑）**：tsc 0 / biome 0（77 文件）/ vitest **116 passed**（B6 行为级 8 例 + 存量 108）/ 契约双门 OK / **未改契约**。
+- 交付：`docs/node-backend/B6-NOTES.md`；测试 `test/routes/interactions.test.ts`（8 例）。
+- 通知生成端（文章发布/评论审核 → 写 Notification）不在本批（任务包禁止项），留对应业务批次或后续补。
