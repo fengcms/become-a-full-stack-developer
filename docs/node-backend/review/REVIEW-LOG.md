@@ -674,4 +674,4 @@ P3-1 新增的 2 例 parentId 测试（幽灵引用 → 404 / 跨文章引用 �
 
 **owner 裁决更新（2026-08-26 末）**：P2 **方案 A**（复原 404，去掉恒 true 的 `found` 字段）、P3-1 **接受**（文档化孤儿竞态、非阻塞、要求开发 AI 在 `deleteAttachment` 物理删处补注释）、P3-2 **要求开发 AI 修复**（守卫 `null→404` 全局纠偏，仅 attachments/comments/articles 三类带 resolveOwner 资源受影响、零回归）。审阅报告已**重写为「裁定 + 开发 AI 修正指令」形态**（`docs/node-backend/review/B-上传去重-后端代码审阅报告.md`），含三任务精确代码 diff + 测试配套 + 复批门禁 5 条；owner 直接交开发 AI 执行 → 架构师复批 → owner 视觉确认 → 冻结 M1 后端主线。
 
-下一步：开发 AI 完成 #1（选 A 或 B 留档）→ 申请复批（复跑门禁+契约双门+确认缺失 id 回归 404 或 owner 留档）→ owner 视觉确认 → 冻结 M1 后端主线。
+**复批通过（2026-08-26 末，BackendArchitect）**：开发 AI 按修正指令稿完成三任务并复批。复检证据——tsc0 / biome 113 文件 0 / vitest **133 passed** / 契约结构门 OK / 语义门 **33 OK**；`openapi.v1.yaml` 字节级 0 行 diff；randomUUID 已移除、contentHash 未进响应、越界 5 文件零 diff。三任务落实：P2-A（`attachment.ts:130` 缺失抛 404、`found` 移除、测试 rejects 404）/ P3-1（`:146-149` 孤儿竞态注释化接受）/ P3-2（`auth.ts:58` null→404、`:61` 非归属者→403、guard 单测加 null→404、全局零回归）。2 项 P3 非阻塞建议（路由 e2e 锁缺 / storage.ts:2 注释遗留）。**裁定：复批通过，无 P2 阻塞；待 owner 视觉确认 → 冻结 M1 后端主线。** 复审批复：`docs/node-backend/review/B-上传去重-复审批复.md`。
