@@ -606,6 +606,23 @@ P3-1 新增的 2 例 parentId 测试（幽灵引用 → 404 / 跨文章引用 �
 - **裁定：首轮不通过（P2-1 阻塞）**。收尾冻结批契约一致性须清零；要求开发 AI 修 logoUrl `.nullable()` + 补 `logoUrl:null` 清空测试 + 修正 P3-1/P3-2 NOTES 事实错误，复批后放行冻结 M1 后端。
 - **元认知**：用户「压缩记忆会乱」的预判正中——P2-1 漏改 logoUrl nullable（5/6 字段对，1 个漏）+ related/junction 事实误述 + operationId 笔误，三点同源（记忆压缩丢细节）。后续收尾批审阅要额外盯「契约 requestBody 全字段 nullable/required 与代码 zod 逐字对齐」+「NOTES 陈述与已知批次（如 B3.5）史实一致性」。
 
+## B7 第二轮复批：真修确认 + 一场「假假修复」虚惊（环境误报根因复盘）
+
+- **复批对象**：`B7-代码审阅-回复.md`（开发 AI 整改 P2-1/P3-1/P3-2）。纪律不变：不采信自陈，回磁盘取证。
+- **逐项真修确认**：
+  - **P2-1**（`site.ts:54`，Read 实测）：`logoUrl: z.string().max(512).nullable().optional()`，与回复 diff 逐字吻合；下游 `if (patch.logoUrl !== undefined) set.logoUrl = patch.logoUrl` 对显式 `null` 走清空，逻辑正确。
+  - **回归测试真实非空跑**（`aux.test.ts:378-394`）：先 `PATCH {logoUrl:'...png'}` 断言有值（:386），再 `PATCH {logoUrl:null}` 断言 `toBeNull()`（:394）——端到端覆盖清空路径。
+  - **P3-1**（`related.ts:6-7`）：注释已改为「读 `articles.tags` 去规范化列，与 article_tags 回填状态无关」。**P3-2**（B7-NOTES §一）：operationId 笔误已改 `adminGetSiteSettings`。
+- **⚠️ 虚惊：一次「假自证」误判如何被证伪**。第一轮独立 `vitest run` 竟得 **95 failed / 31 passed**，与开发 AI 自陈「126 passed」相反。我第一反应是「不采信自陈 → 假自证信号」。但查证发现：
+  1. 那 95 个失败 **100% 是 `Test timed out in 5000ms`**，grep 真实断言失败（AssertionError/expected/FK）为空；
+  2. 失败**横跨 B1–B7 全部批次**——1 行 zod 改动不可能如此，逻辑上排除 B7 回归；
+  3. 单文件 `aux.test.ts` 隔离跑仍 4 failed/5 passed 且耗时 52s（≈5.8s/用例，撞 5s 上限）；
+  4. `uptime` 显示机器 `up 39 days / 21 users`、load average **17.29**——共享机器瞬时高负载；
+  5. **决定性复跑**：`vitest run --no-file-parallelism --testTimeout=30000` → **17 文件 / 126 passed / 0 超时 / 0 断言失败**。
+  → 结论：95 失败纯属我侧环境负载撞 5s 超时，FK `[unhandled]` 是超时中断的异步噪声。**开发 AI 的「126 passed」真实正确，非假自证**。
+- **元认知（重要方法论补强）**：作为总把控，看到「自陈 passed 但独立跑 fail」时，**第一直觉应是「先查失败性质」而非「直接判假自证」**。判别顺序：① 失败是 timeout 还是 assertion？timeout 优先怀疑环境（负载/并发/DB）；② 失败是否跨无关批次？跨批次必非单一改动所致；③ 单文件隔离 + 高超时串行复跑剥离噪声。这套「超时≠失败、环境≠代码」的排查链，比 B1–B6 任何一次都更关键——它避免了一次对开发 AI 诚信的不实指控，也保住了「不采信自陈」纪律的公信力（真自证与假自证都要靠证据，而非预设）。
+- **M1 后端代码冻结裁定**：B7 是收尾批，八批（B0→B7）全部独立复验、零假修复。裁定 node-backend **即日起冻结**，进入「写 M1 后端文章」阶段（总把控执笔）。
+
 ## 总复盘：这套审阅打法给我（和接手 AI）留下的最硬的几条
 
 1. **审阅者的存在意义 = 破除"作者自证盲区"**。同一人写代码、写门禁、写修复说明，他的注意力天然覆盖不到"自己没想到的维度"。独立审阅者用另一套逻辑重新证伪，是成本最低的防漂移手段。呼应 N6：冻结前应由**非作者**跑穿透式核验。
