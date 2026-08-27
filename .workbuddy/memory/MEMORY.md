@@ -14,7 +14,7 @@
 - 公开可见性铁律：公开 `GET /articles` 忽略 status 只返 published；未发布详情/评论对匿名 404；后台筛选走 `GET /admin/articles`。
 
 ## 文章编号体系
-M0 开篇/M1 Node/M2 React/M3 Next(含会员中心)/M4 Flutter/M5 Taro/M6 Go/M7 Vue3/M8 收官/B 支线。每篇对应 git tag `article/M1-15`。仓库根 `ARTICLES.md` 做对照。
+M0 开篇/M1 Node/M2 React/M3 Next(含会员中心)/M4 Flutter/M5 Taro/M6 Go/M7 Vue3/M8 收官/B 支线。**git tag 采用里程碑式**（2026-08-27 重订）：契约/各端冻结时打 `contract-v1.11.0` / `node-backend-v1.0` 等；M0 产品侧不打 tag；废止 per-article tag。仓库根 `ARTICLES.md` 做「标题 ↔ 代码里程碑 ↔ URL」对照。
 
 ## 协作约定（统筹 AI ↔ blog AI · 链接/发布）
 - **模式**：消费 blog AI 索引 + 自服务兜底（2026-08-27 确认）。
@@ -33,7 +33,7 @@ M0 开篇/M1 Node/M2 React/M3 Next(含会员中心)/M4 Flutter/M5 Taro/M6 Go/M7 
 - `docs/prd/README.md` 索引
 
 ## 当前进度里程碑（2026-08-26）
-- **M0 八篇产品侧文章已全部成文**（暂存 `articles/` 草稿，`ARTICLES.md` 已建对照骨架，待发 CSDN 后回填链接+打 tag）。
+- **M0 八篇产品侧文章已全部成文**（暂存 `articles/` 草稿，`ARTICLES.md` 已建对照骨架，待发 CSDN 后回填链接；tag 已改为里程碑式，M0 不打 tag）。
 - **M1 Node 后端：开发完成 + 总把控独立复验通过 + 门禁全绿，但冻结暂缓**（代码库 `node-backend/`，根目录；文档在 `docs/node-backend/`）。
   - 复验证据：tsc 0 error / biome 96 文件 0 问题 / vitest **126 passed** / 契约双门 33 OK / 契约字节级未改。
   - 穿透确认零假修复：`refresh_tokens` 有状态表真存在（落实 Q3-A）、扁平信封真执行（落实 Q1）。

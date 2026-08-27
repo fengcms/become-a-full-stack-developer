@@ -4,7 +4,7 @@
 
 这是《成为全栈开发工程师》专栏 **M1（Node 后端）** 的素材代码——「多端文章系统」API 的**首个后端实现**（Hono + Drizzle + SQLite）。
 
-本仓库的定位是「**文章是产品、代码是素材**」：代码服务于专栏讲解，首要目标是「可读、可讲、不炫技」，不追求生产级完备。完整的专栏定位见仓库根 `README.md`。
+本仓库的定位是「**文章是产品、代码是素材**」：代码服务于专栏讲解，首要目标是「可读、可讲、不炫技」，不追求生产级完备。完整的专栏定位见仓库根 `../README.md`。
 
 ## 技术栈
 
@@ -123,19 +123,19 @@ pnpm lint           # biome check . → 0 问题
 pnpm test           # vitest run → 当前 133 passed（18 文件）
 ```
 
-契约双门（在**仓库根目录**跑，venv 含 `openapi-spec-validator`）：
+契约双门（从本目录用 `../docs` 路径，或切到仓库根目录跑均可；venv 含 `openapi-spec-validator`）：
 
 ```bash
 VENV=/Users/fungleo/.workbuddy/binaries/python/envs/default/bin
-$VENV/openapi-spec-validator docs/api/openapi.v1.yaml   # → OK
-$VENV/python docs/api/check_contract.py                 # → 33 OK
+$VENV/openapi-spec-validator ../docs/api/openapi.v1.yaml   # → OK
+$VENV/python ../docs/api/check_contract.py                 # → 33 OK
 ```
 
 > 注：`scripts/` 与 `test/` 不进 `tsconfig` 的 `include`，脚本类一律走 `tsx` 运行时校验（与 `backfill`/`seed` 同例）；门禁覆盖以 `src/` + `test/` 为准。
 
 ## API 契约说明
 
-所有端点对齐**冻结契约** `docs/api/openapi.v1.yaml`（**v1.11.0**，OpenAPI 3.1），当前实现 **53 路径 / 67 操作**，100% 对齐。
+所有端点对齐**冻结契约** `../docs/api/openapi.v1.yaml`（**v1.11.0**，OpenAPI 3.1），当前实现 **53 路径 / 67 操作**，100% 对齐。
 
 - **统一信封**：成功 `{code:0, message, data, requestId, timestamp}`；错误同信封、明细放 `data`。
 - **角色三角**：`member` / `editor` / `admin`；令牌角色是登录快照（提权须先改库再签发）。端点门槛以契约 `x-authz`（minRole + ownerOverride）为准。
@@ -150,4 +150,4 @@ $VENV/python docs/api/check_contract.py                 # → 33 OK
 
 ---
 
-更多「为什么这么写」的决策与踩坑记录在 `docs/node-backend/DEV-LOG.md`，逐批交付证据见 `docs/node-backend/B0-NOTES.md` ~ `B7-NOTES.md` 与 `docs/node-backend/M1-后端交付文档.md`。
+更多「为什么这么写」的决策与踩坑记录在 `../docs/node-backend/DEV-LOG.md`，逐批交付证据见 `../docs/node-backend/B0-NOTES.md` ~ `../docs/node-backend/B7-NOTES.md` 与 `../docs/node-backend/M1-后端交付文档.md`。

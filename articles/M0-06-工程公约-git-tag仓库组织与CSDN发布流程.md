@@ -127,3 +127,8 @@ become-a-full-stack-developer/
 如果你也想跟着一个真实系统，从「调接口的人」走到「设计系统的人」，欢迎订阅我的《成为全栈开发工程师》专栏。后续每篇都会带着可运行的代码和完整的设计取舍走下来，欢迎在评论区讨论、指正。
 
 {{IMG:CTA-订阅专栏}}
+
+## 相关资源
+
+- 本系列专栏：https://blog.csdn.net/fungleo/category_13204651.html（订阅看全部篇章）
+- 完整项目仓库：https://github.com/fengcms/become-a-full-stack-developer
