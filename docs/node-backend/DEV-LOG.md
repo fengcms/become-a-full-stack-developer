@@ -409,3 +409,32 @@ P3-2/3/4 全是注释/文档不精确（services 例外注释漏 3 处、`NOTES 
 - 状态：**待调优（未冻结）**——owner 需先视觉确认目录风格（routes/services/shared/types 水平分层）符合预期，**确认后才冻结**。
 - 下一步路径：owner 确认 → 冻结 M1 后端主线 → 转「写 M1 后端文章」（M1-01~M1-30）。M2/M3/M4/M6/M7 五端复用"契约→主计划→批次任务包"工作流。
 - 两处非阻塞遗留（统筹跟进，非本会话范围）：① `GET /me/likes` 契约内部矛盾（裸数组 vs page/pageSize）→ 排「契约维护批次」；② nullable 唯一索引「假唯一」→ 记入 Go/Python 跨端协调清单。
+
+---
+
+## 种子用户脚本（2026-08-27）
+
+> 痛点：系统没有任何「创建第一个管理员」的入口——`register` 强制 `role=member`，提权 `PATCH /users/{id}` 又要求操作者已是 admin，形成鸡生蛋死锁。此前 `scripts/bootstrap-admin.mjs` 只是**冒烟测试脚手架**（直插 DB、绕过应用层），其文件头自带说明「生产环境需要另行补种子机制」。本批次补的是正规种子脚本 `scripts/seed-users.ts`。
+
+### S-R1. 新脚本 vs 复用 bootstrap-admin.mjs：走应用层，不复用直插 DB
+`bootstrap-admin.mjs` 用原生 better-sqlite3 直插 `users` 表，绕过了应用层的密码哈希、唯一约束校验、角色语义。**生产种子不该绕过这些**——一旦哪天哈希算法/字段变更，直插脚本会悄悄产出登录验不过的账号。故新建 `seed-users.ts`，复用 `@/shared/password` 的 `hashPassword` 与 Drizzle 查询，与应用层 `registerUser` 同语义。**核心认知：测试脚手架与生产脚本是两回事；脚手架可为快而糙，生产脚本必须与业务层共用同一套原语。**
+
+### S-R2. 密码哈希必须复用应用层函数，绝不内联 bcrypt
+脚本若自己 `bcrypt.hashSync(pw, 10)`（像 mjs 那样），bcrypt 哈希自带 cost 元数据、`compare` 仍兼容，所以"轮数不一致"其实安全；但**更关键的是字段/盐/编码一致性**（如未来换 argon2、加 peppering），内联会立刻与之脱钩。故直接 `import { hashPassword }`，让种子成为应用层的纯消费者。**验证：实跑后取出 `password_hash` 前缀 `$2b$12$`，与 `verifyPassword` 同源，错误密码 `compare→false`、正确密码 `→true`。**
+
+### S-R3. 幂等语义：跳过 / 提升 / 强制重置 三态
+种子要可重复执行（部署脚本常跑）。设计：
+- 用户名不存在 → 插入 `role=admin`。
+- 已存在且已是 admin → **跳过**（不覆盖，避免误改线上账号）。
+- 已存在但非 admin（如被降级的残留）→ **确保提升为 admin**（这是种子的核心职责：保底有管理员）。
+- `--reset` 参数 → 强制重写密码/邮箱/昵称（运维救急场景）。
+**核心认知：种子不是「插入」，是「确保存在且为管理员」；跳过优于覆盖，覆盖只在显式 --reset 时发生。**
+
+### S-R4. DB_FILE 的父目录要预建
+`createLocalDb('./data/app.db')` 在 `./data/` 不存在时 better-sqlite3 会抛「无法打开数据库」。脚本里 `mkdirSync(dirname(dbFile), { recursive: true })`（仅对非空 `:memory:` 生效）兜底，避免首跑因缺目录而失败。**提醒：`:memory:` 下种子无意义（进程退出即丢），脚本已打印警告。**
+
+### S-R5. 不受五门门禁 typecheck 覆盖，但实跑验收
+`tsconfig` 的 `include` 只有 `src/test/drizzle.config.ts`，`scripts/` 不在内（与 `backfill` 同先例），故 `tsc --noEmit` 不扫本脚本。验收方式：① `biome check scripts/seed-users.ts` 零问题（已修导入排序）；② 实跑三路径（创建/幂等跳过/--reset）+ bcrypt 比对，全绿。**经验：脚本类文件门禁靠 `biome` + 实跑，不靠 tsc；写脚本后务必实跑，别只看能编译。**
+
+### S-R6. 已接线 package.json「seed」+ .env.example
+`pnpm seed` 直跑；`.env.example` 补 `SEED_ADMIN_*` 四项（带默认值 `admin/admin123456`，标注生产务必换强口令），与 `DB_FILE` 同源 env 注入，落库文件与 `pnpm dev` 一致。D1 部署的 `wrangler d1 execute` 等价 SQL 写在脚本底部注释（D1 侧无法调用应用层 `hashPassword`，需本地预生成哈希粘贴）。

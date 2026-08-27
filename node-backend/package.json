@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "migrate": "tsx src/db/migrate.ts",
     "backfill": "tsx scripts/backfill-article-tags.ts",
+    "seed": "tsx scripts/seed-users.ts",
     "format": "biome check --write .",
     "lint": "biome check ."
   },
