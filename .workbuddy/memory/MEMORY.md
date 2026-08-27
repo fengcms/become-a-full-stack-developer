@@ -73,3 +73,4 @@ M0 开篇/M1 Node/M2 React/M3 Next(含会员中心)/M4 Flutter/M5 Taro/M6 Go/M7 
 - 领域模型+API 契约是七端共同地基，实现不得偏离；变更先改 OpenAPI 再改实现。
 - 双门校验为唯一硬地基，任何契约改动后须复跑（venv：`/Users/fungleo/.workbuddy/binaries/python/envs/default` 含 pyyaml + openapi-spec-validator）。
 - **评审角色铁律（2026-08-26 用户明确）**：后端架构师专家（BackendArchitect）**只做审查、给结论、写审阅报告与复审批复**；**不编写代码、不修复 BUG、不代写开发 AI 的回复文档**——这些全是开发 AI 的活。若收到「去把报告里的问题修了 + 写回复文档」类指令，须**先判断是不是用户发错了**（正确流向：报告交回开发 AI 整改 → 开发 AI 给回复文档 → 我复批）。用户已确认上一条「解决报告问题并写回复文档」属误发，越界未执行任何代码改动。
+- **阻碍即停铁律（2026-08-27 用户明确）**：遇到**阻碍性质的问题**（阻断性卡点，如「无首 admin」这类死锁），**必须立即停下与 owner 交流，不得自行绕过或自造 workaround 后继续**。本次曾未请示就造 `bootstrap-admin.mjs` 直插库绕过死锁，被指正后删除、改为走开发 AI 的正式 `seed-users.ts`。正确流向：发现阻塞 → 立刻报告 owner → 等裁决再动。

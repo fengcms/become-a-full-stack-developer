@@ -4,7 +4,7 @@
 #
 # 它做什么：
 #   1. 用临时 SQLite 文件启动 node-backend（不污染你的真实库）
-#   2. 直插一个 admin 账号（测试脚手架，规避「无首 admin」死锁，不碰 src/）
+#   2. 用 scripts/seed-users.ts 种子首管理员（走正规应用层 @/shared/password，规避「无首 admin」死锁）
 #   3. 用管理员登录 → 跑分类/标签/文章/评论/上传/站点等增删改查
 #   4. 注册一个普通会员 → 跑会员视角接口 + 权限拒绝(403)验证
 #   5. 演示 RBAC：把会员提升为 editor 后，原本 403 的分类创建变为成功
@@ -117,6 +117,14 @@ fi
 
 # ── 1. 启动服务 ──────────────────────────────────────────────────────────────
 section "1. 启动后端 (PORT=$PORT)"
+# 1a. 先种子首管理员：scripts/seed-users.ts 走正规应用层（复用 @/shared/password 哈希，与登录兼容），
+#     必须在启动服务前执行——避免两个进程并发写同一 SQLite 文件；seed 内部会 migrate 建表。
+DB_FILE="$DB_FILE" JWT_SECRET="$JWT_SECRET" \
+  SEED_ADMIN_USERNAME="$ADMIN_USER" SEED_ADMIN_EMAIL="$ADMIN_EMAIL" SEED_ADMIN_PASSWORD="$ADMIN_PASS" \
+  $TSX scripts/seed-users.ts
+ok_line "admin 账号就绪: $ADMIN_USER"
+
+# 1b. 启动服务（启动时再 migrate 一次，幂等）
 DB_FILE="$DB_FILE" JWT_SECRET="$JWT_SECRET" PORT="$PORT" STORAGE_DRIVER=local NODE_ENV=development \
   $TSX src/index.ts > "$SERVER_LOG" 2>&1 &
 SERVER_PID=$!
@@ -134,12 +142,6 @@ if [ "$ready" -ne 1 ]; then
   exit 1
 fi
 ok_line "服务已就绪"
-
-# ── 2. 引导 admin（直插 DB，测试脚手架） ──────────────────────────────────────
-section "2. 引导测试管理员（直插 SQLite，不碰 src/）"
-SMOKE_DB_FILE="$DB_FILE" SMOKE_ADMIN_USER="$ADMIN_USER" SMOKE_ADMIN_EMAIL="$ADMIN_EMAIL" SMOKE_ADMIN_PASS="$ADMIN_PASS" \
-  node "$SCRIPT_DIR/bootstrap-admin.mjs"
-ok_line "admin 账号就绪: $ADMIN_USER"
 
 # ── 3. 管理员登录 ────────────────────────────────────────────────────────────
 section "3. 管理员登录"
