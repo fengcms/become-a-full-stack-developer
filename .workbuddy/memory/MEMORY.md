@@ -16,6 +16,12 @@
 ## 文章编号体系
 M0 开篇/M1 Node/M2 React/M3 Next(含会员中心)/M4 Flutter/M5 Taro/M6 Go/M7 Vue3/M8 收官/B 支线。每篇对应 git tag `article/M1-15`。仓库根 `ARTICLES.md` 做对照。
 
+## 协作约定（统筹 AI ↔ blog AI · 链接/发布）
+- **模式**：消费 blog AI 索引 + 自服务兜底（2026-08-27 确认）。
+- blog AI 工作目录 `/Users/fungleo/Documents/Blogs`，`csdn_backup.py` 公开抓取无需登录；`links` 命令生成 `materials/csdn-已发布链接.md`（全站标题→URL 索引，单一真相源）。
+- 统筹 AI 只读消费该索引，把本系列 URL 镜像进根 `ARTICLES.md` 的「CSDN 链接」列；索引过期时可自跑同款脚本兜底刷新（owner 已授权）。
+- 内链占位 `{{LINK:Mx-yy}}` + 发布后一次性注入真实 URL。详细见 `docs/链接与发布协作约定.md`。
+
 ## 规模
 主线 115 + 支线 15 = 130 篇（最小可交付 41 篇）；周更 2 篇，全量约 15 个月。
 
