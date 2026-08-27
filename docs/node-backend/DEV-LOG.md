@@ -438,3 +438,18 @@ P3-2/3/4 全是注释/文档不精确（services 例外注释漏 3 处、`NOTES 
 
 ### S-R6. 已接线 package.json「seed」+ .env.example
 `pnpm seed` 直跑；`.env.example` 补 `SEED_ADMIN_*` 四项（带默认值 `admin/admin123456`，标注生产务必换强口令），与 `DB_FILE` 同源 env 注入，落库文件与 `pnpm dev` 一致。D1 部署的 `wrangler d1 execute` 等价 SQL 写在脚本底部注释（D1 侧无法调用应用层 `hashPassword`，需本地预生成哈希粘贴）。
+
+---
+
+## 目录 README（2026-08-27）
+
+> 按 `docs/node-backend/README-任务提示词.md` 指令，为 `node-backend/` 写 `node-backend/README.md`（纯文档，不改动代码/配置/测试）。
+
+### R-R1. README 数字是「当前真实值」，不是任务文档里的旧数
+任务提示词写「126 passed」，但那是 B7 冻结时的快照；结构调优 + 上传去重后实跑 `vitest run` 已为 **133 passed（18 文件）**。同理 `categories.ts` / `comments.ts` 在 review 后已合并回单文件（任务文档仍按拆分版描述）。**决策：README 一律以 `find`/`vitest` 实测为准，不抄文档旧数，并在文末标注当前状态「待调优（未冻结）」。**
+
+### R-R2. 目录树逐项目对标实际 fs
+写树前先 `find src -maxdepth 1` + 各层 `ls`，确认：`lib/` 为空目录（已下沉清空但目录保留）、routes 21 文件、services 19、shared 10、types 2、middleware 4、db 3、config 1。树中显式列出 `lib/（历史 lib，已清空）`，避免读者疑惑为何有空目录。**核心认知：README 的目录树是「承诺」，必须能 `ls` 对得上；任何「计划中的结构」都不能冒充「已实现的结构」。**
+
+### R-R3. 「无首 admin」死锁写进快速上手，而非藏进附录
+`scripts/seed-users.ts` 的存在意义就是破「register 强制 member + 提权需 admin」的鸡生蛋死锁；README 在「数据库与种子」节用 ⚠️ 强调**必须 `pnpm seed` 建首个 admin，严禁手写 SQL 直插**。把"为什么必须有这一步"讲清楚，比只列命令更能防读者踩坑。**核心认知：文档里最该高亮的不是命令，而是"不这样做会死锁/出错"的因果关系。**
