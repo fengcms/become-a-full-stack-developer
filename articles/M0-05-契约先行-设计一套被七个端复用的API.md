@@ -2,7 +2,9 @@
 
 **本文目标**：实体定好之后，下一步是把它们「暴露」成接口。我会讲清什么是 Contract-First（契约先行）、统一响应怎么设计、错误码为什么分两层、版本化怎么玩，以及为什么这份契约值得用机器去校验。读完你会明白，为什么 [用一个真实系统串起全栈](https://blog.csdn.net/fungleo/article/details/164120426) 说它是「唯一硬地基」。
 
-**前置知识**：建议先读 {{LINK:M0-04}}（领域建模）。实体是原料，本文是「把原料变成接口」。
+**前置知识**：建议先读 [《领域建模](https://blog.csdn.net/fungleo/article/details/164139553)（领域建模）。实体是原料，本文是「把原料变成接口」。
+
+![设计一套被七个端复用的 API](https://i-blog.csdnimg.cn/direct/a19851f007094719a6f4fb320e950027.png)
 
 ---
 
@@ -71,8 +73,7 @@
 
 把这两层上下分开看更清楚：
 
-{{IMG:05-错误码两层图}}
-
+![错误码两层图](https://i-blog.csdnimg.cn/direct/db81eaca388a4bc98ddd506c232d43b6.png)
 ---
 
 ## 三、版本化：多端共用，不能随便 breaking
@@ -102,13 +103,13 @@
 
 把双门流程画出来：
 
-{{IMG:05-双门校验流程图}}
+![双门校验流程图](https://i-blog.csdnimg.cn/direct/488dded5370b40589b8b18b2e28661d3.png)
 
 ---
 
 ## 五、回到那个根本问题
 
-把这一篇和上一篇连起来看：{{LINK:M0-04}} 你定义了实体和关系（数据「是什么」），本文你把它们暴露成接口（数据「怎么被访问」）。这两步合起来，就是「设计是常量」的全部内容——**实体关系和 API 契约，是所有端共享、且一次定对的东西**。
+把这一篇和上一篇连起来看：[《领域建模](https://blog.csdn.net/fungleo/article/details/164139553) 你定义了实体和关系（数据「是什么」），本文你把它们暴露成接口（数据「怎么被访问」）。这两步合起来，就是「设计是常量」的全部内容——**实体关系和 API 契约，是所有端共享、且一次定对的东西**。
 
 所以当你纠结「我该先学前端的哪个框架」时，记住：框架会换，实体和契约不会。先把这两样想清楚，后面七个端怎么长，都是顺理成章的事。
 
@@ -125,21 +126,19 @@
 - 错误分两层：HTTP 码管「请求成不成」，业务码管「业务哪步错」，各司其职。
 - 版本化（`/api/v1`）是多端共用的保险锁，破坏式变更才升 v2。
 - 契约用双门机器校验（结构门 + 语义门 33 条断言），因为它错一处六端翻车。
-- 实体（{{LINK:M0-04}}）+ 契约（本文）=「设计是常量」的全部，框架只是长在上面的端。
+- 实体 + 契约（本文）=「设计是常量」的全部，框架只是长在上面的端。
 
 ## 延伸阅读
 
-- {{LINK:M0-04}}《领域建模》——本文的实体，来自那一篇的拆解。
+- [《领域建模](https://blog.csdn.net/fungleo/article/details/164139553)——本文的实体，来自那一篇的拆解。
 - {{LINK:M0-06}}《工程公约》——下一篇，讲清楚这份契约怎么和代码、文章、git tag 绑定成可复现的整体。
-- （地基文档）[02-领域模型与API契约](./02-领域模型与API契约.md) + `docs/api/openapi.v1.yaml`——本文所有约定的完整定义与机器可读契约。
+- （地基文档）[02-领域模型与API契约](https://github.com/fengcms/become-a-full-stack-developer/blob/master/docs/prd/02-%E9%A2%86%E5%9F%9F%E6%A8%A1%E5%9E%8B%E4%B8%8EAPI%E5%A5%91%E7%BA%A6.md) + `docs/api/openapi.v1.yaml`——本文所有约定的完整定义与机器可读契约。
 
 ## 订阅这个专栏
 
 如果你也想跟着一个真实系统，从「调接口的人」走到「设计系统的人」，欢迎订阅我的《成为全栈开发工程师》专栏。后续每篇都会带着可运行的代码和完整的设计取舍走下来，欢迎在评论区讨论、指正。
 
-{{IMG:CTA-订阅专栏}}
+![订阅专栏](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
 
-## 相关资源
-
-- 本系列专栏：https://blog.csdn.net/fungleo/category_13204651.html（订阅看全部篇章）
-- 完整项目仓库：https://github.com/fengcms/become-a-full-stack-developer
+- 本系列专栏：[https://blog.csdn.net/fungleo/category_13204651.html](https://blog.csdn.net/fungleo/category_13204651.html)（订阅看全部篇章）
+- 完整项目仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
