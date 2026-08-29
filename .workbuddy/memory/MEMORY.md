@@ -47,7 +47,7 @@ M0 开篇/M1 Node/M2 React/M3 Next(含会员中心)/M4 Flutter/M5 Taro/M6 Go/M7 
   - 两处非阻塞遗留待统筹跟进：① `GET /me/likes` 契约内部矛盾（裸数组 vs page/pageSize）→ 排「契约维护批次」整改，与 F2 计数复核并轨；② nullable 唯一索引「假唯一」→ 记入 Go/Python 跨端协调清单。
   - **结构调优执行完成 + 后端架构师独立复审通过（5 项 P3 非阻塞）**：分层重构 `04-目标目录结构.md`（routes/services/shared/types 水平分层）已落地，五门门禁全绿（tsc0/biome0/vitest126/契约双门33 OK），routes 21 文件均≤200、`categories/comments` 分拆已合并回单文件。P3 文档修订已落实（services 例外注释补 3 处、NOTES §四真实行数、`types` 措辞精确化）。审阅报告：`docs/node-backend/review/B-结构调优-后端代码审阅报告.md`。
   - **当前状态：已冻结（`node-backend-v1.0`，2026-08-27 owner 裁决）**——owner 确认「结构符合预期、甚至比我想的好」并裁定即日冻结；后续 BUG 走增量维护（fix→门禁复绿→commit→必要时 bump patch tag），不热改主干。
-- **下一步**：M1 已冻结，进入「写 M1 后端文章」（M1-01~M1-30，以冻结代码为唯一素材）。M2/M3/M4/M6/M7 五端复用「契约→主计划→批次任务包」工作流。
+- **下一步**：M1 已冻结，进入「写 M1 后端文章」（**M1-01~M1-31 共 31 篇**，v1.15 路线图新增 M1-31 数据建模手艺；以冻结代码 node-backend-v1.0 为唯一素材）。M2/M3/M4/M6/M7 五端复用「契约→主计划→批次任务包」工作流。
 
 ## 契约演进与评审时间线（截止 2026-08-11）
 | 轮 | 契约 | 范围 | 语义门 |
