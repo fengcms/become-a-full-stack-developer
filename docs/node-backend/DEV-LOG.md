@@ -471,3 +471,24 @@ P3-2/3/4 全是注释/文档不精确（services 例外注释漏 3 处、`NOTES 
 
 ### C-R4. 门禁未受影响
 纯注释改动 + 1 处 import 路径修正（目标文件真实存在）。`biome check src/ scripts/backfill-article-tags.ts` → 64 文件 0 问题。未碰契约、未碰逻辑，双门不受影响。
+
+---
+
+## R2 存储驱动补齐（2026-08-29，部署前置增量）
+
+> 用户决定把后端部署到 Cloudflare（Workers + D1 + R2），前端以线上接口联调。调研发现：wrangler.toml 雏形已有，D1 适配层（client.ts/worker.ts/env.ts）完备，但 **R2 驱动是 deferred 空壳**——`createStorage` 的 r2 分支直接 `throw`，上传功能在 CF 上不可用（且 local 写盘在 CF 只读 FS 也会失败）。属冻结后增量维护（缺口修补，非行为变更）。
+
+### R-R1. 附件 URL 策略选 A（后端 /files 中转）
+与用户确认：R2 下附件 URL 仍返回 `/files/{key}`（与 local 完全一致），由 `GET /files/:key` 路由统一从 storage 读取直出。前端零感知、本地/生产一致；不需配置 R2 public 访问（少一处安全面）。代价是附件经后端中转一次，联调用足够。**核心认知：联调期「前端无感、URL 稳定」比「CDN 直链性能」优先级高；策略 A 用一行 url 契约不变换掉了「本地/生产双套前端逻辑」的隐患。**
+
+### R-R2. R2Storage 实现紧贴 D1 的「类型规避」范式
+storage.ts 新增 `R2Storage`（put/get/delete），用 minimal `R2BucketLike` 接口规避 `@cloudflare/workers-types`（与 client.ts 的 `createD1Db` 反推 D1Binding 同源），保证本地 tsc 在无 workers 类型时通过。内容寻址去重（sha256 同字节复用 key）从 LocalStorage 原样照搬，行为一致。createStorage 在 r2 且 `R2_BUCKET` 缺失时抛清晰错误（而非 undefined cast 后崩）。
+
+### R-R3. files.ts 路由改为统一走 storage
+原 files.ts 硬编码 `readFile('./uploads')` 且 `STORAGE_DRIVER!=='local'` 直接 404。改为统一 `createStorage(env).get(key)`——local 读磁盘、r2 读 R2，都经此路由直出。删掉 node:fs/path 依赖，注释更新为「两种驱动统一直出」。
+
+### R-R4. 测试双保险
+新增 `test/shared/storage.r2.test.ts`（fake in-memory R2Bucket 验证去重/命中/删除/url）+ `test/routes/files.r2.test.ts`（r2 下经 /files 直出、404、路径穿越守卫）。门禁：tsc0 / biome0 / vitest **140 passed**（133+7）/ 契约双门 33 OK 且 yaml 字节级零变更。
+
+### R-R5. wrangler.toml 升级为生产骨架
+激活 `[[d1_databases]]` / `[[r2_buckets]]` 绑定（带占位 id，待用户 `wrangler d1/r2 create` 后回填）、`STORAGE_DRIVER=r2`、CORS 占位；JWT_SECRET 走 `wrangler secret put`（不进 git）。用户本机 `wrangler login` 后执行部署命令（凭证不离开其机器）。

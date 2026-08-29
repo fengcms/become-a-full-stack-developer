@@ -2,22 +2,31 @@ name = "node-backend"
 main = "src/worker.ts"
 compatibility_date = "2025-01-01"
 
-# 本地开发 / Node 侧由 .env 提供；此处为 CF 部署变量示例
+# ── 自定义域名（部署后需在 CF 配 DNS + SSL）──
+# 取消注释并填入你的 API 域名；若先用 *.workers.dev 默认子域联调，可暂保持注释。
+# routes = [{ pattern = "api.yourdomain.com", custom_domain = true }]
+
+# ── 部署环境变量（非敏感）──
 [vars]
-JWT_SECRET = "change-me-in-prod"
 NODE_ENV = "production"
-DB_FILE = ":memory:"
-STORAGE_DRIVER = "local"
-# 生产必须填具体白名单（逗号分隔）；留空或 '*' 将被拒绝跨域（不返回 CORS 头，审阅 B05）
-CORS_ORIGINS = "https://admin.example.com,https://www.example.com"
+DB_FILE = ":memory:"            # CF 下无意义（走 D1 binding），保留无害
+STORAGE_DRIVER = "r2"          # 生产必须 r2（local 写盘在 CF 只读文件系统会失败）
+# CORS：填前端实际域名（逗号分隔）；留空或 '*' 将被拒跨域（审阅 B05）
+CORS_ORIGINS = "https://www.yourdomain.com,https://admin.yourdomain.com"
 
-# Cloudflare D1 绑定（deploy 时启用并填入 database_id）
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "node-backend"
-# database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+# JWT_SECRET 为敏感项，走加密 secret（不进 git / 不写本文件）：
+#   wrangler secret put JWT_SECRET
+# 然后粘贴 `openssl rand -base64 48` 生成的强密钥。
 
-# Cloudflare R2 绑定（STORAGE_DRIVER=r2 时启用）
-# [[r2_buckets]]
-# binding = "R2_BUCKET"
-# bucket_name = "node-backend"
+# ── Cloudflare D1 绑定 ──
+# 先执行：wrangler d1 create node-backend → 复制返回的 database_id 填下方
+[[d1_databases]]
+binding = "DB"
+database_name = "node-backend"
+database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+
+# ── Cloudflare R2 绑定 ──
+# 先执行：wrangler r2 bucket create node-backend → bucket 名填下方
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "node-backend"
