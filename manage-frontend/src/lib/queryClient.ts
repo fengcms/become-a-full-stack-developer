@@ -54,4 +54,11 @@ export const qk = {
   auth: {
     me: ['auth', 'me'] as const,
   },
+  articles: {
+    list: (q: unknown) => ['articles', 'list', q] as const,
+    detail: (id: number | string) => ['articles', 'detail', id] as const,
+  },
+  categories: {
+    tree: ['categories', 'tree'] as const,
+  },
 }

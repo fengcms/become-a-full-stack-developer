@@ -13,7 +13,7 @@ import { roleAtLeast } from '@/config/roles'
 import type { User, UserRole } from '@/types/common'
 
 /** 当前操作者的简版身份（只要 id 与 role）。 */
-type Actor = Pick<User, 'id' | 'role'> | null | undefined
+export type Actor = Pick<User, 'id' | 'role'> | null | undefined
 
 /** 从 actor 取角色，空值归一为 undefined。 */
 const roleOf = (actor: Actor): UserRole | undefined => actor?.role ?? undefined

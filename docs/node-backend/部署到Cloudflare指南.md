@@ -154,6 +154,18 @@ wrangler d1 execute node-backend --remote --command="
 
 > `WHERE NOT EXISTS` 保证幂等；重复执行不会建重。
 
+### 阶段 4.5 — 种子站点配置（site_settings）
+
+`GET /site/settings` 公开接口在 `site_settings` 表没有 `id=1` 的行时会直接 **500**（`src/services/site.ts` 空表抛 `INTERNAL`）。默认种子本在应用层 `pnpm migrate` 里（`src/db/migrate.ts` 的 `onConflictDoNothing` 幂等插入），但线上走的是 `drizzle-kit` 纯 DDL 建表路径，不会写入这行，必须手动补。
+
+已准备幂等种子文件 `scripts/seed-site-settings.sql`（仅填 `site_name` / `site_description` / `updated_at` 三个 NOT NULL 字段，其余留空由 admin 后续经 `PATCH /admin/site/settings` 维护）：
+
+```bash
+wrangler d1 execute node-backend --remote --file=./scripts/seed-site-settings.sql
+```
+
+> 也可内联：`wrangler d1 execute node-backend --remote --command="INSERT INTO site_settings (id, site_name, site_description, updated_at) VALUES (1,'成为全栈开发工程师','全栈开发工程师的成长笔记与实战专栏', unixepoch()*1000) ON CONFLICT(id) DO NOTHING;"`。`ON CONFLICT(id) DO NOTHING` 保证重复执行安全。
+
 ### 阶段 5 — 部署
 
 ```bash
@@ -208,6 +220,7 @@ curl https://api.yourdomain.com/api/v1/health
 | 登录失败（密码不对） | D1 哈希与线上算法不一致 | 必须用 `bcryptjs.hashSync(pwd, 12)` 本地生成后粘贴（rounds=12） |
 | 改/重置 admin 密码（D1） | 用错哈希或忘密码 | 本地 `bcryptjs.hashSync('新密码',12)` 生成哈希 → `UPDATE users SET password_hash='<hash>' WHERE username='admin'`；⚠️ 哈希含 `$`，**务必用 `cat > f.sql <<'EOF' … EOF` 落文件 + `--file=f.sql` 执行**，避免 shell 把 `$2`/`$1` 当位置参数展开截断哈希 |
 | 取附件 404（纯文本 `404 Not Found`，非 JSON 信封） | 用了 `/api/v1/files/<key>`，但文件路由挂在根 `/files`（策略 A：附件直出不进 /api/v1 前缀） | 用 `https://<domain>/files/<key>`（**域名根 + /files，不要带 /api/v1**）；前端拼接须用 `ORIGIN + url` 而非 `API_BASE + url` |
+| `GET /site/settings` 返回 500（INTERNAL） | `site_settings` 表无 `id=1` 行（线上走 drizzle 纯 DDL 建表，未跑应用层 migrate 的种子） | 执行 `wrangler d1 execute node-backend --remote --file=./scripts/seed-site-settings.sql`（幂等）；详见阶段 4.5 |
 | D1 建表报语法错 | schema 含 D1 不支持的语法 | 贴报错给开发 AI 改 `schema.ts` |
 | 自定义域名 SSL 不生效 | DNS/CNAME 未传播 | 等几分钟；确认 CNAME 指向 `<subdomain>.workers.dev` |
 

@@ -32,6 +32,8 @@ import { DefaultHome, GuestOnly, RequireAuth, RequireCan, RequireConsole } from 
 // 登录后的用户永远不会加载登录页的代码，反之亦然，各省一份
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'))
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'))
+const ArticleListPage = lazy(() => import('@/pages/articles/ArticleListPage'))
+const ArticleFormPage = lazy(() => import('@/pages/articles/ArticleFormPage'))
 
 /**
  * 路由表。裸页与后台主壳分层，业务路由按能力套 RequireCan。
@@ -74,17 +76,23 @@ const AppRoutes = () => (
           path="/articles"
           element={
             <RequireCan can={canManageArticles}>
-              <PlaceholderPage
-                title="文章管理"
-                description="草稿 / 待审 / 已发布三态流转，含过审与强改状态。"
-                endpoints={[
-                  'GET    /admin/articles',
-                  'PUT    /articles/{id}',
-                  'DELETE /articles/{id}',
-                  'POST   /admin/articles/{id}/approve',
-                  'POST   /admin/articles/{id}/status  (admin)',
-                ]}
-              />
+              <ArticleListPage />
+            </RequireCan>
+          }
+        />
+        <Route
+          path="/articles/new"
+          element={
+            <RequireCan can={canManageArticles}>
+              <ArticleFormPage />
+            </RequireCan>
+          }
+        />
+        <Route
+          path="/articles/:id/edit"
+          element={
+            <RequireCan can={canManageArticles}>
+              <ArticleFormPage />
             </RequireCan>
           }
         />
