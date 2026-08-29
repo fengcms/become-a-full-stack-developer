@@ -153,3 +153,16 @@
 - 反馈纪律：useUpdateProfile/useChangePassword 已统一 toast，页面层不重复提示（避免双 toast）。
 - 门禁全绿：typecheck/lint/build 0 错；test 62 passed（+9：me.test 5 + notify.test 4）。仍仅 md-editor 563.94kB 告警（owner 已裁决接受）。
 - 上线前 checklist（R4 续）：公开 `GET /site/settings` 可能 5000 属后端修复项，本端未碰，需确认后端已修。
+
+---
+
+## 2026-08-29 深夜 · M2 Phase 8 跨切面（构建/部署/复盘，计划最后一轮）
+
+- **M2-13 构建优化**：路由级懒加载早已就位（登录/仪表盘/文章/评论/分类/标签/用户/站点/个人中心 5 子页全 `React.lazy`），`manualChunks` 早已把编辑器生态隔离成 `md-editor` chunk（Phase1 整改 P3-2）。本阶段补**真实体积证据**：装 `rollup-plugin-visualizer@7.1.1`（dev 依赖），挂 `vite.config.ts` 但**仅 `ANALYZE=1` 时生效**（gated），平时/CI 零开销；`pnpm analyze` 生成 `dist/stats.html` treemap（1.5MB 可交互）。
+- 实测产物（gzip）：共享 vendor `index` 127.77kB（首屏基线）、`md-editor` 180.24kB（唯一 >500kB，owner 已接受）、`DashboardPage` 99.05kB（含 recharts，仅 /dashboard 按需）、其余业务页 2~3.4kB。**首屏 ≈127kB gzip + 小页面 chunk**，体积策略已到位。
+- 纪律：未擅自抬高 `chunkSizeWarningLimit`（md-editor 大是真实信号，抬阈值=藏问题，与审阅原则相悖）。
+- **M2-14 部署指南**：写 `docs/manage-frontend/M2-14-部署指南.md`，Cloudflare Pages + Nginx 双方案，重点讲清 ① SPA 路由回退（`_routes.json` / `try_files $uri /index.html`）② `/api/v1` 与 `/files` 反代（dev 代理是方案 B 专用，生产不能指望）③ 缓存策略（哈希资源 immutable、index.html no-cache）④ 部署后验证清单 6 条。附件 `/files` 根路径坑写入 FAQ。
+- **M2-15 复盘**：写 `docs/manage-frontend/M2-15-复盘文档.md`——四门门禁 + 62 测试 + 依赖增量；4 处「计划↔契约偏差」全部以契约为真相源回流 + 测试钉死；选型对错逐条给证据；七端契约一致性结论；组件/E2E 测试缺口列为工程化爬坡项（非阻塞）。
+- **踩坑小记**：归档 treemap 到 `docs/manage-frontend/build-report/` 被 biome 扫出 1 warning（扫描 html 生成物）→ 改为只留 `dist/stats.html`（gitignore，biome 不扫），`biome.json` 加 `!docs/manage-frontend/build-report` 防再生。lint 复绿 111 文件 0 issue。
+- 门禁四门全绿（实测）：typecheck 0 / lint 111 文件 0 / test 62 passed / build 通。未 git commit（用户自管）。
+- **M2 前端全系列收官**：骨架 + Phase 0~8 全部落地，四门门禁持续全绿，端点严格对齐冻结契约 v1.11.0，文档（NOTES/部署/复盘/DEV-LOG）齐备。唯一跨端遗留 R4（公开 site/settings 5000）转后端上线前确认。
