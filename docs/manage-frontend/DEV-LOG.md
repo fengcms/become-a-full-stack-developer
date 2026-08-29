@@ -115,6 +115,24 @@
 - 加 `role-*`(admin/editor/member) 与 `user-status-*`(active/disabled) 语义令牌（明暗），徽标不再硬编码调色板。
 - 门禁：test 49 passed（新增 4）。下一步 Phase 5 仪表盘。
 
+## 2026-08-29 深夜 · Phase 5 仪表盘（M2-17，替换探针）
+
+- 关键认知：**仪表盘在基座（M2-09）已提前接真实 `/stats` 与 `/categories/stats`**，"探针"即是真数据。Phase 5 实为增强收口，不是从零替换探针。
+- recharts 已装（^3.10.1，计划 R3 风险核实通过）。按计划"图表拆 StatsChart"，新增 `src/components/dashboard/StatsChart.tsx`（recharts 环形饼图）替换原 CSS 条形分类分布。
+- 新增"近期文章"：`listAdminArticles({ sort: '-createdAt', pageSize: 5 })`——契约 admin/articles **支持** sort（openapi:2365 引用 Sort 参数）。
+- 新增"近期评论"：⚠️ **又一处计划/契约偏差**——计划写 `GET /admin/comments?sort=-createdAt`，但契约 admin/comments（openapi:2130-2143）**无 sort**（仅 page/pageSize/status/articleId）。按契约取默认前 5 + 前端 `localeCompare(createdAt)` 兜底倒序，"近期"语义稳定不依赖后端默认顺序。
+- 布局：统计卡网格 `xl:grid-cols-5`（editor 含待审）/ `4`；下方 `lg:grid-cols-3`（分类图 + 近期文章 + 近期评论，后两者 editor+）；member 仅见 4 卡 + 分类图。
+- 守卫：`src/api/site.test.ts`（2 例）钉死 `/stats` 与 `/categories/stats` 路径 + 形状；注意 `/stats` 是 `/categories/stats` 子串，用 `not.toContain('categories')` 区分两者。
+- 坑：recentComments select 用 `b.createdAt!` 触发 biome `noNonNullAssertion` → 改 `?? ''`（filter 已排空，冗余但消除断言告警）。
+- 门禁：test 51 passed（新增 2）。DashboardPage chunk 336kB(gzip 99kB) 含 recharts，仅 lazy 仪表盘页承担；md-editor 563.94kB owner 已裁决接受告警。下一步 Phase 6 站点配置。
+
+## M2 Phase 6 站点配置（2026-08-29 深夜）
+- 交付：SiteSettingsPage.tsx（拉 GET /admin/site/settings 回填 + PATCH 局部更新 6 字段）+ LogoUploadField.tsx（替代计划中未实现的 F0.2，受控 + 复用 useImageUpload 走 POST /upload 拿 URL）+ 路由接入真实页 + site.test.ts(+2 admin 守卫)。门禁全绿（test 53，+4）。
+- 坑①：计划 Phase 6 把 F0.2 `ImageUploadField` 当"已有组件"用，但基座阶段它根本没落地（grep 全仓只命中 useImageUpload hook）。→ 自建最小够用的 LogoUploadField，不回头补通用版（超出本阶段范围）。
+- 坑②：权限 `canXxx` 是**函数式** `(actor) => boolean`，不是布尔。`enabled: canManageSiteSettings` 直接 TS 报错（函数不能当布尔）。正确写法：`useAuthStore((s)=>s.user)` → `const canSite = canManageSiteSettings(user)` → `enabled: canSite`。
+- 坑③：契约守卫测试写 `not.toContain('/site/settings')` 误判——`/admin/site/settings` 本就含该子串，必然失败。区分公开/后台版应看 `/admin/` 段。
+- 偏差：契约公开 `GET /site/settings` 返回 5000 是后端 R4 风险，本阶段只碰 admin 端点、不碰公开版；上线前需确认后端已修。
+
 ## 复盘要点（给 owner 的快速索引）
 
 - **契约驱动的真义**：计划文档会写错端点（评论、标签合并），代码必须**以 `openapi.v1.yaml` 为唯一真相**，偏差写进文件头 + 用测试钉死路径。
@@ -123,3 +141,4 @@
 - **体积优化要归因到根**：chunk 大不是 md-editor 的问题，是 `refractor/all` 297 语言；alias 只顶替 `/all` 即可。
 - **决策权属**：CORS 方案 B 是 owner 拍板，不是 AI 擅自；审阅报告把「已确认决策」误判成「擅自」要更正。
 - **未 git commit**：以上全部 owner 自管，建议按阶段单独提交（基座 / Phase0 / 第一轮整改 / Phase1 / Phase2 / Phase3）。
+- **计划文档会"幻想已实现组件"**：F0.2 ImageUploadField 基座阶段根本没落地，计划却当已有用——动手前 grep 确认组件/字段真实存在，别信计划文档的"已完成"假设。

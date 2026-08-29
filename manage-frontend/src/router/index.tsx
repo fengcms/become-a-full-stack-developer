@@ -38,6 +38,7 @@ const CommentListPage = lazy(() => import('@/pages/comments/CommentListPage'))
 const CategoryTreePage = lazy(() => import('@/pages/categories/CategoryTreePage'))
 const TagListPage = lazy(() => import('@/pages/tags/TagListPage'))
 const UserListPage = lazy(() => import('@/pages/users/UserListPage'))
+const SiteSettingsPage = lazy(() => import('@/pages/site/SiteSettingsPage'))
 
 /**
  * 路由表。裸页与后台主壳分层，业务路由按能力套 RequireCan。
@@ -141,11 +142,7 @@ const AppRoutes = () => (
           path="/settings/site"
           element={
             <RequireCan can={canManageSiteSettings}>
-              <PlaceholderPage
-                title="站点设置"
-                description="站点名称 / 标题 / 描述 / 关键词 / Logo / 版权，供前台页头页脚与 SEO 使用。"
-                endpoints={['GET /admin/site/settings', 'PATCH /admin/site/settings']}
-              />
+              <SiteSettingsPage />
             </RequireCan>
           }
         />
