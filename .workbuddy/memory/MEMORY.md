@@ -49,6 +49,15 @@ M0 开篇/M1 Node/M2 React/M3 Next(含会员中心)/M4 Flutter/M5 Taro/M6 Go/M7 
   - **当前状态：已冻结（`node-backend-v1.0`，2026-08-27 owner 裁决）**——owner 确认「结构符合预期、甚至比我想的好」并裁定即日冻结；后续 BUG 走增量维护（fix→门禁复绿→commit→必要时 bump patch tag），不热改主干。
 - **下一步**：M1 已冻结，进入「写 M1 后端文章」（**M1-01~M1-31 共 31 篇**，v1.15 路线图新增 M1-31 数据建模手艺；以冻结代码 node-backend-v1.0 为唯一素材）。M2/M3/M4/M6/M7 五端复用「契约→主计划→批次任务包」工作流。
 
+## M2 前端（React 管理后台）开发约束
+- 实现目录 `manage-frontend/`（仓库根，未建）。技术栈与 `telemarketing-saas-manage` 同基因：Vite6 + React19 + TS(strict) + Tailwind4 + shadcn/ui(new-york/slate/cssVars) + TanStack Query/Table + zustand + RHF+Zod + lucide + sonner + recharts + next-themes + Radix。
+- **参考资产（照搬）**：`/Users/fungleo/Sites/ShangHaiYingZhou/telemarketing-saas-manage/docs-extract/`（12 篇经验文档）+ 其 `src/` 源项目。可复用：请求层范式、状态分层（Zustand 仅鉴权/RQ 服务端态）、两阶段弹窗、`visibleMenu`+`RequireAuth/RequireRole` 配置驱动权限、`src/index.css` 视觉令牌与 `.app-bg/.glass/.gradient-brand/.hover-lift/.animate-rise` 工具类、偏严 TS+Biome 门禁（忽略 `src/components/ui/**`）。
+- **联调靶（已全链路验收 GREEN）**：`https://api-befull.kao9.com/api/v1`（线上 node-backend 部署）。dev 端口固定 **12000**（`vite.config.ts` `server.port:12000`）。
+- **契约差异（请求层必须改写）**：① 信封 `{code,message,data,requestId,timestamp}`，`code:0` 成功（参考项目用 `success` 布尔，须改）；② base `/api/v1`（非 `/api`）；③ 错误码为**数字**分段 1xxx 认证/2xxx 授权/3xxx 资源/4xxx 参数/5xxx 服务（5001=限流 429）；④ 刷新令牌浏览器走 **HttpOnly Cookie**（`POST /auth/refresh` 读 Cookie 优先、缺失取 body），accessToken 存**内存不 localStorage**，每个请求 `credentials:'include'`；登录响应取 `data.accessToken`（非 `token`）；⑤ 附件 URL `ORIGIN + /files/<key>`（**不带 `/api/v1` 前缀**，否则 404）。
+- 🔴 **CORS 缺口（开工前阻塞）**：线上对所有源返 `access-control-allow-credentials:true` + `vary:Origin` 但**从不回显 `access-control-allow-origin`** → 凭据模式浏览器会拦截响应。解法（待 owner 拍板）：方案A=把 `http://localhost:12000` 加入部署后端 `CORS_ORIGINS`（Hono 即回显 allow-origin+保持 credentials，最贴合契约 Cookie 刷新）；方案B=Vite 代理同源免 CORS，但代理破坏 Cookie 跨域携带→改内存存 refreshToken 走 `/auth/refresh` body（契约支持）。详见 `docs/prd/M2-前端开发准备简报.md` §6。
+- 工程纪律继承（来自参考踩坑）：pnpm11 状态检查 bug（门禁用 `./node_modules/.bin/tsc -b` 等显式调用）；列表永远 `Page<T>` 取 `items`；RQ 缓存 key 前缀统一防双 key 漏刷；`/auth/logout|/auth/refresh` 走 `skipAuthRedirect`/`_isRefresh`；错误统一 `resolveErrorMessage`；不写死颜色用令牌；动效包 `prefers-reduced-motion`；对接接口先 curl 实测。
+- 准备简报：`docs/prd/M2-前端开发准备简报.md`（FrontendDeveloper expert 编写，含 9 阶段启动清单 + 待拍板 3 项）。
+
 ## 契约演进与评审时间线（截止 2026-08-11）
 | 轮 | 契约 | 范围 | 语义门 |
 |---|---|---|---|
