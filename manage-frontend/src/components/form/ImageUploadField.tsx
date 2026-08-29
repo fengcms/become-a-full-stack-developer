@@ -1,8 +1,11 @@
 /**
- * @file src/components/form/LogoUploadField.tsx
- * @description 站点 Logo 上传字段：受控组件，复用 useImageUpload 走 POST /upload 拿到
- *   已解析 URL（ORIGIN + /files/<key>）回填 logoUrl。替代计划中未实现的 F0.2 ImageUploadField。
- *   组件本身只负责「选图→上传→回填」，落库由父表单的 PATCH 提交统一完成（契约要求 logoUrl 先上传）。
+ * @file src/components/form/ImageUploadField.tsx
+ * @description 通用图片上传字段（受控）。由 Phase 6 的 LogoUploadField 泛化而来——
+ *   审阅第四轮报告 R-留意「F0.2 悬空」明确指出：站点 Logo 是首个场景，
+ *   一旦个人中心出现头像（第二个场景）就该泛化为通用件避免重复造轮子。本件即该泛化。
+ *
+ * 能力：选图即上传（复用 useImageUpload 走 POST /upload 拿已解析 URL）、回填受控值、预览（方/圆两种）、
+ * 移除、上传中态、错误 toast。落库由父表单的提交统一完成（契约要求先上传拿可访问地址再存）。
  * @module manage-frontend/components/form
  * @date 2026-08-29
  */
@@ -15,23 +18,35 @@ import { useImageUpload } from '@/hooks/useImageUpload'
 import { useToast } from '@/hooks/useToast'
 import { FormField } from './FormField'
 
+/** 预览形状：square=方角（Logo/封面），circle=圆形（头像）。 */
+type Shape = 'square' | 'circle'
+
 /**
- * Logo 上传字段。
+ * 通用图片上传字段。
  * @param control - RHF 控制对象。
- * @param name - 字段路径（绑 logoUrl）。
+ * @param name - 字段路径（绑 URL 字符串）。
  * @param label - 标签。
  * @param description - 辅助说明。
+ * @param accept - 文件选择器 accept（默认 image/*）。
+ * @param shape - 预览形状（默认 square）。
+ * @param hint - 预览下方的提示文案。
  */
-export const LogoUploadField = <T extends FieldValues>({
+export const ImageUploadField = <T extends FieldValues>({
   control,
   name,
-  label = '站点 Logo',
+  label = '图片',
   description,
+  accept = 'image/*',
+  shape = 'square',
+  hint = '建议 ≤ 10MB',
 }: {
   control: Control<T>
   name: FieldPath<T>
   label?: string
   description?: string
+  accept?: string
+  shape?: Shape
+  hint?: string
 }) => {
   const { field, fieldState } = useController({ control, name })
   const { upload, uploading } = useImageUpload()
@@ -42,16 +57,17 @@ export const LogoUploadField = <T extends FieldValues>({
   /** 选图即上传，拿到可访问 URL 回填（不落本地状态，受控于 RHF）。 */
   const onPick = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    // 允许再次选择同一文件
-    e.target.value = ''
+    e.target.value = '' // 允许再次选择同一文件
     if (!file) return
     try {
       const url = await upload(file)
       field.onChange(url)
     } catch (err) {
-      toastError(err, 'Logo 上传失败')
+      toastError(err, '图片上传失败')
     }
   }
+
+  const previewCls = shape === 'circle' ? 'rounded-full' : 'rounded-md'
 
   return (
     <FormField
@@ -61,15 +77,17 @@ export const LogoUploadField = <T extends FieldValues>({
       description={description}
     >
       <div className="flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-md border bg-muted">
+        <div
+          className={`flex h-16 w-16 items-center justify-center overflow-hidden border bg-muted ${previewCls}`}
+        >
           {value ? (
-            <img src={value} alt="logo" className="h-full w-full object-contain" />
+            <img src={value} alt={label} className="h-full w-full object-cover" />
           ) : (
             <span className="text-xs text-muted-foreground">无</span>
           )}
         </div>
         <div className="flex flex-col gap-2">
-          <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onPick} />
+          <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={onPick} />
           <div className="flex gap-2">
             <Button
               type="button"
@@ -87,7 +105,7 @@ export const LogoUploadField = <T extends FieldValues>({
               </Button>
             ) : null}
           </div>
-          <p className="text-xs text-muted-foreground">建议正方形透明 PNG，≤ 10MB</p>
+          <p className="text-xs text-muted-foreground">{hint}</p>
         </div>
       </div>
     </FormField>

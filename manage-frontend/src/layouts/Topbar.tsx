@@ -6,9 +6,9 @@
  * @date 2026-08-29
  */
 
-import { KeyRound, LogOut, Menu, Moon, PanelLeft, Sun, UserCircle } from 'lucide-react'
+import { Bell, KeyRound, LogOut, Menu, Moon, PanelLeft, Sun, UserCircle } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ROLE_LABELS } from '@/config/roles'
+import { useUnreadCount } from '@/hooks/useNotifications'
 import { useAuthStore } from '@/store/auth'
 import type { User } from '@/types/common'
 
@@ -97,6 +98,30 @@ const UserMenu = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
 }
 
 /**
+ * 通知铃铛：未读红点（轻轮询）。点一下进通知页。
+ * @param enabled - 是否启用轮询（已登录才 true）。
+ */
+const NotificationBell = ({ enabled }: { enabled: boolean }) => {
+  const navigate = useNavigate()
+  const { data } = useUnreadCount(enabled)
+  const count = data?.count ?? 0
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="relative"
+      aria-label="通知"
+      onClick={() => navigate('/profile/notifications')}
+    >
+      <Bell className="h-4 w-4" />
+      {count > 0 ? (
+        <span className="absolute right-1.5 top-1.5 flex h-2 w-2 rounded-full bg-rose-500 ring-2 ring-background" />
+      ) : null}
+    </Button>
+  )
+}
+
+/**
  * 后台顶栏。
  *
  * @param onToggleSidebar - 折叠/展开桌面侧栏。
@@ -143,6 +168,7 @@ export const Topbar = ({
 
       <div className="ml-auto flex items-center gap-2">
         <ThemeToggle />
+        <NotificationBell enabled={Boolean(user)} />
         <UserMenu user={user} onLogout={onLogout} />
       </div>
     </header>

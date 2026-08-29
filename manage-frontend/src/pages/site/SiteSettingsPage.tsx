@@ -2,8 +2,8 @@
  * @file src/pages/site/SiteSettingsPage.tsx
  * @description 站点设置（admin 专属）。拉取 GET /admin/site/settings 回填表单，
  *   PATCH /admin/site/settings 局部更新（SiteSettingUpdate 全可选，仅传这 6 个字段）。
- *   Logo 走自建 LogoUploadField（替代计划中未实现的 F0.2 ImageUploadField）：先上传拿 URL 再回填 logoUrl，
- *   落库由本页 PATCH 统一完成（契约要求 logoUrl 必须是已上传的可访问地址）。
+ *   Logo 走通用 ImageUploadField（Phase 6 由 LogoUploadField 泛化而来，审阅第四轮 R-留意建议）：
+ *   先上传拿 URL 再回填 logoUrl，落库由本页 PATCH 统一完成（契约要求 logoUrl 必须是已上传的可访问地址）。
  * @module manage-frontend/pages/site
  * @date 2026-08-29
  */
@@ -14,7 +14,7 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { getAdminSiteSettings, updateSiteSettings } from '@/api/site'
-import { LogoUploadField } from '@/components/form/LogoUploadField'
+import { ImageUploadField } from '@/components/form/ImageUploadField'
 import { TextAreaField } from '@/components/form/TextAreaField'
 import { TextField } from '@/components/form/TextField'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -142,7 +142,7 @@ const SiteSettingsPage = () => {
                 placeholder="前端, 后端, 全栈"
                 description="逗号分隔，用于 SEO keywords"
               />
-              <LogoUploadField
+              <ImageUploadField
                 control={form.control}
                 name="logoUrl"
                 label="站点 Logo"

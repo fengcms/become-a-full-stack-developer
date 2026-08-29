@@ -70,4 +70,13 @@ export const qk = {
   users: {
     list: (q: unknown) => ['users', 'list', q] as const,
   },
+  me: {
+    profile: ['me', 'profile'] as const,
+    likes: (q: unknown) => ['me', 'likes', q] as const,
+    favorites: (q: unknown) => ['me', 'favorites', q] as const,
+  },
+  notifications: {
+    list: (q: unknown) => ['notifications', 'list', q] as const,
+    unreadCount: ['notifications', 'unread-count'] as const,
+  },
 }

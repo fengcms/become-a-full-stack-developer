@@ -142,3 +142,14 @@
 - **决策权属**：CORS 方案 B 是 owner 拍板，不是 AI 擅自；审阅报告把「已确认决策」误判成「擅自」要更正。
 - **未 git commit**：以上全部 owner 自管，建议按阶段单独提交（基座 / Phase0 / 第一轮整改 / Phase1 / Phase2 / Phase3）。
 - **计划文档会"幻想已实现组件"**：F0.2 ImageUploadField 基座阶段根本没落地，计划却当已有用——动手前 grep 确认组件/字段真实存在，别信计划文档的"已完成"假设。
+
+## Phase 7 · 个人中心（2026-08-29 晚）
+
+- 第四轮审阅（Phase4+5+6）综合 90/100 无阻塞，明确可推进 Phase 7。本批交付：资料编辑 / 改密码 / 通知 / 点赞 / 收藏，全部 member 可访问。
+- 路由：`/profile` 套 RequireAuth + ProfileLayout（左导航 + Outlet），5 个二级页（资料/密码/通知/点赞/收藏）。
+- **F0.2 泛化落地（审阅 R-留意建议）**：头像上传是第二个图片场景 → 把 Phase6 的 `LogoUploadField` 泛化为通用 `ImageUploadField`（`accept`/`shape` 可选），站点设置与个人资料共用，删旧文件。
+- **未读红点 = 轻轮询非 WS**：Topbar 加通知铃铛 + 红点，`useUnreadCount` 用 `refetchInterval: 60s` 拉 `/me/notifications/unread-count`（契约无推送通道）。
+- 🔴 **R5 契约矛盾坐实**：`/me/likes` 契约返回**裸数组** `ArticleSummary[]`（非分页 `{list,pagination}`），计划/路线图写的 page 是错的——前端按数组消费，`me.test.ts` 反向断言非 `{list}`/非 `{pagination}` 防回归。这是契约生成层的已知内部矛盾，已钉死。
+- 反馈纪律：useUpdateProfile/useChangePassword 已统一 toast，页面层不重复提示（避免双 toast）。
+- 门禁全绿：typecheck/lint/build 0 错；test 62 passed（+9：me.test 5 + notify.test 4）。仍仅 md-editor 563.94kB 告警（owner 已裁决接受）。
+- 上线前 checklist（R4 续）：公开 `GET /site/settings` 可能 5000 属后端修复项，本端未碰，需确认后端已修。

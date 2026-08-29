@@ -25,7 +25,12 @@ import {
   canModerateComments,
 } from '@/lib/permission'
 import { ForbiddenPage, NoAccessPage, NotFoundPage } from '@/pages/errors'
-import { PlaceholderPage } from '@/pages/PlaceholderPage'
+import ChangePasswordPage from '@/pages/profile/ChangePasswordPage'
+import FavoritesPage from '@/pages/profile/FavoritesPage'
+import LikesPage from '@/pages/profile/LikesPage'
+import NotificationsPage from '@/pages/profile/NotificationsPage'
+import ProfileLayout from '@/pages/profile/ProfileLayout'
+import ProfilePage from '@/pages/profile/ProfilePage'
 import { DefaultHome, GuestOnly, RequireAuth, RequireCan, RequireConsole } from '@/router/guards'
 
 // 登录页与仪表盘会被首屏立刻用到，但仍走懒加载：
@@ -147,26 +152,21 @@ const AppRoutes = () => (
           }
         />
 
+        {/* 个人中心：member 即可访问，ProfileLayout 提供二级导航 + 子路由 */}
         <Route
           path="/profile"
           element={
-            <PlaceholderPage
-              title="个人资料"
-              description="昵称 / 头像 / 邮箱，邮箱唯一，冲突返回 409 / code 3002。"
-              endpoints={['GET /me/profile', 'PATCH /me/profile']}
-            />
+            <RequireAuth>
+              <ProfileLayout />
+            </RequireAuth>
           }
-        />
-        <Route
-          path="/profile/password"
-          element={
-            <PlaceholderPage
-              title="修改密码"
-              description="需校验旧密码；忘记密码由 admin 经重置端点兜底（v1 无邮件找回）。"
-              endpoints={['POST /me/change-password']}
-            />
-          }
-        />
+        >
+          <Route index element={<ProfilePage />} />
+          <Route path="password" element={<ChangePasswordPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="likes" element={<LikesPage />} />
+          <Route path="favorites" element={<FavoritesPage />} />
+        </Route>
 
         <Route path="/403" element={<ForbiddenPage />} />
         {/* 兜底放在主壳内：未登录时先被 RequireAuth 接走去登录页，
