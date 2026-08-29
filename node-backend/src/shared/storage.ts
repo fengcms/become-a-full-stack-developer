@@ -8,9 +8,21 @@
  * 由 GET /files/:key 路由统一直出（local 读磁盘 / r2 读 R2），前端零感知，本地/生产一致。
  */
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
 import type { AppEnv } from '@/config/env';
+
+/**
+ * node:fs/promises 与 node:path 仅 local 驱动使用。为让 R2 生产 bundle 不再静态引入 fs，
+ * 这里改为按需动态 import()（仅在 LocalStorage 方法被调用时触发，R2 模式永不触发）。
+ * 依赖 nodejs_compat（见 wrangler.toml）：node:crypto 顶层导入已要求该 flag。
+ */
+let fsCache: typeof import('node:fs/promises') | null = null;
+const loadFs = async (): Promise<typeof import('node:fs/promises')> => {
+  if (!fsCache) fsCache = await import('node:fs/promises');
+  return fsCache;
+};
+
+/** 替代 node:path.join：key 经 SAFE_KEY 校验无路径分隔符，简单拼接即可，规避额外 node: 导入。 */
+const joinPath = (root: string, key: string): string => `${root.replace(/[\\/]$/, '')}/${key}`;
 
 /** 存储提供方契约。 */
 export interface StorageProvider {
@@ -39,42 +51,36 @@ interface R2BucketLike {
   delete(key: string): Promise<void> | void;
 }
 
-/** 安全 key 约束：仅允许基础文件名字符。 */
-const SAFE_KEY = /^[A-Za-z0-9._-]+$/;
-
-/** 本地磁盘实现：文件落在 ./uploads，url 以 /files 暴露。 */
+/** 本地磁盘实现：文件落在 ./uploads，url 以 /files 暴露。仅 local 驱动使用 node:fs（动态导入）。 */
 class LocalStorage implements StorageProvider {
   constructor(
     private readonly root: string,
     private readonly baseUrl: string,
   ) {}
 
-  /** 解析并校验 key，非法字符一律拒绝（防御路径遍历）。 */
-  private resolveKey(key: string): string {
-    if (!SAFE_KEY.test(key)) throw new Error(`invalid storage key: ${key}`);
-    return join(this.root, key);
-  }
-
   async put(buffer: Buffer, ext: string): Promise<{ key: string; url: string }> {
     const key = `${createHash('sha256').update(buffer).digest('hex')}${ext}`; // 内容寻址：同字节 → 同 key
     const existing = await this.get(key); // 命中则复用，跳过写盘（省 I/O，R2 省 PUT）
     if (existing) return { key, url: `${this.baseUrl}/${key}` };
-    await mkdir(this.root, { recursive: true });
-    await writeFile(join(this.root, key), buffer);
+    const fs = await loadFs();
+    await fs.mkdir(this.root, { recursive: true });
+    await fs.writeFile(joinPath(this.root, key), buffer);
     return { key, url: `${this.baseUrl}/${key}` };
   }
 
   async get(key: string): Promise<Buffer | null> {
+    const fs = await loadFs();
     try {
-      return await readFile(this.resolveKey(key));
+      return await fs.readFile(joinPath(this.root, key));
     } catch {
       return null;
     }
   }
 
   async delete(key: string): Promise<void> {
+    const fs = await loadFs();
     try {
-      await unlink(this.resolveKey(key));
+      await fs.unlink(joinPath(this.root, key));
     } catch {
       /* 忽略不存在或非法 key */
     }

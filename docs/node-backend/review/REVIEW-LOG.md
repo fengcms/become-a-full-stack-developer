@@ -675,3 +675,18 @@ P3-1 新增的 2 例 parentId 测试（幽灵引用 → 404 / 跨文章引用 �
 **owner 裁决更新（2026-08-26 末）**：P2 **方案 A**（复原 404，去掉恒 true 的 `found` 字段）、P3-1 **接受**（文档化孤儿竞态、非阻塞、要求开发 AI 在 `deleteAttachment` 物理删处补注释）、P3-2 **要求开发 AI 修复**（守卫 `null→404` 全局纠偏，仅 attachments/comments/articles 三类带 resolveOwner 资源受影响、零回归）。审阅报告已**重写为「裁定 + 开发 AI 修正指令」形态**（`docs/node-backend/review/B-上传去重-后端代码审阅报告.md`），含三任务精确代码 diff + 测试配套 + 复批门禁 5 条；owner 直接交开发 AI 执行 → 架构师复批 → owner 视觉确认 → 冻结 M1 后端主线。
 
 **复批通过（2026-08-26 末，BackendArchitect）**：开发 AI 按修正指令稿完成三任务并复批。复检证据——tsc0 / biome 113 文件 0 / vitest **133 passed** / 契约结构门 OK / 语义门 **33 OK**；`openapi.v1.yaml` 字节级 0 行 diff；randomUUID 已移除、contentHash 未进响应、越界 5 文件零 diff。三任务落实：P2-A（`attachment.ts:130` 缺失抛 404、`found` 移除、测试 rejects 404）/ P3-1（`:146-149` 孤儿竞态注释化接受）/ P3-2（`auth.ts:58` null→404、`:61` 非归属者→403、guard 单测加 null→404、全局零回归）。2 项 P3 非阻塞建议（路由 e2e 锁缺 / storage.ts:2 注释遗留）。**裁定：复批通过，无 P2 阻塞；待 owner 视觉确认 → 冻结 M1 后端主线。** 复审批复：`docs/node-backend/review/B-上传去重-复审批复.md`。
+
+## B-R2部署 后端代码审阅（2026-08-29，BackendArchitect）
+
+被审：开发 AI 提交 `2ad49dd`「补齐 R2 存储驱动并升级 Cloudflare 部署骨架」；基线冻结契约 v1.11.0 / M1 `node-backend-v1.0`。
+
+**裁定：代码通过；部署 1 P1 阻断（wrangler.toml 缺 `compatibility_flags = ["nodejs_compat"]`）。** 报告：`docs/node-backend/review/B-R2部署-后端代码审阅报告.md`。
+
+判断逻辑要点：
+1. **五门门禁独立复验全绿**：tsc0 / biome 117 文件 0 / vitest **140 passed**（133+7）/ 契约结构门 STRUCTURE_OK / 语义门 33 OK；`openapi.v1.yaml` git diff **0 行**（字节级未改）。R2 驱动功能正确、测试充分、契约零变更。
+2. **P1 关键抓点——部署会卡在模块求值**：worker 模块图 `storage.ts:10-12` 顶层引 `node:crypto`/`node:fs/promises`/`node:path`，Cloudflare Workers 默认不解析 `node:*` 导入，**必须 `compatibility_flags = ["nodejs_compat"]`**。当前 wrangler.toml 仅有 `compatibility_date`，无该 flag → `wrangler deploy` 模块加载即失败，与"生产可用配置"承诺相悖。为何测试没抓：vitest 跑在 Node（原生支持 node:*），CF 运行时视角未覆盖——典型"测试绿、部署挂"盲区。
+3. **P2 非阻断**：`node:fs`/`node:path` 在 R2 路径是死引入（仅 LocalStorage 用），补 nodejs_compat 后可加载、运行不触发；可选收进 LocalStorage 让生产 bundle 不引 fs；彻底去 flag 需改用 Web Crypto `crypto.subtle.digest`（重构，非必修）。
+4. **P3 设计权衡（信息项）**：策略 A 全量附件经 Worker 中转（非 CDN 直链，egress 成本，联调期合理）；每请求 new storage 实例；R2 未存 contentType 元数据（经 Worker 直出下正确）；去重 TOCTOU 竞态沿用先前裁定接受。
+5. **契约安全**：`/files` 在 `/api/v1` 外，OpenAPI 不含此路径；`Attachment.url` 仅 string/uri/maxLength:512，`/files/{key}` 合规。DEV-LOG R-R1~R-R5 如实未虚报 deploy，但漏识 nodejs_compat。
+
+**owner 待办**：交开发 AI 按报告 §五 修 P1（补 `compatibility_flags = ["nodejs_compat"]`，可选做 P2）→ 复跑五门 → 架构师复批 → owner 实际 `wrangler deploy` 验证 Worker 启动 → R2 部署补充收口。

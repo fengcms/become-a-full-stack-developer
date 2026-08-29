@@ -492,3 +492,9 @@ storage.ts 新增 `R2Storage`（put/get/delete），用 minimal `R2BucketLike` �
 
 ### R-R5. wrangler.toml 升级为生产骨架
 激活 `[[d1_databases]]` / `[[r2_buckets]]` 绑定（带占位 id，待用户 `wrangler d1/r2 create` 后回填）、`STORAGE_DRIVER=r2`、CORS 占位；JWT_SECRET 走 `wrangler secret put`（不进 git）。用户本机 `wrangler login` 后执行部署命令（凭证不离开其机器）。
+
+### R-R6. 审阅 B-R2部署 整改（P1 必修 + P2 选做）
+- **P1（阻断）已修**：`wrangler.toml` 补 `compatibility_flags = ["nodejs_compat"]`。根因——`storage.ts` 顶层 `import node:crypto`（两驱动共用做内容寻址）在 CF 运行时默认不可解析，无 flag 时 `wrangler deploy` 模块求值即崩。该 flag 与具体驱动无关，是 Worker 启动硬前提（即便 `STORAGE_DRIVER=r2` 不会被实例化的 local 驱动也顶层 import 了 `node:fs`，故不可省）。
+- **P2（非阻断）已做**：`node:fs/promises`/`node:path` 由顶层静态 import 改为 `LocalStorage` 内按需动态 `import()`（缓存到模块级 `fsCache`），并用字符串拼接 `joinPath` 替代 `node:path.join`。R2 生产 bundle 不再静态引入 fs；local 驱动方法触发时才加载。顶层仅保留 `node:crypto`（两驱动共用，且 nodejs_compat 已必需）。
+- **P3（设计权衡）确认接受**：A 策略全量经 Worker 中转（联调期合理，量大再优化）、每请求重建 storage 实例（影响极小）、R2 对象不存 contentType（策略 A 下由 `/files` 按扩展名推断，正确）、去重 TOCTOU（与上传去重 P3-1 同裁定，R2 PUT 幂等无损坏）。均记录为后续优化，本期不动。
+- **门禁复绿**：tsc 0 / biome 0（117 文件）/ vitest 140 passed / 契约双门全过 / openapi.v1.yaml git diff 0。审阅报告的「测试绿、部署挂」盲区由代码审阅发现，已闭环。

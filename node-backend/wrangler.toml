@@ -1,6 +1,10 @@
 name = "node-backend"
 main = "src/worker.ts"
 compatibility_date = "2025-01-01"
+# Worker 模块图顶层引入 node:*（node:crypto 两驱动共用；local 驱动用 node:fs/node:path），
+# 必须开启 nodejs_compat 才能在 CF 运行时解析这些导入，否则 wrangler deploy 在模块求值阶段即失败。
+# 注意：即便生产用 STORAGE_DRIVER=r2、local 驱动永不被实例化，顶层 node:fs 导入仍会求值，故本 flag 不可省。
+compatibility_flags = ["nodejs_compat"]
 
 # ── 自定义域名（部署后需在 CF 配 DNS + SSL）──
 # 取消注释并填入你的 API 域名；若先用 *.workers.dev 默认子域联调，可暂保持注释。
