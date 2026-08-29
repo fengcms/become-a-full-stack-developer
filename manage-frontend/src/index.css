@@ -56,6 +56,14 @@
   --status-published-bg: oklch(0.9 0.085 152);
   --status-published-fg: oklch(0.4 0.1 150);
 
+  /* 评论三态（Phase 2）：approved 绿 / rejected 红 / reviewing 琥珀 */
+  --status-approved-bg: oklch(0.9 0.085 152);
+  --status-approved-fg: oklch(0.4 0.1 150);
+  --status-rejected-bg: oklch(0.9 0.06 25);
+  --status-rejected-fg: oklch(0.42 0.17 27);
+  --status-reviewing-bg: oklch(0.9 0.085 85);
+  --status-reviewing-fg: oklch(0.42 0.1 60);
+
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", sans-serif;
@@ -108,6 +116,13 @@
   --status-pending-fg: oklch(0.9 0.085 85);
   --status-published-bg: oklch(0.34 0.085 152);
   --status-published-fg: oklch(0.88 0.085 152);
+
+  --status-approved-bg: oklch(0.34 0.085 152);
+  --status-approved-fg: oklch(0.88 0.085 152);
+  --status-rejected-bg: oklch(0.34 0.09 25);
+  --status-rejected-fg: oklch(0.9 0.09 25);
+  --status-reviewing-bg: oklch(0.36 0.085 85);
+  --status-reviewing-fg: oklch(0.9 0.085 85);
 }
 
 /* ===== 映射为 Tailwind 工具类（@theme inline 便于运行时主题切换） ===== */
@@ -153,6 +168,14 @@
   --color-status-pending-fg: var(--status-pending-fg);
   --color-status-published: var(--status-published-bg);
   --color-status-published-fg: var(--status-published-fg);
+
+  /* 评论三态 */
+  --color-status-approved: var(--status-approved-bg);
+  --color-status-approved-fg: var(--status-approved-fg);
+  --color-status-rejected: var(--status-rejected-bg);
+  --color-status-rejected-fg: var(--status-rejected-fg);
+  --color-status-reviewing: var(--status-reviewing-bg);
+  --color-status-reviewing-fg: var(--status-reviewing-fg);
 
   --font-sans: var(--font-sans);
   --font-display: var(--font-display);

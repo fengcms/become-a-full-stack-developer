@@ -61,4 +61,10 @@ export const qk = {
   categories: {
     tree: ['categories', 'tree'] as const,
   },
+  comments: {
+    list: (q: unknown) => ['comments', 'list', q] as const,
+  },
+  tags: {
+    list: ['tags', 'list'] as const,
+  },
 }

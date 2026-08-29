@@ -34,6 +34,9 @@ const LoginPage = lazy(() => import('@/pages/login/LoginPage'))
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'))
 const ArticleListPage = lazy(() => import('@/pages/articles/ArticleListPage'))
 const ArticleFormPage = lazy(() => import('@/pages/articles/ArticleFormPage'))
+const CommentListPage = lazy(() => import('@/pages/comments/CommentListPage'))
+const CategoryTreePage = lazy(() => import('@/pages/categories/CategoryTreePage'))
+const TagListPage = lazy(() => import('@/pages/tags/TagListPage'))
 
 /**
  * 路由表。裸页与后台主壳分层，业务路由按能力套 RequireCan。
@@ -101,15 +104,7 @@ const AppRoutes = () => (
           path="/comments"
           element={
             <RequireCan can={canModerateComments}>
-              <PlaceholderPage
-                title="评论审核"
-                description="approved / rejected / reviewing 三态，reviewing 为人工复核兜底态。"
-                endpoints={[
-                  'GET    /admin/comments',
-                  'PATCH  /comments/{id}/status',
-                  'DELETE /comments/{id}',
-                ]}
-              />
+              <CommentListPage />
             </RequireCan>
           }
         />
@@ -118,16 +113,7 @@ const AppRoutes = () => (
           path="/categories"
           element={
             <RequireCan can={canManageCategories}>
-              <PlaceholderPage
-                title="分类管理"
-                description="无限级自关联树，最大嵌套 4 级，变更 parentId 时后端做环检测。"
-                endpoints={[
-                  'GET    /categories/tree',
-                  'POST   /categories',
-                  'PUT    /categories/{id}',
-                  'DELETE /categories/{id}',
-                ]}
-              />
+              <CategoryTreePage />
             </RequireCan>
           }
         />
@@ -136,11 +122,7 @@ const AppRoutes = () => (
           path="/tags"
           element={
             <RequireCan can={canManageTags}>
-              <PlaceholderPage
-                title="标签管理"
-                description="标签及其文章计数（articleCount 由后端维护）。"
-                endpoints={['GET /tags', 'POST /tags', 'PUT /tags/{id}', 'DELETE /tags/{id}']}
-              />
+              <TagListPage />
             </RequireCan>
           }
         />
