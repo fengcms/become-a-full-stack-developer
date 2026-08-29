@@ -131,3 +131,24 @@ src/
 
 - 本系列专栏：[https://blog.csdn.net/fungleo/category_13204651.html](https://blog.csdn.net/fungleo/category_13204651.html)（订阅看全部篇章）
 - 完整项目仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
+
+---
+
+## 配图提示词（本段为本地草稿辅助，发布前请整段删除）
+
+> 图名与正文 `{{IMG:图名}}` 占位一一对应。去豆包等工具按提示词生图，发布时替换占位并删除本段。
+
+### `01-目录结构图`
+> 一张后端项目目录结构可视化图，扁平插画风，浅色背景。顶部标题「Node 后端 src/ 目录结构（七个目录）」。下方用七个圆角卡片展示目录，并用箭头标出分层调用关系：
+> - `config/` 配置读取（环境变量 → 统一 Env 对象）
+> - `db/` 数据库连接与迁移
+> - `middleware/` 中间件（认证、CORS、校验、全局错误捕获）
+> - `routes/` HTTP 层：解析参数、调 service、包响应信封
+> - `services/` 业务层：承载领域规则 + 数据库操作
+> - `shared/` 基础设施（jwt、密码哈希、存储适配、分页、响应信封）
+> - `types/` 纯类型定义（不依赖任何运行时）
+>
+> 连线示意：`routes → services → db`、`routes / middleware → shared`、`types 被各方引用`。强调「职责边界」而非代码细节。配色清爽（浅灰底 + 蓝/青绿高亮），中文标签清晰。注意：不要出现 `lib/` 目录（本工程已移除）。
+
+### `CTA-订阅专栏`
+> 复用 M0 专栏订阅图（已注入真实 URL `https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png`），**无需重新生图**。
