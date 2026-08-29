@@ -1,0 +1,58 @@
+# manage-frontend 前端门禁（审阅 P3-5：补 CI，避免「回归无网」）
+#
+# 只在前端子目录变更时触发，后端改动不会白白跑一遍前端流水线。
+
+name: manage-frontend CI
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'manage-frontend/**'
+      - '.github/workflows/manage-frontend-ci.yml'
+  pull_request:
+    paths:
+      - 'manage-frontend/**'
+      - '.github/workflows/manage-frontend-ci.yml'
+
+jobs:
+  quality:
+    name: 门禁（lint / typecheck / test / build）
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: manage-frontend
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 准备 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.4.0
+
+      - name: 准备 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: manage-frontend/pnpm-lock.yaml
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      # 用只读的 check 而非本地的 check --write：CI 上自动改写文件没有意义，
+      # 而且会把「本地跑一遍就变绿」的假象带进流水线。
+      - name: Lint
+        run: pnpm exec biome check .
+
+      - name: 类型检查
+        run: pnpm typecheck
+
+      - name: 冒烟测试
+        run: pnpm test
+
+      - name: 生产构建
+        run: pnpm build

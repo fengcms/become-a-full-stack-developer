@@ -19,6 +19,11 @@
     /* 路径别名 @ -> src。TS 6 起 baseUrl 已弃用，paths 直接相对本 tsconfig 解析 */
     "paths": { "@/*": ["./src/*"] },
 
+    /* 严格模式。审阅 A-P2-2：owner 裁决开启，趁模块还少、改造成本最低时一次到位。
+     * 打开后主要影响 strictNullChecks（可选值必须显式收敛）与
+     * useUnknownInCatchVariables（catch 变量为 unknown，不可直接当 any 用）。 */
+    "strict": true,
+
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,

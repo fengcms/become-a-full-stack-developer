@@ -26,11 +26,15 @@ const STATUS_LABEL: Record<ArticleStatus, string> = {
   published: '已发布',
 }
 
-/** 状态徽标配色（浅色底，明暗主题下均可读）。 */
+/**
+ * 状态徽标配色。
+ * 一律走 index.css 的语义令牌（status-draft / status-pending / status-published），
+ * 明暗主题各自定义底色与前景色，不再硬编码 slate/amber/emerald 调色板（审阅 P3-3）。
+ */
 const STATUS_CLASS: Record<ArticleStatus, string> = {
-  draft: 'bg-slate-200 text-slate-700',
-  pending: 'bg-amber-200 text-amber-800',
-  published: 'bg-emerald-200 text-emerald-800',
+  draft: 'bg-status-draft text-status-draft-fg',
+  pending: 'bg-status-pending text-status-pending-fg',
+  published: 'bg-status-published text-status-published-fg',
 }
 
 /** 状态徽标。 */

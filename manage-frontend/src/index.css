@@ -48,6 +48,14 @@
   --chart-4: oklch(0.4989 0.2031 268.1);
   --chart-5: oklch(0.4541 0.1878 274.2);
 
+  /* 状态语义色（审阅 P3-3）：业务状态不再硬编码调色板，明暗主题各自可控 */
+  --status-draft-bg: oklch(0.92 0.004 250);
+  --status-draft-fg: oklch(0.37 0.012 250);
+  --status-pending-bg: oklch(0.9 0.085 85);
+  --status-pending-fg: oklch(0.42 0.1 60);
+  --status-published-bg: oklch(0.9 0.085 152);
+  --status-published-fg: oklch(0.4 0.1 150);
+
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", sans-serif;
@@ -92,6 +100,14 @@
   --chart-3: oklch(0.62 0.215 262.9);
   --chart-4: oklch(0.55 0.203 268.1);
   --chart-5: oklch(0.48 0.187 274.2);
+
+  /* 暗色下的状态语义色：改为「深底 + 亮字」，保证徽标在深色背景上仍达对比度 */
+  --status-draft-bg: oklch(0.32 0.012 250);
+  --status-draft-fg: oklch(0.88 0.012 250);
+  --status-pending-bg: oklch(0.36 0.085 85);
+  --status-pending-fg: oklch(0.9 0.085 85);
+  --status-published-bg: oklch(0.34 0.085 152);
+  --status-published-fg: oklch(0.88 0.085 152);
 }
 
 /* ===== 映射为 Tailwind 工具类（@theme inline 便于运行时主题切换） ===== */
@@ -129,6 +145,14 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+
+  /* 状态语义色 → 工具类：bg-status-draft / text-status-draft-fg … */
+  --color-status-draft: var(--status-draft-bg);
+  --color-status-draft-fg: var(--status-draft-fg);
+  --color-status-pending: var(--status-pending-bg);
+  --color-status-pending-fg: var(--status-pending-fg);
+  --color-status-published: var(--status-published-bg);
+  --color-status-published-fg: var(--status-published-fg);
 
   --font-sans: var(--font-sans);
   --font-display: var(--font-display);

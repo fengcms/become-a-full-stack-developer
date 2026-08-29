@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# 工具临时产物（曾被误跟踪并提交，审阅 P3-4）
+_tmp_*
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
