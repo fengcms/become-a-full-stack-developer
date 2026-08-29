@@ -12,11 +12,11 @@
 | 成为全栈·产品篇·为什么前端工程师要走向全栈：边界、价值与代价 | — | `articles/M0-01-为什么前端工程师要走向全栈.md` | https://blog.csdn.net/fungleo/article/details/164119914 | 🟢 已发布 |
 | 成为全栈·产品篇·用一个真实系统串起全栈：项目全貌与七个子项目 | — | `articles/M0-02-用一个真实系统串起全栈-项目全貌与七个子项目.md` | https://blog.csdn.net/fungleo/article/details/164120426 | 🟢 已发布 |
 | 成为全栈·产品篇·技术选型不是投票：七个子项目技术栈的定法 | — | `articles/M0-03-技术选型不是投票-七个子项目技术栈的定法.md` | https://blog.csdn.net/fungleo/article/details/164121738 | 🟢 已发布 |
-| 成为全栈·产品篇·领域建模：一个文章系统有哪些实体、什么关系 | — | `articles/M0-04-领域建模-一个文章系统有哪些实体什么关系.md` | — | 🟡 草稿 |
-| 成为全栈·产品篇·契约先行：设计一套被七个端复用的 API | — | `articles/M0-05-契约先行-设计一套被七个端复用的API.md` | — | 🟡 草稿 |
-| 成为全栈·产品篇·工程公约：git tag、仓库组织与 CSDN 发布流程 | — | `articles/M0-06-工程公约-git-tag仓库组织与CSDN发布流程.md` | — | 🟡 草稿 |
-| 成为全栈·产品篇·本系列怎么读：主线、支线与学习路径 | — | `articles/M0-07-本系列怎么读-主线支线与学习路径.md` | — | 🟡 草稿 |
-| 成为全栈·产品篇·全栈能力地图：你读完这套会拥有什么 | — | `articles/M0-08-全栈能力地图-你读完这套会拥有什么.md` | — | 🟡 草稿 |
+| 成为全栈·产品篇·领域建模：一个文章系统有哪些实体、什么关系 | — | `articles/M0-04-领域建模-一个文章系统有哪些实体什么关系.md` | https://blog.csdn.net/fungleo/article/details/164139553 | 🟢 已发布 |
+| 成为全栈·产品篇·契约先行：设计一套被七个端复用的 API | — | `articles/M0-05-契约先行-设计一套被七个端复用的API.md` | https://blog.csdn.net/fungleo/article/details/164140515 | 🟢 已发布 |
+| 成为全栈·产品篇·工程公约：git tag、仓库组织与 CSDN 发布流程 | — | `articles/M0-06-工程公约-git-tag仓库组织与CSDN发布流程.md` | https://blog.csdn.net/fungleo/article/details/164166250 | 🟢 已发布 |
+| 成为全栈·产品篇·本系列怎么读：主线、支线与学习路径 | — | `articles/M0-07-本系列怎么读-主线支线与学习路径.md` | https://blog.csdn.net/fungleo/article/details/164167103 | 🟢 已发布 |
+| 成为全栈·产品篇·全栈能力地图：你读完这套会拥有什么 | — | `articles/M0-08-全栈能力地图-你读完这套会拥有什么.md` | https://blog.csdn.net/fungleo/article/details/164167281 | 🟢 已发布 |
 
 ## M1 · Node 后端（实现中）
 

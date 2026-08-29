@@ -38,7 +38,7 @@ M0 开篇/M1 Node/M2 React/M3 Next(含会员中心)/M4 Flutter/M5 Taro/M6 Go/M7 
 - `docs/prd/README.md` 索引
 
 ## 当前进度里程碑（2026-08-26）
-- **M0 八篇产品侧文章已全部成文**（暂存 `articles/` 草稿）；**M0-01、M0-02 已发 CSDN**（URL 回填 `ARTICLES.md` 置 🟢）；M0-03~08 仍 🟡 草稿；tag 为里程碑式，M0 不打 tag。
+- **M0 产品篇八篇已全量收官（2026-08-29）**：8 篇全发 CSDN + 正文 `{{LINK}}` 内链全量穿插完成 + `ARTICLES.md` 八行全 🟢 回填 URL；tag 为里程碑式，M0 不打 tag。
 - **M1 Node 后端：开发完成 + 结构调优完成 + 总把控独立复验通过 + 门禁全绿，2026-08-27 正式冻结（tag `node-backend-v1.0`）**（代码库 `node-backend/`，根目录；文档在 `docs/node-backend/`）。
   - 复验证据（2026-08-27 冻结前实测）：tsc 0 error / biome 115 文件 0 问题 / vitest **133 passed** / 契约双门 33 OK / 契约字节级未改。
   - 穿透确认零假修复：`refresh_tokens` 有状态表真存在（落实 Q3-A）、扁平信封真执行（落实 Q1）。

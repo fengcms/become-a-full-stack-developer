@@ -2,7 +2,10 @@
 
 **本文目标**：前面几篇讲了「做什么」——七端、建模、契约。这篇讲「怎么把这一切组织起来，让它能复现」。一套专栏最大的承诺是「读者跟着做能跑起来」，而让这个承诺成立的东西，就是工程公约：monorepo 单仓、里程碑式 git tag、一份 `ARTICLES.md` 对照表、以及 CSDN 发布流程。
 
-**前置知识**：建议先读 [用一个真实系统串起全栈](https://blog.csdn.net/fungleo/article/details/164120426)（七端全貌）、{{LINK:M0-05}}（契约）。本文把它们的「组织形式」钉死。
+**前置知识**：建议先读 [用一个真实系统串起全栈](https://blog.csdn.net/fungleo/article/details/164120426)（七端全貌）、[设计一套被七个端复用的 API](https://blog.csdn.net/FungLeo/article/details/164140515)（契约）。本文把它们的「组织形式」钉死。
+
+![git tag、仓库组织与 CSDN 发布流程](https://i-blog.csdnimg.cn/direct/c4daf9a5ec484574b9e0e08da107e184.png)
+
 
 ---
 
@@ -26,7 +29,7 @@ become-a-full-stack-developer/
 
 把这种「一份契约、多端同仓」的结构画出来：
 
-{{IMG:06-monorepo结构图}}
+![monorepo结构图](https://i-blog.csdnimg.cn/direct/71f826e0e7bc41569e8146c24139f6ba.png)
 
 你可能会问，为什么不用七个独立仓库？因为 tag 机制会垮。如果七个端各占一个 repo，那根 tag `node-backend-v1.0` 只能锁住 M1 自己的代码，读者想看「当时整个系统长什么样」，得手动去另外六个 repo 翻各自的对应 commit——而它们根本没打对应的 tag。单仓让一根 tag 锁住全局，这才是「可复现」能成立的前提。
 
@@ -51,7 +54,7 @@ become-a-full-stack-developer/
 
 把「打 tag → checkout → 拿到当时完整代码」的链路画出来：
 
-{{IMG:06-tag流程}}
+![tag流程](https://i-blog.csdnimg.cn/direct/476eef2d16a2419d9bd010662015eeeb.png)
 
 ---
 
@@ -85,9 +88,9 @@ become-a-full-stack-developer/
 
 这套流程的意义，是把「写一篇技术博客」升级成「交付一个可复现的教学产品」。读者不是来看热闹，是来跟着做出来的。
 
-把这条「写作 → 打 tag → 发 CSDN → 回填」的闭环画成环：
+把这条「写作 → 发 CSDN → 回填」的闭环画成环：
 
-{{IMG:06-发布流程}}
+![发布流程](https://i-blog.csdnimg.cn/direct/d5d9c2bf69f44e4e8f5163e635e300a9.png)
 
 给读者的实操建议——这套公约不是写给我自己看的，是给你用的：你 clone 仓库后，读到某篇想照着跑，直接 `git checkout node-backend-v1.0`（换成你读的篇对应的里程碑 tag），就能拿到那个端冻结时刻的完整代码，不用手动对齐版本。如果某篇引用了 `Article.status`，而你本地是当前版本对不上，记得 checkout 对应 tag，才看得到文章说的那个世界。
 
@@ -122,16 +125,14 @@ become-a-full-stack-developer/
 ## 延伸阅读
 
 - [用一个真实系统串起全栈](https://blog.csdn.net/fungleo/article/details/164120426)——本文的 monorepo 结构，对应那篇的七端规划。
-- {{LINK:M0-07}}《本系列怎么读》——下一篇，也是 M0 收官，给你两类读者的阅读路径。
-- （地基文档）[00-项目章程](./00-项目章程.md)——本文所有公约的权威出处（仓库组织 R14、tag 机制、CSDN 主阵地）。
+- [本系列怎么读](https://blog.csdn.net/fungleo/article/details/164167103)——下一篇，也是 M0 收官，给你两类读者的阅读路径。
+- （地基文档）[00-项目章程](https://github.com/fengcms/become-a-full-stack-developer/blob/master/docs/prd/00-%E9%A1%B9%E7%9B%AE%E7%AB%A0%E7%A8%8B.md)——本文所有公约的权威出处（仓库组织 R14、tag 机制、CSDN 主阵地）。
 
 ## 订阅这个专栏
 
 如果你也想跟着一个真实系统，从「调接口的人」走到「设计系统的人」，欢迎订阅我的《成为全栈开发工程师》专栏。后续每篇都会带着可运行的代码和完整的设计取舍走下来，欢迎在评论区讨论、指正。
 
-{{IMG:CTA-订阅专栏}}
+![订阅专栏](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
 
-## 相关资源
-
-- 本系列专栏：https://blog.csdn.net/fungleo/category_13204651.html（订阅看全部篇章）
-- 完整项目仓库：https://github.com/fengcms/become-a-full-stack-developer
+- 本系列专栏：[https://blog.csdn.net/fungleo/category_13204651.html](https://blog.csdn.net/fungleo/category_13204651.html)（订阅看全部篇章）
+- 完整项目仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
