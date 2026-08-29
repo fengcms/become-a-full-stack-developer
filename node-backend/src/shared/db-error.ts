@@ -1,5 +1,5 @@
 /**
- * src/lib/db-error.ts
+ * src/shared/db-error.ts
  * 数据库错误识别工具。
  *
  * 把底层驱动（better-sqlite3 / libsql）抛出的原生错误映射为领域语义，

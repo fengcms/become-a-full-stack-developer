@@ -1,5 +1,5 @@
 /**
- * src/lib/stats.ts
+ * src/services/stats.ts
  * 全站统计（B7）：published 文章数 / approved 评论数 / active 用户数 / 阅读量累计。
  * 纯查询，无 HTTP 层依赖。
  */

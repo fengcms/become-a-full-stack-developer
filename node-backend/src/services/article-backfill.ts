@@ -1,5 +1,5 @@
 /**
- * src/lib/article-backfill.ts
+ * src/services/article-backfill.ts
  * 存量文章标签关联回填（B3.5）：把 articles.tags（JSON 字符串）解析为 article_tags 关联行。
  *
  * 背景：B3 建好 article_tags 关联表，但历史文章从未写入该表（dead table），导致

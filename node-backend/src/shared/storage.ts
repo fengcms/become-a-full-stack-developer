@@ -1,5 +1,5 @@
 /**
- * src/lib/storage.ts
+ * src/shared/storage.ts
  * 存储适配层（对应主计划"适配层"第二处）。STORAGE_DRIVER 决定实现：
  * local = 本地磁盘（开发 / 测试 / 兜底）；r2 = Cloudflare R2（生产，需绑定）。
  * 业务代码只依赖 StorageProvider 接口，不直接接触具体驱动。

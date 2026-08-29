@@ -1,5 +1,5 @@
 /**
- * src/lib/article.ts
+ * src/services/article.ts
  * 文章领域纯逻辑（与路由解耦，便于单测）：序列化、slug 校验、状态转移矩阵、列表查询。
  * 所有 DB 行 snake_case → 契约 camelCase 在此统一完成。
  *

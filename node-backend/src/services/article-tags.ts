@@ -1,5 +1,5 @@
 /**
- * src/lib/article-tags.ts
+ * src/services/article-tags.ts
  * 文章 ↔ 标签关联（article_tags）领域逻辑：标签名解析与关联同步。
  *
  * 解析约定（B3.5）：入库文章里的 tags 字符串按「slug == name」约定解析为已存在的

@@ -1,5 +1,5 @@
 /**
- * src/lib/codes.ts
+ * src/shared/codes.ts
  * 契约错误码单一事实源（对齐 docs/api/openapi.v1.yaml v1.11.0 的 ErrorCode 枚举）。
  * 所有业务错误都必须从这里取值，禁止在别处硬编码数字。
  *

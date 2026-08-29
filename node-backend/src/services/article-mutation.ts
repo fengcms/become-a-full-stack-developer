@@ -1,9 +1,9 @@
 /**
- * src/lib/article-mutation.ts
+ * src/services/article-mutation.ts
  * 文章写侧共享领域逻辑：作者名解析、状态/slug 解析、创建/更新文章的 DB 操作。
- * 与 lib/article.ts（读侧：序列化 / 列表查询）职责分离，避免单文件过载（≤200 行铁律）。
+ * 与 services/article.ts（读侧：序列化 / 列表查询）职责分离，避免单文件过载（≤200 行铁律）。
  *
- * 创建/更新文章时一并维护 article_tags 关联（B3.5，见 lib/article-tags），
+ * 创建/更新文章时一并维护 article_tags 关联（B3.5，见 services/article-tags），
  * 保持 junction 与文章生命周期一致。
  */
 import { and, eq, isNull } from 'drizzle-orm';

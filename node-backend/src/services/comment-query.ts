@@ -1,7 +1,7 @@
 /**
- * src/lib/comment-query.ts
+ * src/services/comment-query.ts
  * 评论路由（read / write 拆分后）共用的轻量查询辅助。
- * 与 lib/article.ts 同源模式：lib 层持有 DB 查询，避免 comments-read / comments-write
+ * 与 services/article.ts 同源模式：services 层持有 DB 查询，避免 comments.ts
  * 两文件互相 import。仅含纯查询，不持有任何 Hono 上下文。
  */
 import { and, eq, isNull } from 'drizzle-orm';

@@ -1,5 +1,5 @@
 /**
- * src/lib/pagination.ts
+ * src/shared/pagination.ts
  * 分页与排序解析（对齐契约 components/parameters 的 Page / PageSize / Sort）。
  * Sort 采用「带符号字段名」约定：`-publishedAt` 倒序、`publishedAt` 正序；
  * publishedAt 为 NULL 时以 created_at 参与比较（COALESCE），末位追加 `id DESC` 稳定键避免分页重漏。

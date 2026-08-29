@@ -1,5 +1,5 @@
 /**
- * src/lib/related.ts
+ * src/services/related.ts
  * 文章关联查询（B7）：取已发布文章、上一篇/下一篇、相关文章。
  * 纯查询逻辑，不触碰 HTTP 层；DB 行 snake_case → 契约 camelCase 在此完成。
  *

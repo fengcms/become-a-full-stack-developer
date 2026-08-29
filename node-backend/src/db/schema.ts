@@ -136,7 +136,7 @@ export const categories = sqliteTable(
     slug: text('slug').notNull(),
     description: text('description'),
     // 自关联父节点；SQLite 自引用 FK 会造成 Drizzle 类型成环，且 FK 默认不强制，
-    // 父存在性 / 成环 / 级联由应用层（lib/category.ts + 删除守卫）保证，故此处不声明 references。
+    // 父存在性 / 成环 / 级联由应用层（services/category.ts + 删除守卫）保证，故此处不声明 references。
     parentId: integer('parent_id'),
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
@@ -152,7 +152,7 @@ export type NewCategory = typeof categories.$inferInsert;
 
 /**
  * 标签表（B3，对齐契约 Tag 实体）。扁平集合，无层级。
- * articleCount 不存表，运行时由 article_tags 关联实时聚合（见 lib/tag.ts）。
+ * articleCount 不存表，运行时由 article_tags 关联实时聚合（见 services/tag.ts）。
  */
 export const tags = sqliteTable(
   'tags',
@@ -202,7 +202,7 @@ export type ArticleTagRow = typeof articleTags.$inferSelect;
  * reviewing 仅能由 `PATCH /comments/{id}/status`（editor/admin）置位与移出。
  * parentId 指向同表另一行（单层回复）；自关联同 B3 不声明 references，避免 Drizzle 类型成环，
  * 父存在性 / 级联删除由应用层（routes/comments.ts 级联删除子回复）保证。
- * content 存已做敏感词转星号处理后的展示文本（见 lib/comment.ts moderateContent）。
+ * content 存已做敏感词转星号处理后的展示文本（见 services/comment.ts moderateContent）。
  */
 export const comments = sqliteTable('comments', {
   id: integer('id').primaryKey({ autoIncrement: true }),

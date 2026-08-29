@@ -1,5 +1,5 @@
 /**
- * src/lib/password.ts
+ * src/shared/password.ts
  * 密码哈希封装。选型 bcryptjs（纯 JS 实现，零原生编译依赖，契合 B0「本地 + CF 双端」诉求）。
  * 成本参数 12 轮：教程项目以安全可见性优先，注册/登录频次低，性能开销可接受。
  */

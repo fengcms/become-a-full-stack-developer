@@ -1,5 +1,5 @@
 /**
- * src/lib/http-error.ts
+ * src/shared/errors.ts
  * 应用统一错误类型。任何业务失败都抛 `AppError`，由顶层 error 中间件转成契约信封。
  */
 

@@ -1,5 +1,5 @@
 /**
- * src/lib/category.ts
+ * src/services/category.ts
  * 分类领域纯逻辑（与路由解耦，便于单测）：序列化、无限级树构建、环检测、深度计算、面包屑。
  * 所有 DB 行 snake_case → 契约 camelCase 在此统一完成。
  *

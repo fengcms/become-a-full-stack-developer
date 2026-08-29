@@ -12,7 +12,7 @@
 import { readEnv } from '@/config/env';
 import { createLocalDb, setDb } from '@/db/client';
 import { migrate } from '@/db/migrate';
-import { backfillArticleTags } from '@/lib/article-backfill';
+import { backfillArticleTags } from '@/services/article-backfill';
 
 const run = async (): Promise<void> => {
   const env = readEnv(process.env as Record<string, string | undefined>);

@@ -1,5 +1,5 @@
 /**
- * src/lib/comment.ts
+ * src/services/comment.ts
  * 评论领域纯逻辑（与路由解耦，便于单测）：三态类型、基础敏感词过滤、入参 schema、序列化。
  * 所有 DB 行 snake_case → 契约 camelCase 在此统一完成。
  *

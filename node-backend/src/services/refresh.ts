@@ -1,5 +1,5 @@
 /**
- * src/lib/refresh.ts
+ * src/services/refresh.ts
  * 有状态刷新令牌（refresh token）模型：签发 → 旋转 → 作废，全部落在 refresh_tokens 表。
  *
  * 设计要点（契约 POST /auth/refresh 强制旋转策略）：

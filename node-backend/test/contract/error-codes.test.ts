@@ -1,7 +1,7 @@
 /**
  * test/contract/error-codes.test.ts
  * 契约一致性门禁（审阅 B01 / B07）：用脚本比对 docs/api/openapi.v1.yaml 中每个错误响应的
- * 业务码 ↔ HTTP 状态，断言与 lib/codes.ts 的 HttpForCode 完全一致。
+ * 业务码 ↔ HTTP 状态，断言与 shared/codes.ts 的 HttpForCode 完全一致。
  * 这把"契约加 code 而漏配 / 配错 HTTP"的回归前移到测试阶段。
  */
 import { readFileSync } from 'node:fs';

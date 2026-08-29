@@ -1,5 +1,5 @@
 /**
- * src/lib/toc.ts
+ * src/shared/toc.ts
  * 目录解析（B7）：由文章 Markdown 正文解析标题层级，生成锚点目录。
  * 纯函数、无 DB 依赖，便于单测。
  */

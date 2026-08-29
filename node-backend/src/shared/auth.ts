@@ -1,5 +1,5 @@
 /**
- * src/lib/jwt.ts
+ * src/shared/auth.ts
  * 访问令牌签发 / 校验，基于 Hono 内置的 HS256 JWT（无额外依赖）。
  * 刷新令牌见 B1（有状态 refresh_tokens 表，支持旋转 / 作废）。
  */

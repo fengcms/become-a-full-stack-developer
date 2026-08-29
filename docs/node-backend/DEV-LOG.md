@@ -453,3 +453,21 @@ P3-2/3/4 全是注释/文档不精确（services 例外注释漏 3 处、`NOTES 
 
 ### R-R3. 「无首 admin」死锁写进快速上手，而非藏进附录
 `scripts/seed-users.ts` 的存在意义就是破「register 强制 member + 提权需 admin」的鸡生蛋死锁；README 在「数据库与种子」节用 ⚠️ 强调**必须 `pnpm seed` 建首个 admin，严禁手写 SQL 直插**。把"为什么必须有这一步"讲清楚，比只列命令更能防读者踩坑。**核心认知：文档里最该高亮的不是命令，而是"不这样做会死锁/出错"的因果关系。**
+
+---
+
+## 注释与目录结构同步（2026-08-29）
+
+> 用户发现：结构调优把 src/lib/* 下沉到 services/shared/types 后，很多文件头注释仍在写旧的 `src/lib/xxx.ts` 路径，没同步。要求逐个核对并修正到最新结构。
+
+### C-R1. 文件头「路径标签」是迁移时漏改的高频点
+结构调优只动了 import 与文件位置，但每个文件第 2 行那条模块路径标签（如 `* src/lib/comment.ts`）没跟着改，于是一堆文件挂着旧 lib 路径、实际却躺在 services/ 或 shared/。逐文件核对：`services/*` 11 个、`shared/*` 10 个（其中 errors←http-error、auth←jwt 是改名）共 **21 个文件头路径标签**改为当前真实路径。**核心认知：文件移动后，除 import 外，文件顶部的「本文件路径注释」也最容易漏改；这类注释是给读者定位用的，标错比不标更糟。**
+
+### C-R2. 内联引用旧 lib 的注释同样要顺着改
+不止文件头——`comment-query.ts`/`article-mutation.ts` 里「与 lib/article.ts 同源」「见 lib/article-tags」、`db/schema.ts` 里「见 lib/tag.ts / lib/category.ts / lib/comment.ts」、以及 `test/contract/error-codes.test.ts` 的「lib/codes.ts」，都是指向旧落点的注释。统一改为 services/* 或 shared/*（codes 已归 shared）。**顺手把 comment-query.ts 里过期的「comments-read / comments-write」路由名也改成合并后的 comments.ts——既然那行已在改，就一并修正，不留半新半旧的引用。**
+
+### C-R3. 意外收获：backfill 脚本有个断链 import
+复扫时发现 `scripts/backfill-article-tags.ts:15` 仍 `import ... from '@/lib/article-backfill'`，但 `src/lib` 已清空、函数现位于 `@/services/article-backfill`。这是**会崩的断链 import**（`pnpm backfill` 启动即模块解析失败），不在「注释」范围内但同源。已改为 `@/services/article-backfill` 并确认 `backfillArticleTags` 在该文件导出。**核心认知：lib→services 迁移的回归面不只是 src/ 注释，scripts/ 里的 import 也走 `@/` 别名、同样会漏；grep `@/lib/` 是迁移后必做的一遍自检。**
+
+### C-R4. 门禁未受影响
+纯注释改动 + 1 处 import 路径修正（目标文件真实存在）。`biome check src/ scripts/backfill-article-tags.ts` → 64 文件 0 问题。未碰契约、未碰逻辑，双门不受影响。

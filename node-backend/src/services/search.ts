@@ -1,5 +1,5 @@
 /**
- * src/lib/search.ts
+ * src/services/search.ts
  * 搜索（B7）：文章命中 标题/摘要/正文 的 LIKE；会员命中 昵称/用户名 的 LIKE。
  * 纯查询逻辑，不触碰 HTTP 层；DB 行 snake_case → 契约 camelCase 在此完成。
  */
