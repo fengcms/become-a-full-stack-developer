@@ -498,3 +498,9 @@ storage.ts 新增 `R2Storage`（put/get/delete），用 minimal `R2BucketLike` �
 - **P2（非阻断）已做**：`node:fs/promises`/`node:path` 由顶层静态 import 改为 `LocalStorage` 内按需动态 `import()`（缓存到模块级 `fsCache`），并用字符串拼接 `joinPath` 替代 `node:path.join`。R2 生产 bundle 不再静态引入 fs；local 驱动方法触发时才加载。顶层仅保留 `node:crypto`（两驱动共用，且 nodejs_compat 已必需）。
 - **P3（设计权衡）确认接受**：A 策略全量经 Worker 中转（联调期合理，量大再优化）、每请求重建 storage 实例（影响极小）、R2 对象不存 contentType（策略 A 下由 `/files` 按扩展名推断，正确）、去重 TOCTOU（与上传去重 P3-1 同裁定，R2 PUT 幂等无损坏）。均记录为后续优化，本期不动。
 - **门禁复绿**：tsc 0 / biome 0（117 文件）/ vitest 140 passed / 契约双门全过 / openapi.v1.yaml git diff 0。审阅报告的「测试绿、部署挂」盲区由代码审阅发现，已闭环。
+
+### DEP-R1. 部署操作文档落地（2026-08-29）
+- **动因**：R2 部署的分散决策与命令散落在多轮对话回复里，owner 需要一份可独立照做的操作手册。
+- **交付**：`docs/node-backend/部署到Cloudflare指南.md`——阶段 0-5 可复制命令（login / secret put / d1+r2 create 回填 id / drizzle-kit generate + wrangler d1 execute 建表 / D1 等价 SQL 建首 admin / wrangler deploy + 自定义域名 DNS）、验证、回滚、常见问题表、附录含完整 `wrangler.toml` 模板与 D1 seed SQL。
+- **对齐真实状态**：文档命令与冻结后代码核对——`nodejs_compat` 已配（P1 修复）、R2 驱动已补（`STORAGE_DRIVER=r2`）、`drizzle.config.ts` dialect=sqlite、`seed-users.ts` 底部已备 D1 SQL。明确「无 deploy npm script，直接用 wrangler deploy CLI」「JWT_SECRET 走 secret 不进 git」。
+- **决策保留**：上传→补 R2、owner 本机 login、绑定自定义域名、策略 A（/files 中转），均记入文档 §9 决策记录。

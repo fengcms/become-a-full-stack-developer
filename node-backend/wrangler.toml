@@ -8,7 +8,7 @@ compatibility_flags = ["nodejs_compat"]
 
 # ── 自定义域名（部署后需在 CF 配 DNS + SSL）──
 # 取消注释并填入你的 API 域名；若先用 *.workers.dev 默认子域联调，可暂保持注释。
-# routes = [{ pattern = "api.yourdomain.com", custom_domain = true }]
+routes = [{ pattern = "api-befull.kao9.com", custom_domain = true }]
 
 # ── 部署环境变量（非敏感）──
 [vars]
@@ -16,7 +16,7 @@ NODE_ENV = "production"
 DB_FILE = ":memory:"            # CF 下无意义（走 D1 binding），保留无害
 STORAGE_DRIVER = "r2"          # 生产必须 r2（local 写盘在 CF 只读文件系统会失败）
 # CORS：填前端实际域名（逗号分隔）；留空或 '*' 将被拒跨域（审阅 B05）
-CORS_ORIGINS = "https://www.yourdomain.com,https://admin.yourdomain.com"
+CORS_ORIGINS = "https://befull.kao9.com,https://manage-befull.kao9.com"
 
 # JWT_SECRET 为敏感项，走加密 secret（不进 git / 不写本文件）：
 #   wrangler secret put JWT_SECRET
@@ -27,10 +27,10 @@ CORS_ORIGINS = "https://www.yourdomain.com,https://admin.yourdomain.com"
 [[d1_databases]]
 binding = "DB"
 database_name = "node-backend"
-database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+database_id = "fe3d7e63-39e2-44f8-9218-0f6d9fe4dc16"
 
 # ── Cloudflare R2 绑定 ──
 # 先执行：wrangler r2 bucket create node-backend → bucket 名填下方
 [[r2_buckets]]
-binding = "R2_BUCKET"
+binding = "node_backend"
 bucket_name = "node-backend"
