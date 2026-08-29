@@ -690,3 +690,18 @@ P3-1 新增的 2 例 parentId 测试（幽灵引用 → 404 / 跨文章引用 �
 5. **契约安全**：`/files` 在 `/api/v1` 外，OpenAPI 不含此路径；`Attachment.url` 仅 string/uri/maxLength:512，`/files/{key}` 合规。DEV-LOG R-R1~R-R5 如实未虚报 deploy，但漏识 nodejs_compat。
 
 **owner 待办**：交开发 AI 按报告 §五 修 P1（补 `compatibility_flags = ["nodejs_compat"]`，可选做 P2）→ 复跑五门 → 架构师复批 → owner 实际 `wrangler deploy` 验证 Worker 启动 → R2 部署补充收口。
+
+## B-R2部署 复审批复（2026-08-29，BackendArchitect）
+
+被复验：开发 AI 回复 `B-R2部署-后端代码-开发AI回复.md` + 提交 `c900ea3`「补全CF部署兼容性配置并优化本地存储导入」。
+
+**裁定：复批通过（代码层面）。** 复审批复：`docs/node-backend/review/B-R2部署-复审批复.md`。
+
+核验要点：
+1. **P1 落实**：`wrangler.toml:7` 确为 `compatibility_flags = ["nodejs_compat"]`，注释写清"即便 r2 模式顶层 node:fs 仍求值故不可省"盲区。Worker 模块图 `node:crypto` 顶层导入可解析，部署阻断解除。
+2. **P2 落实**：`storage.ts` 顶层已无 `node:fs`/`node:path` 静态 import；`loadFs()` 动态 `import('node:fs/promises')` 仅 LocalStorage 方法内 `await` 触发，R2 模式 `LocalStorage` 永不被实例化 → 动态 import 永不执行，R2 bundle 不静态引 fs。
+3. **P3 接受**：A/B/C/D 四项设计权衡与初审一致，无新增风险。
+4. **五门复验全绿（独立跑，非采信自证）**：tsc0 / biome 117 文件 0 / vitest **140 passed** / 结构门 STRUCTURE_OK / 语义门 33 OK；`openapi.v1.yaml` git diff **0 行**（冻结保持）；变更范围仅 `storage.ts`+`wrangler.toml` 两文件、测试未动。
+5. **新观察（P3 非阻断）· 防御纵深削弱**：P2 移除 `storage.ts` 的 `SAFE_KEY`/`resolveKey`（原第二层路径穿越防御），改 `joinPath` 直接拼接。穿透核验调用链——`get` 唯一调用方 `files.ts:37`（前 `files.ts:35` 已 SAFE_KEY 校验 404）、`delete` 唯一调用方 `attachment.ts:151`（传 DB 内容寻址 key 非用户可控）、`put` 内部生成 key——**当前所有 key 均上游校验或内容寻址，实践无穿越可利用**。但 storage 层不再自保，建议后续补回 `get/delete` 内 SAFE_KEY 校验或显式记录信任不变量。非阻断。
+
+**结论**：复批通过，无 P1/P2 阻塞。待 owner 本机 `wrangler deploy` 真实 CF 运行时验证 Worker 启动（唯一权威 P1 终验）→ R2 部署补充收口。P3 防御纵深建议可冻结后顺带处理。
