@@ -32,5 +32,7 @@ database_id = "fe3d7e63-39e2-44f8-9218-0f6d9fe4dc16"
 # ── Cloudflare R2 绑定 ──
 # 先执行：wrangler r2 bucket create node-backend → bucket 名填下方
 [[r2_buckets]]
-binding = "node_backend"
+# binding 必须与 src/config/env.ts 的 R2_BUCKET 一致，否则线上 STORAGE_DRIVER=r2 时
+# createStorage 会因 env.R2_BUCKET 为 undefined 抛错，上传/附件接口全部 500。
+binding = "R2_BUCKET"
 bucket_name = "node-backend"

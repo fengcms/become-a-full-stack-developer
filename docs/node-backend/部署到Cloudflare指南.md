@@ -202,9 +202,12 @@ curl https://api.yourdomain.com/api/v1/health
 | 现象 | 原因 | 解决 |
 |---|---|---|
 | `wrangler deploy` 模块求值即崩 / 报无法解析 `node:*` | 缺 `nodejs_compat` | 确认 `wrangler.toml` 有 `compatibility_flags = ["nodejs_compat"]`（已配置，勿删） |
+| 上传接口 500 且报错 `R2_BUCKET 未绑定` | `wrangler.toml` 的 `[[r2_buckets]]` `binding` 名与 `src/config/env.ts` 的 `R2_BUCKET` 不一致（曾误写成 `node_backend`） | 改成 `binding = "R2_BUCKET"` 后重部署；`bucket_name` 可保持 `node-backend`，仅绑定变量名须对齐 |
 | 上传接口 500 / 文件读不到 | `STORAGE_DRIVER` 设为 `local` | 改为 `r2`（toml 已设 `r2`） |
 | 前端跨域被拒 | `CORS_ORIGINS` 未含前端域名 | 填真实域名后 `wrangler deploy` |
 | 登录失败（密码不对） | D1 哈希与线上算法不一致 | 必须用 `bcryptjs.hashSync(pwd, 12)` 本地生成后粘贴（rounds=12） |
+| 改/重置 admin 密码（D1） | 用错哈希或忘密码 | 本地 `bcryptjs.hashSync('新密码',12)` 生成哈希 → `UPDATE users SET password_hash='<hash>' WHERE username='admin'`；⚠️ 哈希含 `$`，**务必用 `cat > f.sql <<'EOF' … EOF` 落文件 + `--file=f.sql` 执行**，避免 shell 把 `$2`/`$1` 当位置参数展开截断哈希 |
+| 取附件 404（纯文本 `404 Not Found`，非 JSON 信封） | 用了 `/api/v1/files/<key>`，但文件路由挂在根 `/files`（策略 A：附件直出不进 /api/v1 前缀） | 用 `https://<domain>/files/<key>`（**域名根 + /files，不要带 /api/v1**）；前端拼接须用 `ORIGIN + url` 而非 `API_BASE + url` |
 | D1 建表报语法错 | schema 含 D1 不支持的语法 | 贴报错给开发 AI 改 `schema.ts` |
 | 自定义域名 SSL 不生效 | DNS/CNAME 未传播 | 等几分钟；确认 CNAME 指向 `<subdomain>.workers.dev` |
 
