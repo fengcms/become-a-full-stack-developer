@@ -257,6 +257,32 @@ describe('B3 分类 · 写操作权限与冲突', () => {
     expect(moveB.status).toBe(200);
   });
 
+  it('更新时省略 parentId/description 保留原值（不静默挪根）', async () => {
+    await register('keep_ed');
+    await elevate('keep_ed', 'editor');
+    const ed = await tokenOf('keep_ed');
+    const root = await json<CategoryResp>(await createCategory(ed, { name: 'R', slug: 'r' }));
+    const child = await json<CategoryResp>(
+      await createCategory(ed, {
+        name: 'C',
+        slug: 'c',
+        parentId: root.data.id,
+        description: '原描述',
+      }),
+    );
+    // 仅改 name，省略 parentId 与 description
+    const res = await app.request(`${BASE}/${child.data.id}`, {
+      method: 'PUT',
+      headers: authH(ed),
+      body: JSON.stringify({ name: 'C2', slug: 'c' }),
+    });
+    expect(res.status).toBe(200);
+    const body = await json<CategoryResp>(res);
+    expect(body.data.parentId).toBe(root.data.id); // 仍挂原父，未挪根
+    expect(body.data.description).toBe('原描述'); // 描述保留
+    expect(body.data.name).toBe('C2');
+  });
+
   it('删除守卫：有子节点 → 409；干净叶子 → 200 并不可再查', async () => {
     await register('del_ed');
     await elevate('del_ed', 'editor');

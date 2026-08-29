@@ -504,3 +504,21 @@ storage.ts 新增 `R2Storage`（put/get/delete），用 minimal `R2BucketLike` �
 - **交付**：`docs/node-backend/部署到Cloudflare指南.md`——阶段 0-5 可复制命令（login / secret put / d1+r2 create 回填 id / drizzle-kit generate + wrangler d1 execute 建表 / D1 等价 SQL 建首 admin / wrangler deploy + 自定义域名 DNS）、验证、回滚、常见问题表、附录含完整 `wrangler.toml` 模板与 D1 seed SQL。
 - **对齐真实状态**：文档命令与冻结后代码核对——`nodejs_compat` 已配（P1 修复）、R2 驱动已补（`STORAGE_DRIVER=r2`）、`drizzle.config.ts` dialect=sqlite、`seed-users.ts` 底部已备 D1 SQL。明确「无 deploy npm script，直接用 wrangler deploy CLI」「JWT_SECRET 走 secret 不进 git」。
 - **决策保留**：上传→补 R2、owner 本机 login、绑定自定义域名、策略 A（/files 中转），均记入文档 §9 决策记录。
+
+---
+
+## 分类 PUT 静默挪根 修复（冻结后首个行为 bug 增量维护，2026-08-29）
+
+> 前端 AI 联调时预警：`CategoryNode` 无 `parentId` + `PUT /categories/{id}` 全量替换，编辑子分类漏传 parentId 会被置空、静默挪到根。归因三部分责任（前端误解 / 后端实现 bug / 契约欠规范），owner 确认开工修复。纪律：先改契约 YAML 注明省略字段语义 → 改实现 → 补回归测试 → 复跑双门。
+
+### FIX-R1. 同一函数内「局部更新 vs 全量替换」语义不一致才是真 bug
+`src/services/category.ts` 的 `updateCategory` 里：`parentId`/`description` 用 `input.x ?? null`（省略即置空），而 `sortOrder` 用 `input.sortOrder ?? existing.sortOrder`（省略保留原值）。**同一函数两种语义并存**，证明它不是"有意的 PUT 全量替换"，而是 `parentId`/`description` 漏写保留逻辑。修复：`parentId` 改 `input.parentId ?? existing.parentId`、`description` 改 `input.description ?? existing.description`，与 sortOrder 对齐成统一「局部更新」语义——省略字段保留原值，绝不静默挪根。
+
+### FIX-R2. 契约须写明「省略字段保留原值」，消除 PUT 语义歧义
+`PUT /categories/{id}` 用 `PUT`（REST 暗示全量替换）却只 `required:[name,slug]`，契约从未声明可选字段省略时的行为。在 openapi.v1.yaml 的 PUT description 加一句：「本端点为局部更新：可选字段（parentId/description/sortOrder）省略时后端保留原值，不会置空」。这是冻结 v1.11.0 的有意增量（仅 +2 行说明），复跑双门仍 33 OK。
+
+### FIX-R3. 回归测试反向锁死「省略不动」
+`test/routes/categories.test.ts` 增用例「更新时省略 parentId/description 保留原值（不静默挪根）」：建 root + child（带 description），仅 PUT `{name:'C2',slug:'c'}`，断言 `parentId` 仍是 root.id、`description` 仍是原值、`name` 已更新。一旦有人把 `?? existing` 改回 `?? null`，测试立刻红（而非线上静默挪根）。
+
+### FIX-R4. 门禁全绿 + 部署提醒
+六门全绿：tsc 0 / biome 0（117 文件，格式自动修复 1 处）/ vitest **141 passed**（140+1，categories 单文件 11 passed）/ openapi_spec_validator OK / check_contract.py 语义门全过（33 OK 维持）/ yaml diff 仅 +2 行说明（有意增量，非违约）。**🔴 关键交接**：改的是已部署到 Cloudflare 的 Worker 代码，必须 `wrangler deploy` 重新部署线上才生效；契约 YAML 改动仅文档无需部署。建议 owner：① git commit 增量；② bump patch tag（如 node-backend-v1.0.1）；③ `cd node-backend && wrangler deploy`。前端 AI 无需改代码（本就该回传 parentId；现后端即使漏传也不挪根，更安全）。

@@ -1538,6 +1538,8 @@ paths:
       description: >
         变更 parentId 时后端须校验不产生**环**（不能把节点挂到自己的子孙下），
         否则返回 409 / code 3002。无限级自关联树的经典陷阱，两实现必须一致（见 02 §2.2）。
+        本端点为**局部更新**：请求体可选字段（parentId / description / sortOrder）省略时，
+        后端保留该行原值，不会置空（例如省略 parentId 不会把子分类静默挪到根）。
       parameters:
         - name: id
           in: path

@@ -309,7 +309,7 @@ export const updateCategory = async (
   )[0];
   if (dup && dup.id !== id) throw new AppError(ErrCode.CONFLICT, 409); // 3002 slug 占用
 
-  const newParent = input.parentId ?? null;
+  const newParent = input.parentId ?? existing.parentId;
   if (newParent !== existing.parentId) {
     const rows = await allCategories();
     if (newParent != null) {
@@ -331,7 +331,7 @@ export const updateCategory = async (
     .set({
       name: input.name,
       slug: input.slug,
-      description: input.description ?? null,
+      description: input.description ?? existing.description,
       parentId: newParent,
       sortOrder: input.sortOrder ?? existing.sortOrder,
       updatedAt: now,
