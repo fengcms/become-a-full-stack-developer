@@ -30,8 +30,9 @@
 
 ## 三、🔴 关键坑（契约缺口，前端兜底）
 
-- **`CategoryNode` schema 无 `parentId` 字段**：父子关系靠 `children` 嵌套表达；而 `PUT /categories/{id}` 是**全量替换**——编辑子分类时若漏传 parentId，很可能被后端置空、**静默挪到根**。
-  - 解法：抽纯函数 `buildParentMap(tree)` 从树反推 `id → parentId`，编辑时回填。已在 `categoryTree.ts` 头注释写明。
+- **`CategoryNode` schema 无 `parentId` 字段**：父子关系靠 `children` 嵌套表达（树结构设计如此，非字段缺失）。编辑子分类时若漏传 parentId，历史上后端会把子分类**静默挪到根**——这是早期的真实 bug（P3 开发时按「全量替换」假设兜底）。
+  - 🔧 **后端已修（node-backend-v1.0.1）**：`PUT /categories/{id}` 现为**局部更新**（openapi.v1.yaml:1541-1542），省略 parentId / description / sortOrder 保留原值，不再静默挪根。详见 `docs/prd/M2-后端契约校验清单-前端自检.md` R1。
+  - 前端双保险：抽纯函数 `buildParentMap(tree)` 从树反推 `id → parentId`，编辑表单**始终显式回传** parentId（见 `categoryTree.ts` 头注释 + `CategoryFormDialog` 提交逻辑）。即便后端语义回退也不踩坑。
   - 成环防护：`collectSubtreeIds(node)` 收集自身+子孙，编辑时从父级候选排除（后端 PUT 校验环返 409/3002，但不该让用户先提交再吃瘪）。
 - **三条硬约束前置到 UI**（不点了才吃 409）：
   - `Category.x-max-depth: 4` → 深度达 4 的节点「新建子分类」按钮禁用。
@@ -48,5 +49,6 @@
 
 ## 五、待总把控留意 / 回流项
 
-- 未改动契约；标签合并与 `CategoryNode.parentId` 缺口已记文件头/注释，待契约层决策。
+- 未改动契约；标签合并（无 merge 端点）已记文件头/注释，待契约层决策。
+  `CategoryNode.parentId` 不再是缺口——后端 PUT 已修为局部更新，前端亦显式回传 parentId 双保险。
 - 下一步：Phase 4 用户管理（#16）→ Phase 5 仪表盘（#18）→ Phase 6 站点配置（#17）→ Phase 7 个人中心（#20）→ Phase 8 跨切面（#19）。

@@ -95,6 +95,16 @@
 
 ---
 
+## 2026-08-29 收尾 · 后端契约校验清单自检（R1/R2/R3）
+
+- owner 让后端修了 R1 的「分类 PUT 静默挪根」bug，并交来 `docs/prd/M2-后端契约校验清单-前端自检.md`（R1 局部更新 / R2 list 非 items / R3 /files 根路径），要我核对 P3 代码与 NOTES。
+- **R1 实测结论：前端代码无需改功能**。P3 编辑表单从第一天就 `buildParentMap(tree)` 反推并**显式回传 parentId**（CategoryFormDialog 提交逻辑），从没依赖后端兜底——所以新旧语义下都正确。但代码注释里写的「PUT 是全量替换，漏传会静默挪根」与已更新契约（openapi:1541-1542）冲突，会误导后续，已改为「后端已修局部更新 + 前端双保险」。
+- **R2 实测**：`grep 'data\.items'` 命中全是菜单配置 `group.items` 与 `articles.test.ts`/`comments.test.ts` 的**反向断言**（故意 `.items` 为 undefined），无真实列表取数误用；`Page<T>` 仍是 `list`。
+- **R3 实测**：`grep '/api/v1/files'` 0 命中；`fileUrl()` 用 ORIGIN 拼 `/files/<key>`，helpers.test.ts 已钉死。
+- **P3 NOTES 文档纠错**：§三「PUT 全量替换」论断改为「历史 bug + 后端已修局部更新 + 前端双保险」；§五 `parentId` 不再是缺口。
+- 门禁复验：typecheck/lint/test(45)/build 全绿（仅 md-editor 563.94kB 告警，owner 已裁决接受）。
+- 给 owner 的提醒：R1 文档 §0 注明「修复尚未确认重部署」，前端自检前**先确认后端已 `wrangler deploy` node-backend-v1.0.1**，否则线上仍会复现旧静默挪根。
+
 ## 复盘要点（给 owner 的快速索引）
 
 - **契约驱动的真义**：计划文档会写错端点（评论、标签合并），代码必须**以 `openapi.v1.yaml` 为唯一真相**，偏差写进文件头 + 用测试钉死路径。

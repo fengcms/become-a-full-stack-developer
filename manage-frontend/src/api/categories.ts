@@ -47,7 +47,10 @@ export const createCategory = (payload: CategoryUpsert): Promise<Category> =>
 /**
  * 更新分类。PUT /categories/{id}（editor+）
  *
- * ⚠️ 变更 parentId 时后端会校验深度与环，超限/成环返回 409 / code 3002。
+ * 本端点为**局部更新**：省略可选字段（parentId / description / sortOrder）时后端保留原值，
+ * 不会置空（node-backend 冻结后增量修复，openapi.v1.yaml:1541-1542）。
+ * ⚠️ 变更 parentId 时后端仍会校验深度与环，超限/成环返回 409 / code 3002。
+ * 前端编辑表单始终显式回传 parentId（见 CategoryFormDialog），属双保险。
  *
  * @param id - 分类 id。
  * @param payload - 分类字段。
