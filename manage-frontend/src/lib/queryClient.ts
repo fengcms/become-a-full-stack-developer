@@ -67,4 +67,7 @@ export const qk = {
   tags: {
     list: ['tags', 'list'] as const,
   },
+  users: {
+    list: (q: unknown) => ['users', 'list', q] as const,
+  },
 }

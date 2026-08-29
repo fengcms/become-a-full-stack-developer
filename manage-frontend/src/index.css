@@ -64,6 +64,18 @@
   --status-reviewing-bg: oklch(0.9 0.085 85);
   --status-reviewing-fg: oklch(0.42 0.1 60);
 
+  /* 用户角色 / 状态（Phase 4）：admin 紫 / editor 蓝 / member 灰；active 绿 / disabled 红 */
+  --role-admin-bg: oklch(0.92 0.04 300);
+  --role-admin-fg: oklch(0.4 0.12 300);
+  --role-editor-bg: oklch(0.92 0.05 230);
+  --role-editor-fg: oklch(0.4 0.13 240);
+  --role-member-bg: oklch(0.94 0.005 250);
+  --role-member-fg: oklch(0.42 0.01 250);
+  --user-status-active-bg: oklch(0.9 0.085 152);
+  --user-status-active-fg: oklch(0.4 0.1 150);
+  --user-status-disabled-bg: oklch(0.9 0.06 25);
+  --user-status-disabled-fg: oklch(0.42 0.17 27);
+
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", "PingFang SC", "Hiragino Sans GB",
     "Microsoft YaHei", sans-serif;
@@ -123,6 +135,18 @@
   --status-rejected-fg: oklch(0.9 0.09 25);
   --status-reviewing-bg: oklch(0.36 0.085 85);
   --status-reviewing-fg: oklch(0.9 0.085 85);
+
+  /* 用户角色 / 状态（Phase 4）：暗色下「深底 + 亮字」 */
+  --role-admin-bg: oklch(0.34 0.06 300);
+  --role-admin-fg: oklch(0.9 0.06 300);
+  --role-editor-bg: oklch(0.34 0.07 230);
+  --role-editor-fg: oklch(0.88 0.07 240);
+  --role-member-bg: oklch(0.32 0.005 250);
+  --role-member-fg: oklch(0.88 0.01 250);
+  --user-status-active-bg: oklch(0.34 0.085 152);
+  --user-status-active-fg: oklch(0.88 0.085 152);
+  --user-status-disabled-bg: oklch(0.34 0.09 25);
+  --user-status-disabled-fg: oklch(0.9 0.09 25);
 }
 
 /* ===== 映射为 Tailwind 工具类（@theme inline 便于运行时主题切换） ===== */
@@ -176,6 +200,18 @@
   --color-status-rejected-fg: var(--status-rejected-fg);
   --color-status-reviewing: var(--status-reviewing-bg);
   --color-status-reviewing-fg: var(--status-reviewing-fg);
+
+  /* 用户角色 / 状态 */
+  --color-role-admin: var(--role-admin-bg);
+  --color-role-admin-fg: var(--role-admin-fg);
+  --color-role-editor: var(--role-editor-bg);
+  --color-role-editor-fg: var(--role-editor-fg);
+  --color-role-member: var(--role-member-bg);
+  --color-role-member-fg: var(--role-member-fg);
+  --color-user-status-active: var(--user-status-active-bg);
+  --color-user-status-active-fg: var(--user-status-active-fg);
+  --color-user-status-disabled: var(--user-status-disabled-bg);
+  --color-user-status-disabled-fg: var(--user-status-disabled-fg);
 
   --font-sans: var(--font-sans);
   --font-display: var(--font-display);

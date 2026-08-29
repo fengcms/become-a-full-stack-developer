@@ -105,6 +105,16 @@
 - 门禁复验：typecheck/lint/test(45)/build 全绿（仅 md-editor 563.94kB 告警，owner 已裁决接受）。
 - 给 owner 的提醒：R1 文档 §0 注明「修复尚未确认重部署」，前端自检前**先确认后端已 `wrangler deploy` node-backend-v1.0.1**，否则线上仍会复现旧静默挪根。
 
+## 2026-08-29 深夜 · Phase 4 用户管理（admin 专属）
+
+- 按计划继续推进 Phase 4。先核契约，又发现**计划文档与契约偏差**（同 Phase 2/3 一类）：计划 §7 写 `GET/GET/PATCH /admin/users/{id}`，契约里这三个端点在 **`/users` 下**（admin 鉴权、路径不含 admin）；仅重置密码是 `POST /admin/users/{id}/reset-password`。按契约实现，偏差钉进 `users.test.ts`。
+- 第二条偏差：计划写「重置后返回一次性凭证（等宽加粗+自动复制）」；契约 `AdminResetPasswordRequest` **要 admin 主动填 newPassword**（min 8），响应不返回凭证。故 `ResetPasswordDialog` 是输入密码，不是展示凭证。
+- 复用范式：UserListPage 仿 CommentListPage（useTableQuery + DataTable + TablePagination）；编辑/重置两个弹窗仿 CategoryFormDialog（RHF+zod+Dialog）。
+- **两处 TS 坑**：① `z.coerce.number()` 把 level 输入推成 unknown，与 RHF zodResolver 泛型冲突 → 改 `z.string()` + 提交转 number；② 字段级 `.refine` 也会破坏 zodResolver 泛型推断 → 改 `.regex(/^(?:[1-9]\d?|99)$/)` 校验 1~99（CategoryFormDialog 已验证 `.regex` 可编译）。
+- **自锁保护**：编辑自身时禁用 `disabled` 状态选项，避免 admin 把自已封号锁死后台（真实 footgun）。
+- 加 `role-*`(admin/editor/member) 与 `user-status-*`(active/disabled) 语义令牌（明暗），徽标不再硬编码调色板。
+- 门禁：test 49 passed（新增 4）。下一步 Phase 5 仪表盘。
+
 ## 复盘要点（给 owner 的快速索引）
 
 - **契约驱动的真义**：计划文档会写错端点（评论、标签合并），代码必须**以 `openapi.v1.yaml` 为唯一真相**，偏差写进文件头 + 用测试钉死路径。

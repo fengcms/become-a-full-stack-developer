@@ -37,6 +37,7 @@ const ArticleFormPage = lazy(() => import('@/pages/articles/ArticleFormPage'))
 const CommentListPage = lazy(() => import('@/pages/comments/CommentListPage'))
 const CategoryTreePage = lazy(() => import('@/pages/categories/CategoryTreePage'))
 const TagListPage = lazy(() => import('@/pages/tags/TagListPage'))
+const UserListPage = lazy(() => import('@/pages/users/UserListPage'))
 
 /**
  * 路由表。裸页与后台主壳分层，业务路由按能力套 RequireCan。
@@ -131,16 +132,7 @@ const AppRoutes = () => (
           path="/users"
           element={
             <RequireCan can={canManageUsers}>
-              <PlaceholderPage
-                title="用户管理"
-                description="角色升降、启用禁用、等级调整与密码重置，均为 admin 专属。"
-                endpoints={[
-                  'GET   /users',
-                  'GET   /users/{id}',
-                  'PATCH /users/{id}',
-                  'POST  /admin/users/{id}/reset-password',
-                ]}
-              />
+              <UserListPage />
             </RequireCan>
           }
         />
