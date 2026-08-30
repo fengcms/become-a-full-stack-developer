@@ -4,6 +4,9 @@
 
 框架选型是后端工程的第一道岔路口。很多教程一上来就说"我们用 Express"或者"我们用 NestJS"，却很少讲**为什么**。我更想带你从"我们这个工程到底被什么约束"出发，反推出答案——因为选型从来不是给框架排名，是给约束找最合身的那一个。
 
+![成为全栈·Node 后端篇·框架选型：Express、Koa、Fastify、NestJS 的差异与为何选 Hono](https://i-blog.csdnimg.cn/direct/44684cde40e840e3b5535883175a0973.png)
+
+
 下一篇（{{LINK:M1-03}}）我们会顺着框架往下，讲分层架构；而 Hono 一个很妙的设计，会在 {{LINK:M1-08}} 统一响应信封时回来兑现。先别急，这一篇先把"为什么是 Hono"讲透。
 
 你可能会想：Node 不是自带 `http` 模块吗，为什么还需要框架？确实能裸写——`http.createServer((req, res) => { ... })` 也能起一个服务。但路由匹配、查询参数解析、请求体 JSON 读取、中间件编排这些事，全得自己造轮子。框架真正的价值，是把"每个 Web 服务都要重复造一遍"的东西标准化。Hono 的"轻"，是只给你必要的标准件，而不是什么都没有。理解了这点，后面看它怎么被用起来就不会觉得"太单薄"。
@@ -36,6 +39,9 @@
 最后一行是重点：**业务层会不会被框架绑死**。在 Express 里你写响应离不开 `res.json()`，在 Fastify 里离不开 `reply.send()`——这意味着你的"返回数据"逻辑，天生就和这个框架焊在一起。焊死了有什么后果？单测要起框架上下文、换个运行时要重写、迁移成本陡增。
 
 我们恰恰最怕这个。因为我们的定位是"**同一套代码，既能跑在自管的 Linux（Node），又能跑在 Cloudflare Workers（边缘）**"。如果业务层被某个 Node 专属框架焊死，这个定位从第一天就破产了。
+
+![框架对比](https://i-blog.csdnimg.cn/direct/2603e887c6864de1847f89d0a2919e90.png)
+
 
 ## 三、为什么是 Hono：那一个"返回 Response 合法"的妙处
 
@@ -105,14 +111,8 @@ export const ok = <T>(data: T, message = 'ok'): Response =>
 - 本系列专栏：[https://blog.csdn.net/fungleo/category_13204651.html](https://blog.csdn.net/fungleo/category_13204651.html)（订阅看全部篇章）
 - 完整项目仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
----
 
-## 配图提示词（本段为本地草稿辅助，发布前请整段删除）
 
-> 图名与正文 `{{IMG:图名}}` 占位一一对应。去豆包等工具按提示词生图，发布时替换占位并删除本段。
 
-### `02-框架选型对比图`
-> 一张四框架横向对比信息图，扁平风，浅色背景。横向四个等宽卡片并列：Express / Koa / Fastify / NestJS，每张卡片内用图标+短标签标注四个维度（中间件模型 / TS 友好 / 边缘部署 / 体积）。卡片下方居中放一个高亮的 Hono 徽章，用箭头从四张卡片汇聚到 Hono，标注「跨运行时 · 零框架依赖 · 轻」。配色：四卡片用中性灰蓝、Hono 徽章用青绿高亮。中文标签清晰，不要堆代码，强调"约束匹配"的取舍感。
 
-### `CTA-订阅专栏`
-> 复用 M0 专栏订阅图（已注入真实 URL `https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png`），**无需重新生图**。
+
