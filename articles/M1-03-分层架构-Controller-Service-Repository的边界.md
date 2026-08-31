@@ -1,8 +1,10 @@
 # 成为全栈·Node 后端篇·分层架构：Controller、Service、Repository 的边界
 
-前面两篇我们搭好了工程（{{LINK:M1-01}}），也聊清楚了为什么选 Hono（{{LINK:M1-02}}）。工程能跑起来只是第一步，真正的考验是：**代码越写越多之后，怎么让它不变成一锅粥**。
+前面两篇我们搭好了工程（[后端工程从零搭建-TypeScript目录与热更新](https://blog.csdn.net/fungleo/article/details/164186950)），也聊清楚了为什么选 Hono（[框架选型-Express-Koa-Fastify-NestJS的差异与为何选Hono](https://blog.csdn.net/fungleo/article/details/164187017)）。工程能跑起来只是第一步，真正的考验是：**代码越写越多之后，怎么让它不变成一锅粥**。
 
 我在前端干了十年，带新人时最常说的一句话是——"你能把代码跑起来，不代表你能把代码组织好"。后端更是如此。一个接口从接收请求到返回数据，中间要过鉴权、校验、查库、组装、兜底，如果这些东西全部挤在一个文件里，第三天你自己都看不懂自己写的什么。
+
+![成为全栈·Node 后端篇·分层架构：Controller、Service、Repository 的边界](https://i-blog.csdnimg.cn/direct/1f92f2d275084691aac837a56172e633.png)
 
 所以这一篇，我想先把整个后端的"分层"讲透。它不是目录装饰，而是一种**让每一层只干一件事、并且能被单独测试**的纪律。
 
@@ -29,7 +31,7 @@
 
 ## 二、我们真实的七目录结构
 
-回到《项目全貌与七子项目》那篇（讲清楚了我们为什么是"七端共享一份契约"的架构）{{LINK:M0-02}}，后端的代码地基是 `node-backend/`。它冻结后的 `src/` 只有**七个目录**，没有 `lib/`：
+回到《项目全貌与七子项目》那篇（讲清楚了我们为什么是"七端共享一份契约"的架构）[用一个真实系统串起全栈](https://blog.csdn.net/fungleo/article/details/164120426)，后端的代码地基是 `node-backend/`。它冻结后的 `src/` 只有**七个目录**，没有 `lib/`：
 
 ```
 node-backend/src/
@@ -49,7 +51,7 @@ node-backend/src/
 
 换句话说，**路由能不能被单独测，是分层有没有破产的判据**。能 mock service 单测路由，分层就立住了；路由里到处是 `getDb().select(...)`，分层就名存实亡。
 
-{{IMG:03-分层架构图}}
+![分层架构图](https://i-blog.csdnimg.cn/direct/ca741dec490e4fa08cad8c11f446f4d9.png)
 
 ## 三、routes：薄到只剩"胶水"
 
@@ -98,7 +100,7 @@ export const canTransition = (from: ArticleStatus, to: ArticleStatus): boolean =
 };
 ```
 
-这个矩阵和 OpenAPI 契约里 `Article.status.x-allowed-transitions` 是机器对齐的——契约改了，代码矩阵也得跟着改，否则双门校验会报红。这正是"契约先行"（{{LINK:M0-05}}）带来的好处：业务规则有一份权威定义，代码只是它的实现。
+这个矩阵和 OpenAPI 契约里 `Article.status.x-allowed-transitions` 是机器对齐的——契约改了，代码矩阵也得跟着改，否则双门校验会报红。这正是"契约先行"（[契约先行](https://blog.csdn.net/fungleo/article/details/164140515)）带来的好处：业务规则有一份权威定义，代码只是它的实现。
 
 **2. 序列化（snake_case → camelCase）。** 数据库存的是 `view_count`，契约返回的是 `viewCount`。这种"行 → 契约对象"的转换集中放在 `toArticle` / `toArticleSummary`，全站只有一个出口，绝不在路由里手写字段映射。
 
@@ -115,7 +117,7 @@ export const ok = <T>(data: T, message = 'ok'): Response =>
   Response.json(envelope(0, message, data), { status: 200 });
 ```
 
-返回原生 `Response` 意味着什么？意味着这套信封构造逻辑**零框架依赖**——它能在 Node 跑，也能在 Cloudflare Workers 跑，甚至能被纯 Node 测试环境直接调用。这正是我们选 Hono 时埋下的伏笔（{{LINK:M1-02}} 里提到的"handler 返回原生 Response → lib 零框架依赖"）。
+返回原生 `Response` 意味着什么？意味着这套信封构造逻辑**零框架依赖**——它能在 Node 跑，也能在 Cloudflare Workers 跑，甚至能被纯 Node 测试环境直接调用。这正是我们选 Hono 时埋下的伏笔（[框架选型-Express-Koa-Fastify-NestJS的差异与为何选Hono](https://blog.csdn.net/fungleo/article/details/164187017) 里提到的"handler 返回原生 Response → lib 零框架依赖"）。
 
 `shared/` 里还有：
 - `codes.ts`：业务错误码集中定义（`ErrCode`）。
@@ -135,7 +137,7 @@ export const ok = <T>(data: T, message = 'ok'): Response =>
 
 最后聊一个反直觉的点。我们做过一次"结构调优"：把超 200 行的文件拆小。但拆分是**超出 200 行的应激反应**，不是目标。调优过程中我们发现，早期为了压行数把 `categories`、`comments` 各自拆成了多个碎片文件，等逻辑理顺、行数自然降下来后，**这些碎片反而应该主动合并回收成单文件**——拆太碎同样伤害可读性。
 
-所以 P-07 的结论是：**分拆是应激、行数降下来就该回收**。结构的终态不是"文件越小越好"，而是"每个文件的职责单一且自洽"。这一点我在写《领域建模》那篇（{{LINK:M0-04}}）时也强调过——建模的尽头是清晰，不是堆砌。
+所以 P-07 的结论是：**分拆是应激、行数降下来就该回收**。结构的终态不是"文件越小越好"，而是"每个文件的职责单一且自洽"。这一点我在写《领域建模》那篇（[领域建模](https://blog.csdn.net/fungleo/article/details/164139553)）时也强调过——建模的尽头是清晰，不是堆砌。
 
 ## 八、小结与前瞻
 
@@ -159,9 +161,3 @@ export const ok = <T>(data: T, message = 'ok'): Response =>
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
 
----
-
-## 配图提示词（发布前整段删除）
-
-- `03-分层架构图`：横向四层分层图，从上到下——routes（薄层，标注"鉴权/校验/调 service/包信封"，红字警示"禁碰 getDb"）→ services（领域逻辑 + 数据库，标注"状态机/序列化/列表查询"）→ shared（基础设施，标注"response 信封/codes/db-error/pagination/storage/jwt"）→ types（纯类型）。每层用不同色块，箭头单向向下、严禁回指，体现"依赖单向、禁止循环"。风格：扁平技术博客配图、配色与专栏封面一致、图上可放少量中文标签。
-- 复用说明：文末订阅图用真实 URL 直填（https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png），发布前勿删订阅块；本篇配图提示词段整体在发布前删除。
