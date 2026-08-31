@@ -32,6 +32,7 @@ type FormValues = z.infer<typeof schema>
 const ChangePasswordPage = () => {
   const change = useChangePassword()
   const form = useForm<FormValues>({
+    mode: 'onTouched',
     resolver: zodResolver(schema),
     defaultValues: { oldPassword: '', newPassword: '', confirm: '' },
   })

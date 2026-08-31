@@ -8,8 +8,9 @@
 
 import { format } from 'date-fns'
 import { Check, Pencil, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { BatchActionBar } from '@/components/data/BatchActionBar'
 import { type ColumnDef, DataTable } from '@/components/data/DataTable'
 import { TablePagination } from '@/components/data/TablePagination'
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog'
@@ -17,6 +18,7 @@ import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { useAdminArticles, useApproveArticle, useDeleteArticle } from '@/hooks/useArticles'
 import { useTableQuery } from '@/hooks/useTableQuery'
+import { useToast } from '@/hooks/useToast'
 import type { ArticleStatus, ArticleSummary } from '@/types/common'
 
 /** 状态中文标签。 */
@@ -55,12 +57,42 @@ const ArticleListPage = () => {
   const { page, pageSize, sort, query, setPage, setPageSize, setSort, setFilters } = useTableQuery()
   const status = (query.status as ArticleStatus | undefined) ?? undefined
   const keyword = (query.keyword as string | undefined) ?? ''
+  // T3：搜索防抖，避免每次按键即 refetch
+  const [kw, setKw] = useState(keyword)
+  useEffect(() => {
+    const t = setTimeout(() => setFilters({ keyword: kw || undefined }), 300)
+    return () => clearTimeout(t)
+  }, [kw, setFilters])
 
   const listQuery = { page, pageSize, sort, status, keyword: keyword || undefined }
-  const { data, isLoading } = useAdminArticles(listQuery)
+  const { data, isLoading, isError, error, refetch } = useAdminArticles(listQuery)
   const approveMut = useApproveArticle()
   const deleteMut = useDeleteArticle()
   const [toDelete, setToDelete] = useState<ArticleSummary | null>(null)
+  // T6：批量操作受控选择态
+  const [selected, setSelected] = useState<Array<string | number>>([])
+  const [batchBusy, setBatchBusy] = useState(false)
+  const [toBatchDelete, setToBatchDelete] = useState(false)
+  const toast = useToast()
+
+  /** T6：循环调用单行 mutation 实现批量；Promise.allSettled 容忍部分失败。 */
+  const runBatch = async (label: string, fn: (id: number) => Promise<unknown>) => {
+    const ids = selected.map(Number)
+    if (ids.length === 0) return
+    setBatchBusy(true)
+    try {
+      const results = await Promise.allSettled(ids.map(fn))
+      const ok = results.filter((r) => r.status === 'fulfilled').length
+      refetch()
+      setSelected([])
+      setToBatchDelete(false)
+      const fail = results.length - ok
+      if (fail === 0) toast.success(`已${label} ${ok} 篇`)
+      else toast.info(`已${label} ${ok} 篇，${fail} 篇失败`)
+    } finally {
+      setBatchBusy(false)
+    }
+  }
 
   /** 列定义。 */
   const columns: ColumnDef<ArticleSummary>[] = [
@@ -82,13 +114,19 @@ const ArticleListPage = () => {
       align: 'right',
       render: (r) => (
         <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="sm" onClick={() => navigate(`/articles/${r.id}/edit`)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label="编辑"
+            onClick={() => navigate(`/articles/${r.id}/edit`)}
+          >
             <Pencil className="h-4 w-4" />
           </Button>
           {r.status === 'pending' ? (
             <Button
               variant="ghost"
               size="sm"
+              aria-label="通过审核"
               onClick={() => approveMut.mutate(r.id)}
               disabled={approveMut.isPending}
             >
@@ -99,6 +137,7 @@ const ArticleListPage = () => {
             variant="ghost"
             size="sm"
             className="text-destructive"
+            aria-label="删除"
             onClick={() => setToDelete(r)}
           >
             <Trash2 className="h-4 w-4" />
@@ -118,8 +157,8 @@ const ArticleListPage = () => {
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <input
-          value={keyword}
-          onChange={(e) => setFilters({ keyword: e.target.value || undefined })}
+          value={kw}
+          onChange={(e) => setKw(e.target.value)}
           placeholder="搜索标题 / 关键词"
           className="h-9 rounded-md border border-input px-3 text-sm"
         />
@@ -137,6 +176,24 @@ const ArticleListPage = () => {
         </select>
       </div>
 
+      <BatchActionBar
+        count={selected.length}
+        onClear={() => setSelected([])}
+        actions={[
+          {
+            label: '批量发布',
+            disabled: batchBusy,
+            onClick: () => runBatch('发布', (id) => approveMut.mutateAsync(id)),
+          },
+          {
+            label: '批量删除',
+            variant: 'destructive',
+            disabled: batchBusy,
+            onClick: () => setToBatchDelete(true),
+          },
+        ]}
+      />
+
       <DataTable
         columns={columns}
         data={data?.list ?? []}
@@ -145,6 +202,11 @@ const ArticleListPage = () => {
         sort={sort}
         onSortChange={setSort}
         emptyText="暂无文章"
+        error={isError ? error : undefined}
+        onRetry={() => refetch()}
+        selectable
+        selectedKeys={selected}
+        onSelectionChange={setSelected}
       />
 
       {data?.pagination ? (
@@ -173,6 +235,20 @@ const ArticleListPage = () => {
           if (!toDelete) return
           deleteMut.mutate(toDelete.id, { onSuccess: () => setToDelete(null) })
         }}
+      />
+
+      <ConfirmDialog
+        open={toBatchDelete}
+        onOpenChange={(o) => !o && setToBatchDelete(false)}
+        title="批量删除文章"
+        description={
+          selected.length > 0
+            ? `确定删除选中的 ${selected.length} 篇文章？该操作软删除，关联评论 / 附件将隔离可见性。`
+            : undefined
+        }
+        confirmText="删除"
+        loading={batchBusy}
+        onConfirm={() => runBatch('删除', (id) => deleteMut.mutateAsync(id))}
       />
     </div>
   )

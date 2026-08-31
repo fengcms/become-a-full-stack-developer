@@ -61,6 +61,7 @@ export const ResetPasswordDialog = ({
   onSubmit: (id: number, newPassword: string) => void
 }) => {
   const form = useForm<FormValues>({
+    mode: 'onTouched',
     resolver: zodResolver(schema),
     defaultValues: { newPassword: '', confirm: '' },
   })

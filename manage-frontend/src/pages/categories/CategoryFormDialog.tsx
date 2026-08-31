@@ -86,6 +86,7 @@ export const CategoryFormDialog = ({
   onSubmit: (payload: CategoryUpsert) => void
 }) => {
   const form = useForm<FormValues>({
+    mode: 'onTouched',
     resolver: zodResolver(schema),
     defaultValues: { name: '', slug: '', description: '', parentId: '', sortOrder: '0' },
   })

@@ -8,8 +8,10 @@
 
 import { format } from 'date-fns'
 import { Heart } from 'lucide-react'
+import { QueryErrorState } from '@/components/feedback/QueryErrorState'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useLikes } from '@/hooks/useMe'
+import { isApiError } from '@/lib/request'
 import type { ArticleStatus } from '@/types/common'
 
 /** 文章状态徽标 class。 */
@@ -28,7 +30,7 @@ const STATUS_LABEL: Record<ArticleStatus, string> = {
 
 /** 我的点赞页。 */
 const LikesPage = () => {
-  const { data, isLoading } = useLikes({ pageSize: 20 })
+  const { data, isLoading, isError, error, refetch } = useLikes({ pageSize: 20 })
 
   return (
     <Card>
@@ -38,6 +40,11 @@ const LikesPage = () => {
       <CardContent>
         {isLoading ? (
           <p className="text-sm text-muted-foreground">加载中…</p>
+        ) : isError ? (
+          <QueryErrorState
+            description={isApiError(error) ? error.message : undefined}
+            onRetry={() => refetch()}
+          />
         ) : data && data.length > 0 ? (
           <ul className="divide-y">
             {data.map((a) => (

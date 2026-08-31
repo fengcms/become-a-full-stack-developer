@@ -9,9 +9,11 @@
 import { format } from 'date-fns'
 import { useState } from 'react'
 import { TablePagination } from '@/components/data/TablePagination'
+import { QueryErrorState } from '@/components/feedback/QueryErrorState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useFavorites, useToggleFavorite } from '@/hooks/useMe'
+import { isApiError } from '@/lib/request'
 import type { ArticleStatus } from '@/types/common'
 
 /** 文章状态徽标 class。 */
@@ -31,7 +33,7 @@ const STATUS_LABEL: Record<ArticleStatus, string> = {
 /** 我的收藏页。 */
 const FavoritesPage = () => {
   const [page, setPage] = useState(1)
-  const { data, isLoading } = useFavorites({ page, pageSize: 10 })
+  const { data, isLoading, isError, error, refetch } = useFavorites({ page, pageSize: 10 })
   const toggle = useToggleFavorite()
 
   return (
@@ -42,6 +44,11 @@ const FavoritesPage = () => {
       <CardContent className="space-y-3">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">加载中…</p>
+        ) : isError ? (
+          <QueryErrorState
+            description={isApiError(error) ? error.message : undefined}
+            onRetry={() => refetch()}
+          />
         ) : data && data.list.length > 0 ? (
           <>
             <ul className="divide-y">

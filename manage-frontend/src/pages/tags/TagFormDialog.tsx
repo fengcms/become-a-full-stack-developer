@@ -63,6 +63,7 @@ export const TagFormDialog = ({
   onSubmit: (payload: TagUpsert) => void
 }) => {
   const form = useForm<FormValues>({
+    mode: 'onTouched',
     resolver: zodResolver(schema),
     defaultValues: { name: '', slug: '' },
   })

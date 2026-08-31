@@ -78,6 +78,7 @@ const ArticleFormPage = () => {
     reset,
     formState: { errors },
   } = useForm<FormValues>({
+    mode: 'onTouched',
     resolver: zodResolver(schema),
     defaultValues: {
       title: '',

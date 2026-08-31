@@ -56,6 +56,7 @@ export const CommentReplyDialog = ({
   onSubmit: (articleId: number, content: string, parentId: number) => void
 }) => {
   const form = useForm<FormValues>({
+    mode: 'onTouched',
     resolver: zodResolver(schema),
     defaultValues: { content: '' },
   })

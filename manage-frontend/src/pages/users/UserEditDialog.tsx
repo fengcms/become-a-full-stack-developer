@@ -81,6 +81,7 @@ export const UserEditDialog = ({
   )
 
   const form = useForm<FormValues>({
+    mode: 'onTouched',
     resolver: zodResolver(schema),
     defaultValues: { role: 'member', status: 'active', level: '1' },
   })

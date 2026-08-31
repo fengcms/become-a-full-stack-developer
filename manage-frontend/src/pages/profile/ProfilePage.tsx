@@ -41,6 +41,7 @@ const ProfilePage = () => {
   const profile = useMyProfile()
   const update = useUpdateProfile()
   const form = useForm<FormValues>({
+    mode: 'onTouched',
     resolver: zodResolver(schema),
     defaultValues: { nickname: '', email: '', avatar: null },
   })

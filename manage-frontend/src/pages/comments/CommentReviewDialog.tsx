@@ -64,6 +64,7 @@ export const CommentReviewDialog = ({
   onSubmit: (id: number, payload: { status: CommentStatus; reason?: string }) => void
 }) => {
   const form = useForm<FormValues>({
+    mode: 'onTouched',
     resolver: zodResolver(schema),
     defaultValues: { status: 'approved', reason: '' },
   })

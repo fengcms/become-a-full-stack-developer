@@ -13,6 +13,7 @@ import { format } from 'date-fns'
 import { MessageSquareReply, ShieldCheck, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { BatchActionBar } from '@/components/data/BatchActionBar'
 import { type ColumnDef, DataTable } from '@/components/data/DataTable'
 import { TablePagination } from '@/components/data/TablePagination'
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog'
@@ -25,6 +26,7 @@ import {
   useReplyComment,
 } from '@/hooks/useComments'
 import { useTableQuery } from '@/hooks/useTableQuery'
+import { useToast } from '@/hooks/useToast'
 import type { Comment, CommentStatus } from '@/types/common'
 import { CommentReplyDialog } from './CommentReplyDialog'
 import { CommentReviewDialog } from './CommentReviewDialog'
@@ -63,7 +65,7 @@ const CommentListPage = () => {
 
   // 契约不支持排序，这里只传受支持的三个参数
   const listQuery = { page, pageSize, status }
-  const { data, isLoading } = useAdminComments(listQuery)
+  const { data, isLoading, isError, error, refetch } = useAdminComments(listQuery)
 
   const moderateMut = useModerateComment()
   const replyMut = useReplyComment()
@@ -72,6 +74,30 @@ const CommentListPage = () => {
   const [reviewing, setReviewing] = useState<Comment | null>(null)
   const [replying, setReplying] = useState<Comment | null>(null)
   const [toDelete, setToDelete] = useState<Comment | null>(null)
+  // T6：批量操作受控选择态
+  const [selected, setSelected] = useState<Array<string | number>>([])
+  const [batchBusy, setBatchBusy] = useState(false)
+  const [toBatchDelete, setToBatchDelete] = useState(false)
+  const toast = useToast()
+
+  /** T6：循环调用单行 mutation 实现批量；Promise.allSettled 容忍部分失败。 */
+  const runBatch = async (label: string, fn: (id: number) => Promise<unknown>) => {
+    const ids = selected.map(Number)
+    if (ids.length === 0) return
+    setBatchBusy(true)
+    try {
+      const results = await Promise.allSettled(ids.map(fn))
+      const ok = results.filter((r) => r.status === 'fulfilled').length
+      refetch()
+      setSelected([])
+      setToBatchDelete(false)
+      const fail = results.length - ok
+      if (fail === 0) toast.success(`已${label} ${ok} 条`)
+      else toast.info(`已${label} ${ok} 条，${fail} 条失败`)
+    } finally {
+      setBatchBusy(false)
+    }
+  }
 
   /** 列定义。 */
   const columns: ColumnDef<Comment>[] = [
@@ -111,18 +137,31 @@ const CommentListPage = () => {
       align: 'right',
       render: (r) => (
         <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="sm" onClick={() => setReviewing(r)} title="审核置位">
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label="审核置位"
+            title="审核置位"
+            onClick={() => setReviewing(r)}
+          >
             <ShieldCheck className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setReplying(r)} title="代回复">
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label="代回复"
+            title="代回复"
+            onClick={() => setReplying(r)}
+          >
             <MessageSquareReply className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
             className="text-destructive"
-            onClick={() => setToDelete(r)}
+            aria-label="删除"
             title="删除"
+            onClick={() => setToDelete(r)}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -150,12 +189,38 @@ const CommentListPage = () => {
         </select>
       </div>
 
+      <BatchActionBar
+        count={selected.length}
+        onClear={() => setSelected([])}
+        actions={[
+          {
+            label: '批量通过',
+            disabled: batchBusy,
+            onClick: () =>
+              runBatch('通过', (id) =>
+                moderateMut.mutateAsync({ id, payload: { status: 'approved' } }),
+              ),
+          },
+          {
+            label: '批量删除',
+            variant: 'destructive',
+            disabled: batchBusy,
+            onClick: () => setToBatchDelete(true),
+          },
+        ]}
+      />
+
       <DataTable
         columns={columns}
         data={data?.list ?? []}
         rowKey={(r) => r.id}
         loading={isLoading}
         emptyText="暂无评论"
+        error={isError ? error : undefined}
+        onRetry={() => refetch()}
+        selectable
+        selectedKeys={selected}
+        onSelectionChange={setSelected}
       />
 
       {data?.pagination ? (
@@ -204,6 +269,20 @@ const CommentListPage = () => {
           if (!toDelete) return
           deleteMut.mutate(toDelete.id, { onSuccess: () => setToDelete(null) })
         }}
+      />
+
+      <ConfirmDialog
+        open={toBatchDelete}
+        onOpenChange={(o) => !o && setToBatchDelete(false)}
+        title="批量删除评论"
+        description={
+          selected.length > 0
+            ? `确定删除选中的 ${selected.length} 条评论？契约标注级联删除，其下所有回复会一并删除，不可恢复。`
+            : undefined
+        }
+        confirmText="删除"
+        loading={batchBusy}
+        onConfirm={() => runBatch('删除', (id) => deleteMut.mutateAsync(id))}
       />
     </div>
   )

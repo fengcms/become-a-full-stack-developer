@@ -81,7 +81,7 @@ export const ImageUploadField = <T extends FieldValues>({
           className={`flex h-16 w-16 items-center justify-center overflow-hidden border bg-muted ${previewCls}`}
         >
           {value ? (
-            <img src={value} alt={label} className="h-full w-full object-cover" />
+            <img src={value} alt={label} loading="lazy" className="h-full w-full object-cover" />
           ) : (
             <span className="text-xs text-muted-foreground">无</span>
           )}

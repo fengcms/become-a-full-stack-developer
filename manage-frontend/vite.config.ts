@@ -11,8 +11,12 @@ const refractorLanguagesPath = fileURLToPath(
   new URL('./build/refractor-languages.ts', import.meta.url),
 )
 
-/** 线上后端。开发期一律走同源代理，浏览器不直连，绕开 CORS（方案 B）。 */
-const API_TARGET = 'https://api-befull.kao9.com'
+/**
+ * 开发期后端目标（方案 B：同源代理，浏览器不直连，绕开 CORS）。
+ * 默认指向本地后端 localhost:11000，走快链路做页面调优；
+ * 要联调线上时 `API_TARGET=https://api-befull.kao9.com pnpm dev` 即可，无需改代码。
+ */
+const API_TARGET = process.env.API_TARGET ?? 'http://localhost:11000'
 
 /**
  * 产物体积分析开关。仅 `ANALYZE=1 pnpm build` 时挂 `rollup-plugin-visualizer`，

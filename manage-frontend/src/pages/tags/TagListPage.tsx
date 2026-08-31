@@ -15,9 +15,11 @@ import { useState } from 'react'
 import type { TagUpsert } from '@/api/tags'
 import { type ColumnDef, DataTable } from '@/components/data/DataTable'
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog'
+import { QueryErrorState } from '@/components/feedback/QueryErrorState'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { useCreateTag, useDeleteTag, useTags, useUpdateTag } from '@/hooks/useTags'
+import { isApiError } from '@/lib/request'
 import type { Tag } from '@/types/common'
 import { TagFormDialog } from './TagFormDialog'
 
@@ -25,7 +27,7 @@ import { TagFormDialog } from './TagFormDialog'
  * 标签管理页。
  */
 const TagListPage = () => {
-  const { data: tags = [], isLoading } = useTags()
+  const { data: tags = [], isLoading, isError, error, refetch } = useTags()
   const createMut = useCreateTag()
   const updateMut = useUpdateTag()
   const deleteMut = useDeleteTag()
@@ -65,6 +67,7 @@ const TagListPage = () => {
                 setFormOpen(true)
               }}
               title="编辑"
+              aria-label="编辑"
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -75,6 +78,7 @@ const TagListPage = () => {
               onClick={() => setToDelete(r)}
               disabled={used}
               title={used ? '仍有文章引用，无法删除' : '删除'}
+              aria-label={used ? '仍有文章引用，无法删除' : '删除'}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -111,13 +115,20 @@ const TagListPage = () => {
         }
       />
 
-      <DataTable
-        columns={columns}
-        data={tags}
-        rowKey={(r) => r.id}
-        loading={isLoading}
-        emptyText="暂无标签"
-      />
+      {isError ? (
+        <QueryErrorState
+          description={isApiError(error) ? error.message : undefined}
+          onRetry={() => refetch()}
+        />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={tags}
+          rowKey={(r) => r.id}
+          loading={isLoading}
+          emptyText="暂无标签"
+        />
+      )}
 
       <TagFormDialog
         open={formOpen}

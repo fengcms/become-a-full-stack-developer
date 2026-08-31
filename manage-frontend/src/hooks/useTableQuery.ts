@@ -6,6 +6,7 @@
  * @date 2026-08-29
  */
 
+import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 /** 任意查询参数值。 */
@@ -24,20 +25,23 @@ export const useTableQuery = (options?: { defaultPageSize?: number }) => {
   const pageSize = Number(params.get('pageSize')) || defaultSize
   const sort = params.get('sort') ?? undefined
 
-  /** 合并写入 searchParams（undefined/空串删除该键）。 */
-  const patch = (next: Record<string, QueryValue>) => {
-    setParams(
-      (prev) => {
-        const p = new URLSearchParams(prev)
-        for (const [k, v] of Object.entries(next)) {
-          if (v === undefined || v === '') p.delete(k)
-          else p.set(k, String(v))
-        }
-        return p
-      },
-      { replace: true },
-    )
-  }
+  /** 合并写入 searchParams（undefined/空串删除该键）。setParams 稳定，故 patch 可记忆化。 */
+  const patch = useCallback(
+    (next: Record<string, QueryValue>) => {
+      setParams(
+        (prev) => {
+          const p = new URLSearchParams(prev)
+          for (const [k, v] of Object.entries(next)) {
+            if (v === undefined || v === '') p.delete(k)
+            else p.set(k, String(v))
+          }
+          return p
+        },
+        { replace: true },
+      )
+    },
+    [setParams],
+  )
 
   /** 当前完整查询对象（含所有筛选条件），直接传给 fetcher。 */
   const query: Record<string, QueryValue> = {}
@@ -48,14 +52,22 @@ export const useTableQuery = (options?: { defaultPageSize?: number }) => {
   query.pageSize = pageSize
   if (sort !== undefined) query.sort = sort
 
+  const setPage = useCallback((p: number) => patch({ page: p }), [patch])
+  const setPageSize = useCallback((s: number) => patch({ pageSize: s, page: 1 }), [patch])
+  const setSort = useCallback((s?: string) => patch({ sort: s, page: 1 }), [patch])
+  const setFilters = useCallback(
+    (f: Record<string, QueryValue>) => patch({ ...f, page: 1 }),
+    [patch],
+  )
+
   return {
     page,
     pageSize,
     sort,
     query,
-    setPage: (p: number) => patch({ page: p }),
-    setPageSize: (s: number) => patch({ pageSize: s, page: 1 }),
-    setSort: (s?: string) => patch({ sort: s, page: 1 }),
-    setFilters: (f: Record<string, QueryValue>) => patch({ ...f, page: 1 }),
+    setPage,
+    setPageSize,
+    setSort,
+    setFilters,
   }
 }

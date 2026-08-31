@@ -54,6 +54,7 @@ const SiteSettingsPage = () => {
   const queryClient = useQueryClient()
   const { error: toastError, success: toastSuccess } = useToast()
   const form = useForm<FormValues>({
+    mode: 'onTouched',
     resolver: zodResolver(schema),
     defaultValues: {
       siteName: '',

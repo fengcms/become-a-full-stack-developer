@@ -10,9 +10,11 @@ import { format } from 'date-fns'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { TablePagination } from '@/components/data/TablePagination'
+import { QueryErrorState } from '@/components/feedback/QueryErrorState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useNotificationActions, useNotifications } from '@/hooks/useNotifications'
+import { isApiError } from '@/lib/request'
 import type { Notification } from '@/types/common'
 
 /** 通知类型中文标签。 */
@@ -58,7 +60,7 @@ const NotificationRow = ({ n, onRead }: { n: Notification; onRead: (id: number) 
 /** 通知页。 */
 const NotificationsPage = () => {
   const [page, setPage] = useState(1)
-  const { data, isLoading } = useNotifications({ page, pageSize: 10 })
+  const { data, isLoading, isError, error, refetch } = useNotifications({ page, pageSize: 10 })
   const { readAll, markRead } = useNotificationActions()
 
   return (
@@ -77,6 +79,11 @@ const NotificationsPage = () => {
       <CardContent className="space-y-3">
         {isLoading ? (
           <p className="text-sm text-muted-foreground">加载中…</p>
+        ) : isError ? (
+          <QueryErrorState
+            description={isApiError(error) ? error.message : undefined}
+            onRetry={() => refetch()}
+          />
         ) : data && data.list.length > 0 ? (
           <>
             <div className="space-y-2">

@@ -11,7 +11,7 @@
 
 import { format } from 'date-fns'
 import { KeyRound, Pencil } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { type ColumnDef, DataTable } from '@/components/data/DataTable'
 import { TablePagination } from '@/components/data/TablePagination'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -62,9 +62,15 @@ const UserListPage = () => {
   const role = query.role as UserRole | undefined
   const status = query.status as UserStatus | undefined
   const keyword = (query.keyword as string | undefined) ?? undefined
+  // T3：搜索防抖，避免每次按键即 refetch
+  const [kw, setKw] = useState(keyword ?? '')
+  useEffect(() => {
+    const t = setTimeout(() => setFilters({ keyword: kw || undefined }), 300)
+    return () => clearTimeout(t)
+  }, [kw, setFilters])
 
   const listQuery = { page, pageSize, role, status, keyword }
-  const { data, isLoading } = useUsers(listQuery)
+  const { data, isLoading, isError, error, refetch } = useUsers(listQuery)
 
   const updateMut = useUpdateUser()
   const resetMut = useResetPassword()
@@ -92,10 +98,22 @@ const UserListPage = () => {
       align: 'right',
       render: (r) => (
         <div className="flex justify-end gap-1">
-          <Button variant="ghost" size="sm" onClick={() => setEditing(r)} title="编辑角色/状态">
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label="编辑角色/状态"
+            title="编辑角色/状态"
+            onClick={() => setEditing(r)}
+          >
             <Pencil className="h-4 w-4" />
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setResetting(r)} title="重置密码">
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label="重置密码"
+            title="重置密码"
+            onClick={() => setResetting(r)}
+          >
             <KeyRound className="h-4 w-4" />
           </Button>
         </div>
@@ -135,8 +153,8 @@ const UserListPage = () => {
           <option value="disabled">禁用</option>
         </select>
         <input
-          value={keyword ?? ''}
-          onChange={(e) => setFilters({ keyword: e.target.value || undefined })}
+          value={kw}
+          onChange={(e) => setKw(e.target.value)}
           placeholder="搜索用户名 / 昵称 / 邮箱"
           className="h-9 w-64 rounded-md border border-input px-2 text-sm"
         />
@@ -148,6 +166,8 @@ const UserListPage = () => {
         rowKey={(r) => r.id}
         loading={isLoading}
         emptyText="暂无用户"
+        error={isError ? error : undefined}
+        onRetry={() => refetch()}
       />
 
       {data?.pagination ? (

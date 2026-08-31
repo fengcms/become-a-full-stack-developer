@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "dev:local": "bash scripts/dev-local.sh",
     "start": "tsx src/index.ts",
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit",

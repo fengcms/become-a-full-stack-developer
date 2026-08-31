@@ -42,6 +42,7 @@ export const LoginForm = ({ site }: { site?: SiteSetting }) => {
   const [blockedHint, setBlockedHint] = useState<string | null>(null)
 
   const { register, handleSubmit, formState, setValue } = useForm<FormValues>({
+    mode: 'onTouched',
     resolver: zodResolver(schema),
     defaultValues: { username: '', password: '' },
   })
