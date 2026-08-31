@@ -144,6 +144,24 @@ describe('B2 创建 / 权限降级', () => {
     expect(body.data.status).toBe('published');
     expect(body.data.slug).toBe('adm-slug');
   });
+
+  it('创建时 summary/coverImage/slug 传 null 应成功（对齐契约 nullable:true，不得 4001）', async () => {
+    const t = await tokenOf('null_fix_user');
+    const res = await createArticle(t, {
+      title: '222',
+      content: '111',
+      summary: null,
+      coverImage: null,
+      categoryId: null,
+      tags: [],
+      slug: null,
+      status: 'draft',
+    });
+    const body = await json<ArticleResp>(res);
+    expect(res.status).toBe(200);
+    expect(body.code).toBe(0); // 不得报 4001 参数校验失败
+    expect(body.data.title).toBe('222');
+  });
 });
 
 describe('B2 更新 / 软删 / submit / 阅读量', () => {

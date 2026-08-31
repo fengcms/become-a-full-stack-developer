@@ -29,12 +29,12 @@ import { ok } from '@/shared/response';
 
 const createArticleSchema = z.object({
   title: z.string().min(1).max(200),
-  summary: z.string().max(500).optional(),
+  summary: z.string().max(500).nullish(),
   content: z.string().min(1).max(65535),
-  coverImage: z.string().url().max(512).optional().or(z.literal('')),
+  coverImage: z.string().url().max(512).nullish().or(z.literal('')),
   categoryId: z.number().int().positive().optional().nullable(),
   tags: z.array(z.string()).optional(),
-  slug: z.string().optional(),
+  slug: z.string().nullish(),
   status: z.enum(['draft', 'pending', 'published']).optional(),
 });
 // 更新复用创建 schema，但 title/content 改为可选（部分更新）
