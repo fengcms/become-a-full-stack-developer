@@ -87,7 +87,7 @@ export const users = sqliteTable(
 - **唯一索引直接定义在表上**：`uniq_username` / `uniq_email`，Drizzle 会帮你生成对应的 `CREATE UNIQUE INDEX`。
 - 定义完，`typeof users.$inferSelect` 自动给出"查询返回的行类型"，`typeof users.$inferInsert` 给出"插入的入参类型"——**你一行类型声明都不用手写**。
 
-这些设计，正是《领域建模》那篇（我们用真实系统把实体和字段敲定）{{LINK:M0-04}} 在代码层的回响；而它和《技术选型不是投票》里"按约束选工具"的思路一脉相承 {{LINK:M0-03}}。
+这些设计，正是《领域建模》那篇（我们用真实系统把实体和字段敲定）[领域建模](https://blog.csdn.net/fungleo/article/details/164139553) 在代码层的回响；而它和《技术选型不是投票》里"按约束选工具"的思路一脉相承 [技术选型不是投票](https://blog.csdn.net/fungleo/article/details/164121738)。
 
 ## 五、P-10：`.run()` / `.all()` / `.returning().all()` 的分野（运行时才爆）
 

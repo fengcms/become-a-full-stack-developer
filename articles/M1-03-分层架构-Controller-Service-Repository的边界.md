@@ -149,7 +149,7 @@ export const ok = <T>(data: T, message = 'ok'): Response =>
 4. **types 轻**：只放类型，不掺逻辑，从根上避免循环依赖（P-04）。
 5. **200 行是护栏不是枷锁**（P-06），分拆是应激、合回也是纪律（P-07）。
 
-下一篇（{{LINK:M1-04}}）我们钻进 `config/` 和运行时：环境变量从哪来、Node 与 Cloudflare 双路部署时配置怎么注入、为什么 `app.ts` 只导出工厂而不在顶层 new 一个 app。
+下一篇（[数据库选型-关系型还是文档型](https://blog.csdn.net/fungleo/article/details/164209279)）我们钻进 `config/` 和运行时：环境变量从哪来、Node 与 Cloudflare 双路部署时配置怎么注入、为什么 `app.ts` 只导出工厂而不在顶层 new 一个 app。
 
 ---
 

@@ -7,7 +7,7 @@
 ![成为全栈·Node 后端篇·框架选型：Express、Koa、Fastify、NestJS 的差异与为何选 Hono](https://i-blog.csdnimg.cn/direct/44684cde40e840e3b5535883175a0973.png)
 
 
-下一篇（{{LINK:M1-03}}）我们会顺着框架往下，讲分层架构；而 Hono 一个很妙的设计，会在 {{LINK:M1-08}} 统一响应信封时回来兑现。先别急，这一篇先把"为什么是 Hono"讲透。
+下一篇（[分层架构-Controller-Service-Repository的边界](https://blog.csdn.net/fungleo/article/details/164209137)）我们会顺着框架往下，讲分层架构；而 Hono 一个很妙的设计，会在 {{LINK:M1-08}} 统一响应信封时回来兑现。先别急，这一篇先把"为什么是 Hono"讲透。
 
 你可能会想：Node 不是自带 `http` 模块吗，为什么还需要框架？确实能裸写——`http.createServer((req, res) => { ... })` 也能起一个服务。但路由匹配、查询参数解析、请求体 JSON 读取、中间件编排这些事，全得自己造轮子。框架真正的价值，是把"每个 Web 服务都要重复造一遍"的东西标准化。Hono 的"轻"，是只给你必要的标准件，而不是什么都没有。理解了这点，后面看它怎么被用起来就不会觉得"太单薄"。
 
@@ -98,7 +98,7 @@ export const ok = <T>(data: T, message = 'ok'): Response =>
 
 框架选型没有"绝对最好"，只有"在给定约束下最合身"。我们的约束是：**跨运行时（Node + CF）、业务层不绑死框架、TS 原生、轻**。按这几个约束筛下来，Hono 几乎是唯一解——尤其那个"handler 返回 `Response` 合法"的设计，直接撑起了后面整条"零框架依赖"的主线。
 
-但框架只是"入口"。真正决定一个后端能不能维护、能不能扩展的，是入口之下的**分层**。下一篇（{{LINK:M1-03}}）我们就顺着这个入口往下走，聊 Controller / Service / Repository 的边界，以及你熟悉的前端 MVC 经验怎么迁移过来。
+但框架只是"入口"。真正决定一个后端能不能维护、能不能扩展的，是入口之下的**分层**。下一篇（[分层架构-Controller-Service-Repository的边界](https://blog.csdn.net/fungleo/article/details/164209137)）我们就顺着这个入口往下走，聊 Controller / Service / Repository 的边界，以及你熟悉的前端 MVC 经验怎么迁移过来。
 
 ---
 

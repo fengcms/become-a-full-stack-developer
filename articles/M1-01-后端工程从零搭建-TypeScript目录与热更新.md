@@ -56,7 +56,7 @@ src/
 - `shared/` 放基础设施：JWT 怎么签、密码怎么哈希、文件怎么存、分页怎么算。这些东西跟具体业务无关，谁都能用。
 - `types/` 只放类型，不写任何运行时代码，是真正的「纯类型」。
 
-这里我先不展开分层为什么这么切（那是 {{LINK:M1-03}} 的主舞台），只想让你记住一件事：**目录约定是给未来的自己看的契约。** 当你三个月后回来加一个新接口，你该把代码放哪、该去哪找现成的工具，目录结构会替你回答。
+这里我先不展开分层为什么这么切（那是 [分层架构-Controller-Service-Repository的边界](https://blog.csdn.net/fungleo/article/details/164209137) 的主舞台），只想让你记住一件事：**目录约定是给未来的自己看的契约。** 当你三个月后回来加一个新接口，你该把代码放哪、该去哪找现成的工具，目录结构会替你回答。
 
 ![目录结构](https://i-blog.csdnimg.cn/direct/2fae3c9410f1462c9c48d16d03fe9dd4.png)
 
@@ -123,7 +123,7 @@ src/
 
 三个真实踩坑你先记个印象：TS 7 删了 `baseUrl`（P-01）、类型纪律要开硬核选项（P-02）、`@/` 别名是重构保险丝（P-05）。它们都不是教科书上的标准答案，是我们在这个工程里真踩过、真改过的。
 
-下一篇（{{LINK:M1-02}}）我们聊框架选型：Express、Koa、Fastify、NestJS 差在哪，以及为什么这个工程最终选了 Hono。
+下一篇（[框架选型-Express-Koa-Fastify-NestJS的差异与为何选Hono](https://blog.csdn.net/fungleo/article/details/164187017)）我们聊框架选型：Express、Koa、Fastify、NestJS 差在哪，以及为什么这个工程最终选了 Hono。
 
 ---
 
