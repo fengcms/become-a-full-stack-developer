@@ -48,7 +48,8 @@ export const TagsField = ({ value, onChange, label, placeholder, description }: 
 
   return (
     <FormField label={label} htmlFor="tags" description={description}>
-      <div className="flex flex-wrap gap-2 rounded-md border border-input p-2">
+      {/* 与 Input / Textarea / Select 一致：浅色模式纯白底，暗色跟随主题底 */}
+      <div className="flex min-h-9 flex-wrap gap-2 rounded-lg border border-input bg-white p-2 dark:bg-background">
         {value.map((t) => (
           <span
             key={t}

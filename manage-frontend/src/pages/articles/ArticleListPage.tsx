@@ -14,6 +14,7 @@ import { BatchActionBar } from '@/components/data/BatchActionBar'
 import { type ColumnDef, DataTable } from '@/components/data/DataTable'
 import { TablePagination } from '@/components/data/TablePagination'
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog'
+import { FILTER_ALL, FilterSelect } from '@/components/form/FilterSelect'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { useAdminArticles, useApproveArticle, useDeleteArticle } from '@/hooks/useArticles'
@@ -160,20 +161,21 @@ const ArticleListPage = () => {
           value={kw}
           onChange={(e) => setKw(e.target.value)}
           placeholder="搜索标题 / 关键词"
-          className="h-9 rounded-md border border-input px-3 text-sm"
+          className="h-9 rounded-md border border-input bg-white px-3 text-sm dark:bg-background"
         />
-        <select
-          value={status ?? ''}
-          onChange={(e) =>
-            setFilters({ status: (e.target.value || undefined) as ArticleStatus | undefined })
+        <FilterSelect
+          ariaLabel="按状态筛选"
+          value={status ?? FILTER_ALL}
+          onChange={(v) =>
+            setFilters({ status: v === FILTER_ALL ? undefined : (v as ArticleStatus) })
           }
-          className="h-9 rounded-md border border-input px-2 text-sm"
-        >
-          <option value="">全部状态</option>
-          <option value="draft">草稿</option>
-          <option value="pending">待审</option>
-          <option value="published">已发布</option>
-        </select>
+          options={[
+            { value: FILTER_ALL, label: '全部状态' },
+            { value: 'draft', label: '草稿' },
+            { value: 'pending', label: '待审' },
+            { value: 'published', label: '已发布' },
+          ]}
+        />
       </div>
 
       <BatchActionBar

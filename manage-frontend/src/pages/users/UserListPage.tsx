@@ -14,6 +14,7 @@ import { KeyRound, Pencil } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { type ColumnDef, DataTable } from '@/components/data/DataTable'
 import { TablePagination } from '@/components/data/TablePagination'
+import { FILTER_ALL, FilterSelect } from '@/components/form/FilterSelect'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { ROLE_LABELS } from '@/config/roles'
@@ -129,34 +130,32 @@ const UserListPage = () => {
       />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <select
-          value={role ?? ''}
-          onChange={(e) =>
-            setFilters({ role: (e.target.value || undefined) as UserRole | undefined })
-          }
-          className="h-9 rounded-md border border-input px-2 text-sm"
-        >
-          <option value="">全部角色</option>
-          <option value="admin">管理员</option>
-          <option value="editor">编辑</option>
-          <option value="member">会员</option>
-        </select>
-        <select
-          value={status ?? ''}
-          onChange={(e) =>
-            setFilters({ status: (e.target.value || undefined) as UserStatus | undefined })
-          }
-          className="h-9 rounded-md border border-input px-2 text-sm"
-        >
-          <option value="">全部状态</option>
-          <option value="active">启用</option>
-          <option value="disabled">禁用</option>
-        </select>
+        <FilterSelect
+          ariaLabel="按角色筛选"
+          value={role ?? FILTER_ALL}
+          onChange={(v) => setFilters({ role: v === FILTER_ALL ? undefined : (v as UserRole) })}
+          options={[
+            { value: FILTER_ALL, label: '全部角色' },
+            { value: 'admin', label: ROLE_LABELS.admin },
+            { value: 'editor', label: ROLE_LABELS.editor },
+            { value: 'member', label: ROLE_LABELS.member },
+          ]}
+        />
+        <FilterSelect
+          ariaLabel="按状态筛选"
+          value={status ?? FILTER_ALL}
+          onChange={(v) => setFilters({ status: v === FILTER_ALL ? undefined : (v as UserStatus) })}
+          options={[
+            { value: FILTER_ALL, label: '全部状态' },
+            { value: 'active', label: '启用' },
+            { value: 'disabled', label: '禁用' },
+          ]}
+        />
         <input
           value={kw}
           onChange={(e) => setKw(e.target.value)}
           placeholder="搜索用户名 / 昵称 / 邮箱"
-          className="h-9 w-64 rounded-md border border-input px-2 text-sm"
+          className="h-9 w-64 rounded-md border border-input bg-white px-2 text-sm dark:bg-background"
         />
       </div>
 

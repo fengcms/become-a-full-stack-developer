@@ -27,6 +27,7 @@ export const TextField = <T extends FieldValues>({
   placeholder,
   required,
   description,
+  className,
 }: {
   control: Control<T>
   name: FieldPath<T>
@@ -35,6 +36,7 @@ export const TextField = <T extends FieldValues>({
   placeholder?: string
   required?: boolean
   description?: string
+  className?: string
 }) => {
   const { field, fieldState } = useController({ control, name })
   return (
@@ -54,6 +56,7 @@ export const TextField = <T extends FieldValues>({
         onBlur={field.onBlur}
         name={field.name}
         ref={field.ref}
+        className={className}
       />
     </FormField>
   )

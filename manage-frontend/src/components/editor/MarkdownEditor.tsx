@@ -25,8 +25,14 @@ export interface MarkdownEditorProps {
   onChange: (value: string) => void
   /** 占位提示（编辑区为空时显示）。 */
   placeholder?: string
-  /** 编辑器最小高度（px），默认 420。 */
+  /** 编辑器最小高度（px），默认 420；仅在未传 height 时生效。 */
   minHeight?: number
+  /**
+   * 编辑器渲染高度（px）；不传则回落到 minHeight。写作页用它占满可视高度。
+   * 注意：传入 height 时 minHeight 会被同值覆盖——否则库的 minHeight 下限（默认 420）
+   * 会在矮窗下把实际高度顶得比容器更高，导致编辑器溢出、压住底部操作栏。
+   */
+  height?: number
   /** 关联文章 id，随上传一并写入 Attachment.articleId。 */
   articleId?: number
   /** 只读模式：渲染预览，禁止编辑。 */
@@ -43,6 +49,7 @@ export const MarkdownEditor = ({
   onChange,
   placeholder = '开始撰写正文…支持 Markdown 语法，可粘贴 / 拖拽图片',
   minHeight = 420,
+  height,
   articleId,
   disabled = false,
   className,
@@ -120,9 +127,8 @@ export const MarkdownEditor = ({
         ref={editorRef}
         value={value}
         onChange={(v) => onChange(v ?? '')}
-        height={minHeight}
-        minHeight={minHeight}
-        visibleDragbar
+        height={height ?? minHeight}
+        minHeight={height ?? minHeight}
         data-color-mode={resolvedTheme === 'dark' ? 'dark' : 'light'}
         textareaProps={{
           placeholder,

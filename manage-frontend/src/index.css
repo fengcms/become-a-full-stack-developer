@@ -10,6 +10,9 @@
   --foreground: oklch(0.3211 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.3211 0 0);
+  /* 弹层（Select / DropdownMenu / Popover）背景：取 card 同值，避免 bg-popover 解析为透明 */
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.3211 0 0);
   --primary: oklch(0.6231 0.188 259.8);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.967 0.003 250);
@@ -81,6 +84,14 @@
     "Microsoft YaHei", sans-serif;
   --font-display: "Sora", ui-sans-serif, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* ===== 阴影层级（elevation）：全站唯一来源 =====
+     精致感要点：① 不用纯黑，用 slate 色调（16 24 40），白底上不会发灰发脏；
+     ② 去掉「1px 高透明度紧箍」那层，改大模糊 + 低透明度；
+     ③ 分层：e1 静息（几乎靠描边）/ e2 浮层 / e3 弹窗抽屉。 */
+  --elevation-1: 0 1px 2px 0 rgb(16 24 40 / 0.04), 0 1px 3px 0 rgb(16 24 40 / 0.03);
+  --elevation-2: 0 2px 4px -1px rgb(16 24 40 / 0.05), 0 8px 20px -6px rgb(16 24 40 / 0.1);
+  --elevation-3: 0 8px 16px -6px rgb(16 24 40 / 0.1), 0 24px 48px -12px rgb(16 24 40 / 0.16);
 }
 
 .dark {
@@ -88,6 +99,9 @@
   --foreground: oklch(0.95 0 0);
   --card: oklch(0.2686 0 0);
   --card-foreground: oklch(0.95 0 0);
+  /* 暗色弹层背景：取 card 暗色同值 */
+  --popover: oklch(0.2686 0 0);
+  --popover-foreground: oklch(0.95 0 0);
   --primary: oklch(0.6231 0.188 259.8);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.32 0 0);
@@ -147,6 +161,12 @@
   --user-status-active-fg: oklch(0.88 0.085 152);
   --user-status-disabled-bg: oklch(0.34 0.09 25);
   --user-status-disabled-fg: oklch(0.9 0.09 25);
+
+  /* 暗色下阴影用纯黑且提高不透明度：深底上低透明度阴影等于看不见，
+     同时加大扩散补偿「暗色需要更强的明度落差才读得出层次」。 */
+  --elevation-1: 0 1px 2px 0 rgb(0 0 0 / 0.35);
+  --elevation-2: 0 4px 12px -2px rgb(0 0 0 / 0.45), 0 2px 6px -2px rgb(0 0 0 / 0.35);
+  --elevation-3: 0 12px 32px -8px rgb(0 0 0 / 0.55), 0 4px 12px -4px rgb(0 0 0 / 0.45);
 }
 
 /* ===== 映射为 Tailwind 工具类（@theme inline 便于运行时主题切换） ===== */
@@ -155,6 +175,8 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
@@ -224,13 +246,20 @@
   --radius-2xl: calc(var(--radius) + 10px);
 }
 
-/* ===== 阴影层级（精致感关键：multi-layer + 低透明度） ===== */
-@theme {
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
-  --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
-  --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+/* ===== 阴影层级 → Tailwind 工具类 =====
+   新代码一律用语义层级 shadow-e1 / e2 / e3，不要用 shadow-md 这类尺寸名（尺寸名会随元素大小失真）。
+   Tailwind 内置的 xs~2xl 一并映射到同一套层级，避免老写法漏网后出现「两套阴影」。 */
+@theme inline {
+  --shadow-e1: var(--elevation-1);
+  --shadow-e2: var(--elevation-2);
+  --shadow-e3: var(--elevation-3);
+
+  --shadow-xs: var(--elevation-1);
+  --shadow-sm: var(--elevation-1);
+  --shadow-md: var(--elevation-2);
+  --shadow-lg: var(--elevation-3);
+  --shadow-xl: var(--elevation-3);
+  --shadow-2xl: var(--elevation-3);
 }
 
 /* ===== 品牌工具类（沿用参考资产命名） ===== */
@@ -257,8 +286,9 @@
     background: color-mix(in oklch, var(--sidebar-background) 80%, transparent);
     backdrop-filter: blur(20px);
   }
+  /* 已废弃：卡片直接用 shadow-e1，保留别名只为兼容外部引用 */
   .shadow-soft {
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--elevation-1);
   }
   .shadow-lift {
     box-shadow: 0 10px 30px -10px color-mix(in oklch, var(--primary) 45%, transparent);
@@ -270,7 +300,7 @@
   }
   .hover-lift:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--elevation-2);
   }
   .gradient-brand {
     background-image: linear-gradient(135deg, var(--hero-from), var(--hero-to));
@@ -336,4 +366,26 @@
   #root {
     min-height: 100svh;
   }
+}
+
+/* ===== 文章 Markdown 编辑器：放大工具栏图标，提升写作操作体验 ===== */
+.w-md-editor-toolbar {
+  padding: 8px 10px !important;
+  gap: 2px;
+}
+.w-md-editor-toolbar > ul > li {
+  margin: 0 1px;
+}
+.w-md-editor-toolbar button {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  min-height: 30px;
+  border-radius: 6px;
+  font-size: 14px !important;
+}
+.w-md-editor-toolbar button svg {
+  width: 16px !important;
+  height: 16px !important;
 }

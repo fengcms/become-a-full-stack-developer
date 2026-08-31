@@ -17,6 +17,7 @@ import { BatchActionBar } from '@/components/data/BatchActionBar'
 import { type ColumnDef, DataTable } from '@/components/data/DataTable'
 import { TablePagination } from '@/components/data/TablePagination'
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog'
+import { FILTER_ALL, FilterSelect } from '@/components/form/FilterSelect'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import {
@@ -175,18 +176,19 @@ const CommentListPage = () => {
       <PageHeader title="评论审核" description="approved / rejected / reviewing 三态人工审核" />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <select
-          value={status ?? ''}
-          onChange={(e) =>
-            setFilters({ status: (e.target.value || undefined) as CommentStatus | undefined })
+        <FilterSelect
+          ariaLabel="按状态筛选"
+          value={status ?? FILTER_ALL}
+          onChange={(v) =>
+            setFilters({ status: v === FILTER_ALL ? undefined : (v as CommentStatus) })
           }
-          className="h-9 rounded-md border border-input px-2 text-sm"
-        >
-          <option value="">全部状态</option>
-          <option value="approved">已通过</option>
-          <option value="rejected">已拒绝</option>
-          <option value="reviewing">待复核</option>
-        </select>
+          options={[
+            { value: FILTER_ALL, label: '全部状态' },
+            { value: 'approved', label: STATUS_LABEL.approved },
+            { value: 'rejected', label: STATUS_LABEL.rejected },
+            { value: 'reviewing', label: STATUS_LABEL.reviewing },
+          ]}
+        />
       </div>
 
       <BatchActionBar
