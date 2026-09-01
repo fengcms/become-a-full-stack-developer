@@ -1,8 +1,12 @@
+本文聚焦 Node 后端项目的数据迁移方案，讲解线上修改数据表结构的安全实践。文章首先剖析手动执行 ALTER TABLE 改动线上库带来不可追溯、无法复现等多重风险，提出所有结构变更都应写成版本化迁移脚本。结合项目本地环境与 Cloudflare D1 双部署的架构，设计两套差异化迁移路径：本地开发使用内联语句数组循环执行，依靠IF NOT EXISTS实现幂等重置；生产环境借助 drizzle‑kit 生成迁移文件，于部署流水线执行，两条路径同源共用一份 schema 定义。同时点明 better‑sqlite3 不支持多语句一次性执行、需拆分单条 SQL 运行的坑点，给出优先做加法变更、上线前备份、软删除替代物理删除的回滚与风险防控策略。最后着重提醒 better‑sqlite3 事务属于同步 API，回调内不可使用异步 await，避免事务失效。文末预告后续环境变量配置管理相关内容。
+
 # 成为全栈·Node 后端篇·数据迁移：schema 变更如何不弄脏线上数据
 
 上一篇聊完 ORM，你大概觉得"建表"就是写个 `schema.ts` 的事。但真实的软件要活好几年，表结构不可能一成不变——今天加个 `bio` 字段，下周要给文章加 `cover_image`，三个月后分类要支持层级。**怎么改表，又不把线上数据搞丢、不搞乱，是一门正经的工程学问**，这行话叫"数据迁移（migration）"。
 
 我在职业生涯里见过最惨的事故，就是有人直接在线上数据库手敲了一条 `ALTER TABLE`，没备份、没记录，结果字段类型改崩、旧数据全空，最后只能从昨天半夜的备份恢复，丢了大半天业务。这一篇就是帮你绕开这类坑。
+
+![成为全栈·Node 后端篇·数据迁移：schema 变更如何不弄脏线上数据](https://i-blog.csdnimg.cn/direct/9e6ad663f8834a5aa3dc95be14bc62d3.png)
 
 ## 一、为什么不能"手动改表"
 
@@ -77,6 +81,8 @@ for (const statement of STATEMENTS) {
 
 这个"按 `;` 拆成单条、循环执行"的纪律，是 better-sqlite3 驱动的客观限制倒逼出来的。如果你哪天图省事写成一整段多语句字符串，本地一跑就挂。记住：**迁移脚本的每一条都该是能独立执行的原子 SQL**。
 
+![表结构同源演化](https://i-blog.csdnimg.cn/direct/58c9cb06641045cc97e3731efed3705a.png)
+
 ## 四、回滚策略与"不可逆操作"的敬畏
 
 写迁移，脑子里要永远留一半给"万一要撤回"。我给自己定几条铁律：
@@ -146,10 +152,3 @@ const result = db.transaction((articleId: number) => {
 📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
----
-
-## 配图提示词（发布前整段删除）
-
-- `06-迁移双路径图`：左侧"本地/测试"箭头指向 `migrate.ts`（内联 STATEMENTS 逐条 run，标注 IF NOT EXISTS 幂等），右侧"D1 生产"箭头指向 `drizzle-kit generate → deploy 阶段 migrate`，两条路顶端都连着同一个 `schema.ts`（标注"单一事实源"）。风格：扁平技术博客配图、双栏对照、配色与专栏封面一致、可放中文小标签。
-- 复用说明：文末订阅图用真实 URL 直填，发布前勿删订阅块；本篇配图提示词段整体在发布前删除。
