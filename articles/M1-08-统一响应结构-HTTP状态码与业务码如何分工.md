@@ -4,6 +4,8 @@
 
 我早年参与过一个项目，三个后端同学各自发挥：登录返回 `{ret:0, info:{...}}`，列表返回 `{list:[...], total:99}`，错误直接丢个字符串 `'参数错误'`。前端小伙每接一个接口都要翻聊天记录问"你这回又返回啥结构"。后来统一信封后，他跟我说："现在我能写一个通用拦截器，全站错误提示一行搞定，之前那叫一个惨。"——统一格式省下的，是全生命周期的对接成本，不是一时的打字量。
 
+![成为全栈·Node 后端篇·统一响应结构：HTTP 状态码与业务码如何分工](https://i-blog.csdnimg.cn/direct/c51705fc6d6349edbf728f88366e5965.png)
+
 后端成熟的标志之一，就是**所有接口返回同一个"信封"格式**。这一篇我们拆开这个信封，讲清 `code` / `message` / `data` / `requestId` / `timestamp` 各管什么，以及 HTTP 状态码和业务码怎么分工。
 
 ## 一、为什么需要统一信封
@@ -43,7 +45,7 @@ const envelope = <T>(code: number, message: string, data: T | null): Envelope<T>
 
 另外提醒一个容易混淆的点：**成功响应的 `code` 也是 `0`，前端永远先看 `code` 判断业务成败，HTTP 200 只代表"传输成功"**。别用 HTTP 状态码当业务成败的唯一依据——否则遇到"HTTP 200 但业务拒绝"的情况就会失手。
 
-所以我们的纪律是：**一次错误，两个码一起给**。HTTP 码让基础设施正确处置，业务码让前端精细响应。这在《契约先行》那篇讲的"错误码机器化"里是核心一环 {{LINK:M0-05}}。
+所以我们的纪律是：**一次错误，两个码一起给**。HTTP 码让基础设施正确处置，业务码让前端精细响应。这在《契约先行》那篇讲的“错误码机器化”里是核心一环 [契约先行](https://blog.csdn.net/fungleo/article/details/164140515)。
 
 ## 三、列表信封：把分页也包进 `data`
 
@@ -73,6 +75,8 @@ export const paginate = <T>(list: T[], pagination: Pagination, message = 'ok'): 
 ```
 
 前端拿到 `data.pagination.total` 就能算总页数，拿到 `data.list` 直接渲染。约定稳定，前端不用每次猜"分页信息到底挂哪"。
+
+![统一响应信封图](https://i-blog.csdnimg.cn/direct/516780d3cab84213a1603f3d437760a9.png)
 
 ## 四、P-14：信封返回原生 `Response`，零框架依赖
 
@@ -160,9 +164,3 @@ export class AppError extends Error {
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
 
----
-
-## 配图提示词（发布前整段删除）
-
-- `08-统一响应信封图`：一个"信封"外壳图，标注五个字段 code/message/data/requestId/timestamp；右侧分两栏——"HTTP 码（给机器：401/403/404/429/500）"与"业务码（给前端逻辑：1001/4001/3001…）"，中间用箭头从业务码指向 HttpForCode 映射表。风格：扁平技术博客配图、配色与专栏封面一致、可放中文小标签。
-- 复用说明：文末订阅图用真实 URL 直填，发布前勿删订阅块；本篇配图提示词段整体在发布前删除。

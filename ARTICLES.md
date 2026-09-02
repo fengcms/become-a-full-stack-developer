@@ -26,8 +26,8 @@
 | 成为全栈·Node 后端篇·框架选型-Express-Koa-Fastify-NestJS的差异与为何选Hono | — | `articles/M1-02-框架选型-Express-Koa-Fastify-NestJS的差异与为何选Hono.md` | https://blog.csdn.net/fungleo/article/details/164187017 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·分层架构-Controller-Service-Repository的边界 | — | `articles/M1-03-分层架构-Controller-Service-Repository的边界.md` | https://blog.csdn.net/fungleo/article/details/164209137 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·数据库选型-关系型还是文档型 | — | `articles/M1-04-数据库选型-关系型还是文档型.md` | https://blog.csdn.net/fungleo/article/details/164209279 | 🟢 已发布 |
-| 成为全栈·Node 后端篇·ORM为什么选Drizzle-类型安全与D1适配 | — | `articles/M1-05-ORM为什么选Drizzle-类型安全与D1适配.md` | — | 🟡 草稿中 |
-| 成为全栈·Node 后端篇·数据迁移-schema变更如何不弄脏线上数据 | — | `articles/M1-06-数据迁移-schema变更如何不弄脏线上数据.md` | — | 🟡 草稿中 |
+| 成为全栈·Node 后端篇·ORM为什么选Drizzle-类型安全与D1适配 | — | `articles/M1-05-ORM为什么选Drizzle-类型安全与D1适配.md` | https://blog.csdn.net/fungleo/article/details/164254717 | 🟢 已发布 |
+| 成为全栈·Node 后端篇·数据迁移-schema变更如何不弄脏线上数据 | — | `articles/M1-06-数据迁移-schema变更如何不弄脏线上数据.md` | https://blog.csdn.net/fungleo/article/details/164254868 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·配置管理-环境变量-多环境与密钥安全 | — | `articles/M1-07-配置管理-环境变量-多环境与密钥安全.md` | — | 🟡 草稿中 |
 | 成为全栈·Node 后端篇·统一响应结构-HTTP状态码与业务码如何分工 | — | `articles/M1-08-统一响应结构-HTTP状态码与业务码如何分工.md` | — | 🟡 草稿中 |
 | 成为全栈·Node 后端篇·错误处理-异常分层与全局捕获 | — | `articles/M1-09-错误处理-异常分层与全局捕获.md` | — | 🟡 草稿中 |
