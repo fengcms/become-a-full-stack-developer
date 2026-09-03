@@ -7,7 +7,7 @@
 ![成为全栈·Node 后端篇·框架选型：Express、Koa、Fastify、NestJS 的差异与为何选 Hono](https://i-blog.csdnimg.cn/direct/44684cde40e840e3b5535883175a0973.png)
 
 
-下一篇（[分层架构-Controller-Service-Repository的边界](https://blog.csdn.net/fungleo/article/details/164209137)）我们会顺着框架往下，讲分层架构；而 Hono 一个很妙的设计，会在 {{LINK:M1-08}} 统一响应信封时回来兑现。先别急，这一篇先把"为什么是 Hono"讲透。
+下一篇（[分层架构-Controller-Service-Repository的边界](https://blog.csdn.net/fungleo/article/details/164209137)）我们会顺着框架往下，讲分层架构；而 Hono 一个很妙的设计，会在 [统一响应结构：HTTP状态码与业务码如何分工](https://blog.csdn.net/fungleo/article/details/164289071) 统一响应信封时回来兑现。先别急，这一篇先把"为什么是 Hono"讲透。
 
 你可能会想：Node 不是自带 `http` 模块吗，为什么还需要框架？确实能裸写——`http.createServer((req, res) => { ... })` 也能起一个服务。但路由匹配、查询参数解析、请求体 JSON 读取、中间件编排这些事，全得自己造轮子。框架真正的价值，是把"每个 Web 服务都要重复造一遍"的东西标准化。Hono 的"轻"，是只给你必要的标准件，而不是什么都没有。理解了这点，后面看它怎么被用起来就不会觉得"太单薄"。
 
@@ -64,7 +64,7 @@ export const ok = <T>(data: T, message = 'ok'): Response =>
 
 这一条，让整个 `shared/` 和大部分 `services/` 层**零框架依赖**。换个角度想：在 Express 里你离不了 `res`，在 Fastify 里离不了 `reply`，只有 Hono 把 Web 标准 `Response` 当一等公民，才让"业务逻辑不认识框架"这件事变得自然。
 
-> 这个伏笔先埋下：{{LINK:M1-08}} 讲统一响应信封时，我们会看到"零框架依赖"如何反过来让单测极轻、让跨运行时复用成为可能。
+> 这个伏笔先埋下：[统一响应结构：HTTP状态码与业务码如何分工](https://blog.csdn.net/fungleo/article/details/164289071) 讲统一响应信封时，我们会看到"零框架依赖"如何反过来让单测极轻、让跨运行时复用成为可能。
 
 ## 四、双部署：同一套代码跑 Node 和 Cloudflare
 
