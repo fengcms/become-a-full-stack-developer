@@ -4,6 +4,8 @@
 
 这一篇聊认证方案的选型，焦点是那个被聊烂了的问题：JWT 还是 Session？但我不打算给你"JWT 更好"这种偷懒结论，而是把**两者的真实代价**摊开，再讲我们为什么选了"折中路线"。
 
+![成为全栈·Node 后端篇·认证方案：JWT 还是 Session](https://i-blog.csdnimg.cn/direct/de8d447346d64537836276d190236831.png)
+
 ## 一、JWT 与 Session 的本质差异
 
 先抛弃名词，看它们到底怎么干活。
@@ -62,12 +64,17 @@ export const verifyAccessToken = async (token, secret): Promise<AccessToken> => 
 
 注意上面 `AccessToken` 的载荷里有个 `role` 字段：
 
+
+
 ```ts
 export interface AccessToken {
   sub: string;   // 用户 ID
   role: Role;    // 角色：member / editor / admin
 }
 ```
+
+![JWT](https://i-blog.csdnimg.cn/direct/9de52e86056848bf8c7d50bcb200da44.png)
+
 
 把角色塞进 JWT，好处立竿见影：**鉴权时不用每请求查库**。看 `src/middleware/auth.ts` 的 `authMiddleware`，它验完令牌，直接 `c.set('user', { id: claims.sub, role: claims.role })`，后续守卫读 `user.role` 就能判断权限——一次数据库查询都省了，性能友好。
 
@@ -91,7 +98,7 @@ export interface AccessToken {
 
 看 `authMiddleware` 里：缺令牌抛 `1004`，令牌无效抛 `1002`——同样是 401 的 HTTP 状态，业务码精确告诉前端"是哪一类问题"，前端据此决定是弹"请登录"（1002/1004）、静默刷新（1003）、还是跳"账号异常"（1005）。
 
-这种"把笼统错误拆细"的做法，既方便了前端做差异化体验，也收紧了安全（不暴露账号是否存在）。错误码机器化在这里不是形式主义，是真的在挡攻击 {{LINK:M0-05}}。
+这种"把笼统错误拆细"的做法，既方便了前端做差异化体验，也收紧了安全（不暴露账号是否存在）。错误码机器化在这里不是形式主义，是真的在挡攻击 [契约先行](https://blog.csdn.net/fungleo/article/details/164140515)。
 
 ## 六、小结与前瞻
 
@@ -116,9 +123,3 @@ export interface AccessToken {
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
 
----
-
-## 配图提示词（发布前整段删除）
-
-- `12-认证双令牌图`：对比图——左"Session：服务端存 session，客户端持 sessionId（有状态，吊销易）"；右"JWT：客户端持 token，服务端验章（无状态，吊销难）"。下方画我们方案：access token（JWT，1h，无状态）+ refresh token（存 refresh_tokens 表，有状态可吊销），两者用箭头连到"登录/刷新"流程。风格：扁平技术博客配图、配色与专栏封面一致、可放中文小标签。
-- 复用说明：文末订阅图用真实 URL 直填，发布前勿删订阅块；本篇配图提示词段整体在发布前删除。

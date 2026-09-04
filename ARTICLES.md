@@ -30,8 +30,8 @@
 | 成为全栈·Node 后端篇·数据迁移-schema变更如何不弄脏线上数据 | — | `articles/M1-06-数据迁移-schema变更如何不弄脏线上数据.md` | https://blog.csdn.net/fungleo/article/details/164254868 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·配置管理-环境变量-多环境与密钥安全 | — | `articles/M1-07-配置管理-环境变量-多环境与密钥安全.md` | https://blog.csdn.net/fungleo/article/details/164288947 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·统一响应结构-HTTP状态码与业务码如何分工 | — | `articles/M1-08-统一响应结构-HTTP状态码与业务码如何分工.md` | https://blog.csdn.net/fungleo/article/details/164289071 | 🟢 已发布 |
-| 成为全栈·Node 后端篇·错误处理-异常分层与全局捕获 | — | `articles/M1-09-错误处理-异常分层与全局捕获.md` | — | 🟡 草稿中 |
-| 成为全栈·Node 后端篇·参数校验-为什么必须在最外层做 | — | `articles/M1-10-参数校验-为什么必须在最外层做.md` | — | 🟡 草稿中 |
+| 成为全栈·Node 后端篇·错误处理-异常分层与全局捕获 | — | `articles/M1-09-错误处理-异常分层与全局捕获.md` | https://blog.csdn.net/fungleo/article/details/164327333 | 🟢 已发布 |
+| 成为全栈·Node 后端篇·参数校验-为什么必须在最外层做 | — | `articles/M1-10-参数校验-为什么必须在最外层做.md` | https://blog.csdn.net/fungleo/article/details/164327423 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·结构化日志与请求链路追踪 | — | `articles/M1-11-结构化日志与请求链路追踪.md` | — | 🟡 草稿中 |
 | 成为全栈·Node 后端篇·认证方案-JWT还是Session | — | `articles/M1-12-认证方案-JWT还是Session.md` | — | 🟡 草稿中 |
 | 成为全栈·Node 后端篇·注册登录全流程实现 | — | `articles/M1-13-注册登录全流程实现.md` | — | 🟡 草稿中 |
