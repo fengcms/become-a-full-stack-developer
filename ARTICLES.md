@@ -32,8 +32,8 @@
 | 成为全栈·Node 后端篇·统一响应结构-HTTP状态码与业务码如何分工 | — | `articles/M1-08-统一响应结构-HTTP状态码与业务码如何分工.md` | https://blog.csdn.net/fungleo/article/details/164289071 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·错误处理-异常分层与全局捕获 | — | `articles/M1-09-错误处理-异常分层与全局捕获.md` | https://blog.csdn.net/fungleo/article/details/164327333 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·参数校验-为什么必须在最外层做 | — | `articles/M1-10-参数校验-为什么必须在最外层做.md` | https://blog.csdn.net/fungleo/article/details/164327423 | 🟢 已发布 |
-| 成为全栈·Node 后端篇·结构化日志与请求链路追踪 | — | `articles/M1-11-结构化日志与请求链路追踪.md` | — | 🟡 草稿中 |
-| 成为全栈·Node 后端篇·认证方案-JWT还是Session | — | `articles/M1-12-认证方案-JWT还是Session.md` | — | 🟡 草稿中 |
+| 成为全栈·Node 后端篇·结构化日志与请求链路追踪 | — | `articles/M1-11-结构化日志与请求链路追踪.md` | https://blog.csdn.net/fungleo/article/details/164363025 | 🟢 已发布 |
+| 成为全栈·Node 后端篇·认证方案-JWT还是Session | — | `articles/M1-12-认证方案-JWT还是Session.md` | https://blog.csdn.net/fungleo/article/details/164363240 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·注册登录全流程实现 | — | `articles/M1-13-注册登录全流程实现.md` | — | 🟡 草稿中 |
 | 成为全栈·Node 后端篇·权限模型-从认证到RBAC | — | `articles/M1-14-权限模型-从认证到RBAC.md` | — | 🟡 草稿中 |
 | 成为全栈·Node 后端篇·文章CRUD与投稿状态机 | — | `articles/M1-15-文章CRUD与投稿状态机.md` | — | 🟡 草稿中 |
