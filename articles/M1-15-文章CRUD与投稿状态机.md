@@ -205,3 +205,7 @@ export const syncArticleTags = async (articleId: number, tagNames: string[]): Pr
 - `15-文章状态机图`：三节点 draft/pending/published 状态图，箭头标注 submit/approve/pull back，配中文小标签；扁平技术博客风、与专栏封面配色一致。
 - `15-CRUD端点表`：一表展示 10 个端点（方法/路径/守卫/说明），可作为文章内嵌表或配图。
 - 复用说明：文末订阅图用真实 URL 直填，发布前勿删订阅块；本篇配图提示词段整体在发布前删除。
+
+## 文章摘要（发布时填入 CSDN 摘要字段，随配图提示词一并删除）
+
+本文讲内容站文章 CRUD 与投稿状态机的落地。先用 draft / pending / published 三态把"谁能直接发、谁发完要审"说清，再讲 member 不可自发布的领域规则如何写进 service，随后走一遍薄路由的 CRUD 端点，以及软删除、slug 部分唯一、标签同步这三个一不留神就漏的坑。
