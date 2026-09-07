@@ -128,7 +128,7 @@ const [row] = await db.insert(articles).values({ title: 'x' }).returning().all()
 
 另一个 ORM 新手容易栽的跟头（P-11）：当你 `JOIN` 两张表，而它们都有 `id`、`created_at` 这类同名字段时，如果你在 `ORDER BY` 里写裸的 `created_at`，SQLite 会报 `ambiguous column`（列名歧义），直接 500。
 
-这是因为 JOIN 之后结果集里有两个 `created_at`，数据库不知道你排哪个。解决法很简单也很严格：**ORDER BY 必须显式限定基表**，比如 `ORDER BY articles.created_at DESC`。这条规则在我们做"列表接口三件套"（分页/筛选/排序）那篇 {{LINK:M1-17}} 会反复用到，因为列表查询几乎必然 JOIN（比如按标签筛文章）。先在这里埋个伏笔。
+这是因为 JOIN 之后结果集里有两个 `created_at`，数据库不知道你排哪个。解决法很简单也很严格：**ORDER BY 必须显式限定基表**，比如 `ORDER BY articles.created_at DESC`。这条规则在我们做"列表接口三件套"（分页/筛选/排序）那篇 [列表接口三件套：分页、筛选、排序](https://blog.csdn.net/fungleo/article/details/164425686) 会反复用到，因为列表查询几乎必然 JOIN（比如按标签筛文章）。先在这里埋个伏笔。
 
 给个直观例子。按标签筛文章时 JOIN 了 `article_tags` 与 `tags` 两张表：
 
@@ -154,7 +154,7 @@ const [row] = await db.insert(articles).values({ title: 'x' }).returning().all()
 
 ## 八、P-12 前瞻：迁移不靠多语句 exec
 
-还有一条和 ORM 紧邻的纪律（P-12），留到迁移那篇 {{LINK:M1-06}} 细讲，这里先点一句：better-sqlite3 的 `prepare` **不支持一条语句里塞多个 `;` 分隔的 SQL**。所以我们 `migrate.ts` 是把建表语句拆成数组、逐条 `db.run(sql.raw(stmt))` 执行的。D1 那边则走 `drizzle-kit generate + migrate` 的正经迁移流水线。这块是"代码能跑"和"线上数据不脏"的分界线，值得单独成文。
+还有一条和 ORM 紧邻的纪律（P-12），留到迁移那篇 [数据迁移：schema 变更如何不弄脏线上数据](https://blog.csdn.net/fungleo/article/details/164254868) 细讲，这里先点一句：better-sqlite3 的 `prepare` **不支持一条语句里塞多个 `;` 分隔的 SQL**。所以我们 `migrate.ts` 是把建表语句拆成数组、逐条 `db.run(sql.raw(stmt))` 执行的。D1 那边则走 `drizzle-kit generate + migrate` 的正经迁移流水线。这块是"代码能跑"和"线上数据不脏"的分界线，值得单独成文。
 
 ## 九、小结与前瞻
 
@@ -168,7 +168,7 @@ const [row] = await db.insert(articles).values({ title: 'x' }).returning().all()
 6. **P-10**：写用 `.run()`、读用 `.all()`、回读用 `.returning().all()`，写语句错用 `.all()` 编译不报错、运行时才爆。
 7. **P-11**：JOIN 后 `ORDER BY` 必须限定基表，否则 `ambiguous column` 500。
 
-下一篇（{{LINK:M1-06}}）我们聊数据迁移：表结构怎么改、历史数据怎么迁、为什么不能用"多语句 exec"偷懒，以及 D1 生产环境该怎么安全地应用迁移。
+下一篇（[数据迁移：schema 变更如何不弄脏线上数据](https://blog.csdn.net/fungleo/article/details/164254868)）我们聊数据迁移：表结构怎么改、历史数据怎么迁、为什么不能用"多语句 exec"偷懒，以及 D1 生产环境该怎么安全地应用迁移。
 
 ---
 

@@ -2,6 +2,8 @@
 
 假设你做了个内容站：会员注册、写了篇文章、点下"发布"——它就该直接出现在首页吗？如果全站只有你一个人写，那没问题；可一旦有第二个会员投稿，你会发现"发布"这个动作背后藏着一整套规则：谁能直接发、谁发完要等人审、审完算什么状态、删掉的文章到底算不算消失。
 
+![成为全栈·Node 后端篇·文章 CRUD 与投稿状态机](https://i-blog.csdnimg.cn/direct/a8ea3211c6bc467db383490d0b523c50.png)
+
 这一篇我们把文章的**增删改查（CRUD）**和它背后的**投稿状态机**一起讲透：`draft` / `pending` / `published` 三态怎么流转、为什么会员投稿默认进待审、`admin` 发布即审核，以及软删除和 slug 部分唯一这两个一不留神就漏的坑。
 
 ## 一、三态状态机：draft / pending / published
@@ -46,6 +48,8 @@ export const canTransition = (from: ArticleStatus, to: ArticleStatus): boolean =
 ```
 
 注意这里**没有**"从 published 直接人间蒸发"这种转移，下架一律走"退回 draft/pending"，文章数据始终保留（软删除，见第四节）。这条矩阵不是写在注释里就算了，它还被机器化进契约的 `Article.status.x-allowed-transitions`（N9-2 机器化），和代码里的 `canTransition` 互为镜像，门禁会校验两边一致。关于"领域模型如何先想清楚再落库"，我在 [领域建模那一篇](https://blog.csdn.net/fungleo/article/details/164139553) 也聊过类似思路，可以先去温习。
+
+![三态状态机：draft / pending / published](https://i-blog.csdnimg.cn/direct/896f1b4505be47ff9604432c540d5b1b.png)
 
 ## 二、member 不可自发布：领域规则 ≠ 测试假设
 
@@ -95,6 +99,8 @@ export const resolveNewStatus = (
 | GET | `/admin/articles` | `guard('editor')` | 后台列表，全状态可见 |
 | POST | `/admin/articles/:id/approve` | `guard('editor')` | `pending → published` |
 | POST | `/admin/articles/:id/status` | `guard('admin')` | admin 任意置位 |
+
+![CRUD 端点一览：薄路由怎么落地](https://i-blog.csdnimg.cn/direct/7453d2796ca9401993e0f7934db42d61.png)
 
 几个值得展开的点：
 
@@ -186,7 +192,7 @@ export const syncArticleTags = async (articleId: number, tagNames: string[]): Pr
 5. **P-31 伪唯一**：`uniq_article_slug` 对 NULL 允许多行；应用层 `isSlugTaken` 排除软删行 → slug 删后可复用。P-56：删不存在 → 404 非 200（guard 的 resolveOwner 守住）。
 6. **P-32 标签同步**：`syncArticleTags` 先清后插、写入入口唯一、只链已存在 Tag；写用 `.run()`。
 
-下一篇（{{LINK:M1-16}}）我们专门拆"分类与标签"：多对多中间表怎么建、N+1 查询怎么避免、`articleCount` 精确计数（告别 JSON 子串误匹配 `js` 命中 `json` 的尴尬）又是怎么做的。
+下一篇（[分类与标签：多对多关系的建模与查询](https://blog.csdn.net/fungleo/article/details/164425616)）我们专门拆"分类与标签"：多对多中间表怎么建、N+1 查询怎么避免、`articleCount` 精确计数（告别 JSON 子串误匹配 `js` 命中 `json` 的尴尬）又是怎么做的。
 
 ---
 
@@ -198,14 +204,3 @@ export const syncArticleTags = async (articleId: number, tagNames: string[]): Pr
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
 
----
-
-## 配图提示词（发布前整段删除）
-
-- `15-文章状态机图`：三节点 draft/pending/published 状态图，箭头标注 submit/approve/pull back，配中文小标签；扁平技术博客风、与专栏封面配色一致。
-- `15-CRUD端点表`：一表展示 10 个端点（方法/路径/守卫/说明），可作为文章内嵌表或配图。
-- 复用说明：文末订阅图用真实 URL 直填，发布前勿删订阅块；本篇配图提示词段整体在发布前删除。
-
-## 文章摘要（发布时填入 CSDN 摘要字段，随配图提示词一并删除）
-
-本文讲内容站文章 CRUD 与投稿状态机的落地。先用 draft / pending / published 三态把"谁能直接发、谁发完要审"说清，再讲 member 不可自发布的领域规则如何写进 service，随后走一遍薄路由的 CRUD 端点，以及软删除、slug 部分唯一、标签同步这三个一不留神就漏的坑。
