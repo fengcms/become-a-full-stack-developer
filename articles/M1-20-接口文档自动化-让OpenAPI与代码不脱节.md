@@ -2,6 +2,8 @@
 
 新人入职第一天，照着 Swagger 调接口，结果调出一个 500。去问后端，后端说"这个字段上周就改了，文档没顾上"。这类事的根因不是谁偷懒，而是**文档和代码本来就是两份东西**——只要存在两份，它们迟早会漂移。
 
+![成为全栈·Node 后端篇·接口文档自动化：让 OpenAPI 与代码不脱节](https://i-blog.csdnimg.cn/direct/e40c96f8b6db4341b238b4bf961d07c2.png)
+
 这一篇不讲"怎么自动生成文档"，而是讲更彻底的解法：让契约本身成为唯一事实源，再用机器门禁把代码和契约焊死——结构门管格式、语义门管业务规则，契约一改，文档、错误码、权限声明全部跟着走。
 
 ## 一、文档为什么会脱节
@@ -11,6 +13,13 @@
 **手写文档**：写完那一刻就是过时的开始。你加了 `coverImage` 字段，转头去忙别的，文档忘了改。三个月后，文档和代码已经各说各话。
 
 **代码生成文档**（注解 / Swagger）：看似"改代码文档自动更新"，但有两个软肋。一是描述能力有限——复杂的企业约束（谁有权调、状态怎么流转）注解表达不了；二是生成物终究是"副产物"，没人把它当权威，照样没人维护，漂移照旧。
+
+两种解法对比如下：
+
+| 解法 | 表面优势 | 致命软肋 | 漂移方式 |
+|---|---|---|---|
+| **手写文档** | 表达自由、可写业务规则 | 写完即过时，靠人肉维护 | 改代码忘改文档 |
+| **代码生成文档** | 改代码自动更新 | 注解表达不了复杂约束；生成物无人当权威 | 约束写在注解外，照样漂移 |
 
 根因只有一个：**文档和代码是"两样东西"**。只要它们是两样东西，谁先动、谁就不对齐另一个。要根治，得让它们"变成一样东西"。
 
@@ -25,18 +34,97 @@
 - 普通项目：代码是真相，文档是代码的**投影**（代码 → 文档）。
 - 我们：契约是真相，代码是契约的**实现约束**（契约 → 代码必须对齐）。
 
-所以代码不是"生成文档"，而是"被契约约束"。契约里写的远不止路径和字段。它用 `x-authz` 机器化记录每个端点"至少什么角色、是否校验资源归属"；用 `ErrCode` 统一错误码表定义每个失败的业务含义；用 `x-allowed-transitions` 把文章状态机六条转移写死。这些东西，是 Swagger 注解根本表达不了的——注解能说"这个参数必填"，说不了"非作者且非编辑返回 403 而非 404"。契约把"业务规则"也变成了可被机器校验的结构，这是它比"代码生成文档"高出一个维度的地方。我们这套是七端（Node / Flutter / Taro / Go / Python / H5 / Admin）共用一个契约，契约一旦脱节，所有端都得跟着错——所以机器门禁不是锦上添花，是七端协作的底线。比如 `src/shared/response.ts` 的统一信封 `code / message / data / requestId / timestamp`，和契约里的 `ApiResponse` 组件是**严格对应**的——信封长什么样，契约说了算，不是路由里随手写的。实现一旦偏离契约，门禁就会红（见第三节）。文档"脱节"这件事，从根上被消除了，因为文档就是这个被机器校验的契约。
+所以代码不是"生成文档"，而是"被契约约束"。契约里写的远不止路径和字段。看 `updateArticle` 这个端点的真实定义：
+
+```yaml
+# docs/api/openapi.v1.yaml — PUT /api/v1/articles/{id}
+put:
+  operationId: updateArticle
+  x-authz:
+    minRole: editor
+    ownerOverride:
+      param: id
+      ownerField: authorId
+  summary: 更新文章
+  description: >
+    作者本人，或 editor / admin。**状态副作用（显式定义，避免两实现分歧）**：
+    member 编辑自己已 published 的文章，保存后状态自动退回 pending 需重新审核；
+    editor 与 admin 编辑不改变状态。
+```
+
+![契约即文档：让契约成为唯一事实源](https://i-blog.csdnimg.cn/direct/4407912288bd4455b983e63faed21f58.png)
+
+它用 `x-authz` 机器化记录"至少什么角色（`minRole: editor`）、是否校验资源归属（`ownerOverride: param=id, ownerField=authorId`）"；用 `ErrCode` 统一错误码表定义每个失败的业务含义；用 `x-allowed-transitions` 把文章状态机六条转移写死。这些东西，是 Swagger 注解根本表达不了的——注解能说"这个参数必填"，说不了"非作者且非编辑返回 403 而非 404"。契约把"业务规则"也变成了可被机器校验的结构，这是它比"代码生成文档"高出一个维度的地方。
+
+我们这套是七端（Node / Flutter / Taro / Go / Python / H5 / Admin）共用一个契约，契约一旦脱节，所有端都得跟着错——所以机器门禁不是锦上添花，是七端协作的底线。比如 `src/shared/response.ts` 的统一信封，和契约里的 `ApiResponse` 组件是**严格对应**的：
+
+```ts
+// src/shared/response.ts — envelope 构造器
+const envelope = <T>(code: number, message: string, data: T | null): Envelope<T> => ({
+  code,
+  message,
+  data,
+  requestId: requestId(),
+  timestamp: new Date().toISOString(),
+});
+```
+
+契约 `ApiResponse` 与代码 `envelope` 字段一一对应：
+
+| 契约 ApiResponse 字段 | 代码 envelope 字段 | 说明 |
+|---|---|---|
+| `code`（ErrorCode 枚举） | `code` | 0=成功，非零=业务错误码 |
+| `message`（string） | `message` | 成功默认 `ok`，失败取错误码文案 |
+| `data`（nullable） | `data` | 业务数据，无数据时为 null |
+| `requestId`（string） | `requestId` | Web Crypto UUID，链路追踪用 |
+| `timestamp`（date-time） | `timestamp` | ISO 8601，与业务字段时间格式一致 |
+
+信封长什么样，契约说了算，不是路由里随手写的。实现一旦偏离契约，门禁就会红（见第三节）。文档"脱节"这件事，从根上被消除了，因为文档就是这个被机器校验的契约。
 
 ## 三、双门校验：结构门 + 语义门
 
 光有一份 YAML 还不够，得有人盯着"代码和契约真的对齐了"。我们上了**两道机器门禁**，任何契约改动后都必须复跑：
 
 - **结构门**：`openapi-spec-validator` 校验这份 YAML 是**合法的 OpenAPI 文档**——字段拼错、引用断链、版本不符，立刻报错。它守的是"契约本身写得对不对"。
-- **语义门**：`check_contract.py` 校验契约**内部的一致性**——错误码是否自洽、每个端点的 `x-authz`（minRole + ownerOverride）是否闭合、状态机矩阵 `x-allowed-transitions` 是否覆盖六条转移、值错误码集合是否一致……它守的是"契约自己说得通不通"。举个语义门能抓、结构门抓不到的例子：某个端点声明了 `x-authz: { minRole: editor }`，但语义门发现它的错误码里没有对应的 403 分支——结构上门（YAML 合法）完全放行，但逻辑上"声明要鉴权却没地方返回无权限"这个矛盾，只有语义门能嗅出来。两道门分工：结构门防"写错格式"，语义门防"说错逻辑"。
+- **语义门**：`check_contract.py` 校验契约**内部的一致性**——错误码是否自洽、每个端点的 `x-authz`（minRole + ownerOverride）是否闭合、状态机矩阵 `x-allowed-transitions` 是否覆盖六条转移、值错误码集合是否一致……它守的是"契约自己说得通不通"。
 
-落到日常：改契约不是"顺手改个 YAML"，而是一套固定动作——先改 `openapi.v1.yaml`，跑双门确认结构/语义仍绿，再动手改代码对齐，最后门禁复绿才提交。契约在前、实现在后，顺序不能反，反了就会有一段"代码和契约都不绿"的尴尬窗口。
+举个语义门能抓、结构门抓不到的例子：某个端点声明了 `x-authz: { minRole: editor }`，但语义门发现它的错误码里没有对应的 403 分支——结构上门（YAML 合法）完全放行，但逻辑上"声明要鉴权却没地方返回无权限"这个矛盾，只有语义门能嗅出来。看 `check_contract.py` 里 R1 的断言逻辑：
 
-两道门全绿（当前是 **33 OK**）才放行。这等于把"文档对不对"从"人肉 review"变成了"流水线自动卡点"——你改了契约却没同步代码，或者改了代码却没同步契约，门禁直接拒绝，绝不靠良心。
+```python
+# docs/api/check_contract.py — x-authz 机器化校验（R1）
+for path, item in spec.get("paths", {}).items():
+    for m, op in item.items():
+        if m not in HTTP_METHODS:
+            continue
+        if op.get("x-required-roles") is not None or op.get("x-owner-resource") is not None:
+            r1_legacy.append(f"{m.upper()} {path}")
+        sec = effective_security(item, op)
+        if is_public(sec):
+            continue
+        n_login += 1
+        az = op.get("x-authz")
+        if not isinstance(az, dict) or "minRole" not in az:
+            r1_missing.append(f"{m.upper()} {path}")
+            continue
+        if az["minRole"] not in ROLES:
+            r1_bad.append(f"{m.upper()} {path} -> minRole={az['minRole']}")
+```
+
+这段代码逐端点检查：需登录的端点必须声明 `x-authz.minRole`，且取值必须在 `member/editor/admin` 之内。"声明鉴权却没地方返回无权限"这类逻辑矛盾，由后面的 N7 断言（`minRole∈{editor,admin}` 的端点必须挂 403）继续把住——两道门分工：结构门防"写错格式"，语义门防"说错逻辑"。
+
+![双门校验](https://i-blog.csdnimg.cn/direct/3d8ab062ee024df4a7d277cc448b6bb8.png)
+
+落到日常，改契约不是"顺手改个 YAML"，而是一套固定动作：
+
+| 步骤 | 动作 | 门禁状态 |
+|---|---|---|
+| 1 | 改 `openapi.v1.yaml`（契约在前） | — |
+| 2 | 跑结构门 + 语义门 | 双门绿 |
+| 3 | 改代码对齐契约 | 代码编译通过 |
+| 4 | 复跑双门 + 测试 | 全部绿 |
+| 5 | 提交 | — |
+
+契约在前、实现在后，顺序不能反，反了就会有一段"代码和契约都不绿"的尴尬窗口。两道门全绿（当前是 **33 OK**）才放行。这等于把"文档对不对"从"人肉 review"变成了"流水线自动卡点"——你改了契约却没同步代码，或者改了代码却没同步契约，门禁直接拒绝，绝不靠良心。
 
 ## 四、P-16：信封冲突，以契约为准
 
@@ -77,14 +165,6 @@
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
 
----
 
-## 配图提示词（发布前整段删除）
-
-- `20-双门校验`：左门 openapi-spec-validator(结构门) + 右门 check_contract.py(语义门)，两门全绿(33 OK)放行；扁平技术博客风、与专栏封面配色一致。
-- `20-契约即文档`：中央 openapi.v1.yaml 契约，向左约束代码(代码→对齐)，向下生成文档(一致不脱节)，配中文小标签。
-- 复用说明：文末订阅图用真实 URL 直填，发布前勿删订阅块；本篇配图提示词段整体在发布前删除。
-
-## 文章摘要（发布时填入 CSDN 摘要字段，随配图提示词一并删除）
 
 文档与代码是两份东西，只要存在两份，迟早会漂移。本文讲更彻底的解法：让 OpenAPI 契约为唯一事实源，用"结构门 + 语义门"两道机器校验把代码与契约焊死；并以真实踩坑说明信封格式冲突、注释与 README 数字这类沉默技术债如何随契约一并治理。

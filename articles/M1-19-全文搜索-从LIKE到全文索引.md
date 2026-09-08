@@ -1,27 +1,59 @@
 # 成为全栈·Node 后端篇·全文搜索：从 LIKE 到全文索引
 
+![成为全栈·Node 后端篇·全文搜索：从 LIKE 到全文索引](https://i-blog.csdnimg.cn/direct/16b43ac396a24bfaa34991318f094568.png)
+
 搜索框是每个内容站都有的东西，也是最容易做成"能用但不好用"的东西。`LIKE '%关键词%'` 三行代码就能跑，可当文章上千、用户开始搜"全栈 工程师"这种带空格的中文短语时，你会发现它既搜不准、也搜不快。
 
 这一篇不急着上重型引擎，而是帮你判断：**你的场景该停在这条搜索光谱的哪一段**——`LIKE` 的真实代价是什么、什么时候该换全文索引、什么时候才真需要 Meilisearch / Elasticsearch。
 
 ## 一、我们的搜索：先用 LIKE 跑起来
 
-我们当前的搜索实现非常"直白"——`src/services/search.ts` 里的 `searchArticles` 就是在 `title` / `summary` / `content` 三个字段上做 `LIKE`：
+我们当前的搜索实现非常"直白"——`src/services/search.ts` 里的 `searchArticles` 就是在 `title` / `summary` / `content` 三个字段上做 `LIKE`，限定已发布、排除软删，分页返回：
 
 ```ts
+// src/services/search.ts — searchArticles
 const kw = `%${q}%`;
 const where = and(
   eq(articles.status, 'published'),
   isNull(articles.deletedAt),
   or(like(articles.title, kw), like(articles.summary, kw), like(articles.content, kw)),
 );
+const rows = await db
+  .select(SEARCH_COLS)
+  .from(articles)
+  .where(where)
+  .orderBy(buildSortSql(sort))
+  .limit(pageSize)
+  .offset(offset)
+  .all();
+const totalRow = (
+  await db.select({ count: sql<number>`count(*)` }).from(articles).where(where).all()
+)[0];
 ```
 
-命中标题、摘要或正文里**包含**关键词的文章，限定已发布、排除软删，分页返回。`searchMembers` 同理，在 `display_name` / `username` 上 `LIKE`，排除被禁用账号。
+路由层挂在 `src/routes/aux.ts`，是一个薄得不能再薄的入口：
+
+```ts
+// src/routes/aux.ts — GET /search
+auxRoute.get('/search', async (c) => {
+  const q = (c.req.query('q') ?? '').trim();
+  if (!q) throw new AppError(ErrCode.VALIDATION, 400); // 关键词为空 → 4001
+  const type = c.req.query('type') === 'member' ? 'member' : 'article';
+  const { page, pageSize, offset } = parsePage(c);
+  if (type === 'member') {
+    const result = await searchMembers(q, page, pageSize, offset);
+    return ok({ members: result, articles: null });
+  }
+  const result = await searchArticles(q, page, pageSize, offset, c.req.query('sort'));
+  return ok({ articles: { list: result.list, pagination: result.pagination }, members: null });
+});
+```
+
+命中标题、摘要或正文里**包含**关键词的文章，限定已发布、排除软删，分页返回。`searchMembers` 同理，在 `displayName` / `username` 上 `LIKE`，排除被禁用账号。
 
 为什么从 LIKE 起步？因为它**零额外成本**：SQLite 自带、不用引入新服务、不增加同步链路，十几行代码就覆盖了"用户想找某篇提过某词的文章"这个 80% 的需求。对一个刚起步、数据量还小的站点，这是性价比最高的选择——先让搜索"能用"，再谈"好用"。
 
-把搜索单独拆成 `/search` 端点（而不是只依赖列表的 keyword 筛选）也有讲究：列表的 keyword 是"在已有筛选结果里再缩一下"，而 `/search` 是"用户主动发起的一次检索"，两者在前端入口、返回语义、性能预算上都不同。我们两个都给了——列表顺手筛、端点专门搜——但共享同一套 LIKE 逻辑，实现成本依然很低。搜索结果也走统一的 `paginate` 信封（M1-08），前端拿到 `data.list` + `data.pagination` 直接渲染，和列表接口同构——搜索不是例外，只是另一种列表。
+把搜索单独拆成 `/search` 端点（而不是只依赖列表的 keyword 筛选）也有讲究：列表的 keyword 是"在已有筛选结果里再缩一下"，而 `/search` 是"用户主动发起的一次检索"，两者在前端入口、返回语义、性能预算上都不同。我们两个都给了——列表顺手筛、端点专门搜——但共享同一套 LIKE 逻辑，实现成本依然很低。搜索结果也走统一的 `paginate` 信封（[统一响应结构：HTTP 状态码与业务码如何分工](https://blog.csdn.net/fungleo/article/details/164363025)），前端拿到 `data.list` + `data.pagination` 直接渲染，和列表接口同构——搜索不是例外，只是另一种列表。
 
 ## 二、LIKE 的真实代价
 
@@ -35,9 +67,42 @@ const where = and(
 
 **第三，中文分词是个现实坑。** 这是中文项目特有的痛。SQLite 的全文索引（FTS5）默认按空白和标点切词，而中文是**连写不分词**的——"全栈开发工程师"在它眼里是一整个字符串。你搜"全栈"，它匹配不到"全栈开发工程师"，因为中间没有空格把它切成"全栈"和"开发"两个词。要做中文分词，得外接 jieba 这类分词器，复杂度陡增。所以即便你想"升级到数据库全文索引"，中文场景也得额外补分词，不是开个开关就完事。举个具体例子：一篇标题叫《一个全栈工程师的成长笔记》，你搜"全栈工程师"，FTS5 默认不会按中文词切，而是可能把整段当一个 token 或按字符零散切，结果"全栈工程师"这个完整词反而匹配不上子串"全栈"（因为中间夹着"工程师"）。要解决，得在写入时先用 jieba 把"全栈 / 工程师 / 成长 / 笔记"切成词、建索引，搜索时也先分词再查——这一套工程，工作量已经接近"上轻量搜索引擎"了。所以中文项目在 LIKE 和专用引擎之间，往往没有"数据库全文索引"这个舒服的中间档。
 
+![搜索光谱](https://i-blog.csdnimg.cn/direct/7eb2955f13d64e858125dd0d9390e089.png)
+
+把这四种方案放在一起对比，就更清楚自己该停在哪一段：
+
+| 方案 | 中文支持 | 相关性/高亮 | 运维成本 | 适用规模 |
+|---|---|---|---|---|
+| **LIKE `%kw%`** | 子串命中，不分词 | 无 | 零（数据库自带） | 几千~几万行，低频 |
+| **FTS5 + jieba** | 需外接分词器 | 有（基础） | 中（分词器 + 同步） | 几万~几十万行 |
+| **Meilisearch** | 内置中文分词 | 有（开箱即用） | 中低（单机部署） | 几十万~几百万行 |
+| **Elasticsearch** | 需配 IK 分词 | 强（聚合/纠错） | 高（JVM + 集群） | 百万级以上 |
+
+一句话判断：**数据量和体验要求没到那一步，就别提前付那笔账**。LIKE 跑得动就先用，Meilisearch 是"升级首选"，ES 留给真正的大规模。
+
 ## 三、SCAN_LIMIT：列表搜索的刹车（P-37）
 
-上一章（M1-17）讲过列表接口的 `keyword` 分支用 `SCAN_LIMIT = 2000` 给 `LIKE` 扫描量封顶——扫到上限就显示封顶值，不让你一次 `LIKE` 把全表拖垮。这里有个细节值得说清：**列表里的 keyword 筛选和专门的 `/search` 端点，是两条不同的路**。
+上一章（[列表接口三件套：分页、筛选、排序](https://blog.csdn.net/fungleo/article/details/164425686)）讲过列表接口的 `keyword` 分支用 `SCAN_LIMIT = 2000` 给 `LIKE` 扫描量封顶——扫到上限就显示封顶值，不让你一次 `LIKE` 把全表拖垮。真实代码长这样（`src/services/article.ts` 的 `queryArticles` 计数分支）：
+
+```ts
+// src/services/article.ts — queryArticles 计数分支
+const SCAN_LIMIT = 2000;
+
+let total: number;
+if (q.keyword) {
+  const scannedQuery = getDb().select({ id: articles.id }).from(articles);
+  if (q.tag) scannedQuery.innerJoin(articleTags, eq(articleTags.articleId, articles.id));
+  const scanned = await scannedQuery.where(where).limit(SCAN_LIMIT).all();
+  total = scanned.length;
+} else {
+  const totalQuery = getDb().select({ count: sql<number>`count(*)` }).from(articles);
+  if (q.tag) totalQuery.innerJoin(articleTags, eq(articleTags.articleId, articles.id));
+  const totalRow = (await totalQuery.where(where).all())[0];
+  total = Number(totalRow?.count ?? 0);
+}
+```
+
+这里有个细节值得说清：**列表里的 keyword 筛选和专门的 `/search` 端点，是两条不同的路**。
 
 列表的 `keyword` 是"在已有列表里顺手筛一下"，所以用封顶计数保护性能；而 `searchArticles` 是"专门的全文搜索端点"，做的是完整 `count(*)` 返回真实总数——因为搜索页本就该告诉用户"共找到 N 篇"，且它语义上就是一次独立查询。两者都是 LIKE，但**封不封顶取决于这个搜索在产品里的角色**，不是一刀切。这也是为什么我们说"列表三件套"和"搜索"要分开设计。
 
@@ -57,11 +122,18 @@ const where = and(
 
 但上专用引擎是有代价的：**多一个独立服务要养、要多一份数据同步**（写文章时双写到搜索引擎，或用 CDC 监听数据库变更）、要维护索引和映射。即便是 Meilisearch 这种轻量选手，也得给它分内存、盯索引构建时的 CPU 尖峰，小机器上一个不小心就把同机其他服务挤挂。所以我给的建议和前面几篇一脉相承——**先用 LIKE 把搜索跑起来、验证用户真的在搜，再按需升级到 Meilisearch**；别在日活几十的时候就去部署一套 ES，那是对想象中流量的过度投资。
 
-如果真到了要上的那一天，数据同步是第一个要设计的点：常见两招，一是"双写"——应用层建文章时同时往搜索引擎插一条，简单直接但容易和主库不一致（一边写成功一边写失败就裂了）；二是 CDC（变更数据捕获）——监听数据库 binlog/WAL，异步把变更同步过去，主库零侵入但要多一套管道。小团队从双写起步、把一致性问题用"定时重建索引"兜底，往往够用。索引本身也要设计：哪些字段可搜、要不要存摘要用于高亮、中文用哪个分词器——这些都是"上引擎"之后才需要操心的事。
+如果真到了要上的那一天，数据同步是第一个要设计的点。常见两招对比：
+
+| 同步方式 | 原理 | 优点 | 缺点 | 适用场景 |
+|---|---|---|---|---|
+| **双写** | 应用层建文章时同时往搜索引擎插一条 | 简单直接、延迟低 | 一边成功一边失败就裂，一致性靠兜底 | 小团队起步 |
+| **CDC** | 监听数据库 binlog/WAL，异步同步 | 主库零侵入、一致性好 | 多一套管道、运维复杂 | 中大规模 |
+
+小团队从双写起步、把一致性问题用"定时重建索引"兜底，往往够用。索引本身也要设计：哪些字段可搜、要不要存摘要用于高亮、中文用哪个分词器——这些都是"上引擎"之后才需要操心的事。
 
 ## 五、从子串到精确（P-35 钩子）
 
-顺带呼应一个前面埋的点：我们虽然在"正文搜索"上还在用 LIKE，但**"按标签筛选"已经脱离了子串匹配**——M1-16 讲过，`article_tags` 关联表 `JOIN` 精确计数，告别了早期对 `tags` JSON 做 `LIKE '%js%'` 误命中 `json` 的尴尬（P-35）。也就是说，我们的"检索"策略是分层的：标签这种**结构化、需要精确**的，走关联表；正文这种**非结构化、容忍模糊**的，暂用 LIKE。不是"一律 LIKE"也不是"一律上引擎"，而是按字段性质选最合适的武器。
+顺带呼应一个前面埋的点：我们虽然在"正文搜索"上还在用 LIKE，但**"按标签筛选"已经脱离了子串匹配**——[分类与标签：多对多关系的建模与查询](https://blog.csdn.net/fungleo/article/details/164425616) 讲过，`article_tags` 关联表 `JOIN` 精确计数，告别了早期对 `tags` JSON 做 `LIKE '%js%'` 误命中 `json` 的尴尬（P-35）。也就是说，我们的"检索"策略是分层的：标签这种**结构化、需要精确**的，走关联表；正文这种**非结构化、容忍模糊**的，暂用 LIKE。不是"一律 LIKE"也不是"一律上引擎"，而是按字段性质选最合适的武器。
 
 ## 六、小结与前瞻
 
@@ -85,14 +157,6 @@ const where = and(
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
 
----
 
-## 配图提示词（发布前整段删除）
-
-- `19-搜索光谱`：左侧 LIKE（轻量、零成本）→ 中 FTS5（需分词）→ 右 Meilisearch/ES（专用引擎），配中文小标签标注各自适用规模；扁平技术博客风、与专栏封面配色一致。
-- `19-LIKE三硬伤`：三个红叉——全表扫(无索引)/无相关性/中文不分词，对应三个痛点。
-- 复用说明：文末订阅图用真实 URL 直填，发布前勿删订阅块；本篇配图提示词段整体在发布前删除。
-
-## 文章摘要（发布时填入 CSDN 摘要字段，随配图提示词一并删除）
 
 搜索框人人会写，但 LIKE '%词%' 的真实代价常被低估：前导 % 走不了索引、没有相关性排序、中文分词直接失灵。本文帮你判断自己的场景停在哪一段——先用 LIKE 跑起来、用 SCAN_LIMIT 封顶，再谈什么时候才值得上 Meilisearch / Elasticsearch 这类专用引擎。
