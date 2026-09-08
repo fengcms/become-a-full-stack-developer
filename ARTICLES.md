@@ -36,10 +36,10 @@
 | 成为全栈·Node 后端篇·认证方案-JWT还是Session | — | `articles/M1-12-认证方案-JWT还是Session.md` | https://blog.csdn.net/fungleo/article/details/164363240 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·注册登录全流程实现 | — | `articles/M1-13-注册登录全流程实现.md` | https://blog.csdn.net/fungleo/article/details/164396193 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·权限模型-从认证到RBAC | — | `articles/M1-14-权限模型-从认证到RBAC.md` | https://blog.csdn.net/fungleo/article/details/164396910 | 🟢 已发布 |
-| 成为全栈·Node 后端篇·文章CRUD与投稿状态机 | — | `articles/M1-15-文章CRUD与投稿状态机.md` | — | 🟡 草稿中 |
+| 成为全栈·Node 后端篇·文章CRUD与投稿状态机 | — | `articles/M1-15-文章CRUD与投稿状态机.md` | https://blog.csdn.net/fungleo/article/details/164453121 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·分类与标签-多对多关系的建模与查询 | — | `articles/M1-16-分类与标签-多对多关系的建模与查询.md` | https://blog.csdn.net/fungleo/article/details/164425616 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·列表接口三件套-分页-筛选-排序 | — | `articles/M1-17-列表接口三件套-分页-筛选-排序.md` | https://blog.csdn.net/fungleo/article/details/164425686 | 🟢 已发布 |
-| 成为全栈·Node 后端篇·文件上传-R2与本地磁盘双实现与签名直传 | — | `articles/M1-18-文件上传-R2与本地磁盘双实现与签名直传.md` | — | 🟡 草稿中 |
+| 成为全栈·Node 后端篇·文件上传-R2与本地磁盘双实现与签名直传 | — | `articles/M1-18-文件上传-R2与本地磁盘双实现与签名直传.md` | https://blog.csdn.net/fungleo/article/details/164453365 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·全文搜索-从LIKE到全文索引 | — | `articles/M1-19-全文搜索-从LIKE到全文索引.md` | — | 🟡 草稿中 |
 | 成为全栈·Node 后端篇·接口文档自动化-让OpenAPI与代码不脱节 | — | `articles/M1-20-接口文档自动化-让OpenAPI与代码不脱节.md` | — | 🟡 草稿中 |
 | 成为全栈·Node 后端篇·后端测试策略-单元-集成与测试数据库 | — | `articles/M1-21-后端测试策略-单元-集成与测试数据库.md` | — | 🟡 草稿中 |
