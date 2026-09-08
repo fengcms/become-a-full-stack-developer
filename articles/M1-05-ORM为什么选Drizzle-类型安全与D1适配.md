@@ -148,7 +148,7 @@ const [row] = await db.insert(articles).values({ title: 'x' }).returning().all()
 
 **一是复杂聚合与窗口函数。** 比如"每篇文章按发布时间排名""按分类统计文章数并算占比"，Drizzle 的链式 API 表达起来别扭，不如一段 raw SQL 清晰。Drizzle 完全支持 `sql\`…`` 原生片段，该下场时就下场，不必硬凹链式。
 
-**二是全文搜索与特定索引优化。** 后面搜索那篇 {{LINK:M1-19}} 会看到，我们要在 `LIKE` 和真正的全文索引之间做权衡，底层离不开手写 SQL。
+**二是全文搜索与特定索引优化。** 后面搜索那篇 [全文搜索：从 LIKE 到全文索引](https://blog.csdn.net/fungleo/article/details/164582848) 会看到，我们要在 `LIKE` 和真正的全文索引之间做权衡，底层离不开手写 SQL。
 
 所以正确的心智是：**日常 CRUD 交给 Drizzle 吃类型安全的红利，少数复杂查询用 raw SQL 兜底**。ORM 是工具，不是牢笼。
 

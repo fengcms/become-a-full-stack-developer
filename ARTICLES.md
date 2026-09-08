@@ -40,8 +40,8 @@
 | 成为全栈·Node 后端篇·分类与标签-多对多关系的建模与查询 | — | `articles/M1-16-分类与标签-多对多关系的建模与查询.md` | https://blog.csdn.net/fungleo/article/details/164425616 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·列表接口三件套-分页-筛选-排序 | — | `articles/M1-17-列表接口三件套-分页-筛选-排序.md` | https://blog.csdn.net/fungleo/article/details/164425686 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·文件上传-R2与本地磁盘双实现与签名直传 | — | `articles/M1-18-文件上传-R2与本地磁盘双实现与签名直传.md` | https://blog.csdn.net/fungleo/article/details/164453365 | 🟢 已发布 |
-| 成为全栈·Node 后端篇·全文搜索-从LIKE到全文索引 | — | `articles/M1-19-全文搜索-从LIKE到全文索引.md` | — | 🟡 草稿中 |
-| 成为全栈·Node 后端篇·接口文档自动化-让OpenAPI与代码不脱节 | — | `articles/M1-20-接口文档自动化-让OpenAPI与代码不脱节.md` | — | 🟡 草稿中 |
+| 成为全栈·Node 后端篇·全文搜索-从LIKE到全文索引 | — | `articles/M1-19-全文搜索-从LIKE到全文索引.md` | https://blog.csdn.net/fungleo/article/details/164582848 | 🟢 已发布 |
+| 成为全栈·Node 后端篇·接口文档自动化-让OpenAPI与代码不脱节 | — | `articles/M1-20-接口文档自动化-让OpenAPI与代码不脱节.md` | https://blog.csdn.net/fungleo/article/details/164584149 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·后端测试策略-单元-集成与测试数据库 | — | `articles/M1-21-后端测试策略-单元-集成与测试数据库.md` | — | 🟡 草稿中 |
 | 成为全栈·Node 后端篇·容器化-给Node应用写一个像样的Dockerfile | — | `articles/M1-22-容器化-给Node应用写一个像样的Dockerfile.md` | — | 🟡 草稿中 |
 | 成为全栈·Node 后端篇·部署上线-从本地起服到真正对外服务 | — | `articles/M1-23-部署上线-从本地起服到真正对外服务.md` | — | 🟡 草稿中 |
