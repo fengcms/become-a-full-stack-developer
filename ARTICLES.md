@@ -44,8 +44,8 @@
 | 成为全栈·Node 后端篇·接口文档自动化-让OpenAPI与代码不脱节 | — | `articles/M1-20-接口文档自动化-让OpenAPI与代码不脱节.md` | https://blog.csdn.net/fungleo/article/details/164584149 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·后端测试策略-单元-集成与测试数据库 | — | `articles/M1-21-后端测试策略-单元-集成与测试数据库.md` | https://blog.csdn.net/fungleo/article/details/164720486 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·容器化-给Node应用写一个像样的Dockerfile | — | `articles/M1-22-容器化-给Node应用写一个像样的Dockerfile.md` | https://blog.csdn.net/fungleo/article/details/164721321 | 🟢 已发布 |
-| 成为全栈·Node 后端篇·部署上线-从本地起服到真正对外服务 | — | `articles/M1-23-部署上线-从本地起服到真正对外服务.md` | — | 🟡 草稿中 |
-| 成为全栈·Node 后端篇·一套后端双部署-适配层如何让一份代码跑在两套运行时 | — | `articles/M1-24-一套后端双部署-适配层如何让一份代码跑在两套运行时.md` | — | 🟡 草稿中 |
+| 成为全栈·Node 后端篇·部署上线-从本地起服到真正对外服务 | — | `articles/M1-23-部署上线-从本地起服到真正对外服务.md` | https://blog.csdn.net/fungleo/article/details/164815866 | 🟢 已发布 |
+| 成为全栈·Node 后端篇·一套后端双部署-适配层如何让一份代码跑在两套运行时 | — | `articles/M1-24-一套后端双部署-适配层如何让一份代码跑在两套运行时.md` | https://blog.csdn.net/fungleo/article/details/164816647 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·分类树-无限级分类的存储-查询与环检测 | — | `articles/M1-25-分类树-无限级分类的存储-查询与环检测.md` | — | 🟡 草稿中 |
 | 成为全栈·Node 后端篇·阅读量防刷-去重冷却与计数写分离 | — | `articles/M1-26-阅读量防刷-去重冷却与计数写分离.md` | — | 🟡 草稿中 |
 | 成为全栈·Node 后端篇·评论内容安全-敏感词过滤-三态审核与级联删除 | — | `articles/M1-27-评论内容安全-敏感词过滤-三态审核与级联删除.md` | — | 🟡 草稿中 |

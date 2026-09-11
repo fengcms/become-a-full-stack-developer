@@ -174,7 +174,7 @@ HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
 6. **卷挂载持久化**：`DB_FILE` 数据库文件 + `uploads/` 都要挂卷；换 R2 则容器可无状态。
 7. **P-51 诚实**：文档里的结构/数量/路径要么实测要么标"计划补入"，不写"计划中的结构"冒充已有。
 
-下一篇（{{LINK:M1-23}}）我们聊"部署上线"：从本地 `pnpm start` 到真正跑在服务器 / Cloudflare 上，环境变量、反向代理、以及"一套后端双部署"到底怎么落地。
+下一篇（[部署上线：从本地起服到真正对外服务](https://blog.csdn.net/fungleo/article/details/164815866)）我们聊"部署上线"：从本地 `pnpm start` 到真正跑在服务器 / Cloudflare 上，环境变量、反向代理、以及"一套后端双部署"到底怎么落地。
 
 ---
 

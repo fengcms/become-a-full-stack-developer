@@ -80,7 +80,7 @@ export const ok = <T>(data: T, message = 'ok'): Response =>
 
 选项 A 是多写一份 `wrangler.toml` 配置，日常开发测试仍在 Node（启动快、调试方便）；选项 B 是只做适配层、不出 CF 部署产物。我们最终选了 **A**——多走这一步，"兼容 Cloudflare"就从一句漂亮话，变成 `wrangler deploy` 能跑起来的事实。代价只是多维护一个配置文件，收益是定位成真。
 
-> 适配层真正的"魔法"在 DB：Node 用 `better-sqlite3`（本地文件），CF 用 D1（绑定），通过 `setDb` 注入解耦，业务逻辑完全无感。这块细节留到 {{LINK:M1-24}} 再展开，这里先知道"有这层东西"就够了。
+> 适配层真正的"魔法"在 DB：Node 用 `better-sqlite3`（本地文件），CF 用 D1（绑定），通过 `setDb` 注入解耦，业务逻辑完全无感。这块细节留到 [一套后端双部署：适配层如何让一份代码跑在两套运行时](https://blog.csdn.net/fungleo/article/details/164816647) 再展开，这里先知道"有这层东西"就够了。
 
 最后说句公道话：Hono 不是银弹。它的生态比 Express 小得多，很多能力要靠配套包自己拼起来——我们做请求校验用了 `@hono/zod-validator`、在 Node 起服用了 `@hono/node-server`（这些都在 `package.json` 里看得见的依赖），相当于"乐高"要自己挑零件。中文资料也相对少，踩坑时搜出来的多是英文。但我们愿意付这个代价，因为换来的"零框架依赖 + 跨运行时"是别的框架给不了的。选型从来是 trade-off，不是崇拜——把账算清楚，比追新重要。
 
