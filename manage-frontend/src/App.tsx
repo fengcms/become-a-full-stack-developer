@@ -6,12 +6,12 @@
  * @date 2026-08-29
  */
 
-import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Suspense, useEffect } from 'react'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { FullPageLoading } from '@/components/feedback/FullPageLoading'
 import { Toaster } from '@/components/ui/sonner'
 import { bootstrapSession, setUnauthorizedHandler } from '@/lib/request'
-import { AppRoutes } from '@/router'
 
 /**
  * 应用根组件。挂载时注册会话引导与全局 401 兜底，渲染路由表与 toast 容器。
@@ -38,7 +38,9 @@ const App = () => {
 
   return (
     <>
-      <AppRoutes />
+      <Suspense fallback={<FullPageLoading />}>
+        <Outlet />
+      </Suspense>
       <Toaster position="top-center" richColors closeButton />
     </>
   )

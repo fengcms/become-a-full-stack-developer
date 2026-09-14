@@ -11,13 +11,14 @@
 
 import { format } from 'date-fns'
 import { KeyRound, Pencil } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { type ColumnDef, DataTable } from '@/components/data/DataTable'
 import { TablePagination } from '@/components/data/TablePagination'
 import { FILTER_ALL, FilterSelect } from '@/components/form/FilterSelect'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { ROLE_LABELS } from '@/config/roles'
+import { useKeywordFilter } from '@/hooks/useKeywordFilter'
 import { useTableQuery } from '@/hooks/useTableQuery'
 import { useResetPassword, useUpdateUser, useUsers } from '@/hooks/useUsers'
 import type { User, UserRole, UserStatus } from '@/types/common'
@@ -59,16 +60,11 @@ const formatDate = (v?: string | null) => (v ? format(new Date(v), 'yyyy-MM-dd H
  * 用户管理列表页。
  */
 const UserListPage = () => {
-  const { page, pageSize, query, setPage, setPageSize, setFilters } = useTableQuery()
+  const { page, pageSize, query, setPage, setPageSize, setFilters, clearFilters } = useTableQuery()
   const role = query.role as UserRole | undefined
   const status = query.status as UserStatus | undefined
   const keyword = (query.keyword as string | undefined) ?? undefined
-  // T3：搜索防抖，避免每次按键即 refetch
-  const [kw, setKw] = useState(keyword ?? '')
-  useEffect(() => {
-    const t = setTimeout(() => setFilters({ keyword: kw || undefined }), 300)
-    return () => clearTimeout(t)
-  }, [kw, setFilters])
+  const [kw, setKw] = useKeywordFilter(keyword ?? '', setFilters)
 
   const listQuery = { page, pageSize, role, status, keyword }
   const { data, isLoading, isError, error, refetch } = useUsers(listQuery)
@@ -124,10 +120,7 @@ const UserListPage = () => {
 
   return (
     <div>
-      <PageHeader
-        title="用户管理"
-        description="角色升降、启用禁用、等级调整与密码重置，均为 admin 专属"
-      />
+      <PageHeader title="用户管理" description="管理用户账号、分配权限和协助重置密码" />
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <FilterSelect
@@ -154,9 +147,15 @@ const UserListPage = () => {
         <input
           value={kw}
           onChange={(e) => setKw(e.target.value)}
+          aria-label="搜索"
           placeholder="搜索用户名 / 昵称 / 邮箱"
           className="h-9 w-64 rounded-md border border-input bg-white px-2 text-sm dark:bg-background"
         />
+        {(role || status || keyword) && (
+          <Button variant="ghost" onClick={clearFilters}>
+            清除筛选
+          </Button>
+        )}
       </div>
 
       <DataTable
@@ -164,7 +163,7 @@ const UserListPage = () => {
         data={data?.list ?? []}
         rowKey={(r) => r.id}
         loading={isLoading}
-        emptyText="暂无用户"
+        emptyText={role || status || keyword ? '没有符合条件的用户，请调整筛选' : '暂无用户'}
         error={isError ? error : undefined}
         onRetry={() => refetch()}
       />

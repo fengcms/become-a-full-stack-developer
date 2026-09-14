@@ -8,6 +8,8 @@
 
 import { useCallback, useState } from 'react'
 import { uploadFile } from '@/api/attachments'
+import { useUploadActivity } from '@/components/form/UploadScope'
+import { validateImage } from '@/lib/imageUpload'
 import { fileUrl } from '@/lib/request'
 import type { Attachment } from '@/types/common'
 
@@ -16,7 +18,8 @@ import type { Attachment } from '@/types/common'
  * @param options.articleId - 可选，把附件关联到当前正在编辑的文章。
  */
 export const useImageUpload = (options: { articleId?: number } = {}) => {
-  const [uploading, setUploading] = useState(false)
+  const [count, setCount] = useState(0)
+  const { begin } = useUploadActivity()
   const articleId = options.articleId
 
   /**
@@ -27,16 +30,19 @@ export const useImageUpload = (options: { articleId?: number } = {}) => {
    */
   const upload = useCallback(
     async (file: File): Promise<string> => {
-      setUploading(true)
+      validateImage(file)
+      const finish = begin()
+      setCount((n) => n + 1)
       try {
         const attachment: Attachment = await uploadFile(file, articleId)
         return fileUrl(attachment.url)
       } finally {
-        setUploading(false)
+        setCount((n) => n - 1)
+        finish()
       }
     },
-    [articleId],
+    [articleId, begin],
   )
 
-  return { upload, uploading }
+  return { upload, uploading: count > 0 }
 }

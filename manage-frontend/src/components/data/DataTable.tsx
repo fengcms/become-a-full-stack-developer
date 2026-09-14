@@ -5,6 +5,7 @@
  *   行多选（T6 批量操作）为可选能力：传 `selectable` 即在首列渲染复选框，选择态由页面受控。
  * @module manage-frontend/components/data
  * @date 2026-08-29
+ * @remarks 本文件保留同一页面/表格的声明式编排，查询与操作逻辑已由 hooks 或列模块承载；为便于核对控件状态与确认流程，允许超过 200 行。
  */
 
 import { ArrowDown, ArrowUp, ChevronsUpDown, Inbox } from 'lucide-react'
@@ -36,11 +37,13 @@ const RowCheckbox = ({
   indeterminate = false,
   onChange,
   label,
+  disabled = false,
 }: {
   checked: boolean
   indeterminate?: boolean
   onChange: (next: boolean) => void
   label: string
+  disabled?: boolean
 }) => {
   const ref = useRef<HTMLInputElement>(null)
   useEffect(() => {
@@ -50,6 +53,7 @@ const RowCheckbox = ({
     <input
       ref={ref}
       type="checkbox"
+      disabled={disabled}
       aria-label={label}
       checked={checked}
       onChange={(e) => onChange(e.target.checked)}
@@ -82,6 +86,7 @@ export const DataTable = <T,>({
   error,
   onRetry,
   selectable = false,
+  selectionDisabled = false,
   selectedKeys,
   onSelectionChange,
 }: {
@@ -98,6 +103,7 @@ export const DataTable = <T,>({
   onRetry?: () => void
   /** T6：启用首列复选框多选。 */
   selectable?: boolean
+  selectionDisabled?: boolean
   /** T6：受控的已选行 key。 */
   selectedKeys?: Array<string | number>
   /** T6：选择变更回调。 */
@@ -187,6 +193,7 @@ export const DataTable = <T,>({
                   indeterminate={!allChecked && someChecked}
                   onChange={toggleAll}
                   label="全选本页"
+                  disabled={selectionDisabled}
                 />
               </th>
             )}
@@ -254,6 +261,7 @@ export const DataTable = <T,>({
                         checked={selectedSet.has(key)}
                         onChange={(v) => toggleRow(key, v)}
                         label={`选择 ${key}`}
+                        disabled={selectionDisabled}
                       />
                     </td>
                   )}

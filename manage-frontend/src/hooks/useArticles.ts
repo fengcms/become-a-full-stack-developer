@@ -43,7 +43,11 @@ export const useArticle = (id: number) =>
 /** 失效文章相关查询缓存（列表 + 详情）。 */
 const useInvalidateArticles = () => {
   const qc = useQueryClient()
-  return () => qc.invalidateQueries({ queryKey: ['articles'] })
+  return () =>
+    Promise.all([
+      qc.invalidateQueries({ queryKey: ['articles'] }),
+      qc.invalidateQueries({ queryKey: ['site'] }),
+    ])
 }
 
 /** 新建文章。POST /articles（member+；editor/admin 可置 published）。 */

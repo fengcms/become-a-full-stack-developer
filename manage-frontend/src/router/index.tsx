@@ -12,9 +12,9 @@
  * @date 2026-08-29
  */
 
-import { lazy, Suspense } from 'react'
-import { Route, Routes } from 'react-router-dom'
-import { FullPageLoading } from '@/components/feedback/FullPageLoading'
+import { lazy } from 'react'
+import { createBrowserRouter, createRoutesFromElements, Route } from 'react-router-dom'
+import App from '@/App'
 import AdminLayout from '@/layouts/AdminLayout'
 import {
   canManageArticles,
@@ -38,6 +38,7 @@ import { DefaultHome, GuestOnly, RequireAuth, RequireCan, RequireConsole } from 
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'))
 const DashboardPage = lazy(() => import('@/pages/dashboard/DashboardPage'))
 const ArticleListPage = lazy(() => import('@/pages/articles/ArticleListPage'))
+const ArticlePreviewPage = lazy(() => import('@/pages/articles/ArticlePreviewPage'))
 const ArticleFormPage = lazy(() => import('@/pages/articles/ArticleFormPage'))
 const CommentListPage = lazy(() => import('@/pages/comments/CommentListPage'))
 const CategoryTreePage = lazy(() => import('@/pages/categories/CategoryTreePage'))
@@ -48,9 +49,9 @@ const SiteSettingsPage = lazy(() => import('@/pages/site/SiteSettingsPage'))
 /**
  * 路由表。裸页与后台主壳分层，业务路由按能力套 RequireCan。
  */
-const AppRoutes = () => (
-  <Suspense fallback={<FullPageLoading />}>
-    <Routes>
+export const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route element={<App />}>
       {/* 裸页 */}
       <Route
         path="/login"
@@ -90,6 +91,7 @@ const AppRoutes = () => (
             </RequireCan>
           }
         />
+        <Route path="/articles/:id/preview" element={<ArticlePreviewPage />} />
         <Route
           path="/articles/new"
           element={
@@ -173,8 +175,6 @@ const AppRoutes = () => (
             已登录才真的看到「页面不存在」——两种情况的正确反馈本来就不同 */}
         <Route path="*" element={<NotFoundPage />} />
       </Route>
-    </Routes>
-  </Suspense>
+    </Route>,
+  ),
 )
-
-export { AppRoutes }

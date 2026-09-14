@@ -4,162 +4,103 @@
  *   排序 / 分页；行内操作含编辑、过审（pending）、删除。新建入口跳 /articles/new。
  * @module manage-frontend/pages/articles
  * @date 2026-08-29
+ * @remarks 本文件保留同一页面/表格的声明式编排，查询与操作逻辑已由 hooks 或列模块承载；为便于核对控件状态与确认流程，允许超过 200 行。
  */
 
-import { format } from 'date-fns'
-import { Check, Pencil, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { approveArticle, deleteArticle } from '@/api/articles'
 import { BatchActionBar } from '@/components/data/BatchActionBar'
-import { type ColumnDef, DataTable } from '@/components/data/DataTable'
+import { BatchFailures } from '@/components/data/BatchFailures'
+import { DataTable } from '@/components/data/DataTable'
 import { TablePagination } from '@/components/data/TablePagination'
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog'
+import { UnsavedChanges } from '@/components/feedback/UnsavedChanges'
 import { FILTER_ALL, FilterSelect } from '@/components/form/FilterSelect'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { useAdminArticles, useApproveArticle, useDeleteArticle } from '@/hooks/useArticles'
+import { useBatchSelection } from '@/hooks/useBatchSelection'
+import { useCategoryTree } from '@/hooks/useCategories'
+import { useKeywordFilter } from '@/hooks/useKeywordFilter'
 import { useTableQuery } from '@/hooks/useTableQuery'
-import { useToast } from '@/hooks/useToast'
 import type { ArticleStatus, ArticleSummary } from '@/types/common'
-
-/** 状态中文标签。 */
-const STATUS_LABEL: Record<ArticleStatus, string> = {
-  draft: '草稿',
-  pending: '待审',
-  published: '已发布',
-}
-
-/**
- * 状态徽标配色。
- * 一律走 index.css 的语义令牌（status-draft / status-pending / status-published），
- * 明暗主题各自定义底色与前景色，不再硬编码 slate/amber/emerald 调色板（审阅 P3-3）。
- */
-const STATUS_CLASS: Record<ArticleStatus, string> = {
-  draft: 'bg-status-draft text-status-draft-fg',
-  pending: 'bg-status-pending text-status-pending-fg',
-  published: 'bg-status-published text-status-published-fg',
-}
-
-/** 状态徽标。 */
-const StatusBadge = ({ status }: { status: ArticleStatus }) => (
-  <span className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${STATUS_CLASS[status]}`}>
-    {STATUS_LABEL[status]}
-  </span>
-)
-
-/** 日期格式化；空值回退「—」。 */
-const formatDate = (v?: string | null) => (v ? format(new Date(v), 'yyyy-MM-dd HH:mm') : '—')
+import { articleColumns } from './articleColumns'
+import { categoryOptions } from './articleForm'
 
 /**
  * 文章管理列表页。
  */
 const ArticleListPage = () => {
   const navigate = useNavigate()
-  const { page, pageSize, sort, query, setPage, setPageSize, setSort, setFilters } = useTableQuery()
+  const qc = useQueryClient()
+  const location = useLocation()
+  const from = location.pathname + location.search
+  const categories = useCategoryTree()
+  const { page, pageSize, sort, query, setPage, setPageSize, setSort, setFilters, clearFilters } =
+    useTableQuery()
   const status = (query.status as ArticleStatus | undefined) ?? undefined
   const keyword = (query.keyword as string | undefined) ?? ''
-  // T3：搜索防抖，避免每次按键即 refetch
-  const [kw, setKw] = useState(keyword)
-  useEffect(() => {
-    const t = setTimeout(() => setFilters({ keyword: kw || undefined }), 300)
-    return () => clearTimeout(t)
-  }, [kw, setFilters])
+  const [kw, setKw] = useKeywordFilter(keyword ?? '', setFilters)
 
-  const listQuery = { page, pageSize, sort, status, keyword: keyword || undefined }
+  const category = query.category as string | undefined
+  const tag = query.tag as string | undefined
+  const filtered = !!(keyword || category || tag || status)
+  const listQuery = { page, pageSize, sort, status, category, tag, keyword: keyword || undefined }
   const { data, isLoading, isError, error, refetch } = useAdminArticles(listQuery)
   const approveMut = useApproveArticle()
   const deleteMut = useDeleteArticle()
   const [toDelete, setToDelete] = useState<ArticleSummary | null>(null)
-  // T6：批量操作受控选择态
-  const [selected, setSelected] = useState<Array<string | number>>([])
-  const [batchBusy, setBatchBusy] = useState(false)
+  const batch = useBatchSelection(JSON.stringify(listQuery))
+  const { selected, setSelected, busy: batchBusy } = batch
   const [toBatchDelete, setToBatchDelete] = useState(false)
-  const toast = useToast()
-
-  /** T6：循环调用单行 mutation 实现批量；Promise.allSettled 容忍部分失败。 */
-  const runBatch = async (label: string, fn: (id: number) => Promise<unknown>) => {
-    const ids = selected.map(Number)
-    if (ids.length === 0) return
-    setBatchBusy(true)
-    try {
-      const results = await Promise.allSettled(ids.map(fn))
-      const ok = results.filter((r) => r.status === 'fulfilled').length
-      refetch()
-      setSelected([])
-      setToBatchDelete(false)
-      const fail = results.length - ok
-      if (fail === 0) toast.success(`已${label} ${ok} 篇`)
-      else toast.info(`已${label} ${ok} 篇，${fail} 篇失败`)
-    } finally {
-      setBatchBusy(false)
-    }
+  const selectedIds = (data?.list ?? [])
+    .filter((row) => selected.includes(row.id))
+    .map((row) => row.id)
+  const publishIds = (data?.list ?? [])
+    .filter((row) => selected.includes(row.id) && row.status === 'pending')
+    .map((row) => row.id)
+  /** 单次批量结果汇总，不调用逐行提示的 mutation。 */
+  const runBatch = async (
+    label: string,
+    ids: number[],
+    action: (id: number) => Promise<unknown>,
+  ) => {
+    await batch.run(label, ids, action, refetch)
+    void qc.invalidateQueries({ queryKey: ['articles'] })
+    void qc.invalidateQueries({ queryKey: ['site'] })
+    setToBatchDelete(false)
   }
 
-  /** 列定义。 */
-  const columns: ColumnDef<ArticleSummary>[] = [
-    { key: 'id', header: 'ID', sortable: true, sortKey: 'id', className: 'w-14' },
-    { key: 'title', header: '标题', render: (r) => <span className="font-medium">{r.title}</span> },
-    { key: 'status', header: '状态', render: (r) => <StatusBadge status={r.status} /> },
-    { key: 'categoryName', header: '分类', render: (r) => r.categoryName ?? '—' },
-    { key: 'authorName', header: '作者', render: (r) => r.authorName ?? '—' },
-    {
-      key: 'updatedAt',
-      header: '更新时间',
-      sortable: true,
-      sortKey: 'updatedAt',
-      render: (r) => formatDate(r.updatedAt),
-    },
-    {
-      key: 'actions',
-      header: '操作',
-      align: 'right',
-      render: (r) => (
-        <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label="编辑"
-            onClick={() => navigate(`/articles/${r.id}/edit`)}
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          {r.status === 'pending' ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              aria-label="通过审核"
-              onClick={() => approveMut.mutate(r.id)}
-              disabled={approveMut.isPending}
-            >
-              <Check className="h-4 w-4" />
-            </Button>
-          ) : null}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-destructive"
-            aria-label="删除"
-            onClick={() => setToDelete(r)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-    },
-  ]
+  const columns = articleColumns({
+    from,
+    busy: batchBusy,
+    approving: approveMut.isPending,
+    names: new Map(
+      categoryOptions(categories.data ?? []).map((option) => [option.value, option.label]),
+    ),
+    onEdit: (id) => navigate(`/articles/${id}/edit`, { state: { from } }),
+    onApprove: (id) => approveMut.mutate(id),
+    onDelete: setToDelete,
+  })
 
   return (
     <div>
       <PageHeader
         title="文章管理"
-        description="草稿 / 待审 / 已发布三态流转"
-        actions={<Button onClick={() => navigate('/articles/new')}>新建文章</Button>}
+        description="管理草稿、处理投稿和更新已发布文章"
+        actions={
+          <Button onClick={() => navigate('/articles/new', { state: { from } })}>新建文章</Button>
+        }
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <UnsavedChanges dirty={false} busy={batchBusy} />
+      <fieldset disabled={batchBusy} className="mb-4 flex flex-wrap items-center gap-2">
         <input
           value={kw}
           onChange={(e) => setKw(e.target.value)}
+          aria-label="搜索"
           placeholder="搜索标题 / 关键词"
           className="h-9 rounded-md border border-input bg-white px-3 text-sm dark:bg-background"
         />
@@ -176,16 +117,33 @@ const ArticleListPage = () => {
             { value: 'published', label: '已发布' },
           ]}
         />
-      </div>
+        <FilterSelect
+          ariaLabel="按分类筛选"
+          value={category ?? FILTER_ALL}
+          onChange={(v) => setFilters({ category: v === FILTER_ALL ? undefined : v })}
+          options={[
+            { value: FILTER_ALL, label: '全部分类' },
+            ...categoryOptions(categories.data ?? []),
+          ]}
+        />
+        {tag && <span className="text-sm text-muted-foreground">标签：{tag}</span>}
+        {filtered && (
+          <Button variant="ghost" onClick={clearFilters}>
+            清除筛选
+          </Button>
+        )}
+      </fieldset>
 
+      <BatchFailures messages={batch.failures} />
       <BatchActionBar
         count={selected.length}
+        disabled={batchBusy}
         onClear={() => setSelected([])}
         actions={[
           {
-            label: '批量发布',
-            disabled: batchBusy,
-            onClick: () => runBatch('发布', (id) => approveMut.mutateAsync(id)),
+            label: `通过审核并发布（${publishIds.length}）`,
+            disabled: batchBusy || publishIds.length === 0,
+            onClick: () => runBatch('发布', publishIds, approveArticle),
           },
           {
             label: '批量删除',
@@ -203,24 +161,29 @@ const ArticleListPage = () => {
         loading={isLoading}
         sort={sort}
         onSortChange={setSort}
-        emptyText="暂无文章"
+        emptyText={
+          filtered ? '没有符合条件的文章，请调整或清除筛选' : '还没有文章，点击「新建文章」开始写作'
+        }
         error={isError ? error : undefined}
         onRetry={() => refetch()}
         selectable
+        selectionDisabled={batchBusy}
         selectedKeys={selected}
         onSelectionChange={setSelected}
       />
 
-      {data?.pagination ? (
-        <TablePagination
-          page={data.pagination.page}
-          pageSize={data.pagination.pageSize}
-          total={data.pagination.total}
-          totalPages={data.pagination.totalPages}
-          onPageChange={setPage}
-          onPageSizeChange={setPageSize}
-        />
-      ) : null}
+      <fieldset disabled={batchBusy}>
+        {data?.pagination ? (
+          <TablePagination
+            page={data.pagination.page}
+            pageSize={data.pagination.pageSize}
+            total={data.pagination.total}
+            totalPages={data.pagination.totalPages}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        ) : null}
+      </fieldset>
 
       <ConfirmDialog
         open={!!toDelete}
@@ -228,7 +191,7 @@ const ArticleListPage = () => {
         title="删除文章"
         description={
           toDelete
-            ? `确定删除《${toDelete.title}》？该操作软删除，关联评论 / 附件将隔离可见性。`
+            ? `确定删除《${toDelete.title}》？删除后文章将不再展示，相关评论也将隐藏。`
             : undefined
         }
         confirmText="删除"
@@ -245,12 +208,12 @@ const ArticleListPage = () => {
         title="批量删除文章"
         description={
           selected.length > 0
-            ? `确定删除选中的 ${selected.length} 篇文章？该操作软删除，关联评论 / 附件将隔离可见性。`
+            ? `确定删除选中的 ${selected.length} 篇文章？删除后文章将不再展示，相关评论也将隐藏。`
             : undefined
         }
         confirmText="删除"
         loading={batchBusy}
-        onConfirm={() => runBatch('删除', (id) => deleteMut.mutateAsync(id))}
+        onConfirm={() => runBatch('删除', selectedIds, deleteArticle)}
       />
     </div>
   )

@@ -107,13 +107,21 @@ export const UserEditDialog = ({
         <DialogHeader>
           <DialogTitle>编辑用户 · {user?.username ?? ''}</DialogTitle>
           <DialogDescription>
-            角色 member→editor 为晋升；status=disabled 即封号（无法登录/刷新，公开主页 404）。
-            {isSelf ? ' 你正在编辑自己的账号，禁用选项已锁定以防自锁。' : ''}
+            编辑可以管理文章和评论，管理员还可以管理用户与站点设置。
+            {isSelf ? ' 这是你当前使用的账号，不能在这里降低自己的权限或禁用自己。' : ''}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <SelectField control={form.control} name="role" label="角色" options={ROLE_OPTIONS} />
+          <SelectField
+            control={form.control}
+            name="role"
+            label="管理权限"
+            options={ROLE_OPTIONS.map((option) => ({
+              ...option,
+              disabled: isSelf && option.value !== 'admin',
+            }))}
+          />
           <SelectField
             control={form.control}
             name="status"
@@ -126,7 +134,7 @@ export const UserEditDialog = ({
             name="level"
             label="会员等级"
             type="number"
-            description="仅展示用，无业务功能，默认 1"
+            description="用于展示会员等级，不影响管理权限"
           />
           <DialogFooter>
             <Button

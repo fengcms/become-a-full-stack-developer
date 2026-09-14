@@ -1,315 +1,196 @@
 /**
- * @file src/pages/articles/ArticleFormPage.tsx
- * @description 文章新建 / 编辑页（写作优先 · 文章系统后台）。
- *   - 标题行：左侧返回按钮（有改动二次确认）+ 大号标题输入框（无「标题*」标签）。
- *   - Tab 切换位于标题下方：Tab1「内容」= 大号 Markdown 编辑器（动态占满可视高度，页面不滚动）；
- *     Tab2「设置」= 摘要 / 封面 / 分类 / 标签（slug 由标题自动派生：新建留空、编辑保留原 slug）。
- *   - 底部操作栏：保存草稿(draft) / 发布文章(published)，无「取消」；发布前校验分类缺失则跳设置高亮。
- * @module manage-frontend/pages/articles
- * @date 2026-08-31
+ * @file pages/articles/ArticleFormPage.tsx
+ * @description 写作优先布局：内容与设置保留挂载，保存与下架明确分离。
  */
-
-import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, FileText, Settings2 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Controller, useController, useForm } from 'react-hook-form'
-import { useNavigate, useParams } from 'react-router-dom'
-import { z } from 'zod'
+import { useState } from 'react'
+import { Controller, useController } from 'react-hook-form'
 import { MarkdownEditor } from '@/components/editor/MarkdownEditor'
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog'
-import { ImageUploadField } from '@/components/form/ImageUploadField'
-import { SelectField, type SelectOption } from '@/components/form/SelectField'
-import { TagsField } from '@/components/form/TagsField'
-import { TextAreaField } from '@/components/form/TextAreaField'
+import { QueryErrorState } from '@/components/feedback/QueryErrorState'
+import { UnsavedChanges } from '@/components/feedback/UnsavedChanges'
+import { UploadScope } from '@/components/form/UploadScope'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useArticle, useCreateArticle, useUpdateArticle } from '@/hooks/useArticles'
-import { useCategoryTree } from '@/hooks/useCategories'
-import type { ArticleCreate, CategoryNode } from '@/types/common'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useSetArticleStatus } from '@/hooks/useArticles'
+import { useEditorHeight } from '@/hooks/useEditorHeight'
+import { canForceArticleStatus } from '@/lib/permission'
+import { useCurrentUser } from '@/store/auth'
+import { ArticleSettings } from './ArticleSettings'
+import { useArticleEditor } from './useArticleEditor'
 
-/** 表单校验 schema（summary/coverImage 为空串时提交转 null；status 由操作栏双动词决定，不在表单内）。 */
-const schema = z.object({
-  title: z.string().min(1, '标题必填').max(200, '标题最多 200 字'),
-  content: z.string().min(1, '正文必填').max(65535, '正文超出长度上限'),
-  summary: z.string().max(500, '摘要最多 500 字'),
-  coverImage: z.string().max(512, '封面 URL 过长'),
-  categoryId: z.string(),
-  tags: z.array(z.string()),
-})
-
-/** 表单值类型。 */
-type FormValues = z.infer<typeof schema>
-
-/** 把递归分类树拍平成带缩进的 Select 选项。 */
-const flattenCategories = (
-  nodes: CategoryNode[],
-  depth = 0,
-  acc: SelectOption[] = [],
-): SelectOption[] => {
-  for (const n of nodes) {
-    if (n.id == null) continue
-    acc.push({ value: String(n.id), label: `${'  '.repeat(depth)}${n.name ?? ''}` })
-    if (n.children?.length) flattenCategories(n.children, depth + 1, acc)
-  }
-  return acc
-}
-
-/**
- * 文章新建 / 编辑页。
- */
-const ArticleFormPage = () => {
-  const { id } = useParams()
-  const articleId = id ? Number(id) : undefined
-  const isEdit = articleId != null && Number.isFinite(articleId) && articleId > 0
-  const navigate = useNavigate()
-
-  /** 当前激活标签页。 */
-  const [activeTab, setActiveTab] = useState<'content' | 'settings'>('content')
-  /** 取消守卫弹窗（返回按钮触发）。 */
-  const [backOpen, setBackOpen] = useState(false)
-  /** 编辑器动态高度（占满内容区剩余可视高度，页面不滚动）。 */
-  const [editorH, setEditorH] = useState(560)
-  const editorRO = useRef<ResizeObserver | null>(null)
-
-  const { data: article, isLoading } = useArticle(isEdit ? (articleId as number) : -1)
-  const { data: tree } = useCategoryTree()
-  const createMut = useCreateArticle()
-  const updateMut = useUpdateArticle()
-
-  /** 分类下拉选项（含「未分类」）。 */
-  const categoryOptions: SelectOption[] = (() => {
-    const opts = [{ value: '', label: '未分类' }, ...flattenCategories(tree ?? [])]
-    return opts
-  })()
-
-  const {
-    control,
-    handleSubmit,
-    reset,
-    setError,
-    formState: { isDirty },
-  } = useForm<FormValues>({
-    mode: 'onTouched',
-    resolver: zodResolver(schema),
-    defaultValues: {
-      title: '',
-      content: '',
-      summary: '',
-      coverImage: '',
-      categoryId: '',
-      tags: [],
-    },
-  })
-
-  /** 标题用受控字段，便于在返回按钮同一行内联渲染与错误提示。 */
-  const titleField = useController({ control, name: 'title' })
-
-  // 编辑模式下，详情加载完成后回填表单
-  useEffect(() => {
-    if (article) {
-      reset({
-        title: article.title,
-        content: article.content,
-        summary: article.summary ?? '',
-        coverImage: article.coverImage ?? '',
-        categoryId: article.categoryId != null ? String(article.categoryId) : '',
-        tags: article.tags ?? [],
-      })
-    }
-  }, [article, reset])
-
-  /** 编辑器容器高度：用 callback ref 在容器挂载 / 重挂载（切 Tab）时测量，填充剩余可视高度。 */
-  const setEditorWrap = useCallback((node: HTMLDivElement | null) => {
-    editorRO.current?.disconnect()
-    if (!node) return
-    const ro = new ResizeObserver((entries) => {
-      for (const e of entries) {
-        const h = e.contentRect.height
-        if (h > 0) setEditorH(Math.floor(h))
-      }
-    })
-    ro.observe(node)
-    editorRO.current = ro
-    setEditorH(Math.floor(node.clientHeight) || 560)
-  }, [])
-
-  /** 统一提交：按操作栏意图设 status。空串字段转 null，categoryId 转 number|null。 */
-  const submit = (values: FormValues, status: 'draft' | 'published') => {
-    const payload: ArticleCreate = {
-      title: values.title,
-      content: values.content,
-      summary: values.summary || null,
-      coverImage: values.coverImage || null,
-      categoryId: values.categoryId ? Number(values.categoryId) : null,
-      tags: values.tags,
-      slug: isEdit && article?.slug ? article.slug : null,
-      status,
-    }
-    if (isEdit && articleId != null) {
-      updateMut.mutate({ id: articleId, payload }, { onSuccess: () => navigate('/articles') })
-    } else {
-      createMut.mutate(payload, { onSuccess: () => navigate('/articles') })
-    }
-  }
-
-  /** 保存草稿：允许无分类。 */
-  const onSaveDraft = handleSubmit((values) => submit(values, 'draft'))
-
-  /** 发布文章：分类必填，缺失则跳到「设置」Tab 并高亮分类。 */
-  const onPublish = handleSubmit((values) => {
-    if (!values.categoryId) {
-      setError('categoryId', { type: 'manual', message: '发布前请选择分类' })
-      setActiveTab('settings')
-      return
-    }
-    submit(values, 'published')
-  })
-
-  /** 返回：有改动先确认，否则直接离开。 */
-  const onBack = () => {
-    if (isDirty) setBackOpen(true)
-    else navigate('/articles')
-  }
-
-  const pending = createMut.isPending || updateMut.isPending
-
-  if (isEdit && isLoading) return <p className="text-sm text-muted-foreground">加载中…</p>
+/** 页面只负责布局；稿件会话与设置分别独立管理。 */
+const ArticleEditor = () => {
+  const editor = useArticleEditor()
+  const { form, article, busy, activeTab, setActiveTab } = editor
+  const title = useController({ control: form.control, name: 'title' })
+  const user = useCurrentUser()
+  const status = useSetArticleStatus()
+  const [unpublish, setUnpublish] = useState(false)
+  const { height, measure } = useEditorHeight()
+  const locked = busy || status.isPending
+  const dirty = form.formState.isDirty
+  if (editor.isEdit && !editor.validId) return <QueryErrorState title="文章地址无效" />
+  if (editor.isEdit && editor.query.isPending) return <p role="status">正在加载文章…</p>
+  if (editor.isEdit && editor.query.isError && !article)
+    return <QueryErrorState title="无法加载文章" onRetry={() => editor.query.refetch()} />
 
   return (
-    // 整页高度 = 视口高度 - 顶栏 56 - 主区 padding 48（=104px）。用确定的 h 而非 min-h：
-    // 只有确定高度时，内部 flex-1 的 flex-basis:0 才不会退化成"按内容撑开"，
-    // 编辑器才能跟着视口一起变矮；视口过矮时由 min-h 兜底不再收缩，页面超出部分交给外层 main 滚动。
     <div className="flex h-[calc(100dvh-6.5rem)] min-h-[560px] flex-col">
-      {/* 标题行：左侧返回按钮（与输入框同高，正方形）+ 大号标题输入框（无「标题*」标签） */}
-      <div className="shrink-0">
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={onBack}
-            aria-label="返回文章列表"
-            className="size-11 shrink-0"
-          >
-            <ArrowLeft className="size-5" />
-          </Button>
-          <Input
-            {...titleField.field}
-            placeholder="请输入文章标题，不可为空"
-            aria-invalid={!!titleField.fieldState.error}
-            className="h-11 min-w-0 flex-1 text-lg font-medium"
-          />
-        </div>
-        {/* 错误提示与输入框左侧对齐（返回按钮 44 + 间距 12 = 56px） */}
-        {titleField.fieldState.error ? (
-          <p className="mt-1 pl-14 text-xs text-destructive">
-            {titleField.fieldState.error.message}
-          </p>
-        ) : null}
+      <UnsavedChanges dirty={dirty} busy={locked} allowNavigation={editor.allowNavigation} />
+      <div className="flex items-center gap-3">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={editor.back}
+          aria-label="返回文章列表"
+          className="size-11 shrink-0"
+        >
+          <ArrowLeft className="size-5" />
+        </Button>
+        <Input
+          {...title.field}
+          disabled={locked && !editor.uploading}
+          aria-label="文章标题"
+          placeholder="请输入文章标题"
+          aria-invalid={!!title.fieldState.error}
+          className="h-11 min-w-0 flex-1 text-lg font-medium"
+        />
       </div>
-
-      {/* Tab 切换位于标题下方 */}
+      {title.fieldState.error && (
+        <p role="alert" className="mt-1 pl-14 text-xs text-destructive">
+          {title.fieldState.error.message}
+        </p>
+      )}
       <Tabs
         value={activeTab}
         onValueChange={(v) => setActiveTab(v as 'content' | 'settings')}
         className="mt-3 flex min-h-0 flex-1 flex-col"
       >
-        <TabsList className="shrink-0">
+        <TabsList>
           <TabsTrigger value="content">
-            <FileText className="size-4" aria-hidden />
+            <FileText className="size-4" />
             内容
           </TabsTrigger>
           <TabsTrigger value="settings">
-            <Settings2 className="size-4" aria-hidden />
+            <Settings2 className="size-4" />
             设置
           </TabsTrigger>
         </TabsList>
-
-        {/* Tab1：专注写作区——编辑器动态占满剩余可视高度 */}
-        <TabsContent value="content" className="mt-3 min-h-0 flex-1 flex flex-col">
-          {/* overflow-hidden 兜底：编辑器按测量高度渲染，绝不溢出到下方操作栏 */}
-          <div ref={setEditorWrap} className="min-h-[360px] flex-1 overflow-hidden">
+        <div
+          role="tabpanel"
+          id="tabpanel-content"
+          aria-labelledby="tab-content"
+          hidden={activeTab !== 'content'}
+          className={activeTab === 'content' ? 'mt-3 flex min-h-0 flex-1 flex-col' : 'hidden'}
+        >
+          {form.formState.errors.content && (
+            <p role="alert" className="mb-2 text-sm text-destructive">
+              {form.formState.errors.content.message}
+            </p>
+          )}
+          <div ref={measure} className="min-h-[300px] flex-1 overflow-hidden">
             <Controller
-              control={control}
+              control={form.control}
               name="content"
               render={({ field }) => (
                 <MarkdownEditor
                   value={field.value}
                   onChange={field.onChange}
                   articleId={article?.id}
-                  height={editorH}
-                  placeholder="开始撰写正文…（支持 Markdown 语法，可粘贴 / 拖拽图片）"
+                  height={height}
+                  disabled={locked && !editor.uploading}
                 />
               )}
             />
           </div>
-        </TabsContent>
-
-        {/* Tab2：发布所需的元数据——保持小而次要，约束宽度不喧宾夺主。
-            px-2 / -mx-2：滚动容器的 overflow-x 会被 overflow-y:auto 连带变成 auto，
-            左右各留 8px 内边距并反向外扩，控件激活时的焦点环才不会被裁掉。 */}
-        <TabsContent value="settings" className="-mx-2 mt-3 min-h-0 flex-1 overflow-y-auto px-2">
-          {/* py-2：给首个 / 末个字段的焦点环留出纵向空间，避免被滚动容器裁掉 */}
-          <div className="max-w-2xl space-y-4 py-2">
-            <TextAreaField
-              control={control}
-              name="summary"
-              label="摘要"
-              placeholder="可选，最多 500 字"
-            />
-            <ImageUploadField
-              control={control}
-              name="coverImage"
-              label="封面图"
-              description="建议 16:9，选图即上传"
-              shape="square"
-              hint="建议 ≤ 10MB"
-            />
-            <SelectField
-              control={control}
-              name="categoryId"
-              label="分类"
-              options={categoryOptions}
-              placeholder="选择分类"
-            />
-            <Controller
-              control={control}
-              name="tags"
-              render={({ field }) => (
-                <TagsField
-                  value={field.value}
-                  onChange={field.onChange}
-                  label="标签"
-                  description="回车或逗号分隔添加"
-                />
-              )}
-            />
-          </div>
-        </TabsContent>
+        </div>
+        <div
+          role="tabpanel"
+          id="tabpanel-settings"
+          aria-labelledby="tab-settings"
+          hidden={activeTab !== 'settings'}
+          className={
+            activeTab === 'settings' ? '-mx-2 mt-3 min-h-0 flex-1 overflow-y-auto px-2' : 'hidden'
+          }
+        >
+          <fieldset disabled={locked && !editor.uploading}>
+            <ArticleSettings control={form.control} />
+          </fieldset>
+        </div>
       </Tabs>
-
-      {/* 底部操作栏：移除「取消」，重做容器高度 / 背景 / 内填充 */}
-      <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border bg-background/80 px-2 py-3 backdrop-blur">
-        <Button type="button" variant="outline" onClick={onSaveDraft} disabled={pending}>
-          保存草稿
+      <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-border bg-background/80 px-2 py-3">
+        <p role="status" className="mr-auto text-xs text-muted-foreground">
+          {editor.uploading
+            ? '图片上传中，请稍候…'
+            : locked
+              ? '正在保存…'
+              : dirty
+                ? '有未保存的修改'
+                : editor.savedAt
+                  ? `已保存于 ${editor.savedAt}`
+                  : article
+                    ? '已载入文章'
+                    : '新草稿'}
+          {article &&
+            ` · ${article.status === 'published' ? '已发布' : article.status === 'pending' ? '待审核' : '草稿'}`}
+        </p>
+        {article?.status === 'published' && canForceArticleStatus(user) && (
+          <Button
+            variant="ghost"
+            onClick={() => setUnpublish(true)}
+            disabled={locked || dirty}
+            title={dirty ? '请先保存修改' : '从站点下架并转为草稿'}
+          >
+            下架
+          </Button>
+        )}
+        <Button
+          variant={article?.status === 'published' ? 'default' : 'outline'}
+          onClick={editor.save}
+          disabled={locked || (!dirty && !!article)}
+        >
+          {locked
+            ? '处理中…'
+            : article?.status === 'published' || article?.status === 'pending'
+              ? '保存修改'
+              : '保存草稿'}
         </Button>
-        <Button type="button" onClick={onPublish} disabled={pending}>
-          发布文章
-        </Button>
+        {article?.status !== 'published' && (
+          <Button onClick={editor.publish} disabled={locked}>
+            发布文章
+          </Button>
+        )}
       </div>
-
       <ConfirmDialog
-        open={backOpen}
-        onOpenChange={setBackOpen}
-        title="未保存的修改"
-        description="返回会导致已编辑内容消失，确定离开？"
-        confirmText="离开"
-        confirmVariant="default"
-        onConfirm={() => navigate('/articles')}
+        open={unpublish}
+        onOpenChange={setUnpublish}
+        title="下架文章"
+        description="下架后文章将不再公开展示，内容会保留为草稿。"
+        confirmText="确认下架"
+        loading={status.isPending}
+        onConfirm={() => {
+          if (article)
+            status.mutate(
+              { id: article.id, status: 'draft' },
+              {
+                onSuccess: (saved) => {
+                  editor.acceptSaved(saved)
+                  setUnpublish(false)
+                },
+              },
+            )
+        }}
       />
     </div>
   )
 }
 
+/** 独立上传作用域覆盖正文和封面。 */
+const ArticleFormPage = () => (
+  <UploadScope>
+    <ArticleEditor />
+  </UploadScope>
+)
 export default ArticleFormPage

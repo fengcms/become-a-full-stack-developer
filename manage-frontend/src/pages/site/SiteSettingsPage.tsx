@@ -1,179 +1,194 @@
 /**
- * @file src/pages/site/SiteSettingsPage.tsx
- * @description 站点设置（admin 专属）。拉取 GET /admin/site/settings 回填表单，
- *   PATCH /admin/site/settings 局部更新（SiteSettingUpdate 全可选，仅传这 6 个字段）。
- *   Logo 走通用 ImageUploadField（Phase 6 由 LogoUploadField 泛化而来，审阅第四轮 R-留意建议）：
- *   先上传拿 URL 再回填 logoUrl，落库由本页 PATCH 统一完成（契约要求 logoUrl 必须是已上传的可访问地址）。
- * @module manage-frontend/pages/site
- * @date 2026-08-29
+ * @file pages/site/SiteSettingsPage.tsx
+ * @description 按品牌、搜索展示与页脚组织站点设置；加载、上传与未保存保护统一。
  */
-
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { getAdminSiteSettings, updateSiteSettings } from '@/api/site'
+import { QueryErrorState } from '@/components/feedback/QueryErrorState'
+import { UnsavedChanges } from '@/components/feedback/UnsavedChanges'
 import { ImageUploadField } from '@/components/form/ImageUploadField'
 import { TextAreaField } from '@/components/form/TextAreaField'
 import { TextField } from '@/components/form/TextField'
+import { UploadScope, useUploadActivity } from '@/components/form/UploadScope'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/useToast'
-import { canManageSiteSettings } from '@/lib/permission'
 import { qk } from '@/lib/queryClient'
-import { useAuthStore } from '@/store/auth'
-import type { SiteSetting, SiteSettingUpdate } from '@/types/common'
+import type { SiteSetting } from '@/types/common'
 
-/** 表单 schema：6 个站点字段均为可选文本，仅做最大长度兜底，防后端 400。 */
 const schema = z.object({
   siteName: z.string().max(60, '站点名称最多 60 字'),
   siteTitle: z.string().max(80, '站点标题最多 80 字'),
-  siteDescription: z.string().max(200, '站点描述最多 200 字'),
+  siteDescription: z.string().max(200, '描述最多 200 字'),
   siteKeywords: z.string().max(120, '关键词最多 120 字'),
-  logoUrl: z.string().max(500, 'Logo 地址异常'),
-  copyright: z.string().max(200, '版权信息最多 200 字'),
+  logoUrl: z.string().max(500, 'Logo 地址过长'),
+  copyright: z.string().max(200, '版权最多 200 字'),
+})
+type Values = z.infer<typeof schema>
+/** 后端值映射为可编辑字符串。 */
+const toValues = (s?: SiteSetting): Values => ({
+  siteName: s?.siteName ?? '',
+  siteTitle: s?.siteTitle ?? '',
+  siteDescription: s?.siteDescription ?? '',
+  siteKeywords: s?.siteKeywords ?? '',
+  logoUrl: s?.logoUrl ?? '',
+  copyright: s?.copyright ?? '',
 })
 
-/** 表单值类型。 */
-type FormValues = z.infer<typeof schema>
-
-/** 把后端 SiteSetting 映射成表单值（未设字段兜底空串）。 */
-const toFormValues = (s: SiteSetting): FormValues => ({
-  siteName: s.siteName ?? '',
-  siteTitle: s.siteTitle ?? '',
-  siteDescription: s.siteDescription ?? '',
-  siteKeywords: s.siteKeywords ?? '',
-  logoUrl: s.logoUrl ?? '',
-  copyright: s.copyright ?? '',
-})
-
-/** 站点设置页。 */
-const SiteSettingsPage = () => {
-  const queryClient = useQueryClient()
-  const { error: toastError, success: toastSuccess } = useToast()
-  const form = useForm<FormValues>({
-    mode: 'onTouched',
+/** 配置编辑会话首次回填，提交成功再建立新的基线。 */
+const SettingsEditor = () => {
+  const qc = useQueryClient()
+  const toast = useToast()
+  const settings = useQuery({ queryKey: qk.site.adminSettings, queryFn: getAdminSiteSettings })
+  const baseline = useRef<SiteSetting | undefined>(undefined)
+  const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      siteName: '',
-      siteTitle: '',
-      siteDescription: '',
-      siteKeywords: '',
-      logoUrl: '',
-      copyright: '',
-    },
+    mode: 'onTouched',
+    defaultValues: toValues(),
   })
-
-  const user = useAuthStore((s) => s.user)
-  const canSite = canManageSiteSettings(user)
-
-  const settings = useQuery({
-    queryKey: qk.site.adminSettings,
-    queryFn: getAdminSiteSettings,
-    enabled: canSite,
-  })
-
-  /** 拉到配置后回填表单，避免空表单覆盖未设字段。 */
+  const { count } = useUploadActivity()
   useEffect(() => {
-    if (settings.data) form.reset(toFormValues(settings.data))
+    if (settings.data && !baseline.current) {
+      baseline.current = settings.data
+      form.reset(toValues(settings.data))
+    }
   }, [settings.data, form])
-
   const mutation = useMutation({
-    mutationFn: (values: FormValues): Promise<SiteSetting> =>
-      updateSiteSettings({
-        siteName: values.siteName,
-        siteTitle: values.siteTitle,
-        siteDescription: values.siteDescription,
-        siteKeywords: values.siteKeywords,
-        logoUrl: values.logoUrl,
-        copyright: values.copyright,
-      } satisfies SiteSettingUpdate),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: qk.site.adminSettings })
-      toastSuccess('站点设置已保存')
+    mutationFn: updateSiteSettings,
+    onSuccess: (saved) => {
+      baseline.current = saved
+      form.reset(toValues(saved))
+      qc.setQueryData(qk.site.adminSettings, saved)
+      void qc.invalidateQueries({ queryKey: qk.site.publicSettings })
+      toast.success('站点设置已保存')
     },
-    onError: (err: unknown) => toastError(err, '保存失败'),
+    onError: (error: unknown) => toast.error(error, '保存失败，修改已保留'),
   })
-
+  const busy = mutation.isPending || count > 0
+  const dirty = form.formState.isDirty
+  const values = form.watch()
   return (
-    <div className="space-y-6">
+    <div className="max-w-4xl space-y-5">
       <PageHeader
         title="站点设置"
-        description="站点名称 / 标题 / 描述 / 关键词 / Logo / 版权，供前台页头页脚与 SEO 使用。保存即全量局部更新。"
+        description="设置站点品牌、搜索展示与页脚信息，保存后应用到站点。"
       />
-      <Card>
-        <CardHeader>
-          <CardTitle>基础信息</CardTitle>
-          <CardDescription>以下字段会展示在前台页面，请谨慎填写。</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {settings.isLoading ? (
-            <p className="text-sm text-muted-foreground">加载中…</p>
-          ) : (
-            <form
-              className="space-y-4"
-              onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
+      <UnsavedChanges dirty={dirty} busy={busy} />
+      {settings.isPending ? (
+        <p role="status">正在加载设置…</p>
+      ) : settings.isError ? (
+        <QueryErrorState onRetry={() => settings.refetch()} />
+      ) : (
+        <form
+          onSubmit={form.handleSubmit((next) => {
+            if (!busy) mutation.mutate(next)
+          })}
+          className="space-y-5"
+        >
+          <fieldset disabled={mutation.isPending} className="space-y-5">
+            <Card>
+              <CardHeader>
+                <CardTitle>站点品牌</CardTitle>
+                <CardDescription>显示在站点导航和页头，帮助读者识别你的网站。</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <TextField
+                  control={form.control}
+                  name="siteName"
+                  label="站点名称"
+                  placeholder="如：FungLeo 的技术笔记"
+                />
+                <ImageUploadField
+                  control={form.control}
+                  name="logoUrl"
+                  label="站点 Logo"
+                  description="建议正方形透明 PNG，保存后生效"
+                />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>搜索展示</CardTitle>
+                <CardDescription>帮助读者在浏览器标签和搜索结果中了解站点。</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <TextField
+                  control={form.control}
+                  name="siteTitle"
+                  label="站点标题"
+                  placeholder="如：FungLeo 的技术笔记 · 从前端走向全栈"
+                  description="用于浏览器标签，可以比站点名称更完整"
+                />
+                <TextAreaField
+                  control={form.control}
+                  name="siteDescription"
+                  label="站点描述"
+                  placeholder="用一两句话介绍网站的内容"
+                />
+                <TextField
+                  control={form.control}
+                  name="siteKeywords"
+                  label="关键词"
+                  placeholder="前端, 后端, 全栈"
+                  description="多个关键词用英文逗号分隔"
+                />
+                <div className="rounded-md border bg-muted/30 p-4">
+                  <p className="mb-2 text-xs text-muted-foreground">
+                    文字预览（实际展示由前台决定）
+                  </p>
+                  <p className="font-medium">
+                    {values.siteTitle || values.siteName || '你的站点标题'}
+                  </p>
+                  <p className="mt-1 break-words text-sm text-muted-foreground">
+                    {values.siteDescription || '这里将展示站点描述'}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>页脚</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <TextField
+                  control={form.control}
+                  name="copyright"
+                  label="版权信息"
+                  placeholder="© 2026 FungLeo"
+                />
+              </CardContent>
+            </Card>
+          </fieldset>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" disabled={busy || !dirty}>
+              {count ? '图片上传中…' : mutation.isPending ? '保存中…' : '保存设置'}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={busy || !dirty}
+              onClick={() => form.reset(toValues(baseline.current))}
             >
-              <TextField
-                control={form.control}
-                name="siteName"
-                label="站点名称"
-                placeholder="我的博客"
-              />
-              <TextField
-                control={form.control}
-                name="siteTitle"
-                label="站点标题"
-                placeholder="副标题 / 标语"
-                description="浏览器标题或页头副标"
-              />
-              <TextAreaField
-                control={form.control}
-                name="siteDescription"
-                label="站点描述"
-                placeholder="一句话描述本站"
-                description="用于 SEO meta description"
-              />
-              <TextAreaField
-                control={form.control}
-                name="siteKeywords"
-                label="站点关键词"
-                placeholder="前端, 后端, 全栈"
-                description="逗号分隔，用于 SEO keywords"
-              />
-              <ImageUploadField
-                control={form.control}
-                name="logoUrl"
-                label="站点 Logo"
-                description="前台页头展示，建议正方形透明 PNG"
-              />
-              <TextField
-                control={form.control}
-                name="copyright"
-                label="版权信息"
-                placeholder="© 2026 我的博客"
-              />
-              <div className="flex gap-2">
-                <Button type="submit" disabled={mutation.isPending}>
-                  {mutation.isPending ? '保存中…' : '保存设置'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  disabled={mutation.isPending}
-                  onClick={() => settings.data && form.reset(toFormValues(settings.data))}
-                >
-                  重置
-                </Button>
-              </div>
-            </form>
-          )}
-        </CardContent>
-      </Card>
+              撤销未保存修改
+            </Button>
+            <span role="status" className="text-sm text-muted-foreground">
+              {dirty ? '有未保存的修改' : '所有修改已保存'}
+            </span>
+          </div>
+        </form>
+      )}
     </div>
   )
 }
-
+/** 站点表单独立跟踪上传任务。 */
+const SiteSettingsPage = () => (
+  <UploadScope>
+    <SettingsEditor />
+  </UploadScope>
+)
 export default SiteSettingsPage

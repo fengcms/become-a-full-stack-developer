@@ -138,9 +138,7 @@ export const CategoryFormDialog = ({
       >
         <DialogHeader>
           <DialogTitle>{node ? '编辑分类' : '新建分类'}</DialogTitle>
-          <DialogDescription>
-            分类树最大嵌套 4 级；把分类挂到自己的子孙下会被后端拒绝。
-          </DialogDescription>
+          <DialogDescription>设置名称和上级分类，最多支持 4 级。</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -154,10 +152,10 @@ export const CategoryFormDialog = ({
           <TextField
             control={form.control}
             name="slug"
-            label="Slug"
+            label="网址标识"
             required
             placeholder="frontend-basics"
-            description="URL 友好标识，只能含小写字母 / 数字 / 连字符，全局唯一"
+            description="用于分类网址，如 frontend-basics；使用小写字母、数字和连字符，不能重复"
           />
           <TextAreaField
             control={form.control}

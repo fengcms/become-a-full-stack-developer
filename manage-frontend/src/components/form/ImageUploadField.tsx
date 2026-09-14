@@ -11,15 +11,16 @@
  */
 
 import { X } from 'lucide-react'
-import { type ChangeEvent, useRef } from 'react'
+import { type ChangeEvent, useRef, useState } from 'react'
 import { type Control, type FieldPath, type FieldValues, useController } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { useImageUpload } from '@/hooks/useImageUpload'
 import { useToast } from '@/hooks/useToast'
+import { ImageValidationError } from '@/lib/imageUpload'
 import { FormField } from './FormField'
 
 /** 预览形状：square=方角（Logo/封面），circle=圆形（头像）。 */
-type Shape = 'square' | 'circle'
+type Shape = 'square' | 'circle' | 'landscape'
 
 /**
  * 通用图片上传字段。
@@ -51,6 +52,7 @@ export const ImageUploadField = <T extends FieldValues>({
   const { field, fieldState } = useController({ control, name })
   const { upload, uploading } = useImageUpload()
   const { error: toastError } = useToast()
+  const [uploadError, setUploadError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const value = (field.value as string) ?? ''
 
@@ -59,11 +61,14 @@ export const ImageUploadField = <T extends FieldValues>({
     const file = e.target.files?.[0]
     e.target.value = '' // 允许再次选择同一文件
     if (!file) return
+    setUploadError('')
     try {
       const url = await upload(file)
       field.onChange(url)
     } catch (err) {
-      toastError(err, '图片上传失败')
+      const message = err instanceof ImageValidationError ? err.message : '图片上传失败，请重试'
+      setUploadError(message)
+      toastError(err, message)
     }
   }
 
@@ -73,15 +78,15 @@ export const ImageUploadField = <T extends FieldValues>({
     <FormField
       label={label}
       htmlFor={name}
-      error={fieldState.error?.message}
+      error={uploadError || fieldState.error?.message}
       description={description}
     >
       <div className="flex items-center gap-4">
         <div
-          className={`flex h-16 w-16 items-center justify-center overflow-hidden border bg-muted ${previewCls}`}
+          className={`flex ${shape === 'landscape' ? 'aspect-video w-48 max-w-full' : 'h-16 w-16'} items-center justify-center overflow-hidden border bg-muted ${previewCls}`}
         >
           {value ? (
-            <img src={value} alt={label} loading="lazy" className="h-full w-full object-cover" />
+            <img src={value} alt={label} loading="lazy" className="h-full w-full object-contain" />
           ) : (
             <span className="text-xs text-muted-foreground">无</span>
           )}
@@ -99,7 +104,13 @@ export const ImageUploadField = <T extends FieldValues>({
               {uploading ? '上传中…' : value ? '更换' : '上传'}
             </Button>
             {value ? (
-              <Button type="button" variant="ghost" size="sm" onClick={() => field.onChange('')}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={uploading}
+                onClick={() => field.onChange('')}
+              >
                 <X className="mr-1 h-4 w-4" />
                 移除
               </Button>

@@ -6,16 +6,20 @@
  *   本页同时是「活体探针」：能渲染即代表代理/信封/令牌/分页整条链路存活。
  * @module manage-frontend/pages/dashboard
  * @date 2026-08-29
+ * @remarks 本文件保留同一页面/表格的声明式编排，查询与操作逻辑已由 hooks 或列模块承载；为便于核对控件状态与确认流程，允许超过 200 行。
  */
 
 import { useQuery } from '@tanstack/react-query'
 import { format } from 'date-fns'
 import { Eye, FileClock, FileText, MessageSquare, Users } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { listAdminArticles } from '@/api/articles'
 import { listAdminComments } from '@/api/comments'
 import { StatCard } from '@/components/dashboard/StatCard'
 import { StatsChart } from '@/components/dashboard/StatsChart'
+import { QueryErrorState } from '@/components/feedback/QueryErrorState'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCategoryStats, useSiteStats } from '@/hooks/useSite'
@@ -100,9 +104,34 @@ const DashboardPage = () => {
     <div>
       <PageHeader
         title="仪表盘"
-        description={`欢迎回来，${user?.nickname || user?.username || ''}。以下是站点当前的整体情况。`}
+        description={`欢迎回来，${user?.nickname || user?.username || ''}。从这里继续写作和处理读者反馈。`}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            {isEditor && (
+              <>
+                <Button asChild>
+                  <Link to="/articles/new">写文章</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link to="/articles?status=pending">处理待审文章</Link>
+                </Button>
+              </>
+            )}
+            {canComments && (
+              <Button asChild variant="outline">
+                <Link to="/comments?status=reviewing">处理待复核评论</Link>
+              </Button>
+            )}
+          </div>
+        }
       />
 
+      {stats.isError && (
+        <QueryErrorState title="统计暂时无法加载" onRetry={() => stats.refetch()} />
+      )}
+      {pending.isError && (
+        <QueryErrorState title="待审数量加载失败" onRetry={() => pending.refetch()} />
+      )}
       <div
         className={`grid gap-4 sm:grid-cols-2 ${isEditor ? 'xl:grid-cols-5' : 'xl:grid-cols-4'}`}
       >
@@ -136,7 +165,8 @@ const DashboardPage = () => {
             value={pending.data}
             icon={FileClock}
             loading={pending.isPending}
-            hint="会员投稿默认进入待审，需编辑过审后才会公开"
+            hint="点击查看需要处理的投稿"
+            to="/articles?status=pending"
           />
         ) : null}
       </div>
@@ -147,7 +177,9 @@ const DashboardPage = () => {
             <CardTitle className="text-sm font-medium">分类文章分布</CardTitle>
           </CardHeader>
           <CardContent>
-            {categories.isPending ? (
+            {categories.isError ? (
+              <QueryErrorState onRetry={() => categories.refetch()} />
+            ) : categories.isPending ? (
               <div className="h-64 w-full animate-pulse rounded-md bg-muted" />
             ) : (categories.data?.length ?? 0) === 0 ? (
               <p className="py-10 text-center text-sm text-muted-foreground">暂无分类数据</p>
@@ -163,7 +195,9 @@ const DashboardPage = () => {
               <CardTitle className="text-sm font-medium">近期文章</CardTitle>
             </CardHeader>
             <CardContent>
-              {recentArticles.isPending ? (
+              {recentArticles.isError ? (
+                <QueryErrorState onRetry={() => recentArticles.refetch()} />
+              ) : recentArticles.isPending ? (
                 <div className="space-y-3">
                   {[0, 1, 2, 3, 4].map((i) => (
                     <Skeleton key={i} className="h-12 w-full" />
@@ -179,9 +213,13 @@ const DashboardPage = () => {
                       className="flex items-start justify-between gap-3 border-b border-border/50 pb-3 last:border-0 last:pb-0"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium" title={a.title}>
+                        <Link
+                          to={`/articles/${a.id}/edit`}
+                          className="block truncate text-sm font-medium hover:underline"
+                          title={a.title}
+                        >
                           {a.title}
-                        </p>
+                        </Link>
                         <p className="mt-0.5 text-xs text-muted-foreground">
                           {a.categoryName ? `${a.categoryName} · ` : ''}
                           {formatDate(a.createdAt)}
@@ -205,7 +243,9 @@ const DashboardPage = () => {
               <CardTitle className="text-sm font-medium">近期评论</CardTitle>
             </CardHeader>
             <CardContent>
-              {recentComments.isPending ? (
+              {recentComments.isError ? (
+                <QueryErrorState onRetry={() => recentComments.refetch()} />
+              ) : recentComments.isPending ? (
                 <div className="space-y-3">
                   {[0, 1, 2, 3, 4].map((i) => (
                     <Skeleton key={i} className="h-12 w-full" />
@@ -221,10 +261,13 @@ const DashboardPage = () => {
                       className="flex items-start justify-between gap-3 border-b border-border/50 pb-3 last:border-0 last:pb-0"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-sm">
+                        <Link
+                          to={`/comments?articleId=${c.articleId}`}
+                          className="block truncate text-sm hover:underline"
+                        >
                           <span className="font-medium">{c.userName || '匿名'}</span>
                           <span className="text-muted-foreground">：{c.content}</span>
-                        </p>
+                        </Link>
                         <p className="mt-0.5 text-xs text-muted-foreground">
                           {formatDate(c.createdAt)}
                         </p>

@@ -8,12 +8,20 @@
 
 import { format } from 'date-fns'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { TablePagination } from '@/components/data/TablePagination'
 import { QueryErrorState } from '@/components/feedback/QueryErrorState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useNotificationActions, useNotifications } from '@/hooks/useNotifications'
+import { useTableQuery } from '@/hooks/useTableQuery'
 import { isApiError } from '@/lib/request'
 import type { Notification } from '@/types/common'
 
@@ -26,40 +34,57 @@ const TYPE_LABEL: Record<Notification['type'], string> = {
 
 /** 单条通知行。 */
 const NotificationRow = ({ n, onRead }: { n: Notification; onRead: (id: number) => void }) => {
-  const navigate = useNavigate()
+  const [open, setOpen] = useState(false)
+  const articleId = n.link?.match(/^\/articles\/(\d+)(?:[/?#]|$)/)?.[1]
   return (
-    <button
-      type="button"
-      onClick={() => {
-        if (!n.isRead) onRead(n.id)
-        if (n.link) navigate(n.link)
-      }}
-      className={`flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors hover:bg-muted ${
-        n.isRead ? 'opacity-70' : 'bg-primary/5'
-      }`}
-    >
-      <span className="mt-0.5 rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-        {TYPE_LABEL[n.type]}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate text-sm font-medium">{n.title}</span>
-          {!n.isRead ? <span className="h-2 w-2 shrink-0 rounded-full bg-primary" /> : null}
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          if (!n.isRead) onRead(n.id)
+          setOpen(true)
+        }}
+        className={`flex w-full items-start gap-3 rounded-md border p-3 text-left transition-colors hover:bg-muted ${
+          n.isRead ? 'opacity-70' : 'bg-primary/5'
+        }`}
+      >
+        <span className="mt-0.5 rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+          {TYPE_LABEL[n.type]}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-medium">{n.title}</span>
+            {!n.isRead ? <span className="h-2 w-2 shrink-0 rounded-full bg-primary" /> : null}
+          </div>
+          {n.body ? (
+            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.body}</p>
+          ) : null}
+          <p className="mt-1 text-xs text-muted-foreground">
+            {format(new Date(n.createdAt), 'yyyy-MM-dd HH:mm')}
+          </p>
         </div>
-        {n.body ? (
-          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{n.body}</p>
-        ) : null}
-        <p className="mt-1 text-xs text-muted-foreground">
-          {format(new Date(n.createdAt), 'yyyy-MM-dd HH:mm')}
-        </p>
-      </div>
-    </button>
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-h-[85dvh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{n.title}</DialogTitle>
+            <DialogDescription>{TYPE_LABEL[n.type]}</DialogDescription>
+          </DialogHeader>
+          <p className="whitespace-pre-wrap break-words text-sm">{n.body || '暂无补充内容'}</p>
+          {articleId && (
+            <Button asChild>
+              <Link to={`/articles/${articleId}/preview`}>查看文章</Link>
+            </Button>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
 /** 通知页。 */
 const NotificationsPage = () => {
-  const [page, setPage] = useState(1)
+  const { page, setPage } = useTableQuery()
   const { data, isLoading, isError, error, refetch } = useNotifications({ page, pageSize: 10 })
   const { readAll, markRead } = useNotificationActions()
 

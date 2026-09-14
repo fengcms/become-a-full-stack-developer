@@ -78,7 +78,7 @@ export const useReplyComment = () => {
     }) => replyComment(articleId, { content, parentId }),
     onSuccess: (comment) => {
       if (comment.status === 'rejected') {
-        toast.success('回复已提交，但命中过滤规则未予展示')
+        toast.info('回复未发布，请修改后重试')
       } else {
         toast.success('回复已发布')
       }

@@ -7,19 +7,23 @@
  * 所以本页刻意不给 DataTable 传 sort——传了也是被后端忽略的无效参数。
  * @module manage-frontend/pages/comments
  * @date 2026-08-29
+ * @remarks 本文件保留同一页面/表格的声明式编排，查询与操作逻辑已由 hooks 或列模块承载；为便于核对控件状态与确认流程，允许超过 200 行。
  */
 
-import { format } from 'date-fns'
-import { MessageSquareReply, ShieldCheck, Trash2 } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { deleteComment, moderateComment } from '@/api/comments'
 import { BatchActionBar } from '@/components/data/BatchActionBar'
-import { type ColumnDef, DataTable } from '@/components/data/DataTable'
+import { BatchFailures } from '@/components/data/BatchFailures'
+import { DataTable } from '@/components/data/DataTable'
 import { TablePagination } from '@/components/data/TablePagination'
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog'
+import { UnsavedChanges } from '@/components/feedback/UnsavedChanges'
 import { FILTER_ALL, FilterSelect } from '@/components/form/FilterSelect'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
+import { useBatchSelection } from '@/hooks/useBatchSelection'
 import {
   useAdminComments,
   useDeleteComment,
@@ -27,45 +31,25 @@ import {
   useReplyComment,
 } from '@/hooks/useComments'
 import { useTableQuery } from '@/hooks/useTableQuery'
-import { useToast } from '@/hooks/useToast'
 import type { Comment, CommentStatus } from '@/types/common'
 import { CommentReplyDialog } from './CommentReplyDialog'
 import { CommentReviewDialog } from './CommentReviewDialog'
-
-/** 状态中文标签。 */
-const STATUS_LABEL: Record<CommentStatus, string> = {
-  approved: '已通过',
-  rejected: '已拒绝',
-  reviewing: '待复核',
-}
-
-/** 状态徽标配色，走 index.css 的语义令牌（与文章状态同一套纪律）。 */
-const STATUS_CLASS: Record<CommentStatus, string> = {
-  approved: 'bg-status-approved text-status-approved-fg',
-  rejected: 'bg-status-rejected text-status-rejected-fg',
-  reviewing: 'bg-status-reviewing text-status-reviewing-fg',
-}
-
-/** 状态徽标。 */
-const StatusBadge = ({ status }: { status: CommentStatus }) => (
-  <span className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${STATUS_CLASS[status]}`}>
-    {STATUS_LABEL[status]}
-  </span>
-)
-
-/** 日期格式化；空值回退「—」。 */
-const formatDate = (v?: string | null) => (v ? format(new Date(v), 'yyyy-MM-dd HH:mm') : '—')
+import { commentColumns, STATUS_LABEL } from './commentColumns'
 
 /**
  * 评论审核列表页。
  */
 const CommentListPage = () => {
   const navigate = useNavigate()
-  const { page, pageSize, query, setPage, setPageSize, setFilters } = useTableQuery()
+  const qc = useQueryClient()
+  const { page, pageSize, query, setPage, setPageSize, setFilters, clearFilters } = useTableQuery()
   const status = (query.status as CommentStatus | undefined) ?? undefined
 
   // 契约不支持排序，这里只传受支持的三个参数
-  const listQuery = { page, pageSize, status }
+  const rawArticleId = Number(query.articleId)
+  const articleId =
+    Number.isSafeInteger(rawArticleId) && rawArticleId > 0 ? rawArticleId : undefined
+  const listQuery = { page, pageSize, status, articleId }
   const { data, isLoading, isError, error, refetch } = useAdminComments(listQuery)
 
   const moderateMut = useModerateComment()
@@ -75,107 +59,38 @@ const CommentListPage = () => {
   const [reviewing, setReviewing] = useState<Comment | null>(null)
   const [replying, setReplying] = useState<Comment | null>(null)
   const [toDelete, setToDelete] = useState<Comment | null>(null)
-  // T6：批量操作受控选择态
-  const [selected, setSelected] = useState<Array<string | number>>([])
-  const [batchBusy, setBatchBusy] = useState(false)
+  const batch = useBatchSelection(JSON.stringify(listQuery))
+  const { selected, setSelected, busy: batchBusy } = batch
   const [toBatchDelete, setToBatchDelete] = useState(false)
-  const toast = useToast()
-
-  /** T6：循环调用单行 mutation 实现批量；Promise.allSettled 容忍部分失败。 */
-  const runBatch = async (label: string, fn: (id: number) => Promise<unknown>) => {
-    const ids = selected.map(Number)
-    if (ids.length === 0) return
-    setBatchBusy(true)
-    try {
-      const results = await Promise.allSettled(ids.map(fn))
-      const ok = results.filter((r) => r.status === 'fulfilled').length
-      refetch()
-      setSelected([])
-      setToBatchDelete(false)
-      const fail = results.length - ok
-      if (fail === 0) toast.success(`已${label} ${ok} 条`)
-      else toast.info(`已${label} ${ok} 条，${fail} 条失败`)
-    } finally {
-      setBatchBusy(false)
-    }
+  const [replyRejection, setReplyRejection] = useState('')
+  const selectedIds = (data?.list ?? [])
+    .filter((row) => selected.includes(row.id))
+    .map((row) => row.id)
+  /** 批量只给一次汇总，失败记录留在当前页。 */
+  const runBatch = async (label: string, action: (id: number) => Promise<unknown>) => {
+    await batch.run(label, selectedIds, action, refetch)
+    void qc.invalidateQueries({ queryKey: ['comments'] })
+    void qc.invalidateQueries({ queryKey: ['site'] })
+    setToBatchDelete(false)
   }
 
-  /** 列定义。 */
-  const columns: ColumnDef<Comment>[] = [
-    { key: 'id', header: 'ID', className: 'w-14' },
-    {
-      key: 'content',
-      header: '内容',
-      render: (r) => (
-        <div className="max-w-md">
-          <p className="line-clamp-2 break-words text-sm">{r.content}</p>
-          {r.rejectedReason ? (
-            <p className="mt-0.5 text-xs text-muted-foreground">理由：{r.rejectedReason}</p>
-          ) : null}
-        </div>
-      ),
+  const columns = commentColumns({
+    busy: batchBusy,
+    onReview: setReviewing,
+    onDelete: setToDelete,
+    onReply: (comment) => {
+      setReplyRejection('')
+      setReplying(comment)
     },
-    { key: 'userName', header: '作者', render: (r) => r.userName ?? '匿名' },
-    { key: 'status', header: '状态', render: (r) => <StatusBadge status={r.status} /> },
-    {
-      key: 'articleId',
-      header: '所属文章',
-      render: (r) => (
-        <Button
-          variant="link"
-          size="sm"
-          className="h-auto p-0"
-          onClick={() => navigate(`/articles/${r.articleId}/edit`)}
-        >
-          #{r.articleId}
-        </Button>
-      ),
-    },
-    { key: 'createdAt', header: '时间', render: (r) => formatDate(r.createdAt) },
-    {
-      key: 'actions',
-      header: '操作',
-      align: 'right',
-      render: (r) => (
-        <div className="flex justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label="审核置位"
-            title="审核置位"
-            onClick={() => setReviewing(r)}
-          >
-            <ShieldCheck className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label="代回复"
-            title="代回复"
-            onClick={() => setReplying(r)}
-          >
-            <MessageSquareReply className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-destructive"
-            aria-label="删除"
-            title="删除"
-            onClick={() => setToDelete(r)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      ),
-    },
-  ]
+    onPreview: (id) => navigate(`/articles/${id}/preview`),
+  })
 
   return (
     <div>
-      <PageHeader title="评论审核" description="approved / rejected / reviewing 三态人工审核" />
+      <PageHeader title="评论审核" description="查看评论内容，处理待复核评论和回复读者" />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
+      <UnsavedChanges dirty={false} busy={batchBusy} />
+      <fieldset disabled={batchBusy} className="mb-4 flex flex-wrap items-center gap-2">
         <FilterSelect
           ariaLabel="按状态筛选"
           value={status ?? FILTER_ALL}
@@ -189,19 +104,32 @@ const CommentListPage = () => {
             { value: 'reviewing', label: STATUS_LABEL.reviewing },
           ]}
         />
-      </div>
+        <input
+          aria-label="按文章编号筛选"
+          placeholder="文章编号"
+          type="number"
+          min="1"
+          value={articleId ?? ''}
+          onChange={(e) => setFilters({ articleId: e.target.value || undefined })}
+          className="h-9 w-36 rounded-md border bg-background px-3 text-sm"
+        />
+        {(status || articleId) && (
+          <Button variant="ghost" onClick={clearFilters}>
+            清除筛选
+          </Button>
+        )}
+      </fieldset>
 
+      <BatchFailures messages={batch.failures} />
       <BatchActionBar
         count={selected.length}
+        disabled={batchBusy}
         onClear={() => setSelected([])}
         actions={[
           {
             label: '批量通过',
             disabled: batchBusy,
-            onClick: () =>
-              runBatch('通过', (id) =>
-                moderateMut.mutateAsync({ id, payload: { status: 'approved' } }),
-              ),
+            onClick: () => runBatch('通过', (id) => moderateComment(id, { status: 'approved' })),
           },
           {
             label: '批量删除',
@@ -217,24 +145,27 @@ const CommentListPage = () => {
         data={data?.list ?? []}
         rowKey={(r) => r.id}
         loading={isLoading}
-        emptyText="暂无评论"
+        emptyText={status || articleId ? '没有符合条件的评论，请调整筛选' : '还没有收到评论'}
         error={isError ? error : undefined}
         onRetry={() => refetch()}
         selectable
+        selectionDisabled={batchBusy}
         selectedKeys={selected}
         onSelectionChange={setSelected}
       />
 
-      {data?.pagination ? (
-        <TablePagination
-          page={data.pagination.page}
-          pageSize={data.pagination.pageSize}
-          total={data.pagination.total}
-          totalPages={data.pagination.totalPages}
-          onPageChange={setPage}
-          onPageSizeChange={setPageSize}
-        />
-      ) : null}
+      <fieldset disabled={batchBusy}>
+        {data?.pagination ? (
+          <TablePagination
+            page={data.pagination.page}
+            pageSize={data.pagination.pageSize}
+            total={data.pagination.total}
+            totalPages={data.pagination.totalPages}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        ) : null}
+      </fieldset>
 
       <CommentReviewDialog
         comment={reviewing}
@@ -251,8 +182,21 @@ const CommentListPage = () => {
         open={!!replying}
         onOpenChange={(o) => !o && setReplying(null)}
         loading={replyMut.isPending}
+        rejection={replyRejection}
         onSubmit={(articleId, content, parentId) => {
-          replyMut.mutate({ articleId, content, parentId }, { onSuccess: () => setReplying(null) })
+          replyMut.mutate(
+            { articleId, content, parentId },
+            {
+              onSuccess: (comment) => {
+                if (comment.status === 'rejected')
+                  setReplyRejection(comment.rejectedReason || '回复未通过内容检查，请修改后重试。')
+                else {
+                  setReplying(null)
+                  setReplyRejection('')
+                }
+              },
+            },
+          )
         }}
       />
 
@@ -262,7 +206,7 @@ const CommentListPage = () => {
         title="删除评论"
         description={
           toDelete
-            ? `确定删除 ${toDelete.userName ?? '匿名'} 的这条评论？契约标注级联删除，其下所有回复会一并删除，不可恢复。`
+            ? `确定删除 ${toDelete.userName ?? '匿名'} 的这条评论？这条评论及其下的回复将一并删除，无法恢复。`
             : undefined
         }
         confirmText="删除"
@@ -279,12 +223,12 @@ const CommentListPage = () => {
         title="批量删除评论"
         description={
           selected.length > 0
-            ? `确定删除选中的 ${selected.length} 条评论？契约标注级联删除，其下所有回复会一并删除，不可恢复。`
+            ? `确定删除选中的 ${selected.length} 条评论？这条评论及其下的回复将一并删除，无法恢复。`
             : undefined
         }
         confirmText="删除"
         loading={batchBusy}
-        onConfirm={() => runBatch('删除', (id) => deleteMut.mutateAsync(id))}
+        onConfirm={() => runBatch('删除', deleteComment)}
       />
     </div>
   )

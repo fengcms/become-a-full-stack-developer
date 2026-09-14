@@ -25,10 +25,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import type { Comment } from '@/types/common'
+import { CommentContext } from './CommentContext'
 
 /** 表单校验 schema。content 上限与契约 Comment.content 的 2000 字符对齐。 */
 const schema = z.object({
-  content: z.string().min(1, '回复内容必填').max(2000, '回复最多 2000 字'),
+  content: z.string().trim().min(1, '回复内容必填').max(2000, '回复最多 2000 字'),
 })
 
 /** 表单值类型。 */
@@ -47,11 +48,13 @@ export const CommentReplyDialog = ({
   open,
   onOpenChange,
   loading,
+  rejection,
   onSubmit,
 }: {
   comment: Comment | null
   open: boolean
   onOpenChange: (open: boolean) => void
+  rejection?: string
   loading: boolean
   onSubmit: (articleId: number, content: string, parentId: number) => void
 }) => {
@@ -76,6 +79,7 @@ export const CommentReplyDialog = ({
   return (
     <Dialog open={open} onOpenChange={(v) => !loading && onOpenChange(v)}>
       <DialogContent
+        className="max-h-[85dvh] overflow-y-auto"
         onEscapeKeyDown={(e) => loading && e.preventDefault()}
         onInteractOutside={(e) => loading && e.preventDefault()}
       >
@@ -86,12 +90,25 @@ export const CommentReplyDialog = ({
           </DialogDescription>
         </DialogHeader>
 
+        {open && comment && (
+          <CommentContext articleId={comment.articleId} parentId={comment.parentId} />
+        )}
         {comment ? (
           <blockquote className="rounded-md border border-l-4 border-l-muted-foreground/40 bg-muted/40 p-3 text-sm">
-            <p className="whitespace-pre-wrap break-words">{comment.content}</p>
+            <p className="max-h-44 overflow-y-auto whitespace-pre-wrap break-words">
+              {comment.content}
+            </p>
           </blockquote>
         ) : null}
 
+        {rejection && (
+          <p
+            role="alert"
+            className="rounded-md border border-destructive/30 p-3 text-sm text-destructive"
+          >
+            {rejection} 输入已保留，可修改后重新发布。
+          </p>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <TextAreaField
             control={form.control}

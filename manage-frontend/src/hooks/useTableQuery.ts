@@ -6,7 +6,7 @@
  * @date 2026-08-29
  */
 
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 /** 任意查询参数值。 */
@@ -19,29 +19,30 @@ export type QueryValue = string | number | undefined
  */
 export const useTableQuery = (options?: { defaultPageSize?: number }) => {
   const [params, setParams] = useSearchParams()
+  const writer = useRef(setParams)
+  writer.current = setParams
   const defaultSize = options?.defaultPageSize ?? 10
 
-  const page = Number(params.get('page')) || 1
-  const pageSize = Number(params.get('pageSize')) || defaultSize
+  const rawPage = Number(params.get('page'))
+  const page = Number.isSafeInteger(rawPage) && rawPage > 0 ? rawPage : 1
+  const rawSize = Number(params.get('pageSize'))
+  const pageSize = [10, 20, 50].includes(rawSize) ? rawSize : defaultSize
   const sort = params.get('sort') ?? undefined
 
   /** 合并写入 searchParams（undefined/空串删除该键）。setParams 稳定，故 patch 可记忆化。 */
-  const patch = useCallback(
-    (next: Record<string, QueryValue>) => {
-      setParams(
-        (prev) => {
-          const p = new URLSearchParams(prev)
-          for (const [k, v] of Object.entries(next)) {
-            if (v === undefined || v === '') p.delete(k)
-            else p.set(k, String(v))
-          }
-          return p
-        },
-        { replace: true },
-      )
-    },
-    [setParams],
-  )
+  const patch = useCallback((next: Record<string, QueryValue>) => {
+    writer.current(
+      (prev) => {
+        const p = new URLSearchParams(prev)
+        for (const [k, v] of Object.entries(next)) {
+          if (v === undefined || v === '') p.delete(k)
+          else p.set(k, String(v))
+        }
+        return p
+      },
+      { replace: true },
+    )
+  }, [])
 
   /** 当前完整查询对象（含所有筛选条件），直接传给 fetcher。 */
   const query: Record<string, QueryValue> = {}
@@ -60,7 +61,22 @@ export const useTableQuery = (options?: { defaultPageSize?: number }) => {
     [patch],
   )
 
+  /** 清除筛选与排序，保留每页条数。 */
+  const clearFilters = useCallback(
+    () =>
+      writer.current(
+        (prev) => {
+          const next = new URLSearchParams()
+          if (prev.has('pageSize')) next.set('pageSize', prev.get('pageSize') ?? '')
+          return next
+        },
+        { replace: true },
+      ),
+    [],
+  )
+
   return {
+    clearFilters,
     page,
     pageSize,
     sort,

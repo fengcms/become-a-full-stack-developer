@@ -13,8 +13,10 @@ import { useTheme } from 'next-themes'
 import { type ClipboardEvent, type DragEvent, useRef, useState } from 'react'
 import '@uiw/react-md-editor/markdown-editor.css'
 import '@uiw/react-markdown-preview/markdown.css'
+import { useCompactEditor } from '@/hooks/useCompactEditor'
 import { useImageUpload } from '@/hooks/useImageUpload'
 import { useToast } from '@/hooks/useToast'
+import { ImageValidationError } from '@/lib/imageUpload'
 import { cn } from '@/lib/utils'
 
 /** 编辑器对外入参。受控组件：value + onChange。 */
@@ -55,7 +57,13 @@ export const MarkdownEditor = ({
   className,
 }: MarkdownEditorProps) => {
   const { resolvedTheme } = useTheme()
+  const compact = useCompactEditor()
   const editorRef = useRef<RefMDEditor>(null)
+  const latest = useRef(value)
+  latest.current = value
+  const change = useRef(onChange)
+  change.current = onChange
+  const queue = useRef(Promise.resolve())
   const { upload, uploading } = useImageUpload({ articleId })
   const toast = useToast()
   const [dragging, setDragging] = useState(false)
@@ -63,10 +71,12 @@ export const MarkdownEditor = ({
   /** 在光标处插入片段，并把光标移到片段之后。 */
   const insertAtCursor = (snippet: string) => {
     const ta = editorRef.current?.textarea
-    const start = ta?.selectionStart ?? value.length
-    const end = ta?.selectionEnd ?? value.length
-    const next = value.slice(0, start) + snippet + value.slice(end)
-    onChange(next)
+    const current = latest.current
+    const start = ta?.selectionStart ?? current.length
+    const end = ta?.selectionEnd ?? current.length
+    const next = current.slice(0, start) + snippet + current.slice(end)
+    latest.current = next
+    change.current(next)
     const pos = start + snippet.length
     requestAnimationFrame(() => {
       ta?.focus()
@@ -83,7 +93,7 @@ export const MarkdownEditor = ({
         const url = await upload(file)
         insertAtCursor(`\n![${file.name || 'image'}](${url})\n`)
       } catch (err) {
-        toast.error(err)
+        toast.error(err, err instanceof ImageValidationError ? err.message : '图片上传失败，请重试')
       }
     }
   }
@@ -93,7 +103,7 @@ export const MarkdownEditor = ({
     const files = Array.from(e.clipboardData?.files ?? [])
     if (files.length === 0) return
     e.preventDefault()
-    void handleFiles(files)
+    queue.current = queue.current.then(() => handleFiles(files))
   }
 
   /** 拖拽图片落入编辑区时拦截默认行为并上传；同时收掉拖拽高亮。 */
@@ -102,7 +112,7 @@ export const MarkdownEditor = ({
     setDragging(false)
     if (files.length === 0) return
     e.preventDefault()
-    void handleFiles(files)
+    queue.current = queue.current.then(() => handleFiles(files))
   }
 
   /** 拖拽悬停时高亮编辑区（仅当拖的是文件）。 */
@@ -115,7 +125,10 @@ export const MarkdownEditor = ({
 
   if (disabled) {
     return (
-      <div className={cn('rounded-md border bg-muted/30 p-4', className)}>
+      <div
+        data-color-mode={resolvedTheme === 'dark' ? 'dark' : 'light'}
+        className={cn('rounded-md border bg-muted/30 p-4', className)}
+      >
         <MDEditor.Markdown source={value || ''} style={{ background: 'transparent' }} />
       </div>
     )
@@ -125,8 +138,12 @@ export const MarkdownEditor = ({
     <div className={cn('w-full', dragging && 'rounded-md ring-2 ring-primary/50', className)}>
       <MDEditor
         ref={editorRef}
+        preview={compact ? 'edit' : 'live'}
         value={value}
-        onChange={(v) => onChange(v ?? '')}
+        onChange={(v) => {
+          latest.current = v ?? ''
+          onChange(v ?? '')
+        }}
         height={height ?? minHeight}
         minHeight={height ?? minHeight}
         data-color-mode={resolvedTheme === 'dark' ? 'dark' : 'light'}

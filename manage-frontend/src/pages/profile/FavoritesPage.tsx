@@ -7,12 +7,13 @@
  */
 
 import { format } from 'date-fns'
-import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { TablePagination } from '@/components/data/TablePagination'
 import { QueryErrorState } from '@/components/feedback/QueryErrorState'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useFavorites, useToggleFavorite } from '@/hooks/useMe'
+import { useTableQuery } from '@/hooks/useTableQuery'
 import { isApiError } from '@/lib/request'
 import type { ArticleStatus } from '@/types/common'
 
@@ -32,7 +33,7 @@ const STATUS_LABEL: Record<ArticleStatus, string> = {
 
 /** 我的收藏页。 */
 const FavoritesPage = () => {
-  const [page, setPage] = useState(1)
+  const { page, setPage } = useTableQuery()
   const { data, isLoading, isError, error, refetch } = useFavorites({ page, pageSize: 10 })
   const toggle = useToggleFavorite()
 
@@ -50,41 +51,46 @@ const FavoritesPage = () => {
             onRetry={() => refetch()}
           />
         ) : data && data.list.length > 0 ? (
-          <>
-            <ul className="divide-y">
-              {data.list.map((a) => (
-                <li key={a.id} className="flex items-center gap-3 py-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{a.title}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {a.categoryName ?? '未分类'} ·{' '}
-                      {a.createdAt ? format(new Date(a.createdAt), 'yyyy-MM-dd') : '-'}
-                    </div>
-                  </div>
-                  <span className={`rounded px-2 py-0.5 text-xs ${STATUS_CLS[a.status]}`}>
-                    {STATUS_LABEL[a.status]}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={toggle.isPending}
-                    onClick={() => toggle.mutate({ articleId: a.id, add: false })}
+          <ul className="divide-y">
+            {data.list.map((a) => (
+              <li key={a.id} className="flex items-center gap-3 py-3">
+                <div className="min-w-0 flex-1">
+                  <Link
+                    className="block truncate text-sm font-medium hover:underline"
+                    to={`/articles/${a.id}/preview`}
                   >
-                    取消
-                  </Button>
-                </li>
-              ))}
-            </ul>
-            <TablePagination
-              page={data.pagination.page}
-              pageSize={data.pagination.pageSize}
-              total={data.pagination.total}
-              totalPages={data.pagination.totalPages}
-              onPageChange={setPage}
-            />
-          </>
+                    {a.title}
+                  </Link>
+                  <div className="text-xs text-muted-foreground">
+                    {a.categoryName ?? '未分类'} ·{' '}
+                    {a.createdAt ? format(new Date(a.createdAt), 'yyyy-MM-dd') : '-'}
+                  </div>
+                </div>
+                <span className={`rounded px-2 py-0.5 text-xs ${STATUS_CLS[a.status]}`}>
+                  {STATUS_LABEL[a.status]}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={toggle.isPending}
+                  onClick={() => toggle.mutate({ articleId: a.id, add: false })}
+                >
+                  取消收藏
+                </Button>
+              </li>
+            ))}
+          </ul>
         ) : (
           <p className="text-sm text-muted-foreground">还没有收藏任何文章</p>
+        )}
+        {data?.pagination && (
+          <TablePagination
+            page={data.pagination.page}
+            pageSize={data.pagination.pageSize}
+            total={data.pagination.total}
+            totalPages={data.pagination.totalPages}
+            onPageChange={setPage}
+          />
         )}
       </CardContent>
     </Card>

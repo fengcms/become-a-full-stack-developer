@@ -54,13 +54,21 @@ export const SelectField = <T extends FieldValues>({
       error={fieldState.error?.message}
       description={description}
     >
-      <Select value={field.value == null ? '' : String(field.value)} onValueChange={field.onChange}>
-        <SelectTrigger id={name}>
+      <Select
+        value={field.value == null || field.value === '' ? '__empty__' : String(field.value)}
+        onValueChange={(value) => field.onChange(value === '__empty__' ? '' : value)}
+      >
+        <SelectTrigger
+          id={name}
+          ref={field.ref}
+          onBlur={field.onBlur}
+          aria-invalid={!!fieldState.error}
+        >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
           {options.map((o) => (
-            <SelectItem key={o.value} value={o.value} disabled={o.disabled}>
+            <SelectItem key={o.value} value={o.value || '__empty__'} disabled={o.disabled}>
               {o.label}
             </SelectItem>
           ))}

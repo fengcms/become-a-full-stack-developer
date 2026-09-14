@@ -39,6 +39,7 @@ export const ConfirmDialog = ({
   cancelText = '取消',
   confirmVariant = 'destructive',
   loading = false,
+  confirmDisabled = false,
   onConfirm,
   children,
 }: {
@@ -57,6 +58,7 @@ export const ConfirmDialog = ({
     | 'link'
     | 'gradient'
   loading?: boolean
+  confirmDisabled?: boolean
   onConfirm: () => void
   children?: ReactNode
 }) => (
@@ -74,7 +76,7 @@ export const ConfirmDialog = ({
         <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
           {cancelText}
         </Button>
-        <Button variant={confirmVariant} onClick={onConfirm} disabled={loading}>
+        <Button variant={confirmVariant} onClick={onConfirm} disabled={loading || confirmDisabled}>
           {loading ? '处理中…' : confirmText}
         </Button>
       </DialogFooter>

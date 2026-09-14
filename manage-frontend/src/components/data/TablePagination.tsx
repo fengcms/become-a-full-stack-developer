@@ -5,6 +5,7 @@
  * @date 2026-08-29
  */
 
+import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -40,42 +41,47 @@ export const TablePagination = ({
   totalPages: number
   onPageChange: (page: number) => void
   onPageSizeChange?: (size: number) => void
-}) => (
-  <div className="flex flex-wrap items-center justify-between gap-3 px-1 py-3 text-sm text-muted-foreground">
-    <div>
-      共 {total} 条 · 第 {page} / {Math.max(totalPages, 1)} 页
+}) => {
+  useEffect(() => {
+    if (page > Math.max(totalPages, 1)) onPageChange(Math.max(totalPages, 1))
+  }, [page, totalPages, onPageChange])
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 px-1 py-3 text-sm text-muted-foreground">
+      <div>
+        共 {total} 条 · 第 {page} / {Math.max(totalPages, 1)} 页
+      </div>
+      <div className="flex items-center gap-2">
+        {onPageSizeChange ? (
+          <Select value={String(pageSize)} onValueChange={(v) => onPageSizeChange(Number(v))}>
+            <SelectTrigger className="h-8 w-[90px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PAGE_SIZES.map((s) => (
+                <SelectItem key={s} value={String(s)}>
+                  {s} 条/页
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(page - 1)}
+          disabled={page <= 1}
+        >
+          上一页
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(page + 1)}
+          disabled={page >= totalPages}
+        >
+          下一页
+        </Button>
+      </div>
     </div>
-    <div className="flex items-center gap-2">
-      {onPageSizeChange ? (
-        <Select value={String(pageSize)} onValueChange={(v) => onPageSizeChange(Number(v))}>
-          <SelectTrigger className="h-8 w-[90px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {PAGE_SIZES.map((s) => (
-              <SelectItem key={s} value={String(s)}>
-                {s} 条/页
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ) : null}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onPageChange(page - 1)}
-        disabled={page <= 1}
-      >
-        上一页
-      </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onPageChange(page + 1)}
-        disabled={page >= totalPages}
-      >
-        下一页
-      </Button>
-    </div>
-  </div>
-)
+  )
+}

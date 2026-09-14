@@ -8,9 +8,12 @@
 
 import { format } from 'date-fns'
 import { Heart } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { QueryErrorState } from '@/components/feedback/QueryErrorState'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useLikes } from '@/hooks/useMe'
+import { useTableQuery } from '@/hooks/useTableQuery'
 import { isApiError } from '@/lib/request'
 import type { ArticleStatus } from '@/types/common'
 
@@ -30,7 +33,8 @@ const STATUS_LABEL: Record<ArticleStatus, string> = {
 
 /** 我的点赞页。 */
 const LikesPage = () => {
-  const { data, isLoading, isError, error, refetch } = useLikes({ pageSize: 20 })
+  const { page, setPage } = useTableQuery()
+  const { data, isLoading, isError, error, refetch } = useLikes({ page, pageSize: 20 })
 
   return (
     <Card>
@@ -51,7 +55,12 @@ const LikesPage = () => {
               <li key={a.id} className="flex items-center gap-3 py-3">
                 <Heart className="h-4 w-4 shrink-0 text-rose-500" />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium">{a.title}</div>
+                  <Link
+                    className="block truncate text-sm font-medium hover:underline"
+                    to={`/articles/${a.id}/preview`}
+                  >
+                    {a.title}
+                  </Link>
                   <div className="text-xs text-muted-foreground">
                     {a.categoryName ?? '未分类'} ·{' '}
                     {a.createdAt ? format(new Date(a.createdAt), 'yyyy-MM-dd') : '-'}
@@ -64,8 +73,29 @@ const LikesPage = () => {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">还没有点赞任何文章</p>
+          <p className="text-sm text-muted-foreground">
+            {page > 1 ? '这一页没有更多点赞，可返回上一页' : '还没有点赞任何文章'}
+          </p>
         )}
+        <div className="mt-4 flex items-center justify-between gap-2 text-sm text-muted-foreground">
+          <span>第 {page} 页 · 每页最多 20 篇</span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              disabled={page <= 1 || isLoading}
+              onClick={() => setPage(page - 1)}
+            >
+              上一页
+            </Button>
+            <Button
+              variant="outline"
+              disabled={isLoading || isError || (data?.length ?? 0) < 20}
+              onClick={() => setPage(page + 1)}
+            >
+              下一页
+            </Button>
+          </div>
+        </div>
       </CardContent>
     </Card>
   )

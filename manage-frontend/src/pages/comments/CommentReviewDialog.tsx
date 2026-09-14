@@ -13,7 +13,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { SelectField, type SelectOption } from '@/components/form/SelectField'
 import { TextAreaField } from '@/components/form/TextAreaField'
 import { Button } from '@/components/ui/button'
 import {
@@ -25,6 +24,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import type { Comment, CommentStatus } from '@/types/common'
+import { CommentContext } from './CommentContext'
 
 /** 表单校验 schema。reason 上限与契约 Comment.rejectedReason 的 200 字符对齐。 */
 const schema = z.object({
@@ -36,10 +36,10 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>
 
 /** 目标状态选项。带英文状态名，方便与契约 / 后端沟通时对齐口径。 */
-const STATUS_OPTIONS: SelectOption[] = [
-  { value: 'approved', label: '通过（approved）' },
-  { value: 'rejected', label: '拒绝（rejected）' },
-  { value: 'reviewing', label: '待人工复核（reviewing）' },
+const STATUS_OPTIONS: { value: CommentStatus; label: string }[] = [
+  { value: 'approved', label: '通过' },
+  { value: 'rejected', label: '拒绝' },
+  { value: 'reviewing', label: '待复核' },
 ]
 
 /**
@@ -69,6 +69,7 @@ export const CommentReviewDialog = ({
     defaultValues: { status: 'approved', reason: '' },
   })
   const reason = form.watch('reason')
+  const targetStatus = form.watch('status')
 
   // 每次打开时按当前评论重置，否则上一条的输入会残留到这一条
   useEffect(() => {
@@ -82,13 +83,14 @@ export const CommentReviewDialog = ({
     if (!comment) return
     onSubmit(comment.id, {
       status: values.status,
-      reason: values.reason.trim() || undefined,
+      reason: values.status === 'approved' ? undefined : values.reason.trim() || undefined,
     })
   })
 
   return (
     <Dialog open={open} onOpenChange={(v) => !loading && onOpenChange(v)}>
       <DialogContent
+        className="max-h-[85dvh] overflow-y-auto"
         onEscapeKeyDown={(e) => loading && e.preventDefault()}
         onInteractOutside={(e) => loading && e.preventDefault()}
       >
@@ -99,9 +101,14 @@ export const CommentReviewDialog = ({
           </DialogDescription>
         </DialogHeader>
 
+        {open && comment && (
+          <CommentContext articleId={comment.articleId} parentId={comment.parentId} />
+        )}
         {comment ? (
           <blockquote className="rounded-md border border-l-4 border-l-muted-foreground/40 bg-muted/40 p-3 text-sm">
-            <p className="whitespace-pre-wrap break-words">{comment.content}</p>
+            <p className="max-h-52 overflow-y-auto whitespace-pre-wrap break-words">
+              {comment.content}
+            </p>
             {comment.rejectedReason ? (
               <p className="mt-2 text-xs text-muted-foreground">
                 历史理由：{comment.rejectedReason}
@@ -111,21 +118,34 @@ export const CommentReviewDialog = ({
         ) : null}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <SelectField
-            control={form.control}
-            name="status"
-            label="目标状态"
-            options={STATUS_OPTIONS}
-            required
-            description="置为「通过」时，后端会清空已有的拒绝理由"
-          />
-          <TextAreaField
-            control={form.control}
-            name="reason"
-            label="拒绝理由"
-            placeholder="仅在拒绝 / 待复核时有意义"
-            description={`${reason.length}/200`}
-          />
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">审核结果</legend>
+            <div className="flex flex-wrap gap-3">
+              {STATUS_OPTIONS.map((option) => (
+                <label
+                  key={option.value}
+                  className="flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                >
+                  <input
+                    type="radio"
+                    value={option.value}
+                    {...form.register('status')}
+                    disabled={loading}
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          {targetStatus !== 'approved' && (
+            <TextAreaField
+              control={form.control}
+              name="reason"
+              label={targetStatus === 'reviewing' ? '复核备注' : '拒绝理由'}
+              placeholder="说明处理原因，最多 200 字"
+              description={`${reason.length}/200`}
+            />
+          )}
           <DialogFooter>
             <Button
               type="button"

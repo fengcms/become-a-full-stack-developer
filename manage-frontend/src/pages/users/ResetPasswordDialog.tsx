@@ -84,8 +84,7 @@ export const ResetPasswordDialog = ({
         <DialogHeader>
           <DialogTitle>重置密码 · {user?.username ?? ''}</DialogTitle>
           <DialogDescription>
-            为忘记密码的用户设置新密码（v1 无邮件找回，此端点为唯一兜底）。新密码至少 8 位，
-            设置后请线下告知该用户——重置会作废其全部刷新令牌。
+            为用户设置至少 8 位的新密码。设置后请将新密码告知该用户，原有登录会话将需要重新登录。
           </DialogDescription>
         </DialogHeader>
 

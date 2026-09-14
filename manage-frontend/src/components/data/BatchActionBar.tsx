@@ -31,11 +31,13 @@ export const BatchActionBar = ({
   actions,
   onClear,
   className,
+  disabled = false,
 }: {
   count: number
   actions: BatchAction[]
   onClear: () => void
   className?: string
+  disabled?: boolean
 }) => {
   if (count === 0) return null
   return (
@@ -60,7 +62,14 @@ export const BatchActionBar = ({
           </Button>
         ))}
       </div>
-      <Button type="button" size="sm" variant="ghost" onClick={onClear} aria-label="取消选择">
+      <Button
+        type="button"
+        size="sm"
+        variant="ghost"
+        onClick={onClear}
+        disabled={disabled}
+        aria-label="取消选择"
+      >
         <X className="size-4" />
         取消
       </Button>

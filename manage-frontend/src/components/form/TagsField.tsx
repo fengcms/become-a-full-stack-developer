@@ -7,7 +7,7 @@
  */
 
 import { X } from 'lucide-react'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { FormField } from './FormField'
 
 /** 标签输入受控组件入参。 */
@@ -22,18 +22,27 @@ export interface TagsFieldProps {
   placeholder?: string
   /** 辅助说明。 */
   description?: string
+  suggestions?: string[]
 }
 
 /**
  * 标签输入（chip 形式）。
  */
-export const TagsField = ({ value, onChange, label, placeholder, description }: TagsFieldProps) => {
+export const TagsField = ({
+  value,
+  onChange,
+  label,
+  placeholder,
+  description,
+  suggestions = [],
+}: TagsFieldProps) => {
   const [draft, setDraft] = useState('')
+  const listId = useId()
 
   /** 把输入按逗号拆分并去重追加到现有标签。 */
   const add = (raw: string) => {
     const next = raw
-      .split(',')
+      .split(/[,，]/)
       .map((s) => s.trim())
       .filter(Boolean)
     if (next.length === 0) return
@@ -68,10 +77,12 @@ export const TagsField = ({ value, onChange, label, placeholder, description }: 
         ))}
         <input
           id="tags"
+          list={listId}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ',') {
+            if (e.nativeEvent.isComposing || e.keyCode === 229) return
+            if (e.key === 'Enter' || e.key === ',' || e.key === '，') {
               e.preventDefault()
               add(draft)
             }
@@ -81,6 +92,13 @@ export const TagsField = ({ value, onChange, label, placeholder, description }: 
           className="min-w-[8rem] flex-1 bg-transparent text-sm outline-none"
         />
       </div>
+      <datalist id={listId}>
+        {suggestions
+          .filter((tag) => !value.includes(tag))
+          .map((tag) => (
+            <option key={tag} value={tag} />
+          ))}
+      </datalist>
     </FormField>
   )
 }

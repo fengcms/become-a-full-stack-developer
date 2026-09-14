@@ -19,6 +19,7 @@ import {
 } from '@/api/me'
 import { useToast } from '@/hooks/useToast'
 import { qk } from '@/lib/queryClient'
+import { useAuthStore } from '@/store/auth'
 import type { ChangePasswordRequest, ProfileUpdateRequest } from '@/types/common'
 
 /** 我的资料（GET /me/profile）。 */
@@ -30,8 +31,9 @@ export const useUpdateProfile = () => {
   const toast = useToast()
   return useMutation({
     mutationFn: (payload: ProfileUpdateRequest) => updateMyProfile(payload),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: qk.me.profile })
+    onSuccess: (user) => {
+      useAuthStore.getState().setUser(user)
+      qc.setQueryData(qk.me.profile, user)
       toast.success('资料已更新')
     },
     // 邮箱冲突 409 / code 3002 由 toast 显式提示（不静默）
@@ -65,7 +67,7 @@ export const useToggleFavorite = () => {
     mutationFn: ({ articleId, add }: { articleId: number; add: boolean }) =>
       add ? addFavorite(articleId) : removeFavorite(articleId),
     onSuccess: (_d, { add }) => {
-      void qc.invalidateQueries({ queryKey: qk.me.favorites({}) })
+      void qc.invalidateQueries({ queryKey: ['me', 'favorites'] })
       toast.success(add ? '已收藏' : '已取消收藏')
     },
     onError: (e) => toast.error(e, '操作失败'),
