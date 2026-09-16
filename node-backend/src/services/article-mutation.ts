@@ -8,7 +8,7 @@
  */
 import { and, eq, isNull } from 'drizzle-orm';
 import { getDb } from '@/db/client';
-import { type ArticleRow, articles, users } from '@/db/schema';
+import { type ArticleRow, articles, categories, users } from '@/db/schema';
 import type { ArticleStatus } from '@/services/article';
 import { assertValidSlug } from '@/services/article';
 import { syncArticleTags } from '@/services/article-tags';
@@ -95,6 +95,23 @@ export const assertSlugAvailable = async (
   if (await isSlugTaken(slug, exceptId)) throw new AppError(ErrCode.CONFLICT, 409); // 3002 slug 占用
 };
 
+/** 根据 categoryId 查询分类表，返回 name/slug；无则返回 null。 */
+const resolveCategoryFields = async (
+  categoryId: number | null | undefined,
+): Promise<{ categoryName: string | null; categorySlug: string | null }> => {
+  if (!categoryId) return { categoryName: null, categorySlug: null };
+  const row = (
+    await getDb()
+      .select({ name: categories.name, slug: categories.slug })
+      .from(categories)
+      .where(eq(categories.id, categoryId))
+      .limit(1)
+      .all()
+  )[0];
+  if (!row) return { categoryName: null, categorySlug: null };
+  return { categoryName: row.name, categorySlug: row.slug };
+};
+
 /** 创建文章并同步标签关联（仅链接已存在 Tag）。 */
 export const createArticleRow = async (
   input: ArticleCreateInput,
@@ -108,6 +125,7 @@ export const createArticleRow = async (
   await assertSlugAvailable(slug);
 
   const now = new Date();
+  const catFields = await resolveCategoryFields(input.categoryId);
   let inserted: ArticleRow[];
   try {
     inserted = await db
@@ -121,8 +139,8 @@ export const createArticleRow = async (
         authorId,
         authorName: await authorNameOf(authorId),
         categoryId: input.categoryId ?? null,
-        categoryName: null, // B3 落地分类表后补全
-        categorySlug: null,
+        categoryName: catFields.categoryName,
+        categorySlug: catFields.categorySlug,
         status,
         tags: input.tags ? JSON.stringify(input.tags) : null,
         viewCount: 0,
@@ -160,6 +178,9 @@ export const updateArticleRow = async (
 
   const now = new Date();
   const publishedAt = status === 'published' ? (existing.publishedAt ?? now) : null;
+  const categoryChanged =
+    input.categoryId !== undefined && input.categoryId !== existing.categoryId;
+  const catFields = categoryChanged ? await resolveCategoryFields(input.categoryId) : null;
   await db
     .update(articles)
     .set({
@@ -169,6 +190,8 @@ export const updateArticleRow = async (
       content: input.content ?? existing.content,
       coverImage: input.coverImage !== undefined ? input.coverImage || null : existing.coverImage,
       categoryId: input.categoryId !== undefined ? input.categoryId : existing.categoryId,
+      categoryName: catFields ? catFields.categoryName : existing.categoryName,
+      categorySlug: catFields ? catFields.categorySlug : existing.categorySlug,
       tags: input.tags ? JSON.stringify(input.tags) : existing.tags,
       status,
       publishedAt,

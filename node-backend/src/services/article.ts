@@ -7,10 +7,17 @@
  * + 统一列表查询」四类紧密相关的领域逻辑，拆分反而会割裂这些单一职责的协作（如状态机被
  * 序列化与更新共用）。按项目纪律「特殊情况需注释说明」显式标注；routes 层仍严守 ≤200。
  */
-import { and, eq, isNull, like, or, type SQL, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, like, or, type SQL, sql } from 'drizzle-orm';
 import type { Context } from 'hono';
 import { getDb } from '@/db/client';
-import { type ArticleRow, articles, articleTags, articleViewDedup, tags } from '@/db/schema';
+import {
+  type ArticleRow,
+  articles,
+  articleTags,
+  articleViewDedup,
+  categories,
+  tags,
+} from '@/db/schema';
 import { ErrCode } from '@/shared/codes';
 import { isUniqueConstraintError } from '@/shared/db-error';
 import { AppError } from '@/shared/errors';
@@ -154,6 +161,30 @@ export interface ArticlePage {
 const SCAN_LIMIT = 2000;
 
 /**
+ * 解析某分类 slug 及其所有后代分类的 slug 集合（级联）。
+ * 分类树小（≤4 层、深度受限），采用应用层循环展开而非递归 CTE，逻辑直观且无额外 SQL 依赖。
+ * 分类不存在 → 返回空数组（调用方据此直接返回空列表）。
+ * @param slug 目标分类 slug
+ */
+const resolveCategorySlugsWithDescendants = async (slug: string): Promise<string[]> => {
+  const all = await getDb()
+    .select({ id: categories.id, slug: categories.slug, parentId: categories.parentId })
+    .from(categories)
+    .all();
+  const root = all.find((c) => c.slug === slug);
+  if (!root) return [];
+  const result: string[] = [root.slug];
+  let parentIds = [root.id];
+  // 最大深度 4，逐层展开后代；parentId 为 null 的节点不是任何节点的子节点，需剔除
+  for (let depth = 0; depth < 4 && parentIds.length > 0; depth++) {
+    const children = all.filter((c) => c.parentId !== null && parentIds.includes(c.parentId));
+    result.push(...children.map((c) => c.slug));
+    parentIds = children.map((c) => c.id);
+  }
+  return result;
+};
+
+/**
  * 统一列表查询：组合过滤条件 + 分页 + 排序，返回摘要数组与分页元数据。
  * 过滤：deleted_at IS NULL 基础条件；公开/后台/我的文章通过 forcedStatus / status / authorId 区分。
  * @param q 查询入参（含 Hono 上下文以读取分页/排序参数）
@@ -183,8 +214,13 @@ export const queryArticles = async (q: ArticleQuery): Promise<ArticlePage> => {
     if (!tagRow) return { list: [], pagination: meta(page, pageSize, 0) };
     conds.push(eq(articleTags.tagId, tagRow.id));
   }
-  // category 按 slug 匹配（B2 仅透传存储 category_slug，B3 补全分类表后生效）
-  if (q.category) conds.push(eq(articles.categorySlug, q.category));
+  // category 按 slug 级联匹配（含自身及其所有后代子分类，契约 FilterCategory 描述）。
+  // 分类不存在 → 直接返回空列表；分类存在但无后代则等价于原精确匹配。
+  if (q.category) {
+    const slugs = await resolveCategorySlugsWithDescendants(q.category);
+    if (slugs.length === 0) return { list: [], pagination: meta(page, pageSize, 0) };
+    conds.push(inArray(articles.categorySlug, slugs));
+  }
 
   const where = and(...conds);
   // 投影：列表仅取摘要所需列，不拉 content 长文本（BE11 投影护栏）

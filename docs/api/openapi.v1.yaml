@@ -139,7 +139,7 @@ components:
     FilterCategory:
       name: category
       in: query
-      description: 按分类 **slug** 精确匹配（非 id、非 name）。不含子分类，只匹配该分类自身
+      description: 按分类 **slug** 匹配（非 id、非 name）。包含该分类自身及其所有后代子分类（级联）。
       schema:
         type: string
     FilterTag:
