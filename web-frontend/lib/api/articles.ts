@@ -18,6 +18,12 @@ export type ArticlePage = components['schemas']['ArticlePage']
 export type Article = components['schemas']['Article']
 /** 分页信息。 */
 export type Pagination = components['schemas']['Pagination']
+/** 文章精简桩（上下篇用）。 */
+export type ArticleStub = components['schemas']['ArticleStub']
+/** 上下篇结果。 */
+export type ArticleAdjacent = components['schemas']['ArticleAdjacent']
+/** 相关文章项。 */
+export type ArticleRelatedItem = components['schemas']['ArticleRelatedItem']
 
 /** listArticles 查询参数。 */
 export interface ListArticlesParams {
@@ -58,4 +64,28 @@ export const getArticle = (idOrSlug: string | number): Promise<Article> =>
   serverFetch<Article>(`/articles/${idOrSlug}`, {
     cache: 'force-cache',
     next: { tags: [`article:${idOrSlug}`] },
+  })
+
+/**
+ * 获取文章的上下篇（同排序 -publishedAt 下的相邻两篇，仅 published）。
+ *
+ * @param id - 文章 id。
+ */
+export const getArticleAdjacent = (id: number): Promise<ArticleAdjacent> =>
+  serverFetch<ArticleAdjacent>(`/articles/${id}/adjacent`, {
+    cache: 'force-cache',
+    next: { tags: [`article:${id}:adjacent`] },
+  })
+
+/**
+ * 获取相关文章（基于共享标签 + 同分类打分，排除自身，仅 published）。
+ *
+ * @param id - 文章 id。
+ * @param limit - 返回数量，默认 4。
+ */
+export const getArticleRelated = (id: number, limit = 4): Promise<ArticleRelatedItem[]> =>
+  serverFetch<ArticleRelatedItem[]>(`/articles/${id}/related`, {
+    query: { limit },
+    cache: 'force-cache',
+    next: { tags: [`article:${id}:related`] },
   })

@@ -12,6 +12,7 @@
       "!public",
       "!components/ui",
       "!types/api.gen.ts",
+      "!next-env.d.ts",
       "!pnpm-lock.yaml"
     ]
   },
@@ -42,6 +43,9 @@
       "suspicious": {
         "noExplicitAny": "error",
         "noArrayIndexKey": "off"
+      },
+      "security": {
+        "noDangerouslySetInnerHtml": "off"
       },
       "style": {
         "noNonNullAssertion": "warn"

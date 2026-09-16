@@ -17,6 +17,8 @@ interface TagArticlesProps {
 
 const TagArticlesPage = async ({ params, searchParams }: TagArticlesProps) => {
   const { slug } = await params
+  // URL 中的中文标签会被编码，解码后用于查询与显示
+  const tag = decodeURIComponent(slug)
   const sp = await searchParams
   const page = Number(sp.page) || 1
   const pageSize = 10
@@ -25,7 +27,7 @@ const TagArticlesPage = async ({ params, searchParams }: TagArticlesProps) => {
     page,
     pageSize,
     sort: '-publishedAt',
-    tag: slug,
+    tag,
   }).catch(() => ({
     list: [],
     pagination: { page: 1, pageSize, total: 0, totalPages: 0 },
@@ -36,7 +38,7 @@ const TagArticlesPage = async ({ params, searchParams }: TagArticlesProps) => {
   return (
     <div className="mx-auto max-w-content px-6 py-12">
       <div className="mb-8 border-b border-line pb-3">
-        <h1 className="text-2xl font-semibold tracking-tight">标签：#{slug}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">标签：#{tag}</h1>
         <p className="mt-1 text-sm text-ink-faint">
           共 {pagination.total} 篇文章
           {pagination.totalPages > 1 ? `，第 ${page}/${pagination.totalPages} 页` : ''}
@@ -54,7 +56,7 @@ const TagArticlesPage = async ({ params, searchParams }: TagArticlesProps) => {
             <Pagination
               page={pagination.page}
               totalPages={pagination.totalPages}
-              basePath={`/tags/${slug}`}
+              basePath={`/tags/${encodeURIComponent(tag)}`}
             />
           )}
         </>
