@@ -54,7 +54,7 @@
 | 成为全栈·Node 后端篇·通知系统-事件消费与已读态管理 | — | `articles/M1-30-通知系统-事件消费与已读态管理.md` | https://blog.csdn.net/fungleo/article/details/165293002 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·数据建模手艺-状态机-冗余计数与适配层的心法清单 | — | `articles/M1-31-数据建模手艺-状态机-冗余计数与适配层的心法清单.md` | https://blog.csdn.net/fungleo/article/details/165445806 | 🟢 已发布 |
 
-## M2 · React 管理后台（待写作）
+## M2 · React 管理后台（草稿完成，待发布）
 
 | 文章标题 | tag | 代码 / 草稿位置 | CSDN 链接 | 状态 |
 |---|---|---|---|---|

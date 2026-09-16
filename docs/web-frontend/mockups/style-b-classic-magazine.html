@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>风格 B · 经典杂志风 — 成为全栈开发工程师</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --text: #111827;
+    --text-soft: #4b5563;
+    --text-faint: #9ca3af;
+    --accent: #0f766e;
+    --accent-light: #f0fdfa;
+    --border: #e5e7eb;
+    --max-w: 1120px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .serif { font-family: Georgia, "Times New Roman", "Songti SC", "SimSun", serif; }
+
+  /* Top bar */
+  .topbar {
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    text-align: center;
+    padding: 6px 16px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Header */
+  header {
+    border-bottom: 2px solid var(--text);
+  }
+  .header-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .logo {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    text-decoration: none;
+  }
+  .tagline {
+    font-size: 13px;
+    color: var(--text-soft);
+    font-style: italic;
+  }
+  nav a {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    margin-left: 28px;
+    padding-bottom: 2px;
+    border-bottom: 2px solid transparent;
+    transition: border-color .15s;
+  }
+  nav a:hover { border-bottom-color: var(--accent); }
+
+  /* Featured hero */
+  .featured {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 48px 32px;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 48px;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .featured .cat-tag {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    margin-bottom: 20px;
+  }
+  .featured h1 {
+    font-size: 40px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .featured .lead {
+    font-size: 17px;
+    color: var(--text-soft);
+    margin-bottom: 24px;
+  }
+  .featured .meta {
+    font-size: 13px;
+    color: var(--text-faint);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .featured .cover {
+    aspect-ratio: 4/3;
+    background: linear-gradient(135deg, #0f766e22, #0f766e44);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    font-size: 14px;
+  }
+
+  /* Section title */
+  .section-head {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 40px 32px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+  }
+  .section-head h2 {
+    font-size: 22px;
+    letter-spacing: -0.01em;
+  }
+  .section-head a {
+    font-size: 13px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  /* Grid */
+  .grid {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 32px 32px 64px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+  .card {
+    border: 1px solid var(--border);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    transition: border-color .15s, transform .15s;
+  }
+  .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .card .cat {
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .card h3 {
+    font-size: 19px;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    margin-bottom: 12px;
+  }
+  .card h3 a { color: var(--text); text-decoration: none; }
+  .card h3 a:hover { color: var(--accent); }
+  .card .excerpt {
+    font-size: 14px;
+    color: var(--text-soft);
+    margin-bottom: auto;
+    padding-bottom: 16px;
+  }
+  .card .meta {
+    font-size: 12px;
+    color: var(--text-faint);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .avatar { width: 20px; height: 20px; border-radius: 50%; background: #d1d5db; }
+
+  /* Footer */
+  footer {
+    border-top: 2px solid var(--text);
+    background: #fafafa;
+  }
+  .footer-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 40px 32px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 24px;
+    font-size: 14px;
+    color: var(--text-soft);
+  }
+  .footer-inner a { color: var(--text-soft); text-decoration: none; margin-right: 20px; }
+  .footer-inner a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="topbar">每周二、五更新 · 已发布 53 篇系列教程</div>
+
+<header>
+  <div class="header-inner">
+    <div class="brand">
+      <a href="#" class="logo serif">全栈工程师养成</a>
+      <span class="tagline">— 一个真实系统串起的全栈之路</span>
+    </div>
+    <nav>
+      <a href="#">首页</a>
+      <a href="#">系列</a>
+      <a href="#">分类</a>
+      <a href="#">标签</a>
+      <a href="#">关于</a>
+    </nav>
+  </div>
+</header>
+
+<section class="featured">
+  <div>
+    <span class="cat-tag">本期推荐</span>
+    <h1 class="serif">App Router 与 CSR 时代的思维差异</h1>
+    <p class="lead">目录即路由、服务端优先心智。Next.js 把全栈压进一个框架——前端第一次真正"拥有"服务端，这是从"调接口的人"到"设计系统的人"的关键一跃。</p>
+    <div class="meta">
+      <span class="avatar"></span>
+      <span>FungLeo</span>
+      <span>·</span>
+      <span>2026-09-16</span>
+      <span>·</span>
+      <span>M3-01</span>
+    </div>
+  </div>
+  <div class="cover">封面图占位 4:3</div>
+</section>
+
+<div class="section-head">
+  <h2>最新文章</h2>
+  <a href="#">查看全部 →</a>
+</div>
+
+<main class="grid">
+  <article class="card">
+    <div class="cat">M3 · Next.js</div>
+    <h3><a href="#">SSR、SSG、ISR：三种渲染模式怎么选</a></h3>
+    <p class="excerpt">按页面类型逐个分析，公开内容与会员中心的渲染策略差异。</p>
+    <div class="meta"><span class="avatar"></span><span>2026-09-14</span></div>
+  </article>
+
+  <article class="card">
+    <div class="cat">M2 · 管理后台</div>
+    <h3><a href="#">前端鉴权闭环：内存令牌、刷新旋转与路由守卫</a></h3>
+    <p class="excerpt">access token 不落盘、Cookie/请求体双路径、并发刷新与强制登出。</p>
+    <div class="meta"><span class="avatar"></span><span>2026-09-12</span></div>
+  </article>
+
+  <article class="card">
+    <div class="cat">M1 · 后端</div>
+    <h3><a href="#">评论内容安全：敏感词过滤与自动审核流</a></h3>
+    <p class="excerpt">命中转等长星号、违规比率阈值拒绝、reviewing 人工兜底。</p>
+    <div class="meta"><span class="avatar"></span><span>2026-09-09</span></div>
+  </article>
+
+  <article class="card">
+    <div class="cat">M3 · Next.js</div>
+    <h3><a href="#">服务端组件与客户端组件的边界</a></h3>
+    <p class="excerpt">'use client' 的传染性，什么该放服务端、什么必须在客户端。</p>
+    <div class="meta"><span class="avatar"></span><span>2026-09-07</span></div>
+  </article>
+
+  <article class="card">
+    <div class="cat">M0 · 开篇</div>
+    <h3><a href="#">契约先行：设计一套被七个端复用的 API</a></h3>
+    <p class="excerpt">Contract-First、统一响应、错误码、版本化。</p>
+    <div class="meta"><span class="avatar"></span><span>2026-08-10</span></div>
+  </article>
+
+  <article class="card">
+    <div class="cat">M1 · 后端</div>
+    <h3><a href="#">阅读量防刷：去重计数、冷却窗口与计数写分离</a></h3>
+    <p class="excerpt">登录 user_id / 匿名 ip+ua 哈希去重、不锁主表。</p>
+    <div class="meta"><span class="avatar"></span><span>2026-09-05</span></div>
+  </article>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <strong class="serif">全栈工程师养成</strong>
+      <p style="margin-top:8px;">文章是产品，代码是素材。</p>
+    </div>
+    <div>
+      <a href="#">GitHub</a>
+      <a href="#">RSS</a>
+      <a href="#">CSDN</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

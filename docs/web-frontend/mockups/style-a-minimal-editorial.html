@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>风格 A · 极简编辑风 — 成为全栈开发工程师</title>
+<style>
+  :root {
+    --bg: #fbfaf7;
+    --surface: #ffffff;
+    --text: #1a1a1a;
+    --text-soft: #6b6b6b;
+    --text-faint: #9a9a9a;
+    --accent: #2563eb;
+    --border: #e8e6e1;
+    --max-w: 720px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  .serif { font-family: Georgia, "Times New Roman", "Songti SC", "SimSun", serif; }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .header-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    color: var(--text);
+  }
+  nav a {
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14px;
+    margin-left: 24px;
+    transition: color .15s;
+  }
+  nav a:hover { color: var(--accent); }
+
+  /* Hero / featured */
+  .hero {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 72px 24px 56px;
+    text-align: center;
+  }
+  .hero .eyebrow {
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-size: 44px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+  .hero p {
+    font-size: 18px;
+    color: var(--text-soft);
+    max-width: 540px;
+    margin: 0 auto 32px;
+  }
+  .hero .meta {
+    font-size: 14px;
+    color: var(--text-faint);
+  }
+
+  /* Article list */
+  .list {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+  .section-title {
+    font-size: 13px;
+    color: var(--text-faint);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  article {
+    padding: 32px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  article:last-child { border-bottom: none; }
+  article .cat {
+    font-size: 12px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  article h2 {
+    font-size: 26px;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    margin: 10px 0 12px;
+  }
+  article h2 a {
+    color: var(--text);
+    text-decoration: none;
+    transition: color .15s;
+  }
+  article h2 a:hover { color: var(--accent); }
+  article .excerpt {
+    color: var(--text-soft);
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  article .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--text-faint);
+  }
+  .avatar {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: #d4d4d8;
+    display: inline-block;
+  }
+  .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-faint); }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .footer-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 40px 24px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-faint);
+  }
+  .footer-inner a { color: var(--text-soft); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="#" class="logo serif">成为全栈开发工程师</a>
+    <nav>
+      <a href="#">文章</a>
+      <a href="#">分类</a>
+      <a href="#">标签</a>
+      <a href="#">关于</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="eyebrow">系列教程 · 持续更新</div>
+  <h1 class="serif">用一个真实系统，<br>把前端工程师托到全栈</h1>
+  <p>从只会调接口，到能设计、实现、部署一整套系统。七个子项目，一套 API 契约，波次串行推进。</p>
+  <div class="meta">已发布 53 篇 · 每周二、五更新</div>
+</section>
+
+<main class="list">
+  <div class="section-title">最新文章</div>
+
+  <article>
+    <a class="cat" href="#">M3 · Next.js 网站前台</a>
+    <h2><a href="#">App Router 与 CSR 时代的思维差异</a></h2>
+    <p class="excerpt">目录即路由、服务端优先心智。Next.js 把全栈压进一个框架，前端第一次真正"拥有"服务端。</p>
+    <div class="meta-row">
+      <span class="avatar"></span>
+      <span>FungLeo</span>
+      <span class="dot"></span>
+      <span>2026-09-16</span>
+      <span class="dot"></span>
+      <span>12 分钟阅读</span>
+    </div>
+  </article>
+
+  <article>
+    <a class="cat" href="#">M2 · React 管理后台</a>
+    <h2><a href="#">前端鉴权闭环：内存令牌、刷新旋转与路由守卫</a></h2>
+    <p class="excerpt">access token 不落盘、Cookie/请求体双路径、并发刷新与强制登出。C 端与 B 端的异同。</p>
+    <div class="meta-row">
+      <span class="avatar"></span>
+      <span>FungLeo</span>
+      <span class="dot"></span>
+      <span>2026-09-12</span>
+      <span class="dot"></span>
+      <span>15 分钟阅读</span>
+    </div>
+  </article>
+
+  <article>
+    <a class="cat" href="#">M1 · Node 后端</a>
+    <h2><a href="#">评论内容安全：敏感词过滤与自动审核流</a></h2>
+    <p class="excerpt">命中转等长星号、违规比率阈值拒绝、reviewing 人工兜底。从数据模型到防刷的完整链路。</p>
+    <div class="meta-row">
+      <span class="avatar"></span>
+      <span>FungLeo</span>
+      <span class="dot"></span>
+      <span>2026-09-09</span>
+      <span class="dot"></span>
+      <span>18 分钟阅读</span>
+    </div>
+  </article>
+
+  <article>
+    <a class="cat" href="#">M0 · 开篇规划</a>
+    <h2><a href="#">契约先行：设计一套被七个端复用的 API</a></h2>
+    <p class="excerpt">Contract-First、统一响应、错误码、版本化。为什么 API 契约是唯一值得提前投入的硬地基。</p>
+    <div class="meta-row">
+      <span class="avatar"></span>
+      <span>FungLeo</span>
+      <span class="dot"></span>
+      <span>2026-08-10</span>
+      <span class="dot"></span>
+      <span>10 分钟阅读</span>
+    </div>
+  </article>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <p>© 2026 成为全栈开发工程师 · 文章是产品，代码是素材</p>
+  </div>
+</footer>
+
+</body>
+</html>

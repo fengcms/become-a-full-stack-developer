@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>风格 C · 现代科技风 — 成为全栈开发工程师</title>
+<style>
+  :root {
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --text: #0f172a;
+    --text-soft: #475569;
+    --text-faint: #94a3b8;
+    --accent: #4f46e5;
+    --accent-hover: #4338ca;
+    --accent-soft: #eef2ff;
+    --border: #e2e8f0;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --max-w: 1120px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Inter", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Header */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: saturate(180%) blur(8px);
+  }
+  .header-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.01em;
+  }
+  .logo-mark {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+  }
+  nav { display: flex; align-items: center; gap: 4px; }
+  nav a {
+    color: var(--text-soft);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    transition: background .15s, color .15s;
+  }
+  nav a:hover { background: var(--accent-soft); color: var(--accent); }
+  .btn {
+    background: var(--accent);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 7px 16px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    transition: background .15s;
+  }
+  .btn:hover { background: var(--accent-hover); }
+
+  /* Hero */
+  .hero {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 56px 24px 40px;
+    text-align: center;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin-bottom: 24px;
+  }
+  .hero h1 {
+    font-size: 42px;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    margin-bottom: 18px;
+  }
+  .hero h1 .grad {
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero p {
+    font-size: 18px;
+    color: var(--text-soft);
+    max-width: 600px;
+    margin: 0 auto 28px;
+  }
+  .hero .stats {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 32px;
+  }
+  .stat .num { font-size: 28px; font-weight: 700; color: var(--text); }
+  .stat .label { font-size: 13px; color: var(--text-faint); }
+
+  /* Grid */
+  .grid {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 24px 24px 80px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: box-shadow .15s, transform .15s, border-color .15s;
+    display: flex;
+    flex-direction: column;
+  }
+  .card:hover {
+    box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.12);
+    transform: translateY(-2px);
+    border-color: #cbd5e1;
+  }
+  .card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .cat-pill {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+  .date { font-size: 12px; color: var(--text-faint); }
+  .card h3 {
+    font-size: 19px;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    margin-bottom: 10px;
+  }
+  .card h3 a { color: var(--text); text-decoration: none; }
+  .card h3 a:hover { color: var(--accent); }
+  .card .excerpt {
+    font-size: 14px;
+    color: var(--text-soft);
+    margin-bottom: 16px;
+  }
+  .card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .author { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-soft); }
+  .avatar { width: 24px; height: 24px; border-radius: 50%; background: #cbd5e1; }
+  .read { font-size: 12px; color: var(--text-faint); }
+
+  /* Footer */
+  footer {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .footer-inner {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 32px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 14px;
+    color: var(--text-faint);
+  }
+  .footer-inner a { color: var(--text-soft); text-decoration: none; margin-left: 20px; }
+  .footer-inner a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="#" class="logo">
+      <span class="logo-mark">全</span>
+      <span>全栈工程师养成</span>
+    </a>
+    <nav>
+      <a href="#">首页</a>
+      <a href="#">系列</a>
+      <a href="#">分类</a>
+      <a href="#">标签</a>
+      <a href="#" class="btn">登录</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <span class="badge">● 系列教程 · 持续更新中</span>
+  <h1>从调接口的人，<br>到<span class="grad">设计系统</span>的人</h1>
+  <p>用一个真实可运行的多端文章系统，串起后端、前台、移动端全链路。七个子项目，一套 API 契约。</p>
+  <div class="stats">
+    <div class="stat"><div class="num">53</div><div class="label">已发布文章</div></div>
+    <div class="stat"><div class="num">7</div><div class="label">子项目</div></div>
+    <div class="stat"><div class="num">2</div><div class="label">每周更新</div></div>
+  </div>
+</section>
+
+<main class="grid">
+  <article class="card">
+    <div class="card-top">
+      <span class="cat-pill">M3 · Next.js</span>
+      <span class="date">09-16</span>
+    </div>
+    <h3><a href="#">App Router 与 CSR 时代的思维差异</a></h3>
+    <p class="excerpt">目录即路由、服务端优先心智。Next.js 把全栈压进一个框架，前端第一次真正"拥有"服务端。</p>
+    <div class="card-foot">
+      <div class="author"><span class="avatar"></span><span>FungLeo</span></div>
+      <span class="read">12 分钟阅读</span>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="card-top">
+      <span class="cat-pill">M2 · 管理后台</span>
+      <span class="date">09-12</span>
+    </div>
+    <h3><a href="#">前端鉴权闭环：内存令牌、刷新旋转与路由守卫</a></h3>
+    <p class="excerpt">access token 不落盘、Cookie/请求体双路径、并发刷新与强制登出。</p>
+    <div class="card-foot">
+      <div class="author"><span class="avatar"></span><span>FungLeo</span></div>
+      <span class="read">15 分钟阅读</span>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="card-top">
+      <span class="cat-pill">M1 · 后端</span>
+      <span class="date">09-09</span>
+    </div>
+    <h3><a href="#">评论内容安全：敏感词过滤与自动审核流</a></h3>
+    <p class="excerpt">命中转等长星号、违规比率阈值拒绝、reviewing 人工兜底。</p>
+    <div class="card-foot">
+      <div class="author"><span class="avatar"></span><span>FungLeo</span></div>
+      <span class="read">18 分钟阅读</span>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="card-top">
+      <span class="cat-pill">M3 · Next.js</span>
+      <span class="date">09-07</span>
+    </div>
+    <h3><a href="#">SSR、SSG、ISR：三种渲染模式怎么选</a></h3>
+    <p class="excerpt">按页面类型逐个分析渲染模式，公开内容与会员中心的策略差异。</p>
+    <div class="card-foot">
+      <div class="author"><span class="avatar"></span><span>FungLeo</span></div>
+      <span class="read">14 分钟阅读</span>
+    </div>
+  </article>
+</main>
+
+<footer>
+  <div class="footer-inner">
+    <span>© 2026 全栈工程师养成</span>
+    <div>
+      <a href="#">GitHub</a>
+      <a href="#">RSS</a>
+      <a href="#">CSDN</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
