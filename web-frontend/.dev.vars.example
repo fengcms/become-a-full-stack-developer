@@ -1,0 +1,4 @@
+# Cloudflare Workers 运行时变量（wrangler dev 本地开发用，生产用 wrangler secret）
+
+# 后端 API 实际地址（Route Handler 反代目标）
+API_ORIGIN=http://localhost:8787

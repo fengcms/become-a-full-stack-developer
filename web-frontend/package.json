@@ -1,0 +1,38 @@
+{
+  "name": "web-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "gen:api": "bash scripts/generate-api-types.sh",
+    "build:cf": "opennextjs-cloudflare build",
+    "dev:cf": "opennextjs-cloudflare build && wrangler dev",
+    "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5",
+    "next": "16.3.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zustand": "^5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "latest",
+    "@opennextjs/cloudflare": "latest",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "openapi-typescript": "latest",
+    "tailwindcss": "^4",
+    "typescript": "^7",
+    "wrangler": "latest"
+  },
+  "packageManager": "pnpm@11.18.0"
+}

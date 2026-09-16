@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/*
+ * 极简编辑风设计令牌（对齐 docs/web-frontend/mockups/style-a-minimal-editorial.html）
+ * 米白底、衬线标题、居中窄栏、大量留白、单一蓝色点缀。
+ */
+@theme inline {
+  --color-bg: #fbfaf7;
+  --color-surface: #ffffff;
+  --color-ink: #1a1a1a;
+  --color-ink-soft: #6b6b6b;
+  --color-ink-faint: #9a9a9a;
+  --color-accent: #2563eb;
+  --color-line: #e8e6e1;
+
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-serif: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
+
+  --content-max: 720px;
+}
+
+:root {
+  --background: var(--color-bg);
+  --foreground: var(--color-ink);
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 1.7;
+}
+
+/* 选中态配色 */
+::selection {
+  background: var(--color-accent);
+  color: #fff;
+}
