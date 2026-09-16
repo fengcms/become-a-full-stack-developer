@@ -50,15 +50,15 @@
 | 成为全栈·Node 后端篇·阅读量防刷-去重冷却与计数写分离 | — | `articles/M1-26-阅读量防刷-去重冷却与计数写分离.md` | https://blog.csdn.net/fungleo/article/details/164973883 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·评论内容安全-敏感词过滤-三态审核与级联删除 | — | `articles/M1-27-评论内容安全-敏感词过滤-三态审核与级联删除.md` | https://blog.csdn.net/fungleo/article/details/165110811 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·辅助接口-相邻-相关-目录-统计与搜索的薄路由实现 | — | `articles/M1-28-辅助接口-相邻-相关-目录-统计与搜索的薄路由实现.md` | https://blog.csdn.net/fungleo/article/details/165111053 | 🟢 已发布 |
-| 成为全栈·Node 后端篇·点赞系统-幂等点赞与计数原子增减 | — | `articles/M1-29-点赞系统-幂等点赞与计数原子增减.md` | — | 🟡 草稿中 |
-| 成为全栈·Node 后端篇·通知系统-事件消费与已读态管理 | — | `articles/M1-30-通知系统-事件消费与已读态管理.md` | — | 🟡 草稿中 |
-| 成为全栈·Node 后端篇·数据建模手艺-状态机-冗余计数与适配层的心法清单 | — | `articles/M1-31-数据建模手艺-状态机-冗余计数与适配层的心法清单.md` | — | 🟡 草稿中 |
+| 成为全栈·Node 后端篇·点赞系统-幂等点赞与计数原子增减 | — | `articles/M1-29-点赞系统-幂等点赞与计数原子增减.md` | https://blog.csdn.net/fungleo/article/details/165292499 | 🟢 已发布 |
+| 成为全栈·Node 后端篇·通知系统-事件消费与已读态管理 | — | `articles/M1-30-通知系统-事件消费与已读态管理.md` | https://blog.csdn.net/fungleo/article/details/165293002 | 🟢 已发布 |
+| 成为全栈·Node 后端篇·数据建模手艺-状态机-冗余计数与适配层的心法清单 | — | `articles/M1-31-数据建模手艺-状态机-冗余计数与适配层的心法清单.md` | https://blog.csdn.net/fungleo/article/details/165445806 | 🟢 已发布 |
 
 ## M2 · React 管理后台（待写作）
 
 | 文章标题 | tag | 代码 / 草稿位置 | CSDN 链接 | 状态 |
 |---|---|---|---|---|
-| 成为全栈·React 管理后台篇·Vite + React + TypeScript：搭起一个有门禁的后台工程 | — | `articles/M2-01-Vite-React-TypeScript-搭起一个有门禁的后台工程.md` | — | 🟡 草稿中 |
+| 成为全栈·React 管理后台篇·Vite + React + TypeScript：搭起一个有门禁的后台工程 | — | `articles/M2-01-Vite-React-TypeScript-搭起一个有门禁的后台工程.md` | https://blog.csdn.net/fungleo/article/details/165447601 | 🟢 已发布 |
 | 成为全栈·React 管理后台篇·后台骨架：布局、数据路由与分层守卫 | — | `articles/M2-02-后台骨架-布局数据路由与分层守卫.md` | — | 🟡 草稿中 |
 | 成为全栈·React 管理后台篇·请求层封装：统一信封、业务错误与并发 401 | — | `articles/M2-03-请求层封装-统一信封业务错误与并发401.md` | — | 🟡 草稿中 |
 | 成为全栈·React 管理后台篇·OpenAPI 生成类型，为什么请求函数仍然手写 | — | `articles/M2-04-OpenAPI生成类型为什么请求函数仍然手写.md` | — | 🟡 草稿中 |
