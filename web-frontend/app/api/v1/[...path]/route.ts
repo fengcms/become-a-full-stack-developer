@@ -14,7 +14,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
 /** 后端实际地址。本地用 .dev.vars 的 API_ORIGIN，生产用 wrangler secret。 */
-const API_ORIGIN = process.env.API_ORIGIN || 'http://localhost:8787'
+const API_ORIGIN = process.env.API_ORIGIN || 'http://localhost:11000'
 
 /** 不转发给后端的请求头（hop-by-hop + 主机相关）。 */
 const HOP_BY_HOP_HEADERS = [
@@ -90,4 +90,3 @@ export const DELETE = proxy
 
 /** 关闭此路由的缓存（反代必须实时）。 */
 export const dynamic = 'force-dynamic'
-

@@ -7,6 +7,8 @@
       "!node_modules",
       "!.next",
       "!.open-next",
+      "!.wrangler",
+      "!.wrangler-home",
       "!public",
       "!components/ui",
       "!types/api.gen.ts",

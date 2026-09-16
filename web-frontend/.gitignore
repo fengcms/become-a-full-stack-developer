@@ -32,6 +32,17 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# cloudflare workers local secrets
+.dev.vars
+
+# opennext build output
+.open-next/
+
+# wrangler dev temp / local home override
+.wrangler/
+.wrangler-home/
 
 # vercel
 .vercel
