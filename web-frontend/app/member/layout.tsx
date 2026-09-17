@@ -18,6 +18,8 @@ const NAV_ITEMS = [
   { href: '/member/favorites', label: '我的收藏' },
   { href: '/member/history', label: '阅读历史' },
   { href: '/member/articles', label: '我的文章' },
+  { href: '/member/likes', label: '我的点赞' },
+  { href: '/member/notifications', label: '通知' },
 ]
 
 const MemberLayout = ({ children }: MemberLayoutProps) => {

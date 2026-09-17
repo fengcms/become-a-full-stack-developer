@@ -16,6 +16,7 @@ import { getCategoryTree, getSiteSettings, type SiteSetting } from '@/lib/api'
 const NAV_ITEMS = [
   { href: '/articles', label: '文章' },
   { href: '/tags', label: '标签' },
+  { href: '/search', label: '搜索' },
   { href: '/about', label: '关于' },
 ]
 

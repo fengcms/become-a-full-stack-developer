@@ -9,6 +9,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import AuthProvider from '@/components/auth/AuthProvider'
+import { ToastProvider } from '@/components/ui/Toast'
 import { getSiteSettings } from '@/lib/api'
 
 /** 默认兜底配置（后端不可达时使用）。 */
@@ -49,7 +50,9 @@ const RootLayout = ({ children }: RootLayoutProps) => {
   return (
     <html lang="zh-CN">
       <body className="min-h-screen flex flex-col">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   )

@@ -9,8 +9,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import LikeButton from '@/components/article/LikeButton'
 import Markdown from '@/components/article/Markdown'
 import TableOfContents from '@/components/article/TableOfContents'
+import CommentList from '@/components/comment/CommentList'
 import {
   type Article,
   type ArticleAdjacent,
@@ -21,6 +23,7 @@ import {
   getArticleRelated,
   getCategoryBreadcrumb,
 } from '@/lib/api'
+import { listArticleComments } from '@/lib/api/comments'
 
 /** 文章详情缓存策略：5 分钟重新验证。 */
 export const revalidate = 300
@@ -89,13 +92,17 @@ const ArticleDetailPage = async ({ params }: ArticleDetailProps) => {
 
   const date = formatDate(article.publishedAt || article.createdAt)
 
-  // 并发拉取面包屑 + 上下篇 + 相关文章（后端专用接口）
-  const [breadcrumb, adjacent, relatedArticles] = await Promise.all([
+  // 并发拉取面包屑 + 上下篇 + 相关文章 + 评论
+  const [breadcrumb, adjacent, relatedArticles, commentsPage] = await Promise.all([
     article.categoryId
       ? getCategoryBreadcrumb(article.categoryId).catch<CategoryBreadcrumbItem[]>(() => [])
       : Promise.resolve([]),
     getArticleAdjacent(article.id).catch<ArticleAdjacent | null>(() => null),
     getArticleRelated(article.id, 4).catch<ArticleRelatedItem[]>(() => []),
+    listArticleComments(article.id, 1, 100).catch(() => ({
+      list: [],
+      pagination: { page: 1, pageSize: 100, total: 0, totalPages: 0 },
+    })),
   ])
 
   const prevArticle = adjacent?.prev ?? null
@@ -183,6 +190,11 @@ const ArticleDetailPage = async ({ params }: ArticleDetailProps) => {
       {/* 正文（Markdown 渲染） */}
       <Markdown content={article.content} />
 
+      {/* 点赞 */}
+      <div className="mt-12 flex justify-center">
+        <LikeButton articleId={article.id} />
+      </div>
+
       {/* 上一篇 / 下一篇 */}
       {(prevArticle || nextArticle) && (
         <nav className="mt-12 grid grid-cols-1 gap-4 border-t border-line pt-8 sm:grid-cols-2">
@@ -241,6 +253,17 @@ const ArticleDetailPage = async ({ params }: ArticleDetailProps) => {
           </div>
         </section>
       )}
+
+      {/* 评论区 */}
+      <section className="mt-12 border-t border-line pt-8">
+        <h2 className="mb-5 text-lg font-semibold tracking-tight">
+          评论{' '}
+          <span className="text-sm font-normal text-ink-faint">
+            ({commentsPage.pagination.total})
+          </span>
+        </h2>
+        <CommentList articleId={article.id} initialComments={commentsPage.list} />
+      </section>
     </article>
   )
 }
