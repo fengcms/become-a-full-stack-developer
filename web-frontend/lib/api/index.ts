@@ -8,4 +8,5 @@
 export * from './articles'
 export * from './categories'
 export * from './members'
+export * from './site'
 export * from './tags'

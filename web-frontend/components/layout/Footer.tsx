@@ -1,27 +1,26 @@
 /**
  * @file components/layout/Footer.tsx
- * @description 公开区页脚：版权信息。
+ * @description 公开区页脚：站点描述 + 版权信息。
  *   极简编辑风：顶部细分割线、居中窄栏、淡色文字。
- *   客户端组件：年份需运行时计算（Cache Components 模式下 new Date() 不可预渲染）。
+ *   RSC：拉取站点配置；年份用服务器时间（ISR 重新验证时更新）。
  * @module web-frontend/components/layout
  * @date 2026-09-16
  */
 
-'use client'
+import { getSiteSettings, type SiteSetting } from '@/lib/api'
 
-import { useEffect, useState } from 'react'
-
-const Footer = () => {
-  const [year, setYear] = useState(2026)
-
-  useEffect(() => {
-    setYear(new Date().getFullYear())
-  }, [])
+const Footer = async () => {
+  const site = await getSiteSettings().catch<SiteSetting | null>(() => null)
+  const siteName = site?.siteName ?? '成为全栈开发工程师'
+  const description = site?.siteDescription
+  const year = new Date().getFullYear()
+  const copyright = site?.copyright ?? `© ${year} ${siteName}`
 
   return (
     <footer className="mt-auto border-t border-line bg-surface">
       <div className="mx-auto max-w-content px-6 py-10 text-center text-sm text-ink-faint">
-        <p>© {year} 成为全栈开发工程师 · 文章是产品，代码是素材</p>
+        {description && <p className="mb-2">{description}</p>}
+        <p>{copyright}</p>
       </div>
     </footer>
   )

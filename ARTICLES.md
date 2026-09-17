@@ -59,8 +59,8 @@
 | 文章标题 | tag | 代码 / 草稿位置 | CSDN 链接 | 状态 |
 |---|---|---|---|---|
 | 成为全栈·React 管理后台篇·Vite + React + TypeScript：搭起一个有门禁的后台工程 | — | `articles/M2-01-Vite-React-TypeScript-搭起一个有门禁的后台工程.md` | https://blog.csdn.net/fungleo/article/details/165447601 | 🟢 已发布 |
-| 成为全栈·React 管理后台篇·后台骨架：布局、数据路由与分层守卫 | — | `articles/M2-02-后台骨架-布局数据路由与分层守卫.md` | — | 🟡 草稿中 |
-| 成为全栈·React 管理后台篇·请求层封装：统一信封、业务错误与并发 401 | — | `articles/M2-03-请求层封装-统一信封业务错误与并发401.md` | — | 🟡 草稿中 |
+| 成为全栈·React 管理后台篇·后台骨架：布局、数据路由与分层守卫 | — | `articles/M2-02-后台骨架-布局数据路由与分层守卫.md` | https://blog.csdn.net/fungleo/article/details/165589276 | 🟢 已发布 |
+| 成为全栈·React 管理后台篇·请求层封装：统一信封、业务错误与并发 401 | — | `articles/M2-03-请求层封装-统一信封业务错误与并发401.md` | https://blog.csdn.net/fungleo/article/details/165590548 | 🟢 已发布 |
 | 成为全栈·React 管理后台篇·OpenAPI 生成类型，为什么请求函数仍然手写 | — | `articles/M2-04-OpenAPI生成类型为什么请求函数仍然手写.md` | — | 🟡 草稿中 |
 | 成为全栈·React 管理后台篇·服务端状态、会话状态、界面状态：不要都塞进 Zustand | — | `articles/M2-05-三类状态不要都塞进Zustand.md` | — | 🟡 草稿中 |
 | 成为全栈·React 管理后台篇·TanStack Query 不只是缓存：失效、派生与失败恢复 | — | `articles/M2-06-TanStack-Query不只是缓存.md` | — | 🟡 草稿中 |

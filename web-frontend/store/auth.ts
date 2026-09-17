@@ -9,13 +9,14 @@
 
 import { create } from 'zustand'
 
-/** 公开用户信息（脱敏后的 User 视图）。 */
+/** 登录用户信息（对齐契约 User 实体）。 */
 export interface PublicUser {
   id: number
   username: string
+  email?: string
   nickname: string
-  avatarUrl?: string
-  role: 'admin' | 'member'
+  avatar?: string | null
+  role: 'admin' | 'editor' | 'member'
 }
 
 /** 认证结果（登录/刷新返回）。 */
