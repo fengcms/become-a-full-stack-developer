@@ -8,6 +8,14 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  // ISR 增量缓存：OpenNext 自动读取此绑定存储 revalidate 页面缓存
+  // 需在 Cloudflare 控制台先创建同名 R2 bucket
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "web-frontend-cache"
+    }
+  ],
   "observability": {
     "enabled": true
   },
