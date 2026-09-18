@@ -9,8 +9,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import FavoriteButton from '@/components/article/FavoriteButton'
 import LikeButton from '@/components/article/LikeButton'
 import Markdown from '@/components/article/Markdown'
+import ReadingTracker from '@/components/article/ReadingTracker'
 import TableOfContents from '@/components/article/TableOfContents'
 import CommentList from '@/components/comment/CommentList'
 import {
@@ -190,9 +192,10 @@ const ArticleDetailPage = async ({ params }: ArticleDetailProps) => {
       {/* 正文（Markdown 渲染） */}
       <Markdown content={article.content} />
 
-      {/* 点赞 */}
-      <div className="mt-12 flex justify-center">
+      {/* 点赞 + 收藏 */}
+      <div className="mt-12 flex justify-center gap-4">
         <LikeButton articleId={article.id} />
+        <FavoriteButton articleId={article.id} />
       </div>
 
       {/* 上一篇 / 下一篇 */}
@@ -253,6 +256,9 @@ const ArticleDetailPage = async ({ params }: ArticleDetailProps) => {
           </div>
         </section>
       )}
+
+      {/* 阅读历史上报（登录用户停留 5s 后触发） */}
+      <ReadingTracker articleId={article.id} />
 
       {/* 评论区 */}
       <section className="mt-12 border-t border-line pt-8">

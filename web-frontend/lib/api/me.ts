@@ -69,6 +69,14 @@ export const removeFavorite = (articleId: number): Promise<void> =>
   request<void>(`/me/favorites/${articleId}`, { method: 'DELETE' })
 
 /**
+ * 添加收藏（幂等：重复收藏返回 200）。
+ *
+ * @param articleId - 文章 id。
+ */
+export const addFavorite = (articleId: number): Promise<void> =>
+  request<void>('/me/favorites', { method: 'POST', body: { articleId } })
+
+/**
  * 我的阅读历史。
  */
 export const getMyHistory = (q?: ListQuery): Promise<HistoryPage> =>
@@ -81,6 +89,15 @@ export const getMyHistory = (q?: ListQuery): Promise<HistoryPage> =>
  */
 export const removeHistoryItem = (articleId: number): Promise<void> =>
   request<void>(`/me/history/${articleId}`, { method: 'DELETE' })
+
+/**
+ * 上报阅读进度（写入/更新 ReadingLog）。
+ *
+ * @param articleId - 文章 id。
+ * @param progress - 阅读进度百分比 0-100，可选。
+ */
+export const reportReadingProgress = (articleId: number, progress?: number): Promise<void> =>
+  request<void>('/me/history', { method: 'POST', body: { articleId, progress } })
 
 /**
  * 我的文章（含全部状态）。
