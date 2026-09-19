@@ -2,6 +2,8 @@
 
 > 页码、筛选和排序不是表格组件的临时状态，而是“用户正在查看哪一组数据”的完整描述。只要这个描述值得刷新、返回或分享，就应该进入 URL。
 
+![成为全栈·React 管理后台篇·列表页范式：让分页、筛选和返回位置进入 URL](https://i-blog.csdnimg.cn/direct/1910a7b64bd54d0da49ae7adf871e16d.png)
+
 ## 前言
 
 管理后台的列表页看起来都差不多：搜索框、几个筛选项、一张表格和分页器。真正容易出问题的，却不是表格怎么画，而是用户离开再回来以后还能不能回到原处。
@@ -18,7 +20,7 @@
 - 编辑页怎样保存完整返回位置。
 - 总页数缩小时，当前页如何夹正。
 
-前置阅读：[列表接口三件套：分页、筛选、排序](https://blog.csdn.net/fungleo/article/details/164425686)、[TanStack Query 不只是缓存：失效、派生与失败恢复]({{LINK:M2-06}})
+前置阅读：[列表接口三件套：分页、筛选、排序](https://blog.csdn.net/fungleo/article/details/164425686)、[TanStack Query 不只是缓存：失效、派生与失败恢复](https://blog.csdn.net/fungleo/article/details/165847415)
 
 ## 列表 URL 是一份可执行的视图描述
 
@@ -41,7 +43,7 @@
 | 请求 loading | 否 | 是一次请求过程，不是用户选择 |
 | 当前页勾选项 | 通常否 | 依赖当前返回数据，跨页面恢复容易误操作 |
 
-{{IMG:M2-08-URL状态流}}
+![URL状态流](https://i-blog.csdnimg.cn/direct/a1057dcb1600458299bb69ae9c1fb128.png)
 
 ## 用一个 hook 收住解析和写入规则
 
@@ -243,7 +245,7 @@ URL 很适合离散、可序列化的查询条件，却不适合大型草稿、�
 ## 延伸阅读
 
 - [列表接口三件套：分页、筛选、排序](https://blog.csdn.net/fungleo/article/details/164425686)
-- [TanStack Query 不只是缓存：失效、派生与失败恢复]({{LINK:M2-06}})
+- [TanStack Query 不只是缓存：失效、派生与失败恢复](https://blog.csdn.net/fungleo/article/details/165847415)
 - [表单页范式：校验、数据回填与未保存保护]({{LINK:M2-09}})
 
 ---

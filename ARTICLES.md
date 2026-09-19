@@ -63,8 +63,8 @@
 | 成为全栈·React 管理后台篇·请求层封装：统一信封、业务错误与并发 401 | — | `articles/M2-03-请求层封装-统一信封业务错误与并发401.md` | https://blog.csdn.net/fungleo/article/details/165590548 | 🟢 已发布 |
 | 成为全栈·React 管理后台篇·OpenAPI 生成类型，为什么请求函数仍然手写 | — | `articles/M2-04-OpenAPI生成类型为什么请求函数仍然手写.md` | https://blog.csdn.net/fungleo/article/details/165721265 | 🟢 已发布 |
 | 成为全栈·React 管理后台篇·服务端状态、会话状态、界面状态：不要都塞进 Zustand | — | `articles/M2-05-三类状态不要都塞进Zustand.md` | https://blog.csdn.net/fungleo/article/details/165722061 | 🟢 已发布 |
-| 成为全栈·React 管理后台篇·TanStack Query 不只是缓存：失效、派生与失败恢复 | — | `articles/M2-06-TanStack-Query不只是缓存.md` | — | 🟡 草稿中 |
-| 成为全栈·React 管理后台篇·前端鉴权闭环：内存令牌、刷新旋转与路由守卫 | — | `articles/M2-07-前端鉴权闭环-内存令牌刷新旋转与路由守卫.md` | — | 🟡 草稿中 |
+| 成为全栈·React 管理后台篇·TanStack Query 不只是缓存：失效、派生与失败恢复 | — | `articles/M2-06-TanStack-Query不只是缓存.md` | https://blog.csdn.net/fungleo/article/details/165847415 | 🟢 已发布 |
+| 成为全栈·React 管理后台篇·前端鉴权闭环：内存令牌、刷新旋转与路由守卫 | — | `articles/M2-07-前端鉴权闭环-内存令牌刷新旋转与路由守卫.md` | https://blog.csdn.net/fungleo/article/details/165848076 | 🟢 已发布 |
 | 成为全栈·React 管理后台篇·列表页范式：让分页、筛选和返回位置进入 URL | — | `articles/M2-08-列表页范式-让分页筛选和返回位置进入URL.md` | — | 🟡 草稿中 |
 | 成为全栈·React 管理后台篇·表单页范式：校验、数据回填与未保存保护 | — | `articles/M2-09-表单页范式-校验数据回填与未保存保护.md` | — | 🟡 草稿中 |
 | 成为全栈·React 管理后台篇·Markdown 编辑器：预览、暗色主题与连续图片粘贴 | — | `articles/M2-10-Markdown编辑器-预览暗色主题与连续图片粘贴.md` | — | 🟡 草稿中 |

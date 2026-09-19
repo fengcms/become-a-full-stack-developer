@@ -87,7 +87,7 @@ SPA 部署包含静态资源、路由回退、两条后端反代、HTTPS Cookie 
 ## 延伸阅读
 
 - [部署上线：从本地起服到真正对外服务](https://blog.csdn.net/fungleo/article/details/164815866)
-- [前端鉴权闭环]({{LINK:M2-07}})
+- [前端鉴权闭环](https://blog.csdn.net/fungleo/article/details/165848076)
 - [Vite 构建优化]({{LINK:M2-19}})
 
 ---
