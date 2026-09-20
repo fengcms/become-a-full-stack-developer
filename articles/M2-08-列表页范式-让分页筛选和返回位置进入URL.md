@@ -246,7 +246,7 @@ URL 很适合离散、可序列化的查询条件，却不适合大型草稿、�
 
 - [列表接口三件套：分页、筛选、排序](https://blog.csdn.net/fungleo/article/details/164425686)
 - [TanStack Query 不只是缓存：失效、派生与失败恢复](https://blog.csdn.net/fungleo/article/details/165847415)
-- [表单页范式：校验、数据回填与未保存保护]({{LINK:M2-09}})
+- [表单页范式：校验、数据回填与未保存保护](https://blog.csdn.net/fungleo/article/details/165986069)
 
 ---
 

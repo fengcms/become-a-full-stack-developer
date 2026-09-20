@@ -190,7 +190,7 @@ onSuccess: (user) => {
 
 - [TanStack Query 不只是缓存：失效、派生与失败恢复](https://blog.csdn.net/fungleo/article/details/165847415)
 - [前端鉴权闭环：内存令牌、刷新旋转与路由守卫](https://blog.csdn.net/fungleo/article/details/165848076)
-- [表单页范式：校验、数据回填与未保存保护]({{LINK:M2-09}})
+- [表单页范式：校验、数据回填与未保存保护](https://blog.csdn.net/fungleo/article/details/165986069)
 
 ---
 

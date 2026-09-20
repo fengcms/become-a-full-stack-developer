@@ -18,7 +18,7 @@
 - 上传活动怎样阻止表单过早保存或离开。
 - 实时预览、暗色主题和窄屏布局如何融入后台。
 
-前置阅读：[文件上传：R2 / 本地磁盘双实现与签名直传](https://blog.csdn.net/fungleo/article/details/164453365)、[表单页范式：校验、数据回填与未保存保护]({{LINK:M2-09}})
+前置阅读：[文件上传：R2 / 本地磁盘双实现与签名直传](https://blog.csdn.net/fungleo/article/details/164453365)、[表单页范式：校验、数据回填与未保存保护](https://blog.csdn.net/fungleo/article/details/165986069)
 
 ## 第三方编辑器先收成一个普通表单字段
 
@@ -242,7 +242,7 @@ Markdown 最终来自用户输入。是否允许原始 HTML、链接协议怎样
 ## 延伸阅读
 
 - [文件上传：R2 / 本地磁盘双实现与签名直传](https://blog.csdn.net/fungleo/article/details/164453365)
-- [表单页范式：校验、数据回填与未保存保护]({{LINK:M2-09}})
+- [表单页范式：校验、数据回填与未保存保护](https://blog.csdn.net/fungleo/article/details/165986069)
 - [异步交互的一致性：上传、批量操作与部分失败]({{LINK:M2-15}})
 
 ---
