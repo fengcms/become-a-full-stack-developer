@@ -26,6 +26,11 @@ M0 开篇 / M1 Node / M2 React / M3 Next / M4 Flutter / M5 Taro / M6 Go / M7 Vue
 ## 协作约定
 - **blog AI 链接/发布**：blog AI 工作目录 `/Users/fungleo/Documents/Blogs`，`csdn_backup.py` 公开抓取，`links` 命令生成 `materials/csdn-已发布链接.md`（单一真相源）；统筹 AI 只读消费并镜像进根 `ARTICLES.md`。内链占位 `{{LINK:Mx-yy}}`，某里程碑全发完后一次性注入。详见 `docs/链接与发布协作约定.md`。
 - **写作分工（A 计划）**：文章写作归统筹 AI（M0 已写、M1~M8 续写）；发布维护 M0 由统筹 AI 顺手做，M1 起委派独立「发布维护 Agent」（`docs/发布维护-agent-岗位说明书.md`）。
+- **发布维护 SOP（2026-09-21 owner 定稿）**：
+  - 每轮三件事：① SOP-A 把新发布 URL 镜像进根 `ARTICLES.md`（🟢 已发布）；② 回填所有指向已发布文章的 `{{LINK:Mx-yy}}`；③ **全量链接审计**——把全仓正文引用的 CSDN ID 与 `materials/csdn-已发布链接.md` 比对，查两类缺陷：**ID 不在索引＝幽灵链**、**文案与目标标题不符＝错链**。此项已由 owner 定为**每轮标准动作**。
+  - **中途不重发（owner 2026-09-21 决策）**：系列发布期间 owner **不更新**已发布文章；本地源改动（回填内链、修复坏链）一律**累积**，待全系列发完、owner 统一打磨后**一次性全量更新到 CSDN**。故不再逐轮提示"必须重发"，只累积记录。
+  - 占位形态：M1 为裸 `{{LINK:Mx-yy}}`（替换成完整 `[标题](URL)`）；M2 为 `[标题]({{LINK:Mx-yy}})`（**只填 URL**）。同文件多占位必须**串行** Edit，不同文件可并行。
+  - 检索纪律：查具体文章前先 Glob 拿真实文件名（勿猜编号）；查回填目标按**目标编号逐个精确 grep**，核验覆盖全部已发布编号。
 
 ## 文档位置
 - 00-项目章程（v1.14）/ 02-领域模型与API契约（v1.14）/ 01-内容路线图（v1.15）
@@ -38,6 +43,8 @@ M0 开篇 / M1 Node / M2 React / M3 Next / M4 Flutter / M5 Taro / M6 Go / M7 Vue
   - **已部署 Cloudflare 全链路 GREEN**（2026-08-29）：Worker 启动 / D1 查询 / CORS / admin 登录（bcryptjs rounds=12 同源）/ R2 读写全部线上实测通过；自定义域名 `api-befull.kao9.com`。部署指南 `docs/node-backend/部署到Cloudflare指南.md`，验收报告 `docs/node-backend/M1-后端部署到Cloudflare-验收报告.md`。
   - 部署 FAQ 四坑：① R2 binding 名须对齐 `env.ts` 的 `R2_BUCKET`；② D1 改密码须 bcryptjs(12) 同源且含 `$` 用 heredoc；③ curl `-F file=@` 的 `~` 不展开；④ **`GET /files/<key>` 挂在根路径不带 `/api/v1`**（策略 A 中转）。
 - **下一步**：M1 冻结后写「M1 后端文章」（M1-01~M1-31，31 篇）；M2 前端按「契约→主计划→批次任务包」推进。
+- **发布进度（2026-09-21）**：M0 全 8 篇、**M1 全 31 篇（2026-09-16 收官）**、**M2-01~11 已发布**（M2-12/13 待发）。`{{LINK:}}` 占位在覆盖范围内零残留。
+- **待最终全量更新清单**（本地源已改、等系列发完统一重发）：`M1-02`、`M1-06`、`M1-07`、`M1-09`、`M1-14`、`M1-17`、`M1-18`、`M1-19`、`M1-20`、`M1-21`、`M1-22`、`M1-23`、`M1-24`、`M1-25`、`M1-26`、`M1-27`、`M1-28`、`M1-29`、`M1-30`、`M1-31`、`M2-02`、`M2-03`、`M2-05`、`M2-09`、`M0-03`（含 09-19 修复的 9 处坏链）。
 
 ## M2 前端（React 管理后台）
 - 目录 `manage-frontend/`（已建）。栈：Vite8 + React19 + TS6 + Tailwind4 + shadcn/ui + TanStack Query5 + Zustand5（仅鉴权）+ RHF7+Zod4 + Biome2.5；已开 `strict`。dev 端口 12000。
