@@ -69,8 +69,8 @@
 | 成为全栈·React 管理后台篇·表单页范式：校验、数据回填与未保存保护 | — | `articles/M2-09-表单页范式-校验数据回填与未保存保护.md` | https://blog.csdn.net/fungleo/article/details/165986069 | 🟢 已发布 |
 | 成为全栈·React 管理后台篇·Markdown 编辑器：预览、暗色主题与连续图片粘贴 | — | `articles/M2-10-Markdown编辑器-预览暗色主题与连续图片粘贴.md` | https://blog.csdn.net/fungleo/article/details/166107729 | 🟢 已发布 |
 | 成为全栈·React 管理后台篇·文章管理工作流：保存修改、投稿、发布与下架 | — | `articles/M2-11-文章管理工作流-保存修改投稿发布与下架.md` | https://blog.csdn.net/fungleo/article/details/166110378 | 🟢 已发布 |
-| 成为全栈·React 管理后台篇·按钮级权限：能力映射、菜单过滤与自锁保护 | — | `articles/M2-12-按钮级权限-能力映射菜单过滤与自锁保护.md` | — | 🟡 草稿中 |
-| 成为全栈·React 管理后台篇·评论审核工作流：把状态下拉改成可理解的动作 | — | `articles/M2-13-评论审核工作流-把状态下拉改成可理解的动作.md` | — | 🟡 草稿中 |
+| 成为全栈·React 管理后台篇·按钮级权限：能力映射、菜单过滤与自锁保护 | — | `articles/M2-12-按钮级权限-能力映射菜单过滤与自锁保护.md` | https://blog.csdn.net/fungleo/article/details/166233264 | 🟢 已发布 |
+| 成为全栈·React 管理后台篇·评论审核工作流：把状态下拉改成可理解的动作 | — | `articles/M2-13-评论审核工作流-把状态下拉改成可理解的动作.md` | https://blog.csdn.net/fungleo/article/details/166234769 | 🟢 已发布 |
 | 成为全栈·React 管理后台篇·分类树与标签管理：层级数据在后台怎么编辑 | — | `articles/M2-14-分类树与标签管理-层级数据在后台怎么编辑.md` | — | 🟡 草稿中 |
 | 成为全栈·React 管理后台篇·异步交互的一致性：上传、批量操作与部分失败 | — | `articles/M2-15-异步交互的一致性-上传批量操作与部分失败.md` | — | 🟡 草稿中 |
 | 成为全栈·React 管理后台篇·管理功能与账号中心：不同能力如何共享同一应用 | — | `articles/M2-16-管理功能与账号中心-不同能力如何共享同一应用.md` | — | 🟡 草稿中 |

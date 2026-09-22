@@ -189,7 +189,7 @@ TanStack Query 的价值不止是少发几次请求。query key 给远端事实�
 ## 延伸阅读
 
 - [服务端状态、会话状态、界面状态：不要都塞进 Zustand](https://blog.csdn.net/fungleo/article/details/165722061)
-- [评论审核工作流：把状态下拉改成可理解的动作]({{LINK:M2-13}})
+- [评论审核工作流：把状态下拉改成可理解的动作](https://blog.csdn.net/fungleo/article/details/166234769)
 - [站点配置页：如何组织低频但高风险的全局设置]({{LINK:M2-17}})
 
 ---
