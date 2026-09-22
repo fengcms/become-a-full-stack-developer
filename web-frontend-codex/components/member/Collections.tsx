@@ -1,8 +1,10 @@
 /** @file Collection views share one paginated controller. Line-limit exception: keeping the four contract adapters together avoids duplicate mutation/cache behavior. */
 'use client'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { ArticleCard } from '@/components/article/ArticleCard'
+import { ManuscriptActions } from '@/components/contribute/ManuscriptActions'
 import { Empty, Failure, Skeleton } from '@/components/ui/Feedback'
 import { unlikeArticle } from '@/lib/api/likes'
 import {
@@ -20,7 +22,7 @@ const labels = {
   favorites: ['我的收藏', '保存值得反复阅读的文章。'],
   history: ['阅读历史', '从上次停下的地方，继续阅读。'],
   likes: ['我的点赞', '那些你曾经赞同的思考与实践。'],
-  articles: ['我的文章', '查看文章的发布状态与阅读情况。'],
+  articles: ['我的文章', '记录思考与实践，保存草稿或提交审核。'],
 }
 interface PageData {
   items: { article: ArticleSummary; time?: string; progress?: number }[]
@@ -75,6 +77,9 @@ export const Collections = ({ kind }: { kind: CollectionKind }) => {
     queryFn: () => fetchCollection(kind, page, status),
     enabled: !!user,
   })
+  useEffect(() => {
+    if (query.data && !query.data.items.length && page > 1) setPage(page - 1)
+  }, [query.data, page])
   const mutation = useMutation({
     mutationFn: async (id: number) => {
       await (kind === 'favorites'
@@ -97,6 +102,11 @@ export const Collections = ({ kind }: { kind: CollectionKind }) => {
     <>
       <div className="intro">
         <h1>{title}</h1>
+        {kind === 'articles' && (
+          <Link className="pbutton" href="/member/articles/new">
+            写文章
+          </Link>
+        )}
         <p>{description}</p>
       </div>
       {kind === 'articles' && (
@@ -137,6 +147,8 @@ export const Collections = ({ kind }: { kind: CollectionKind }) => {
         />
       ) : !query.data.items.length ? (
         <Empty
+          href={kind === 'articles' ? '/member/articles/new' : '/articles'}
+          action={kind === 'articles' ? '写第一篇文章' : '浏览文章'}
           title={
             kind === 'favorites'
               ? '还没有收藏文章'
@@ -179,7 +191,9 @@ export const Collections = ({ kind }: { kind: CollectionKind }) => {
                           ? '取消点赞'
                           : '移除记录'}
                     </button>
-                  ) : undefined
+                  ) : (
+                    <ManuscriptActions article={item.article} />
+                  )
                 }
               />
             </div>

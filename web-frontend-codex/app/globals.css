@@ -1915,3 +1915,173 @@ button:disabled {
 .adbanner strong {
   color: var(--ink);
 }
+
+/* Member writing: spacious white workspace, same typography as public articles. */
+.member-writing {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+.member-writing .memberside[hidden] {
+  display: none;
+}
+.member-writing .membercontent {
+  min-width: 0;
+}
+.writing-page h1 {
+  font-size: 26px;
+  margin: 20px 0;
+}
+.writing-heading,
+.writing-tools,
+.writing-actions,
+.manuscript-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.writing-heading {
+  justify-content: space-between;
+  color: #60758b;
+}
+.writing-fields,
+.writing-settings fieldset,
+.writing-fields fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.writing-title {
+  display: block;
+  font-weight: 600;
+}
+.writing-title input {
+  width: 100%;
+  font-size: 22px;
+  padding: 16px;
+  margin: 10px 0 18px;
+  border: 1px solid #dce5ee;
+  border-radius: 8px;
+}
+.writing-tools {
+  padding: 12px 0;
+}
+.writing-tools details {
+  color: #60758b;
+  font-size: 13px;
+}
+.writing-tools label {
+  cursor: pointer;
+}
+.composer .w-md-editor {
+  --color-canvas-default: #fff;
+  --color-fg-default: #34465a;
+  --color-border-default: #dce5ee;
+  box-shadow: 0 0 0 1px #dce5ee;
+}
+.composer .w-md-editor-text-pre,
+.composer .w-md-editor-text-input {
+  font-size: 15px;
+  line-height: 1.8;
+}
+.writing-settings {
+  max-width: 760px;
+  padding: 22px 0;
+  display: grid;
+  gap: 22px;
+}
+.writing-settings > label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+.writing-settings textarea,
+.writing-settings select {
+  width: 100%;
+  border: 1px solid #dce5ee;
+  padding: 12px;
+  border-radius: 6px;
+  background: white;
+  font: inherit;
+  color: #34465a;
+}
+.writing-settings small {
+  color: #60758b;
+  font-weight: normal;
+}
+.writing-tags {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.writing-tags label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.writing-cover {
+  max-width: 100%;
+  width: 440px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 8px;
+  margin: 12px 0;
+}
+.writing-preview {
+  max-width: 840px;
+  margin: 20px auto;
+  overflow-wrap: anywhere;
+}
+.writing-preview h1 {
+  font-size: 30px;
+  margin: 22px 0;
+}
+.writing-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  border-top: 1px solid #dce5ee;
+  padding: 16px 0;
+  background: #fff;
+  margin-top: 20px;
+}
+.writing-actions > span {
+  flex: 1;
+  font-size: 12px;
+  color: #60758b;
+  min-width: 180px;
+}
+.manuscript-actions {
+  font-size: 13px;
+  gap: 10px;
+}
+@media (max-width: 700px) {
+  .writing-title input {
+    font-size: 18px;
+  }
+  .writing-actions {
+    padding: 12px 0;
+    gap: 8px;
+  }
+  .writing-actions > span {
+    flex-basis: 100%;
+  }
+  .composer .w-md-editor[data-preview="live"] .w-md-editor-input {
+    width: 100%;
+  }
+  .composer .w-md-editor[data-preview="live"] .w-md-editor-preview {
+    display: none;
+  }
+  .writing-tools button:nth-child(2) {
+    display: none;
+  }
+}
+
+.entry:has(.manuscript-actions) {
+  flex-wrap: wrap;
+}
+.entry:has(.manuscript-actions) .entryaction {
+  width: 100%;
+}

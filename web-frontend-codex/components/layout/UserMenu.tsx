@@ -65,6 +65,7 @@ export const UserMenu = () => {
       <summary>{user.nickname || user.username} ▾</summary>
       <div className="drop">
         <Link href="/member/favorites">会员中心</Link>
+        <Link href="/member/articles/new">我要投稿</Link>
         <Link href="/member/notifications">通知中心</Link>
         <Link href="/member/profile">个人资料</Link>
         <button type="button" className="textbutton" disabled={pending} onClick={exit}>

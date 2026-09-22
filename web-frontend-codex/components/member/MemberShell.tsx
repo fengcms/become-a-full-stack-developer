@@ -24,6 +24,7 @@ export const MemberShell = ({ children }: { children: React.ReactNode }) => {
       router.replace(`/login?redirect=${encodeURIComponent(pathname)}`)
   }, [user, bootStatus, pathname, router])
   if (bootStatus !== 'ready' || !user) return <Skeleton />
+  const writing = /^\/member\/articles\/(new|\d+\/(edit|preview))$/.test(pathname)
   return (
     <>
       <div className="breadcrumb">
@@ -31,8 +32,8 @@ export const MemberShell = ({ children }: { children: React.ReactNode }) => {
         <span>/</span>
         <span>会员中心</span>
       </div>
-      <div className="membergrid">
-        <aside className="memberside">
+      <div className={writing ? 'member-writing' : 'membergrid'}>
+        <aside className="memberside" hidden={writing}>
           <div className="memberidentity">
             <div className="avatar">{user.nickname?.slice(0, 1) || '读'}</div>
             <div>
@@ -49,6 +50,7 @@ export const MemberShell = ({ children }: { children: React.ReactNode }) => {
                 key={path}
                 className={
                   pathname === `/member/${path}` ||
+                  (path === 'articles' && pathname.startsWith('/member/articles/')) ||
                   (path === 'profile' && pathname === '/member/password')
                     ? 'selected'
                     : ''
