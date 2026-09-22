@@ -1,0 +1,44 @@
+{
+  "name": "web-frontend-codex",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1 --port 13001",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1 --port 13001",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "gen:api": "bash scripts/generate-api-types.sh",
+    "build:cf": "opennextjs-cloudflare build",
+    "dev:cf": "opennextjs-cloudflare build && wrangler dev",
+    "deploy:cf": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "test": "node --experimental-strip-types --experimental-loader ./tests/alias-loader.mjs --test tests/*.test.ts"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5",
+    "highlight.js": "^11.12.0",
+    "next": "16.3.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-markdown": "^10.1.0",
+    "rehype-highlight": "^7.0.2",
+    "rehype-slug": "^6.0.0",
+    "remark-gfm": "^4.0.1",
+    "zustand": "^5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "latest",
+    "@opennextjs/cloudflare": "latest",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "openapi-typescript": "latest",
+    "tailwindcss": "^4",
+    "typescript": "^7",
+    "wrangler": "latest"
+  },
+  "packageManager": "pnpm@11.18.0"
+}
