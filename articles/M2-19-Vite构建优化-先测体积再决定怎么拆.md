@@ -2,6 +2,8 @@
 
 > 构建出现大包告警时，先确认谁在首屏、谁按需加载、重量来自哪里。隐藏告警或机械拆包，都不等于性能优化。
 
+![成为全栈·React 管理后台篇·Vite 构建优化：先测体积，再决定怎么拆](https://i-blog.csdnimg.cn/direct/3e8b5f7aa336427ab52379b49a1c71be.png)
+
 ## 前言
 
 文章编辑页第一次构建出了 1.06MB chunk。最直接的反应是调高 `chunkSizeWarningLimit`，或者把所有依赖都塞进 vendor。这样终端不再报警，用户需要下载的代码却一字节没少。
@@ -32,7 +34,7 @@ manualChunks: (id) =>
 
 这叫隔离，不叫减重。真正减重来自下一步归因。
 
-{{IMG:M2-19-分包前后}}
+![分包前后](https://i-blog.csdnimg.cn/direct/14f232a97dc547a5af274ae2b52be066.png)
 
 ## visualizer 只在分析时启用
 
@@ -67,7 +69,7 @@ Vite 只精确 alias `refractor/all`。不能连裸 `refractor` 一起替换，�
 
 结果是 md-editor 从 1059.87kB 降到 563.94kB，gzip 从 363.46kB 降到 180.24kB，约减半。jsx/tsx 经过目视验证，避免优化后高亮静默失效。
 
-{{IMG:M2-19-Treemap归因}}
+![Treemap归因](https://i-blog.csdnimg.cn/direct/9570dd9b11af44f3b8bc89b00e63a65a.png)
 
 ## 仍超过 500kB，为什么保留告警
 

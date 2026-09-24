@@ -2085,3 +2085,98 @@ button:disabled {
 .entry:has(.manuscript-actions) .entryaction {
   width: 100%;
 }
+
+/* A top-level comment owns one floor; replies stay within it across loaded pages. */
+.comment-floor {
+  border-bottom: 1px solid var(--line);
+  padding: 8px 0 22px;
+}
+.comment-floor .comment {
+  border-bottom: 0;
+  margin: 0;
+}
+.comment-floor .grow {
+  min-width: 0;
+}
+.comment-byline {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.comment-byline time {
+  font-size: 12px;
+}
+.comment-replies {
+  margin: 0 0 0 52px;
+  padding: 4px 18px 12px;
+  border-left: 2px solid #dce8f2;
+  background: #f7faff;
+  border-radius: 0 8px 8px 0;
+}
+.comment-replies .avatar {
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  font-size: 13px;
+}
+.comment-replies .comment {
+  padding: 14px 0;
+  gap: 10px;
+}
+.comment-reply-count {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 10px 0 0;
+}
+.comment-nested {
+  margin-left: 20px;
+}
+.comment-context {
+  display: block;
+  margin: 10px 0;
+  padding: 8px 12px;
+  background: #edf3f9;
+  border-radius: 4px;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.comment-context span {
+  display: block;
+  color: var(--blue);
+  margin-bottom: 4px;
+}
+.comment-context q {
+  color: #60758b;
+}
+.comment-unavailable,
+.reply-excerpt {
+  font-size: 12px;
+  color: #60758b;
+}
+.reply-excerpt {
+  display: block;
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+.comment-expand {
+  margin: 8px 0;
+}
+.comment[id] {
+  scroll-margin-top: 100px;
+}
+.comment[id]:target {
+  outline: 2px solid #b9d6ee;
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+@media (max-width: 640px) {
+  .comment-replies {
+    margin-left: 12px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .comment-nested {
+    margin-left: 8px;
+  }
+}
