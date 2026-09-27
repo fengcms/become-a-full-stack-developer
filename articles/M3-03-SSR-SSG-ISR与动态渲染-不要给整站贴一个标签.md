@@ -2,7 +2,7 @@
 
 > 一个 Next.js 网站可以同时包含预渲染的公开内容、定时再验证的首页、按请求计算的搜索和完全私有的会员数据。渲染方式是页面的决策，不是项目的标签。
 
-{{IMG:M3-03-封面}}
+![成为全栈·Next.js 网站前台篇·SSR、SSG、ISR 与动态渲染：不要给整站贴一个标签](https://i-blog.csdnimg.cn/direct/c000c24fb78b49d4b3ab6f4493e6cb7e.png)
 
 ## 前言
 
@@ -46,7 +46,7 @@ const response = await fetch(url, {
 
 这不是说首页每 60 秒主动刷新一次。过期只是让后续访问触发再验证。对低流量站点，若过期后没有人访问，也不会凭空运行一次生成。
 
-{{IMG:M3-03-页面决策表}}
+![页面决策表](https://i-blog.csdnimg.cn/direct/e4e0d2fc0edf4c4bb825fd18729ba542.png)
 
 ## 文章详情：公开不代表永久静态
 
@@ -117,8 +117,8 @@ out.set('cache-control', 'private, no-store')
 
 ## 延伸阅读
 
-- [App Router 与 CSR 时代的思维差异]({{LINK:M3-01}})
-- [服务端组件与客户端组件]({{LINK:M3-02}})
+- [App Router 与 CSR 时代的思维差异](https://blog.csdn.net/FungLeo/article/details/166690841)
+- [服务端组件与客户端组件](https://blog.csdn.net/FungLeo/article/details/166737733)
 - [数据获取与缓存]({{LINK:M3-04}})
 
 ---
@@ -130,39 +130,3 @@ out.set('cache-control', 'private, no-store')
 📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
-<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
-
-## 发布辅助信息
-
-### 文章 Tag（6 个）
-
-`Next.js`、`SSR`、`SSG`、`ISR`、`App Router`、`前端渲染`
-
-### 文章简介（250 字以内）
-
-一个 Next.js 站点不必只选 SSR、SSG、ISR 或 CSR 中的一种。本文结合首页、文章详情、搜索、会员中心和 sitemap，从数据所有权、新鲜度和请求时机出发，解释为什么渲染方式应按页面与数据选择。
-
-### 建议发布分类
-
-前端开发 / Next.js / Web 性能
-
-### 封面短标题
-
-不要给整站贴渲染标签
-
-### 配图 AI 提示词
-
-1. `M3-03-封面`：16:9 技术博客封面，一个网站地图分成“首页 ISR”“文章 ISR”“搜索动态”“会员 CSR”“sitemap 300 秒”五个区域，各自有时钟图标，中文短标题“不要给整站贴渲染标签”，深蓝背景、青绿与橙色区分，无 Logo 和水印。
-2. `M3-03-页面决策表`：16:9 决策树信息图，从“数据是否私有”开始，经过“是否依赖请求”“可否短暂陈旧”“是否高交互”，通向 SSG、ISR、动态渲染和 CSR；中文标签清晰，结构优先。
-
-### 发布前核对
-
-- [ ] 替换 2 处配图占位符
-- [ ] M3-01、02、04 发布后回填站内链接
-- [ ] 保留“未开启 cacheComponents”的版本前提
-- [ ] 确认没有把客户端守卫写成安全边界
-- [ ] CSDN 预览中表格与代码块正常
-- [ ] 已删除本辅助区
-
-<!-- PUBLISH_ASSIST_END -->

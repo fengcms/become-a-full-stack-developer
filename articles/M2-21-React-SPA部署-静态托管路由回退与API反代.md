@@ -2,6 +2,8 @@
 
 > `dist/` 上传成功，只证明静态文件存在。深链刷新、API、附件、Cookie 和缓存全部跑通，SPA 才真正上线。
 
+![成为全栈·React 管理后台篇·React SPA 部署：静态托管、路由回退与 API 反代](https://i-blog.csdnimg.cn/direct/56eb122825ae40f8b88651253fdc552b.png)
+
 ## 前言
 
 本地开发一切正常，部署后首页也能打开，可刷新 `/articles/42/edit` 就返回 404；登录接口修好后，文章图片又全部裂开；最后发现刷新页面仍会掉登录。三个问题分别来自 SPA 回退、漏掉 `/files` 反代和 Secure Cookie。
@@ -35,7 +37,7 @@ location / {
 
 同时要排除真实 assets、API 和附件，不能把 `/api/v1/users` 的 404 也回退成 HTML。否则请求层会报告“响应格式异常”，排查非常绕。
 
-{{IMG:M2-21-部署请求链}}
+![部署请求链](https://i-blog.csdnimg.cn/direct/46ca9f3f926343e5a6ea6d177ee0b45d.png)
 
 ## `/api/v1` 与 `/files` 两条反代缺一不可
 
@@ -99,41 +101,3 @@ SPA 部署包含静态资源、路由回退、两条后端反代、HTTPS Cookie 
 📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
-<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
-
-## 发布辅助信息
-
-### 文章 Tag（6 个）
-
-`React`、`Vite`、`SPA部署`、`Nginx`、`Cloudflare Pages`、`反向代理`
-
-### 文章简介（250 字以内）
-
-Vite 的 dist 上传成功，不代表 React SPA 已经可靠上线。本文从深链刷新 404、附件裂图和页面刷新掉登录三个问题出发，讲清 index.html 路由回退、`/api/v1` 与 `/files` 双反代、生产 HTTPS Cookie 验证，以及入口文件与哈希资源的差异化缓存，并给出 Cloudflare Pages 与 Nginx 的共同部署模型。
-
-### 建议发布分类
-
-前端开发 / React / 部署运维
-
-### 封面短标题
-
-SPA 上线不只是上传 dist
-
-### 配图 AI 提示词
-
-#### 1. `M2-21-封面`
-- 用途：封面；比例：16:9。
-- 提示词：技术博客横版封面，React SPA 从 dist 经过静态托管、路由回退、API 反代、files 反代和 HTTPS Cookie 五个节点上线，标题“SPA 上线不只是上传 dist”，深蓝背景，中文清晰。
-
-#### 2. `M2-21-部署请求链`
-- 插入位置：“深链必须回退”之后；比例：16:9。
-- 提示词：部署请求路由图，assets 到静态文件，页面深链到 index.html，api/v1 到后端 API，files 到附件服务，Set-Cookie 经 HTTPS 返回浏览器。深色信息图，中文准确。
-
-### 发布前核对
-- [ ] 6 个 Tag，简介不超过 250 字
-- [ ] 两张配图已替换，M2 内链已回填
-- [ ] 在真实生产域名验证 Cookie 与深链
-- [ ] 宣传图片存在，辅助区已删除
-
-<!-- PUBLISH_ASSIST_END -->

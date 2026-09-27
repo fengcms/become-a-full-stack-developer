@@ -2,7 +2,7 @@
 
 > 从 React SPA 走到 Next.js App Router，最难的不是记住 `page.tsx`、`layout.tsx` 和 `loading.tsx`，而是接受一件事：前端代码开始参与服务端请求生命周期了。
 
-{{IMG:M3-01-封面}}
+![成为全栈·Next.js 网站前台篇·App Router 与 CSR 时代的思维差异](https://i-blog.csdnimg.cn/direct/78bbd3517a764efeb2d470f424f788a9.png)
 
 ## 前言
 
@@ -43,7 +43,7 @@ app/
 | 页面报错如何跳转 | 错误应该由哪一层路由边界承接 |
 | 首屏何时发请求 | 数据在构建、服务端请求还是浏览器阶段获取 |
 
-{{IMG:M3-01-请求结构}}
+![请求结构](https://i-blog.csdnimg.cn/direct/7412c06c80354427ade4e4064e78dd4f.png)
 
 ## 服务端优先，不等于所有逻辑都塞进服务端
 
@@ -140,38 +140,3 @@ App Router 改变的不只是路由写法。它让页面直接参与数据获取
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
 
-<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
-
-## 发布辅助信息
-
-### 文章 Tag（6 个）
-
-`Next.js`、`App Router`、`React`、`Server Components`、`CSR`、`全栈开发`
-
-### 文章简介（250 字以内）
-
-从 React SPA 转向 Next.js App Router，需要改变的不只是路由写法。本文结合真实内容站，分析目录路由、布局、Server Component、同源 BFF 和服务端数据获取如何改变前端的责任边界，也说清何时 SPA 仍是更合适的选择。
-
-### 建议发布分类
-
-前端开发 / Next.js / 全栈开发
-
-### 封面短标题
-
-从页面思维到请求思维
-
-### 配图 AI 提示词
-
-1. `M3-01-封面`：16:9 技术博客封面，画面左侧是“CSR”浏览器单体，右侧是由“Layout、Page、Server Data、Client Island”组成的 App Router 树，中间用请求箭头连接；深蓝背景、青绿高亮、结构优先；只显示中文短标题“从页面思维到请求思维”，不要 Logo、人物和水印。
-2. `M3-01-请求结构`：16:9 分层信息图，从上到下为“URL 路由段 → Layout → Page → Server Fetch → 后端 API”，右侧分出“Client Island → 同源 BFF”，用不同颜色区分服务端与浏览器，中文清晰，避免装饰性图标。
-
-### 发布前核对
-
-- [ ] 替换 2 处配图占位符
-- [ ] M3-02 发布后回填站内链接
-- [ ] 保留 Next.js 16.3.5 当前项目语境
-- [ ] 确认 Tag 为 6 个、简介不超过 250 字
-- [ ] CSDN 预览中目录树与表格排版正常
-- [ ] 已删除本辅助区
-
-<!-- PUBLISH_ASSIST_END -->

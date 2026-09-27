@@ -47,10 +47,13 @@ M0 开篇 / M1 Node / M2 React / M3 Next / M4 Flutter / M5 Taro / M6 Go / M7 Vue
 - **M1 Node 后端：已冻结**（tag `node-backend-v1.0`，2026-08-27）。冻结证据：tsc 0 / biome 0 / vitest 133 passed / 契约双门 33 OK / yaml 字节未改。交付 `docs/node-backend/M1-后端交付文档.md`。后续 BUG 走增量维护（fix→门禁复绿→commit→必要时 bump patch tag），不热改主干。
   - **已部署 Cloudflare 全链路 GREEN**（2026-08-29）：Worker 启动 / D1 查询 / CORS / admin 登录（bcryptjs rounds=12 同源）/ R2 读写全部线上实测通过；自定义域名 `api-befull.kao9.com`。部署指南 `docs/node-backend/部署到Cloudflare指南.md`，验收报告 `docs/node-backend/M1-后端部署到Cloudflare-验收报告.md`。
   - 部署 FAQ 四坑：① R2 binding 名须对齐 `env.ts` 的 `R2_BUCKET`；② D1 改密码须 bcryptjs(12) 同源且含 `$` 用 heredoc；③ curl `-F file=@` 的 `~` 不展开；④ **`GET /files/<key>` 挂在根路径不带 `/api/v1`**（策略 A 中转）。
+  - **本地运行与种子（2026-09-25 新增）**：`bash scripts/dev-local.sh` 起本地服（默认 :11000，DB `./data/app.db`，admin/admin123456）；`scripts/seed-articles.ts` 可把 `articles/` 下 M0–M3 的 md 解析后以 published 状态写入（自带管理员 + 按模块分类 m0–m3，**幂等**，复用 `createArticleRow`/`updateArticleRow`）。`readEnv` 强制要求 `JWT_SECRET`，独立跑脚本须显式传入（如 `JWT_SECRET=x DB_FILE=./data/app.db pnpm tsx scripts/seed-articles.ts`）。
 - **下一步**：M1 冻结后写「M1 后端文章」（M1-01~M1-31，31 篇）；M2 前端按「契约→主计划→批次任务包」推进。
 - **发布进度（2026-09-24）**：M0 全 8 篇、**M1 全 31 篇（2026-09-16 收官）**、**M2-01~17 已发布**（M2-14=`166353905`、M2-15=`166354291` 于 09-22；M2-16=`166471141`、M2-17=`166471607` 于 09-23；M2-18/19 待发）。`{{LINK:}}` 占位在**已发布范围内零残留**。
 - **待最终全量更新清单**（本地源已改、等系列发完统一重发）：`M1-02`、`M1-06`、`M1-07`、`M1-09`、`M1-14`、`M1-17`、`M1-18`、`M1-19`、`M1-20`、`M1-21`、`M1-22`、`M1-23`、`M1-24`、`M1-25`、`M1-26`、`M1-27`、`M1-28`、`M1-29`、`M1-30`、`M1-31`、`M2-02`、`M2-03`、`M2-05`、`M2-06`、`M2-09`、`M2-10`、`M2-11`、`M2-13`、`M0-03`（含 09-19 坏链 9 处、09-22 错链 2 处、09-23 M2-10/M2-13 回填 `{{LINK:M2-15}}`）。⚠️ 此清单**不完整**，见「发布维护 SOP」小节末条。
 - **SOP-C 审计基线（2026-09-24）**：正文唯一 ID 54 / 索引 453，幽灵链 0、错链 0（严格口径）。存疑未改：`M2-07` 文案多写「与权限模型」但目标（M1-12 认证方案）正确。
+- **M3 Next 前台已启动（2026-09-24+）**：存在**双前台目录歧义**——`web-frontend/`(pkg `web-frontend-codex`，Codex 初版) 与 `web-frontend-trae/`(pkg `web-frontend`，Trae 重做版·**当前主力**) 并存；根 `README.md` 仍写 M3 在 `web-frontend/`，待 owner 定 canonical 并清理。M3 文章 4 篇（1 已发），路线图已「调整规模」（末提交 `0ce72a0`）。
+- **七端缩水观察**：`go-backend/` 与 `app-frontend/`(Flutter) 仍 **0 文件**；实际仅交付 Node 后端 + `manage-frontend`(React) + `web-frontend`(Next) 三端。Go/Flutter/Taro(M5) 是否仍属范围待 owner 确认。
 
 ## M2 前端（React 管理后台）
 - 目录 `manage-frontend/`（已建）。栈：Vite8 + React19 + TS6 + Tailwind4 + shadcn/ui + TanStack Query5 + Zustand5（仅鉴权）+ RHF7+Zod4 + Biome2.5；已开 `strict`。dev 端口 12000。
