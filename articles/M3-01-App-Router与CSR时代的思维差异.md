@@ -103,6 +103,102 @@ App Router 可以写 Route Handler 和 Server Action，但这个项目已经有�
 
 ## 验证不能只看“页面出来了”
 
+### 把同一个需求分别写一遍，差异会更直观
+
+如果沿用 CSR 思维，文章列表通常要在组件挂载后再取数据：
+
+```tsx
+'use client'
+
+export function ArticleList() {
+  const [articles, setArticles] = useState<Article[]>([])
+
+  useEffect(() => {
+    fetch('/api/v1/articles?page=1&pageSize=10')
+      .then((response) => response.json())
+      .then((result) => setArticles(result.data.list))
+  }, [])
+
+  return articles.map((article) => <ArticleCard key={article.id} article={article} />)
+}
+```
+
+代码没有错，但 HTML 首次生成时没有文章。加载态、请求失败、SEO 与分享元数据，都要等浏览器接手以后再处理。App Router 中，公开首屏可以先在服务端完成：
+
+```tsx
+export default async function ArticlesPage() {
+  const page = await listArticles({ page: 1, pageSize: 10 })
+
+  return (
+    <section>
+      <h1>最新文章</h1>
+      {page.list.map((article) => (
+        <ArticleCard key={article.id} article={article} />
+      ))}
+    </section>
+  )
+}
+```
+
+这不是语法替换，而是请求顺序发生了变化：文章数据参与服务端渲染，浏览器收到的首屏已经有标题、链接和摘要。
+
+### 元数据也属于路由的数据依赖
+
+文章标题既出现在正文里，也出现在浏览器标题、搜索结果和分享卡片里。当前详情页用同一个加载函数生成页面与元数据：
+
+```tsx
+const load = cache((slug: string) => getArticle(slug))
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const article = await load((await params).slug)
+
+  return {
+    title: article.seoTitle || article.title,
+    description: article.seoDescription || article.summary,
+  }
+}
+```
+
+`cache()` 在一次服务端渲染过程中复用结果，避免元数据和页面正文各请求一次同一篇文章。这正是 App Router 的思维：元数据不是页面之外的一张静态表，它与路由使用同一份内容事实。
+
+### 四类特殊文件各管一种状态
+
+```tsx
+// app/error.tsx
+'use client'
+
+export default function ErrorPage({ error }: { error: Error }) {
+  return (
+    <section role="alert">
+      <h1>页面暂时无法加载</h1>
+      <p>{error.message}</p>
+      <button onClick={() => location.reload()}>重新加载</button>
+    </section>
+  )
+}
+```
+
+| 文件 | 触发条件 | 应承担的职责 |
+| --- | --- | --- |
+| `layout.tsx` | 进入当前路由段及其子路由 | 共享外壳、导航与 Provider |
+| `loading.tsx` | 路由内容仍在流式加载 | 提供与最终结构接近的骨架 |
+| `error.tsx` | 当前路由段抛出运行错误 | 告知失败并提供恢复动作 |
+| `not-found.tsx` | 明确调用 `notFound()` | 表达资源不存在，而不是系统故障 |
+
+不要把请求超时也转成 404。找不到文章与后端暂时不可用是两类事实，混写会误导读者，也会让监控失去信号。
+
+{{IMG:M3-01-CSR与AppRouter对照}}
+
+### 一套可以复现的验证顺序
+
+```bash
+pnpm typecheck
+pnpm build
+pnpm start
+```
+
+生产服务启动后，应至少检查：首页 HTML 中能找到文章标题；详情页 `<title>` 与正文一致；不存在的 slug 返回 404；人为让内容接口失败时进入错误页而不是 404；关闭 JavaScript 后，公开文章仍可阅读。只有这几项一起通过，才能说明路由、数据与错误语义确实连起来了。
+
 当前项目的验证证明了不同层次的事：
 
 - `next build` 证明路由树、服务端代码和客户端代码能生成生产产物。
@@ -164,10 +260,11 @@ App Router 改变的不只是路由写法。它让页面直接参与数据获取
 
 1. `M3-01-封面`：16:9 技术博客封面，画面左侧是“CSR”浏览器单体，右侧是由“Layout、Page、Server Data、Client Island”组成的 App Router 树，中间用请求箭头连接；深蓝背景、青绿高亮、结构优先；只显示中文短标题“从页面思维到请求思维”，不要 Logo、人物和水印。
 2. `M3-01-请求结构`：16:9 分层信息图，从上到下为“URL 路由段 → Layout → Page → Server Fetch → 后端 API”，右侧分出“Client Island → 同源 BFF”，用不同颜色区分服务端与浏览器，中文清晰，避免装饰性图标。
+3. `M3-01-CSR与AppRouter对照`：16:9 双栏时序图，左侧 CSR 显示“空 HTML→下载 JS→请求 API→出现内容”，右侧 App Router 显示“服务端取数→生成 HTML 与 RSC→首屏内容→客户端增强”，突出首屏请求轮次差异，中文清晰。
 
 ### 发布前核对
 
-- [ ] 替换 2 处配图占位符
+- [ ] 替换 3 处配图占位符
 - [ ] M3-02 发布后回填站内链接
 - [ ] 保留 Next.js 16.3.5 当前项目语境
 - [ ] 确认 Tag 为 6 个、简介不超过 250 字

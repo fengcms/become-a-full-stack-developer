@@ -85,6 +85,93 @@ out.set('cache-control', 'private, no-store')
 
 ## 构建输出是证据，但不是唯一证据
 
+### 把策略写在真正使用数据的地方
+
+首页能够接受一分钟旧值，代码就在路由和公开请求层明确表达：
+
+```tsx
+// app/page.tsx
+export const revalidate = 60
+
+export default async function HomePage() {
+  const [latest, categories] = await Promise.all([
+    listArticles({ page: 1, pageSize: 10, sort: '-publishedAt' }),
+    getCategoryTree(),
+  ])
+
+  return <Home initial={latest} categories={categories} />
+}
+```
+
+搜索则依赖当前关键词，调用方显式覆盖默认缓存：
+
+```ts
+export function searchArticles(keyword: string, page = 1) {
+  return serverFetch<ArticlePage>('/articles/search', {
+    cache: 'no-store',
+    query: { keyword, page, pageSize: 20 },
+  })
+}
+```
+
+站点地图可以更慢更新，它有自己的再验证周期：
+
+```ts
+// app/sitemap.ts
+export const revalidate = 300
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const articles = await listSitemapArticles()
+  return articles.map((item) => ({ url: articleUrl(item.slug), lastModified: item.updatedAt }))
+}
+```
+
+这三段代码放在一起，比一句“本项目使用 ISR”准确得多。
+
+### 私有路由要同时控制上游与下游
+
+```ts
+const upstream = await fetch(target, {
+  method: request.method,
+  headers,
+  body,
+  cache: 'no-store',
+})
+
+const responseHeaders = new Headers(upstream.headers)
+responseHeaders.set('cache-control', 'private, no-store')
+
+return new Response(upstream.body, {
+  status: upstream.status,
+  headers: responseHeaders,
+})
+```
+
+`cache: 'no-store'` 约束 Next.js 到上游的请求，响应头约束浏览器和中间缓存。只写其中一处，私有数据链路都没有闭合。
+
+### 路由决策矩阵
+
+| 路由 | 内容所有权 | 可接受旧值 | 当前策略 | 验证重点 |
+| --- | --- | --- | --- | --- |
+| `/` | 公开 | 60 秒 | ISR | 过期后能否更新 |
+| `/articles/[slug]` | 公开正文 + 私有互动 | 正文可旧、互动不可串用户 | 服务端缓存 + 客户端请求 | 两种新鲜度是否隔离 |
+| `/search` | 公开但依赖关键词 | 尽量实时 | 动态、`no-store` | 不同 query 是否混用 |
+| `/member/*` | 当前会员 | 不可公共复用 | CSR + 私有代理 | 两个账号是否隔离 |
+| `/sitemap.xml` | 公开 | 300 秒 | 较长周期再验证 | 新文章最终是否出现 |
+
+{{IMG:M3-03-路由策略矩阵}}
+
+### 用生产模式做一个最小实验
+
+```bash
+pnpm build
+pnpm start
+curl -s http://localhost:3000/ > /tmp/home-a.html
+curl -s 'http://localhost:3000/search?keyword=Next.js' > /tmp/search.html
+```
+
+然后修改一篇可辨认的测试文章，在 60 秒内和过期后分别保存首页响应。搜索页应按新请求计算，首页则按再验证时序过渡。验证会员接口时要使用两个测试账号，并检查响应中的 `Cache-Control`；只用同一个账号刷新，无法证明用户之间没有缓存串读。
+
 `next build` 会检查路由能否生成生产产物，并帮助我们发现不兼容的请求时 API、服务端 import 或静态分析问题。但只看构建日志中某个路由的图标，仍不足以说明它在部署平台上的全部行为。
 
 我们至少还要观察三件事：首次访问时是否向上游发出请求，在 TTL 内重复访问是否复用内容，后台数据改变且超过 TTL 后何时出现新版本。对私有页面，还要确认不同账号不会复用同一份响应。
@@ -155,10 +242,11 @@ out.set('cache-control', 'private, no-store')
 
 1. `M3-03-封面`：16:9 技术博客封面，一个网站地图分成“首页 ISR”“文章 ISR”“搜索动态”“会员 CSR”“sitemap 300 秒”五个区域，各自有时钟图标，中文短标题“不要给整站贴渲染标签”，深蓝背景、青绿与橙色区分，无 Logo 和水印。
 2. `M3-03-页面决策表`：16:9 决策树信息图，从“数据是否私有”开始，经过“是否依赖请求”“可否短暂陈旧”“是否高交互”，通向 SSG、ISR、动态渲染和 CSR；中文标签清晰，结构优先。
+3. `M3-03-路由策略矩阵`：16:9 表格式信息图，纵向为首页、文章详情、搜索、会员中心、sitemap，横向为所有权、旧值窗口、策略、验证重点，用颜色标出公开缓存与私有 no-store。
 
 ### 发布前核对
 
-- [ ] 替换 2 处配图占位符
+- [ ] 替换 3 处配图占位符
 - [ ] M3-01、02、04 发布后回填站内链接
 - [ ] 保留“未开启 cacheComponents”的版本前提
 - [ ] 确认没有把客户端守卫写成安全边界
