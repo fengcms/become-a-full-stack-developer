@@ -87,7 +87,7 @@ Vite 只精确 alias `refractor/all`。不能连裸 `refractor` 一起替换，�
 
 - [Vite + React + TypeScript：搭起一个有门禁的后台工程](https://blog.csdn.net/fungleo/article/details/165447601)
 - [Markdown 编辑器](https://blog.csdn.net/fungleo/article/details/166107729)
-- [前端质量门禁]({{LINK:M2-20}})
+- [前端质量门禁](https://blog.csdn.net/fungleo/article/details/166643861)
 
 ---
 

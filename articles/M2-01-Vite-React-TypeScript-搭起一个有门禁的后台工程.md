@@ -179,7 +179,7 @@ export default defineConfig({
 
 - [Node 后端工程从零搭建](https://blog.csdn.net/fungleo/article/details/164186950)
 - [后台骨架：布局、数据路由与分层守卫](https://blog.csdn.net/fungleo/article/details/165589276)
-- [前端质量门禁：契约守卫、纯函数测试与浏览器验收]({{LINK:M2-20}})
+- [前端质量门禁：契约守卫、纯函数测试与浏览器验收](https://blog.csdn.net/fungleo/article/details/166643861)
 
 ---
 

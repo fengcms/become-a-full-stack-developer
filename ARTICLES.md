@@ -75,11 +75,11 @@
 | 成为全栈·React 管理后台篇·异步交互的一致性：上传、批量操作与部分失败 | — | `articles/M2-15-异步交互的一致性-上传批量操作与部分失败.md` | https://blog.csdn.net/fungleo/article/details/166354291 | 🟢 已发布 |
 | 成为全栈·React 管理后台篇·管理功能与账号中心：不同能力如何共享同一应用 | — | `articles/M2-16-管理功能与账号中心-不同能力如何共享同一应用.md` | https://blog.csdn.net/fungleo/article/details/166471141 | 🟢 已发布 |
 | 成为全栈·React 管理后台篇·站点配置页：如何组织低频但高风险的全局设置 | — | `articles/M2-17-站点配置页-如何组织低频但高风险的全局设置.md` | https://blog.csdn.net/fungleo/article/details/166471607 | 🟢 已发布 |
-| 成为全栈·React 管理后台篇·统计看板：从数字堆砌到可执行的工作入口 | — | `articles/M2-18-统计看板-从数字堆砌到可执行的工作入口.md` | — | 🟡 草稿中 |
-| 成为全栈·React 管理后台篇·Vite 构建优化：先测体积，再决定怎么拆 | — | `articles/M2-19-Vite构建优化-先测体积再决定怎么拆.md` | — | 🟡 草稿中 |
-| 成为全栈·React 管理后台篇·前端质量门禁：契约守卫、纯函数测试与浏览器验收 | — | `articles/M2-20-前端质量门禁-契约守卫纯函数测试与浏览器验收.md` | — | 🟡 草稿中 |
-| 成为全栈·React 管理后台篇·React SPA 部署：静态托管、路由回退与 API 反代 | — | `articles/M2-21-React-SPA部署-静态托管路由回退与API反代.md` | — | 🟡 草稿中 |
-| 成为全栈·React 管理后台篇·总复盘：从“接口能调通”到“后台值得使用” | — | `articles/M2-22-总复盘-从接口能调通到后台值得使用.md` | — | 🟡 草稿中 |
+| 成为全栈·React 管理后台篇·统计看板：从数字堆砌到可执行的工作入口 | — | `articles/M2-18-统计看板-从数字堆砌到可执行的工作入口.md` | https://blog.csdn.net/fungleo/article/details/166582519 | 🟢 已发布 |
+| 成为全栈·React 管理后台篇·Vite 构建优化：先测体积，再决定怎么拆 | — | `articles/M2-19-Vite构建优化-先测体积再决定怎么拆.md` | https://blog.csdn.net/fungleo/article/details/166582771 | 🟢 已发布 |
+| 成为全栈·React 管理后台篇·前端质量门禁：契约守卫、纯函数测试与浏览器验收 | — | `articles/M2-20-前端质量门禁-契约守卫纯函数测试与浏览器验收.md` | https://blog.csdn.net/fungleo/article/details/166643861 | 🟢 已发布 |
+| 成为全栈·React 管理后台篇·React SPA 部署：静态托管、路由回退与 API 反代 | — | `articles/M2-21-React-SPA部署-静态托管路由回退与API反代.md` | https://blog.csdn.net/fungleo/article/details/166643883 | 🟢 已发布 |
+| 成为全栈·React 管理后台篇·总复盘：从“接口能调通”到“后台值得使用” | — | `articles/M2-22-总复盘-从接口能调通到后台值得使用.md` | https://blog.csdn.net/fungleo/article/details/166690803 | 🟢 已发布 |
 
 ---
 
@@ -87,9 +87,9 @@
 
 | 文章标题 | tag | 代码 / 草稿位置 | CSDN 链接 | 状态 |
 |---|---|---|---|---|
-| 成为全栈·Next.js 网站前台篇·App Router 与 CSR 时代的思维差异 | — | `articles/M3-01-App-Router与CSR时代的思维差异.md` | — | 🟡 草稿中 |
-| 成为全栈·Next.js 网站前台篇·服务端组件与客户端组件：边界画错，整棵树都会变重 | — | `articles/M3-02-服务端组件与客户端组件-边界画错整棵树都会变重.md` | — | 🟡 草稿中 |
-| 成为全栈·Next.js 网站前台篇·SSR、SSG、ISR 与动态渲染：不要给整站贴一个标签 | — | `articles/M3-03-SSR-SSG-ISR与动态渲染-不要给整站贴一个标签.md` | — | 🟡 草稿中 |
+| 成为全栈·Next.js 网站前台篇·App Router 与 CSR 时代的思维差异 | — | `articles/M3-01-App-Router与CSR时代的思维差异.md` | https://blog.csdn.net/fungleo/article/details/166690841 | 🟢 已发布 |
+| 成为全栈·Next.js 网站前台篇·服务端组件与客户端组件：边界画错，整棵树都会变重 | — | `articles/M3-02-服务端组件与客户端组件-边界画错整棵树都会变重.md` | https://blog.csdn.net/fungleo/article/details/166737733 | 🟢 已发布 |
+| 成为全栈·Next.js 网站前台篇·SSR、SSG、ISR 与动态渲染：不要给整站贴一个标签 | — | `articles/M3-03-SSR-SSG-ISR与动态渲染-不要给整站贴一个标签.md` | https://blog.csdn.net/fungleo/article/details/166737776 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·数据获取与缓存：60 秒再验证背后到底发生了什么 | — | `articles/M3-04-数据获取与缓存-60秒再验证背后到底发生了什么.md` | — | 🟡 草稿中 |
 | 成为全栈·Next.js 网站前台篇·内容门户首页：焦点、最新、文章流与侧栏如何组织 | — | `articles/M3-05-内容门户首页-焦点最新文章流与侧栏如何组织.md` | — | 🟡 草稿中 |
 | 成为全栈·Next.js 网站前台篇·多级分类、标签与 URL：让内容导航既可读又可索引 | — | `articles/M3-06-多级分类标签与URL-让内容导航既可读又可索引.md` | — | 🟡 草稿中 |

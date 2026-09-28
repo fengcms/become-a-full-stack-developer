@@ -224,7 +224,7 @@ App Router 改变的不只是路由写法。它让页面直接参与数据获取
 
 - [React 后台骨架：布局、数据路由与分层守卫](https://blog.csdn.net/fungleo/article/details/165589276)
 - [契约先行：设计一套被七个端复用的 API](https://blog.csdn.net/fungleo/article/details/164140515)
-- [服务端组件与客户端组件]({{LINK:M3-02}})
+- [服务端组件与客户端组件](https://blog.csdn.net/fungleo/article/details/166737733)
 
 ---
 

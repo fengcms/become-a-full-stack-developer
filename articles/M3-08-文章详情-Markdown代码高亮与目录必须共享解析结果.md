@@ -197,7 +197,7 @@ useEffect(() => {
 
 ## 延伸阅读
 
-- [服务端组件与客户端组件]({{LINK:M3-02}})
+- [服务端组件与客户端组件](https://blog.csdn.net/fungleo/article/details/166737733)
 - [Markdown 编辑器：预览、暗色主题与连续图片粘贴](https://blog.csdn.net/fungleo/article/details/166107729)
 - [文章阅读辅助]({{LINK:M3-09}})
 
