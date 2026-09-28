@@ -159,7 +159,6 @@ return new Response(upstream.body, {
 | `/member/*` | 当前会员 | 不可公共复用 | CSR + 私有代理 | 两个账号是否隔离 |
 | `/sitemap.xml` | 公开 | 300 秒 | 较长周期再验证 | 新文章最终是否出现 |
 
-{{IMG:M3-03-路由策略矩阵}}
 
 ### 用生产模式做一个最小实验
 
@@ -206,7 +205,7 @@ curl -s 'http://localhost:3000/search?keyword=Next.js' > /tmp/search.html
 
 - [App Router 与 CSR 时代的思维差异](https://blog.csdn.net/FungLeo/article/details/166690841)
 - [服务端组件与客户端组件](https://blog.csdn.net/FungLeo/article/details/166737733)
-- [数据获取与缓存]({{LINK:M3-04}})
+- [数据获取与缓存](https://blog.csdn.net/FungLeo/article/details/166784128)
 
 ---
 
