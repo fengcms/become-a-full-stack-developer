@@ -172,7 +172,7 @@ onINP(sendMetric)
 
 ## 延伸阅读
 
-- [服务端组件与客户端组件]({{LINK:M3-02}})
+- [服务端组件与客户端组件](https://blog.csdn.net/fungleo/article/details/166737733)
 - [响应式、可访问性与错误状态]({{LINK:M3-20}})
 - [质量门禁]({{LINK:M3-22}})
 

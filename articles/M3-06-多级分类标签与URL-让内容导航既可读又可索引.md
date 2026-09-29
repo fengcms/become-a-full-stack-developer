@@ -2,7 +2,7 @@
 
 > 分类 id 用来建立数据关系，slug 用来稳定地址，name 用来给人阅读。这三者看起来都能代表一个分类，却不能在路由和接口里混着用。
 
-{{IMG:M3-06-封面}}
+![成为全栈·Next.js 网站前台篇·多级分类、标签与 URL：让内容导航既可读又可索引](https://i-blog.csdnimg.cn/direct/9e75ff3ccf4f48bb935ca94746017d2b.png)
 
 ## 前言
 
@@ -54,7 +54,7 @@ const CategoryItem = ({ node, depth = 0 }) =>
 
 顶部只直接放前三个根分类，其余收进“更多栏目”。点击分类后菜单收起，按 Escape 关闭并将焦点返回 summary，点击导航外部也会关闭。原生 disclosure 让键盘基础行为有可靠起点，但四级嵌套在手机端仍然需要真实触摸验收，不能只在桌面改窄浏览器就算通过。
 
-{{IMG:M3-06-标识与路由}}
+![标识与路由](https://i-blog.csdnimg.cn/direct/404fcb546ba14041908a79e46b5a65a4.png)
 
 ## 父分类页应该看到子树文章
 
@@ -162,7 +162,7 @@ return <Link href={pageHref(current + 1)}>下一页</Link>
 | 非法页码 | `page=-2` 或 `page=abc` | 收敛到第 1 页 |
 | 非法排序 | `sort=drop-table` | 回退发布时间排序 |
 
-{{IMG:M3-06-URL验收矩阵}}
+![URL验收矩阵](https://i-blog.csdnimg.cn/direct/f737bbce97d741c28d5ef50289f5cb29.png)
 
 ## 适用边界
 
@@ -179,7 +179,7 @@ return <Link href={pageHref(current + 1)}>下一页</Link>
 ## 延伸阅读
 
 - [分类树与标签管理：层级数据在后台怎么编辑](https://blog.csdn.net/fungleo/article/details/166353905)
-- [内容门户首页]({{LINK:M3-05}})
+- [内容门户首页](https://blog.csdn.net/fungleo/article/details/166784376)
 - [文章列表：服务端首屏与客户端持续加载]({{LINK:M3-07}})
 
 ---

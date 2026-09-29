@@ -215,7 +215,7 @@ Next.js 提供了 metadata、sitemap 和 robots 的文件约定，却不会自�
 ## 延伸阅读
 
 - [文章阅读辅助]({{LINK:M3-09}})
-- [数据获取与缓存]({{LINK:M3-04}})
+- [数据获取与缓存](https://blog.csdn.net/fungleo/article/details/166784128)
 - [站点设置如何驱动页头、页脚与 SEO]({{LINK:M3-19}})
 
 ---

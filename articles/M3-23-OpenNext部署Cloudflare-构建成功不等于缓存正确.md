@@ -159,7 +159,7 @@ Cloudflare 部署不是构建命令的最后一行，而是一条从 Next 产物
 
 ## 延伸阅读
 
-- [数据获取与缓存]({{LINK:M3-04}})
+- [数据获取与缓存](https://blog.csdn.net/fungleo/article/details/166784128)
 - [质量门禁]({{LINK:M3-22}})
 - [总复盘]({{LINK:M3-24}})
 
