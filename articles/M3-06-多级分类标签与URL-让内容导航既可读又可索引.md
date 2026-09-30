@@ -180,7 +180,7 @@ return <Link href={pageHref(current + 1)}>下一页</Link>
 
 - [分类树与标签管理：层级数据在后台怎么编辑](https://blog.csdn.net/fungleo/article/details/166353905)
 - [内容门户首页](https://blog.csdn.net/fungleo/article/details/166784376)
-- [文章列表：服务端首屏与客户端持续加载]({{LINK:M3-07}})
+- [文章列表：服务端首屏与客户端持续加载](https://blog.csdn.net/fungleo/article/details/166836287)
 
 ---
 

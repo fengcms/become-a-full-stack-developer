@@ -92,8 +92,8 @@
 | 成为全栈·Next.js 网站前台篇·SSR、SSG、ISR 与动态渲染：不要给整站贴一个标签 | — | `articles/M3-03-SSR-SSG-ISR与动态渲染-不要给整站贴一个标签.md` | https://blog.csdn.net/fungleo/article/details/166737776 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·数据获取与缓存：60 秒再验证背后到底发生了什么 | — | `articles/M3-04-数据获取与缓存-60秒再验证背后到底发生了什么.md` | https://blog.csdn.net/fungleo/article/details/166784128 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·内容门户首页：焦点、最新、文章流与侧栏如何组织 | — | `articles/M3-05-内容门户首页-焦点最新文章流与侧栏如何组织.md` | https://blog.csdn.net/fungleo/article/details/166784376 | 🟢 已发布 |
-| 成为全栈·Next.js 网站前台篇·多级分类、标签与 URL：让内容导航既可读又可索引 | — | `articles/M3-06-多级分类标签与URL-让内容导航既可读又可索引.md` | — | 🟡 草稿中 |
-| 成为全栈·Next.js 网站前台篇·文章列表：服务端首屏与客户端持续加载怎样协作 | — | `articles/M3-07-文章列表-服务端首屏与客户端持续加载怎样协作.md` | — | 🟡 草稿中 |
+| 成为全栈·Next.js 网站前台篇·多级分类、标签与 URL：让内容导航既可读又可索引 | — | `articles/M3-06-多级分类标签与URL-让内容导航既可读又可索引.md` | https://blog.csdn.net/fungleo/article/details/166835906 | 🟢 已发布 |
+| 成为全栈·Next.js 网站前台篇·文章列表：服务端首屏与客户端持续加载怎样协作 | — | `articles/M3-07-文章列表-服务端首屏与客户端持续加载怎样协作.md` | https://blog.csdn.net/fungleo/article/details/166836287 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·文章详情：Markdown、代码高亮与目录必须共享解析结果 | — | `articles/M3-08-文章详情-Markdown代码高亮与目录必须共享解析结果.md` | — | 🟡 草稿中 |
 | 成为全栈·Next.js 网站前台篇·文章阅读辅助：上下篇、面包屑、相关文章与阅读记录 | — | `articles/M3-09-文章阅读辅助-上下篇面包屑相关文章与阅读记录.md` | — | 🟡 草稿中 |
 | 成为全栈·Next.js 网站前台篇·Next.js SEO：metadata、结构化数据、sitemap 与 robots | — | `articles/M3-10-Nextjs-SEO-metadata结构化数据sitemap与robots.md` | — | 🟡 草稿中 |

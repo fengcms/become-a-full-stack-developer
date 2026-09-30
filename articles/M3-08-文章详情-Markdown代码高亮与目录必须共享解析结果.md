@@ -2,7 +2,7 @@
 
 > 目录和正文如果各自解析 Markdown，简单英文标题也许正常，中文、行内链接与重复标题很快就会让锚点失配。真正可靠的方案，是让它们从同一棵语法树里得到同一个 id。
 
-{{IMG:M3-08-封面}}
+![成为全栈·Next.js 网站前台篇·文章详情：Markdown、代码高亮与目录必须共享解析结果](https://i-blog.csdnimg.cn/direct/05b87fcee7814320a74a02e53c8f89a9.png)
 
 ## 前言
 
@@ -64,7 +64,7 @@ while (used.has(id)) id = `${base}-${suffix++}`
 
 正则里的 `\p{L}` 和 `\p{N}` 按 Unicode 字母与数字处理，中文不会被全部删掉。标题清理后为空时使用 `section`，重复标题依次变成 `小结`、`小结-1`、`小结-2`。
 
-{{IMG:M3-08-共享解析树}}
+![共享解析树](https://i-blog.csdnimg.cn/direct/34a65117cef14dc69353709f7c50bb1d.png)
 
 因为目录数组与正文 id 来自同一次遍历，它们不需要“保持两套 slug 算法一致”。项目直接消除了两套算法。
 
@@ -168,7 +168,7 @@ useEffect(() => {
 
 表中的标点清理结果必须与项目算法一致；真正的断言对象应是最终 DOM 的 `id` 与目录链接的 `href`，而不是只测中间字符串。
 
-{{IMG:M3-08-锚点边界用例}}
+![锚点边界用例](https://i-blog.csdnimg.cn/direct/d24bf30cba284379b3774e0d1f93dc7c.png)
 
 ### 最小浏览器回归步骤
 
@@ -199,7 +199,6 @@ useEffect(() => {
 
 - [服务端组件与客户端组件](https://blog.csdn.net/fungleo/article/details/166737733)
 - [Markdown 编辑器：预览、暗色主题与连续图片粘贴](https://blog.csdn.net/fungleo/article/details/166107729)
-- [文章阅读辅助]({{LINK:M3-09}})
 
 ---
 
