@@ -2,7 +2,7 @@
 
 > access token 放在内存可以缩短暴露时间，refresh token 放进 HttpOnly Cookie 可以避开 JavaScript 读取。但真正困难的部分，是多个请求同时 401、刷新时退出登录，以及旧账号请求晚到这些竞态。
 
-{{IMG:M3-11-封面}}
+![成为全栈·Next.js 网站前台篇·C 端认证：内存令牌、HttpOnly Cookie 与会话代次](https://i-blog.csdnimg.cn/direct/199c99b9ef1b4e9588af4c0d34c82307.png)
 
 ## 前言
 
@@ -23,7 +23,7 @@ access token 不进入 localStorage，刷新页面后自然丢失。浏览器仍
 
 这不是“绝对安全”的宣言。XSS 仍可能在当前页面生命周期内以用户身份发请求；Cookie 仍需要 SameSite、Secure、Path 和跨站写入保护。存储方案只是减少某些攻击面，不能代替完整防御。
 
-{{IMG:M3-11-令牌生命周期}}
+![令牌生命周期](https://i-blog.csdnimg.cn/direct/03e27de71bf3495fa3e0efa2005f550c.png)
 
 ## Zustand 只保存浏览器当前需要的会话状态
 
@@ -212,8 +212,7 @@ const unsubscribe = useAuthStore.subscribe((next, previous) => {
 场景 D：旧 token 请求晚到 401，新 token 已存在
 预期：直接使用新 token 重放，不再次刷新
 ```
-
-{{IMG:M3-11-并发刷新时序}}
+![并发刷新时序](https://i-blog.csdnimg.cn/direct/e3669b9ef6ac47f495f42e5192084fdc.png)
 
 还要检查 token 不出现在 localStorage、sessionStorage、URL 和错误日志里；刷新响应 JSON 中也不应把 refresh token交给客户端 JavaScript。
 

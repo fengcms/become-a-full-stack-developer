@@ -2,7 +2,7 @@
 
 > SEO 不是给页面塞一组关键词。搜索引擎需要稳定的公开 URL、与正文一致的元数据、可安全解析的结构化数据，以及一张不包含私有页面的站点地图。
 
-{{IMG:M3-10-封面}}
+![成为全栈·Next.js 网站前台篇·Next.js SEO：metadata、结构化数据、sitemap 与 robots](https://i-blog.csdnimg.cn/direct/bc6857dd0e8f45ed9571ba6ce3151371.png)
 
 ## 前言
 
@@ -21,7 +21,7 @@
 
 robots 中写了 `Disallow`，并不意味着页面有安全保护；任何私有数据仍必须由后端鉴权。反过来，URL 出现在 sitemap 中也不等于一定获得排名。
 
-{{IMG:M3-10-SEO四件套}}
+![SEO四件套](https://i-blog.csdnimg.cn/direct/ddcfbc867e824536a10395ea83834075.png)
 
 ## 动态 metadata 应与正文复用同一篇文章
 
@@ -184,7 +184,7 @@ export const metadata = {
 | robots sitemap 地址 | 使用正式站点 origin |
 | 私有页面 | 不进 sitemap，同时带 noindex，且后端鉴权 |
 
-{{IMG:M3-10-URL一致性}}
+![URL一致性](https://i-blog.csdnimg.cn/direct/86d5bd6d3d834e90b20fa1a60d6f7d92.png)
 
 ## 生产验收不能只看页面源代码
 
@@ -214,7 +214,7 @@ Next.js 提供了 metadata、sitemap 和 robots 的文件约定，却不会自�
 
 ## 延伸阅读
 
-- [文章阅读辅助]({{LINK:M3-09}})
+- [文章阅读辅助](https://blog.csdn.net/fungleo/article/details/166885558)
 - [数据获取与缓存](https://blog.csdn.net/fungleo/article/details/166784128)
 - [站点设置如何驱动页头、页脚与 SEO]({{LINK:M3-19}})
 
