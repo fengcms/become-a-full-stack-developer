@@ -914,8 +914,6 @@ function statusChip(st){
 }
 const bySlug = (k) => ARTICLES.find(a => a.slug === k || String(a.id) === String(k));
 
-/** 本文目录。实现由 GET /articles/{id}/toc 解析正文生成；原型用静态数据等价表达。 */
-
 /* ================================================================
    路由
    ================================================================ */
@@ -1130,12 +1128,16 @@ function hilite(text, q){
    页面：文章详情
    ================================================================ */
 /* ---------- 正文与目录同源 ----------
-   真实实现里目录来自服务端 GET /articles/{id}/toc（见 02 §4），
-   本原型用同一份 SECTIONS 同时生成「正文标题」与「目录」，
-   从结构上保证二者不会不同步（旧版手写 TOC 5 条、正文只有 3 个标题）。
-   每个标题的锚点 id 固定为 h-N，目录点击即滚到该锚点。 */
+   真实实现里目录来自服务端 GET /articles/{id}/toc，返回 level / text / anchor 三项
+   （契约 TocItem；产品侧端点映射见 03 §6「文章详情子资源」）。
+   本原型用同一份 SECTIONS 同时生成「正文标题」与「目录」，从结构上保证二者不会不同步
+   （旧版手写 TOC 5 条、正文只有 3 个标题）。
+   ⚠️ 锚点值取自 SECTIONS[i].anchor，它模拟的是 /toc 返回的 anchor（slug 化标题），
+   不是本地序号。开发实现时标题的 Widget key 必须用服务端返回的 anchor ——
+   产品侧 01 §2 与 03 §6 已冻结「key 值采用服务端 anchor；客户端不自行生成目录数据，也不自行 slug 化」。
+   上一轮此处把锚点写成 h-N 形式的本地序号，与该冻结口径冲突，已改。 */
 const SECTIONS = [
-  {n:1, t:'一、差异从哪里来', html:`
+  {level:1, anchor:'cha-yi-cong-na-li-lai', text:'一、差异从哪里来', html:`
 <p>运行时差异集中在三处：环境的读取方式、文件存储的位置、以及后台任务的调度能力。把它们列成一张表，适配层的边界就清楚了。</p>
 <div class="tbl-wrap"><table>
 <thead><tr><th>能力</th><th>Workers</th><th>Linux</th></tr></thead>
@@ -1144,7 +1146,7 @@ const SECTIONS = [
 <tr><td>对象存储</td><td>R2 绑定</td><td>本地磁盘目录</td></tr>
 <tr><td>定时任务</td><td>Cron Triggers</td><td>外部调度器</td></tr>
 </tbody></table></div>`},
-  {n:2, t:'二、把差异收敛成一个接口', html:`
+  {level:1, anchor:'ba-cha-yi-shou-lian-cheng-yi-ge-jie-kou', text:'二、把差异收敛成一个接口', html:`
 <p>适配层只暴露能力，不暴露实现细节。调用方永远拿到的是一组稳定的函数签名。</p>
 <div class="codebox"><div class="bar"><span>storage.ts</span><span>TypeScript</span></div>
 <pre><span class="c">// 两种驱动，一个契约</span>
@@ -1156,22 +1158,24 @@ const SECTIONS = [
 <span class="k">export const</span> createStorage = (driver: <span class="s">"r2"</span> | <span class="s">"local"</span>): Storage =&gt;
   driver === <span class="s">"r2"</span> ? r2Storage() : localStorage();</pre></div>
 <blockquote>适配层不是抽象层。它只解决"同一件事在两套运行时怎么做"，不解决"以后可能换别的什么"。</blockquote>`},
-  {n:3, t:'代码块与表格的移动端折行策略', lv2:true, html:`
+  {level:2, anchor:'dai-ma-kuai-yu-biao-ge-de-zhe-hang-ce-lue', text:'代码块与表格的移动端折行策略', html:`
 <p>桌面端可以横着铺开的代码块和表格，到了 393dp 宽度上必须换一种活法：代码块整体横向滚动、不折行，行号才能对齐；表格则包一层可横滑的容器，超出的列不给省略号，避免把数据藏起来。</p>
 <p>两者都不能撑破正文宽度——一旦撑破，整页跟着横向滚动，正文的阅读节奏就断了。</p>`},
-  {n:4, t:'错误码到用户文案的映射', lv2:true, html:`
+  {level:2, anchor:'cuo-wu-ma-dao-yong-hu-wen-an-de-ying-she', text:'错误码到用户文案的映射', html:`
 <p>同一个失败在两套运行时下的表现并不一致：一方抛结构化错误码，另一方可能直接抛底层异常。适配层的职责是把它们压成同一组错误码，页面只认这组码。</p>
 <p>映射表集中在一个文件里维护。页面上不允许出现「按错误消息文本判断分支」的写法——那等于把后端文案当成了契约。</p>`},
-  {n:5, t:'三、收敛成本', html:`
+  {level:1, anchor:'shou-lian-cheng-ben', text:'三、收敛成本', html:`
 <p>把差异收敛之后，业务代码里不再出现任何运行时判断。部署到 Cloudflare 只是换一个环境变量，而不是换一份代码。</p>
 <p>这一步做完，后面每个新功能都只需要在业务层写一遍，两套部署自动都拿到。</p>`}
 ];
 const ARTICLE_LEAD = `<p>同一份 Hono 代码，要同时跑在 Cloudflare Workers 和一台普通 Linux 机器上。硬编码运行时判断会让代码迅速腐烂，正确的做法是把差异收敛到一层薄的适配接口。</p>`;
 const ARTICLE_BODY = ARTICLE_LEAD + SECTIONS.map(s => {
-  const tag = s.lv2 ? 'h3' : 'h2';
-  return `<${tag} id="h-${s.n}">${s.t}</${tag}>${s.html}`;
+  /* level 1 落到页面级 h2（h1 留给文章标题），level 2 落 h3，与契约 level(1-6) 一一对应 */
+  const tag = 'h' + (s.level + 1);
+  return `<${tag} id="${s.anchor}">${s.text}</${tag}>${s.html}`;
 }).join('');
-const TOC = SECTIONS.map(s => ({n:s.n, t:s.t, lv2:!!s.lv2}));
+/* 目录项与契约 TocItem 同形（level / text / anchor），面板展示与跳转共用同一份 */
+const TOC = SECTIONS.map(s => ({level:s.level, text:s.text, anchor:s.anchor}));
 
 function articleChrome(idx){
   return {
@@ -2011,9 +2015,9 @@ function sheetChoice(text, hint, act, danger){
 
 /* 目录跳转：真实滚动 #screen 到正文锚点。
    拿不到锚点就返回 false，由调用方给出如实提示——不谎报「已定位」（B-5 同一原则）。 */
-function scrollToSection(n){
+function scrollToSection(anchor){
   const screen = document.getElementById('screen');
-  const el = document.getElementById('h-' + n);
+  const el = anchor && document.getElementById(anchor);
   if(!screen || !el) return false;
   const delta = el.getBoundingClientRect().top - screen.getBoundingClientRect().top;
   screen.scrollTop += delta - 8;
@@ -2102,14 +2106,13 @@ function handleAct(act){
     case 'toc': {
       if(a === 'panel'){
         openSheet('本文目录',
-          TOC.map(t => sheetChoice(t.t, t.lv2 ? '二级标题' : '一级标题', 'toc:' + t.n)).join('') +
+          TOC.map(t => sheetChoice(t.text, t.level > 1 ? '二级标题' : '一级标题', 'toc:' + t.anchor)).join('') +
           sheetChoice('取消', '', 'sheet:close'));
         break;
       }
       render();                       /* 关闭面板：render 会清空 overlay */
-      const n = +a;
-      const hit = TOC.find(t => t.n === n);
-      if(scrollToSection(n)) toast('已定位到「' + (hit ? hit.t : '') + '」');
+      const hit = TOC.find(t => t.anchor === a);
+      if(scrollToSection(a)) toast('已定位到「' + (hit ? hit.text : '') + '」');
       else toast('这一节在当前正文里没有对应位置');
       break;
     }

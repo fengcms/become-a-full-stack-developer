@@ -91,10 +91,24 @@ const PAGE = String.raw`(async () => {
   const nn = $('[data-state-set="normal"]'); if (nn) { nn.click(); await sleep(150); }
 
   // ---- 5. 目录：顶栏入口 + 真滚动 + 缺锚点时不谎报 ----
+  //      期望值一律从页面自身的 TOC 派生。上一版把锚点写死成 ['h-1'..'h-5']，
+  //      既违反「期望值程序化推导」，又在本次 A-1 整改后直接失效——已改掉。
   await snap('#/articles/' + slug);
-  const anchors = ['h-1','h-2','h-3','h-4','h-5'].filter(id => document.getElementById(id));
-  out.toc = { anchorCount: anchors.length, entries: TOC.length, levels: {} };
-  for (const t of TOC) out.toc.levels[t.n] = (document.getElementById('h-' + t.n) || {}).tagName || null;
+  const tocAnchors = TOC.map(t => t.anchor);
+  const heads = $$('.prose h2, .prose h3');
+  const headIds = heads.map(h => h.id);
+  out.toc = {
+    entries: TOC.length,
+    anchors: tocAnchors,
+    levels: TOC.map(t => t.level),
+    headingIds: headIds,
+    headingTags: heads.map(h => h.tagName),
+    anchorUnique: new Set(tocAnchors).size === tocAnchors.length && tocAnchors.every(a => !!a),
+    /* P1 回归探测器：锚点若退回「本地序号形态」（^h-数字$）即命中 */
+    localSeqAnchors: headIds.filter(id => /^h-\d+$/.test(id)),
+    /* 正文标题 id 必须与 TOC.anchor 逐条相等、且同序 */
+    idsMatchToc: heads.length === TOC.length && heads.every((h, i) => h.id === tocAnchors[i]),
+  };
 
   ($('[data-act="toc:panel"]') || {click(){}}).click(); await sleep(150);
   out.toc.panelOpen = /本文目录/.test(sheetText());
@@ -108,11 +122,12 @@ const PAGE = String.raw`(async () => {
   out.toc.pick = { before: b3, after: scr().scrollTop, delta: scr().scrollTop - b3, toast: toastText() };
   out.toc.closedAfterPick = !/本文目录/.test(sheetText());
 
-  const h4 = document.getElementById('h-4');
+  /* 缺锚点时不谎报：临时摘掉第 4 节标题的 id，再点它 */
+  const h4 = document.getElementById(tocAnchors[3]);
   const savedId = h4 && h4.id;
   if (h4) h4.removeAttribute('id');
   scr().scrollTop = 0; await sleep(60);
-  handleAct('toc:4'); await sleep(200);
+  handleAct('toc:' + tocAnchors[3]); await sleep(200);
   out.toc.missing = { scrollTop: scr().scrollTop, toast: toastText() };
   if (h4 && savedId) h4.id = savedId;
 
@@ -219,11 +234,16 @@ ck.assert('详情页不渲染任何审核态徽章', r.reject.statusBadges === 0
 ck.assert('除被拒反馈条外无「复核中」字样', r.reject.hasReviewingWord === false);
 ck.assert('除被拒反馈条外无「未通过」字样', r.reject.hasRejectedWord === false);
 
-ck.assert('正文锚点数与目录条目一一对应', r.toc.anchorCount === r.toc.entries && r.toc.entries === 5,
-  `锚点 ${r.toc.anchorCount} / 条目 ${r.toc.entries}`);
-ck.assert('目录含二级标题且层级正确（h3）',
-  r.toc.levels[3] === 'H3' && r.toc.levels[4] === 'H3' && r.toc.levels[1] === 'H2',
-  JSON.stringify(r.toc.levels));
+ck.assert('目录条目数与正文标题数一致', r.toc.entries === 5 && r.toc.headingIds.length === 5,
+  `条目 ${r.toc.entries} / 标题 ${r.toc.headingIds.length}`);
+ck.assert('正文标题 id 与 TOC.anchor 逐条相等且同序（A-1 核心）', r.toc.idsMatchToc === true,
+  `标题 id ${JSON.stringify(r.toc.headingIds)}`);
+ck.assert('锚点不得是本地序号形态 h-数字（A-1 回归探测器）', r.toc.localSeqAnchors.length === 0,
+  `命中 ${JSON.stringify(r.toc.localSeqAnchors)}`);
+ck.assert('TOC.anchor 唯一且非空', r.toc.anchorUnique === true, JSON.stringify(r.toc.anchors));
+ck.assert('标题层级由 TOC.level 决定（level+1 → h 标签）',
+  r.toc.levels.every((lv, i) => r.toc.headingTags[i] === 'H' + (lv + 1)),
+  `${JSON.stringify(r.toc.headingTags)} / levels ${JSON.stringify(r.toc.levels)}`);
 ck.assert('顶栏「目录」入口能打开面板', r.toc.panelOpen === true);
 ck.assert('目录面板列出全部条目', r.toc.panelItems === 5, `条目 ${r.toc.panelItems}`);
 ck.assert('点目录后关闭面板', r.toc.closedAfterPick === true);
