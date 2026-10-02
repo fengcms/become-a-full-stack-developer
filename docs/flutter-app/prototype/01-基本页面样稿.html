@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flutter APP · 基本页面视觉样稿（步骤二）</title>
+<style>
+/* ============================================================
+   Flutter APP 视觉样稿 · 令牌与网站 A 方案（纯白／晴蓝）同源
+   令牌定义见 docs/flutter-app/06-UI设计规范与设计令牌.md
+   ============================================================ */
+:root{
+  --space1:4px; --space2:8px; --space3:12px; --space4:16px; --space5:20px;
+  --space6:24px; --space8:32px; --space10:40px;
+  --r-xs:4px; --r-sm:6px; --r-md:8px; --r-lg:12px; --r-full:999px;
+  --font-cn:"PingFang SC","Noto Sans SC",-apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif;
+  --font-mono:"SFMono-Regular",Consolas,"Roboto Mono",monospace;
+}
+/* ---------- 浅色模式 ---------- */
+html[data-theme="light"]{
+  --bg:#FFFFFF; --bg-subtle:#F7FAFD; --surface:#FFFFFF; --surface-sunken:#F5F9FC;
+  --surface-elevated:#FFFFFF;
+  --line:#E9EFF5; --line-strong:#D5E2ED; --field-border:#8397AB;
+  --text-title:#2F4256; --text-body:#34465A; --text-muted:#607286;
+  --text-placeholder:#8A99A8; --text-inverse:#FFFFFF;
+  --brand:#3277B5; --brand-hover:#245D91; --brand-solid:#3277B5;
+  --brand-subtle:#EDF5FC; --brand-on-subtle:#2A6AA3;
+  --focus-ring:#3277B5;
+  --success:#276954; --success-bg:#EDF7F2;
+  --warning:#7A6122; --warning-bg:#FAF5E9;
+  --danger:#9E3D3D;  --danger-bg:#FCF1F1;
+  --st-published:#3277B5; --st-published-bg:#EDF5FC;
+  --st-pending:#7A6122;   --st-pending-bg:#FAF5E9;
+  --st-draft:#5C6C80;     --st-draft-bg:#F0F3F6;
+  --hero-wash:linear-gradient(115deg,#F0F7FE,#E4F0FB);
+  --hero-ink:#2F4256; --hero-sub:#617D96;
+  --shadow-overlay:0 8px 24px rgba(41,78,117,.12);
+  --shadow-card:0 1px 3px rgba(41,78,117,.06);
+  --code-bg:#F7FAFD; --code-fg:#3E627F;
+  --mark-bg:#EDF5FC; --mark-fg:#2A6AA3;
+  --skeleton:#EDF3F8;
+  --doc-bg:#EEF1F5;
+}
+/* ---------- 深色模式（独立设计，非反转） ---------- */
+html[data-theme="dark"]{
+  --bg:#121820; --bg-subtle:#171E27; --surface:#1A222C; --surface-sunken:#161C24;
+  --surface-elevated:#212B36;
+  --line:#2E3A46; --line-strong:#3A4754; --field-border:#4A5A69;
+  --text-title:#E8EFF6; --text-body:#C6D2DE; --text-muted:#8FA0B2;
+  --text-placeholder:#6E7E8F; --text-inverse:#FFFFFF;
+  --brand:#5EA0D8; --brand-hover:#7FB6E4; --brand-solid:#37709F;
+  --brand-subtle:#1C2E3E; --brand-on-subtle:#7FB6E4;
+  --focus-ring:#5EA0D8;
+  --success:#7FCBA8; --success-bg:#17281F;
+  --warning:#E0BC72; --warning-bg:#2E2718;
+  --danger:#EF9A9A;  --danger-bg:#2F1D1D;
+  --st-published:#7FB6E4; --st-published-bg:#1C2E3E;
+  --st-pending:#E0BC72;   --st-pending-bg:#2E2718;
+  --st-draft:#93A4B6;     --st-draft-bg:#232B34;
+  --hero-wash:linear-gradient(115deg,#1B2733,#16202A);
+  --hero-ink:#E8EFF6; --hero-sub:#9DB0C2;
+  --shadow-overlay:0 8px 24px rgba(0,0,0,.45);
+  --shadow-card:0 0 0 1px var(--line-strong);
+  --code-bg:#161C24; --code-fg:#9CC4E4;
+  --mark-bg:#1C2E3E; --mark-fg:#9CC4E4;
+  --skeleton:#212B36;
+  --doc-bg:#0C1116;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  font-family:var(--font-cn);
+  background:var(--doc-bg);
+  color:var(--text-body);
+  min-height:100vh;
+  padding:var(--space6) var(--space6) 56px;
+  -webkit-font-smoothing:antialiased;
+  transition:background .2s;
+}
+svg.icon{width:1em; height:1em; fill:none; stroke:currentColor; stroke-width:1.6;
+  stroke-linecap:round; stroke-linejoin:round; display:block;}
+
+/* ================= 展示页外壳 ================= */
+.page-head{max-width:1360px; margin:0 auto var(--space6); display:flex;
+  align-items:flex-end; justify-content:space-between; gap:var(--space4); flex-wrap:wrap;}
+.page-head h1{font-size:19px; font-weight:600; color:var(--text-title); letter-spacing:0;}
+.page-head p{font-size:13px; color:var(--text-muted); margin-top:6px; line-height:1.7;}
+.head-right{display:flex; align-items:center; gap:var(--space2);}
+.seg{display:flex; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r-sm); overflow:hidden;}
+.seg button{border:0; background:none; color:var(--text-muted); font-family:inherit;
+  font-size:13px; padding:8px 16px; cursor:pointer; min-height:36px;}
+.seg button[aria-pressed="true"]{background:var(--brand-subtle); color:var(--brand-on-subtle); font-weight:500;}
+
+.stage{max-width:1360px; margin:0 auto; display:flex; gap:var(--space8);
+  align-items:flex-start; justify-content:center; flex-wrap:wrap;}
+
+/* 手机画框 */
+.phone-col{display:flex; flex-direction:column; align-items:center; gap:var(--space3);}
+.phone-label{font-size:12px; color:var(--text-muted); letter-spacing:.04em;}
+.phone{
+  width:393px; height:852px; border-radius:26px; background:var(--bg);
+  border:1px solid var(--line); overflow:hidden; display:flex; flex-direction:column;
+  box-shadow:var(--shadow-overlay); position:relative;
+}
+/* 状态栏 */
+.statusbar{height:32px; flex:0 0 auto; display:flex; align-items:center;
+  justify-content:space-between; padding:0 20px; font-size:12px; font-weight:600;
+  color:var(--text-title); background:var(--surface);}
+.statusbar .sb-right{display:flex; align-items:center; gap:5px;}
+.sb-bars{display:flex; align-items:flex-end; gap:2px; height:10px;}
+.sb-bars i{width:3px; background:currentColor; border-radius:1px; display:block;}
+.sb-bars i:nth-child(1){height:4px;} .sb-bars i:nth-child(2){height:6px;}
+.sb-bars i:nth-child(3){height:8px;} .sb-bars i:nth-child(4){height:10px;}
+.sb-batt{width:22px; height:11px; border:1.4px solid currentColor; border-radius:3px;
+  position:relative; opacity:.9;}
+.sb-batt::after{content:""; position:absolute; right:-3.5px; top:3px; width:2px; height:5px;
+  background:currentColor; border-radius:0 1px 1px 0;}
+.sb-batt i{position:absolute; inset:1.6px; width:70%; background:currentColor; border-radius:1.5px; display:block;}
+
+/* 顶部栏 */
+.appbar{flex:0 0 auto; height:52px; display:flex; align-items:center; gap:var(--space3);
+  padding:0 var(--space4); background:var(--surface); border-bottom:1px solid var(--line);}
+.appbar .brand{display:flex; align-items:center; gap:var(--space2); font-weight:700;
+  font-size:16px; color:var(--text-title); letter-spacing:-.3px;}
+.brand-mark{background:var(--brand-subtle); color:var(--brand-on-subtle);
+  font-family:var(--font-mono); font-size:15px; font-weight:700; padding:3px 7px;
+  border-radius:var(--r-xs); line-height:1.2;}
+.appbar .grow{flex:1;}
+.iconbtn{width:44px; height:44px; margin-right:-10px; display:grid; place-items:center;
+  border:0; background:none; color:var(--text-body); cursor:pointer; font-size:20px;
+  border-radius:var(--r-full);}
+.iconbtn:hover{background:var(--bg-subtle);}
+.appbar-title{font-size:15px; font-weight:600; color:var(--text-title); flex:1; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+/* 滚动区 */
+.screen{flex:1; overflow-y:auto; overflow-x:hidden; background:var(--bg);
+  scrollbar-width:none; -webkit-overflow-scrolling:touch;}
+.screen::-webkit-scrollbar{display:none;}
+.pad{padding:0 var(--space4);}
+
+/* ================= 首页 ================= */
+.hero{margin:var(--space4) var(--space4) 0; border-radius:var(--r-md);
+  background:var(--hero-wash); padding:var(--space5); position:relative; overflow:hidden;}
+.hero::before{content:"{ API }"; position:absolute; right:14px; top:-6px;
+  font-family:var(--font-mono); font-size:46px; font-weight:600; color:var(--hero-ink);
+  opacity:.08; pointer-events:none;}
+.hero .eyebrow{font-size:11px; font-weight:600; color:var(--brand-on-subtle);
+  letter-spacing:.06em; display:block; margin-bottom:var(--space2); position:relative;}
+.hero h2{font-size:24px; line-height:1.35; font-weight:700; color:var(--hero-ink);
+  position:relative; margin-bottom:var(--space2);}
+.hero p{font-size:13px; line-height:1.7; color:var(--hero-sub); position:relative;}
+.hero .dots{display:flex; gap:6px; margin-top:var(--space4); position:relative;}
+.hero .dots i{height:4px; width:20px; border-radius:2px; background:var(--brand);
+  opacity:.28; display:block;}
+.hero .dots i.on{opacity:1;}
+
+.sec-head{display:flex; align-items:center; justify-content:space-between;
+  gap:var(--space3); margin:var(--space6) var(--space4) 0; padding-bottom:var(--space3);
+  border-bottom:1px solid var(--line);}
+.sec-head h3{font-size:17px; font-weight:600; color:var(--text-title);}
+.sec-head a{font-size:12px; color:var(--brand); text-decoration:none;
+  display:flex; align-items:center; gap:2px; min-height:20px;}
+.sec-head a svg{font-size:14px;}
+
+/* 文章列表项 */
+.entry{display:flex; gap:var(--space3); padding:var(--space4) var(--space4);
+  border-bottom:1px solid var(--line); align-items:flex-start; cursor:pointer;}
+.entry:active{background:var(--bg-subtle);}
+.entry .body{flex:1; min-width:0;}
+.entry h4{font-size:16px; line-height:1.5; font-weight:600; color:var(--text-title);
+  margin-bottom:6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden;}
+.entry .sum{font-size:12.5px; line-height:1.65; color:var(--text-muted); margin-bottom:8px;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+.entry .meta{font-size:11px; color:var(--text-muted); display:flex; align-items:center;
+  gap:8px; flex-wrap:wrap;}
+.entry .meta i{width:2px; height:2px; border-radius:50%; background:currentColor;
+  opacity:.6; display:block;}
+.thumb{width:96px; height:72px; flex:0 0 96px; border-radius:var(--r-xs);
+  background:var(--brand-subtle); color:var(--brand-on-subtle); display:grid;
+  place-items:center; font-family:var(--font-mono); font-size:15px; font-weight:600;
+  border:1px solid var(--line); overflow:hidden;}
+.entry.noimg .thumb{display:none;}
+
+/* 热门排行 */
+.rank{display:flex; gap:var(--space3); padding:var(--space3) var(--space4);
+  border-bottom:1px solid var(--line); align-items:baseline; cursor:pointer;}
+.rank b{font-family:var(--font-mono); font-size:14px; color:var(--brand);
+  min-width:18px; font-weight:700; opacity:.75;}
+.rank .rt{flex:1; font-size:14px; line-height:1.55; color:var(--text-body);
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+.rank span{font-size:11px; color:var(--text-muted); white-space:nowrap;}
+
+/* 底部 Tab */
+.tabbar{flex:0 0 auto; height:56px; display:flex; background:var(--surface);
+  border-top:1px solid var(--line); padding-bottom:0;}
+.tabbar button{flex:1; border:0; background:none; cursor:pointer; color:var(--text-muted);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  font-family:inherit; font-size:10px; position:relative;}
+.tabbar button svg{font-size:22px;}
+.tabbar button.on{color:var(--brand); font-weight:500;}
+.tab-dot{position:absolute; top:8px; left:calc(50% + 8px); width:7px; height:7px;
+  border-radius:50%; background:var(--danger);}
+
+/* ================= 文章详情 ================= */
+.crumb{padding:var(--space3) var(--space4) 0; display:flex; align-items:center;
+  gap:6px; font-size:12px; color:var(--text-muted);}
+.crumb svg{font-size:13px; opacity:.7;}
+.art-head{padding:var(--space4) var(--space4) var(--space3);}
+.art-tag{display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:500;
+  background:var(--brand-subtle); color:var(--brand-on-subtle); padding:3px 9px;
+  border-radius:var(--r-full); margin-bottom:var(--space3);}
+.art-head h1{font-size:24px; line-height:1.4; font-weight:700; color:var(--text-title);
+  margin-bottom:var(--space4);}
+.byline{display:flex; align-items:center; gap:var(--space3); padding-bottom:var(--space4);
+  border-bottom:1px solid var(--line);}
+.avatar{width:40px; height:40px; flex:0 0 40px; border-radius:50%; background:var(--brand-subtle);
+  color:var(--brand-on-subtle); display:grid; place-items:center; font-weight:600; font-size:15px;}
+.byline .who{flex:1; min-width:0;}
+.byline .who strong{display:block; font-size:14px; font-weight:600; color:var(--text-body);}
+.byline .who small{font-size:11px; color:var(--text-muted);}
+.lead{margin:var(--space4); padding:var(--space4); background:var(--surface-sunken);
+  border-left:3px solid var(--brand-subtle); border-radius:0 var(--r-sm) var(--r-sm) 0;
+  font-size:14px; line-height:1.8; color:var(--text-muted);}
+.prose{padding:0 var(--space4); font-size:17px; line-height:1.85; color:var(--text-body);
+  overflow-wrap:anywhere;}
+.prose p{margin-bottom:var(--space5);}
+.prose h2{font-size:20px; line-height:1.45; font-weight:600; color:var(--text-title);
+  margin:var(--space8) 0 var(--space3); padding-left:10px; border-left:3px solid var(--brand);}
+.prose code{font-family:var(--font-mono); font-size:.86em; background:var(--code-bg);
+  border:1px solid var(--line); border-radius:3px; padding:1px 5px; color:var(--code-fg);}
+.codebox{margin:var(--space4) 0 var(--space5); background:var(--code-bg);
+  border:1px solid var(--line); border-radius:var(--r-sm); overflow:hidden;}
+.codebox .bar{display:flex; justify-content:space-between; align-items:center;
+  padding:7px var(--space3); border-bottom:1px solid var(--line);
+  font-size:11px; color:var(--text-muted); font-family:var(--font-mono);}
+.codebox pre{padding:var(--space3); font-family:var(--font-mono); font-size:12.5px;
+  line-height:1.85; color:var(--code-fg); overflow-x:auto; white-space:pre;}
+.codebox .k{color:#8B5CF6;} .codebox .s{color:#0F766E;} .codebox .c{opacity:.6;}
+html[data-theme="dark"] .codebox .k{color:#C4A0F5;}
+html[data-theme="dark"] .codebox .s{color:#6FCFB4;}
+.tbl-wrap{margin:var(--space4) 0 var(--space5); overflow-x:auto;}
+.prose table{width:100%; min-width:340px; border-collapse:collapse; font-size:13px;}
+.prose th,.prose td{border:1px solid var(--line); padding:9px 11px; text-align:left;
+  line-height:1.6;}
+.prose th{background:var(--surface-sunken); font-weight:500; color:var(--text-title);}
+.prose blockquote{margin:var(--space4) 0 var(--space5); padding:var(--space3) var(--space4);
+  background:var(--surface-sunken); border-left:3px solid var(--brand-subtle);
+  border-radius:0 var(--r-sm) var(--r-sm) 0; color:var(--text-muted); font-size:15px;}
+
+/* 目录折叠条 */
+.toc-bar{margin:var(--space6) var(--space4); border:1px solid var(--line);
+  border-radius:var(--r-md); overflow:hidden;}
+.toc-bar summary{list-style:none; display:flex; align-items:center; gap:var(--space2);
+  padding:var(--space3) var(--space4); font-size:13px; font-weight:500;
+  color:var(--brand); cursor:pointer; min-height:44px;}
+.toc-bar summary::-webkit-details-marker{display:none;}
+.toc-bar summary .cnt{margin-left:auto; font-size:11px; color:var(--text-muted);
+  font-weight:400;}
+.toc-bar ol{padding:0 var(--space4) var(--space3); list-style:none;}
+.toc-bar li{padding:7px 0; font-size:13px; color:var(--text-muted); border-top:1px solid var(--line);}
+.toc-bar li.lv2{padding-left:14px;}
+
+/* 互动工具条 */
+.actions{display:flex; justify-content:center; gap:var(--space3); padding:var(--space5) var(--space4);
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
+.act{display:flex; flex-direction:column; align-items:center; gap:5px; min-width:72px;
+  padding:var(--space2) var(--space3); border:1px solid var(--line); border-radius:var(--r-md);
+  background:var(--surface); color:var(--text-muted); font-family:inherit; font-size:11px;
+  cursor:pointer; min-height:56px; justify-content:center;}
+.act svg{font-size:19px;}
+.act.on{border-color:var(--brand); background:var(--brand-subtle); color:var(--brand-on-subtle);
+  font-weight:500;}
+
+/* 上下篇 */
+.adj{padding:var(--space4); display:grid; gap:var(--space2);}
+.adj a{display:block; padding:var(--space3) var(--space4); border:1px solid var(--line);
+  border-radius:var(--r-md); text-decoration:none; color:var(--text-body); font-size:13.5px;
+  line-height:1.55;}
+.adj small{display:block; font-size:11px; color:var(--text-muted); margin-bottom:5px;}
+
+/* 评论 */
+.cmt-head{display:flex; align-items:center; gap:var(--space2);
+  margin:var(--space6) var(--space4) 0; padding-bottom:var(--space3);
+  border-bottom:1px solid var(--line);}
+.cmt-head h3{font-size:17px; font-weight:600; color:var(--text-title);}
+.cmt-head .n{font-size:12px; color:var(--text-muted); font-weight:400;}
+.cmt{display:flex; gap:var(--space3); padding:var(--space4); border-bottom:1px solid var(--line);}
+.cmt .cbody{flex:1; min-width:0;}
+.cmt .cname{font-size:13px; font-weight:600; color:var(--text-body);
+  display:flex; align-items:center; gap:var(--space2);}
+.cmt .opt{font-size:10px; font-weight:500; color:var(--st-draft);
+  background:var(--st-draft-bg); padding:1px 6px; border-radius:var(--r-xs);}
+.cmt .ctext{font-size:13.5px; line-height:1.75; color:var(--text-body); margin:6px 0 8px;
+  overflow-wrap:anywhere;}
+.cmt .cfoot{display:flex; gap:var(--space5); font-size:11px; color:var(--text-muted);}
+.cmt .cfoot button{border:0; background:none; font-family:inherit; font-size:11px;
+  color:var(--text-muted); cursor:pointer; padding:4px 0; min-height:28px;}
+/* 楼内回复 */
+.reply{margin-top:var(--space3); padding:var(--space3); background:var(--surface-sunken);
+  border-radius:var(--r-sm);}
+.reply .rto{font-size:12px; color:var(--brand); font-weight:500; margin-bottom:5px;}
+.reply .rq{font-size:12.5px; line-height:1.7; color:var(--text-muted);
+  padding-left:9px; border-left:2px solid var(--line-strong);
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+.reply .ra{font-size:13.5px; line-height:1.75; color:var(--text-body); margin-top:6px;}
+
+/* 底部评论输入条 */
+.composer{flex:0 0 auto; display:flex; align-items:center; gap:var(--space2);
+  padding:var(--space2) var(--space3); border-top:1px solid var(--line);
+  background:var(--surface);}
+.composer .fake{flex:1; height:38px; border:1px solid var(--field-border);
+  border-radius:var(--r-full); display:flex; align-items:center; padding:0 var(--space4);
+  font-size:13px; color:var(--text-placeholder); background:var(--bg-subtle);}
+.composer .send{width:38px; height:38px; border-radius:50%; background:var(--brand-solid);
+  color:#fff; border:0; display:grid; place-items:center; font-size:17px; cursor:pointer;}
+
+/* ================= 左栏：令牌速览 ================= */
+.panel{width:330px; flex:0 0 330px; background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r-lg); padding:var(--space5); display:flex; flex-direction:column;
+  gap:var(--space5);}
+.panel h4{font-size:13px; font-weight:600; color:var(--text-title);
+  letter-spacing:.05em; text-transform:uppercase; opacity:.85;}
+.swatches{display:grid; grid-template-columns:1fr 1fr; gap:var(--space2);}
+.sw{display:flex; align-items:center; gap:var(--space2); font-size:10.5px;
+  color:var(--text-muted); font-family:var(--font-mono);}
+.sw i{width:22px; height:22px; border-radius:var(--r-xs); border:1px solid var(--line-strong);
+  flex:0 0 22px; display:block;}
+.sw span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.typerow{display:flex; align-items:baseline; gap:var(--space3); padding:5px 0;
+  border-bottom:1px dashed var(--line);}
+.typerow:last-child{border:0;}
+.typerow .tag{font-size:10px; font-family:var(--font-mono); color:var(--text-muted);
+  min-width:78px; flex:0 0 78px;}
+.typerow .demo{color:var(--text-body);}
+.chips{display:flex; flex-wrap:wrap; gap:var(--space2);}
+.chip{display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:500;
+  padding:3px 9px; border-radius:var(--r-xs);}
+.chip svg{font-size:12px;}
+.chip.pub{background:var(--st-published-bg); color:var(--st-published);}
+.chip.pen{background:var(--st-pending-bg); color:var(--st-pending);}
+.chip.dr{background:var(--st-draft-bg); color:var(--st-draft);}
+.chip.tagp{background:var(--brand-subtle); color:var(--brand-on-subtle); border-radius:var(--r-full);}
+.btn-demo{display:flex; flex-wrap:wrap; gap:var(--space2);}
+.b{font-family:inherit; font-size:13px; padding:9px 16px; border-radius:var(--r-md);
+  min-height:40px; cursor:pointer; border:1px solid transparent; display:inline-flex;
+  align-items:center; gap:6px;}
+.b.pri{background:var(--brand-solid); color:#fff;}
+.b.sec{background:var(--surface); border-color:var(--line-strong); color:var(--brand);}
+.b.txt{background:none; color:var(--brand); padding-left:2px;}
+.b.dis{background:var(--brand-solid); color:#fff; opacity:.55; cursor:default;}
+.field-demo{border:1px solid var(--field-border); border-radius:var(--r-sm);
+  padding:10px 12px; font-size:15px; color:var(--text-placeholder); background:var(--surface-elevated);}
+.field-note{font-size:11px; color:var(--text-muted); margin-top:6px; line-height:1.6;}
+.legend{font-size:11px; color:var(--text-muted); line-height:1.75;}
+.legend b{color:var(--text-body); font-weight:600;}
+@media (max-width:900px){
+  .stage{gap:var(--space6);}
+  .panel{width:100%; flex:1 1 100%; order:3;}
+}
+</style>
+</head>
+<body>
+
+<!-- 图标 sprite -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.4 12 3.2l9 7.2"/><path d="M5.6 9.2V19a2 2 0 0 0 2 2h8.8a2 2 0 0 0 2-2V9.2"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3 3 7.5l9 4.5 9-4.5z"/><path d="M3 12.6 12 17.1l9-4.5"/><path d="M3 17.1 12 21.6l9-4.5"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.2 4.2"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.8"/><path d="M4.5 21c.6-3.9 3.8-6.2 7.5-6.2s6.9 2.3 7.5 6.2"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M15 4.5 7.5 12 15 19.5"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18.5" cy="12" r="1.4"/></symbol>
+<symbol id="i-chevr" viewBox="0 0 24 24"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></symbol>
+<symbol id="i-chevd" viewBox="0 0 24 24"><path d="m5.5 9.5 6.5 6.5 6.5-6.5"/></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.3s-7.4-4.6-7.4-9.9A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.4 2.8c0 5.3-7.4 9.9-7.4 9.9Z"/></symbol>
+<symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M7 3.8h10a1 1 0 0 1 1 1v15.5L12 15.9l-6 4.4V4.8a1 1 0 0 1 1-1Z"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15.5V3.6"/><path d="m8.2 7.2 3.8-3.6 3.8 3.6"/><path d="M5 13v6.4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V13"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.6" cy="6.5" r="1.1"/><circle cx="4.6" cy="12" r="1.1"/><circle cx="4.6" cy="17.5" r="1.1"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.3"/><path d="M12 7.4V12l3.2 2"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.3"/><path d="m8.4 12.3 2.6 2.6 4.6-5.2"/></symbol>
+<symbol id="i-pen" viewBox="0 0 24 24"><path d="M13 4H7a1.6 1.6 0 0 0-1.6 1.6v13A1.6 1.6 0 0 0 7 20.2h10a1.6 1.6 0 0 0 1.6-1.6V9.6z"/><path d="M13 4v5.6h5.6"/></symbol>
+<symbol id="i-msg" viewBox="0 0 24 24"><path d="M20 11.6a7.3 7.3 0 0 1-7.3 7.3H8.2L4 21.5V11.6a7.3 7.3 0 0 1 7.3-7.3h1.4A7.3 7.3 0 0 1 20 11.6Z"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.6 12S6.2 6.4 12 6.4 21.4 12 21.4 12 17.8 17.6 12 17.6 2.6 12 2.6 12Z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+<symbol id="i-send" viewBox="0 0 24 24"><path d="m4 11.5 16-7-7 16-2.4-6.6z"/></symbol>
+<symbol id="i-signal" viewBox="0 0 24 24"><path d="M4 20V10M9.3 20V5M14.7 20v-7M20 20V8"/></symbol>
+</defs></svg>
+
+<div class="page-head">
+  <div>
+    <h1>Flutter APP · 基本页面视觉样稿</h1>
+    <p>步骤二交付 · 视觉基准 = 网站已确认 A 方案（纯白／晴蓝）＋ APP 新增深色模式 · 内容为真实文章标题<br />
+       令牌定义见 <code style="font-family:var(--font-mono);font-size:12px">docs/flutter-app/06-UI设计规范与设计令牌.md</code></p>
+  </div>
+  <div class="head-right">
+    <div class="seg" role="group" aria-label="主题切换">
+      <button id="btnLight" aria-pressed="true">浅色</button>
+      <button id="btnDark" aria-pressed="false">深色</button>
+    </div>
+  </div>
+</div>
+
+<div class="stage">
+
+  <!-- ============ 左栏：令牌速览 ============ -->
+  <aside class="panel">
+    <div>
+      <h4>色彩令牌</h4>
+      <div class="swatches" style="margin-top:12px">
+        <div class="sw"><i style="background:var(--bg)"></i><span>bg.base</span></div>
+        <div class="sw"><i style="background:var(--bg-subtle)"></i><span>bg.subtle</span></div>
+        <div class="sw"><i style="background:var(--surface)"></i><span>surface</span></div>
+        <div class="sw"><i style="background:var(--surface-sunken)"></i><span>sunken</span></div>
+        <div class="sw"><i style="background:var(--line)"></i><span>line</span></div>
+        <div class="sw"><i style="background:var(--field-border)"></i><span>field</span></div>
+        <div class="sw"><i style="background:var(--text-title)"></i><span>text.title</span></div>
+        <div class="sw"><i style="background:var(--text-body)"></i><span>text.body</span></div>
+        <div class="sw"><i style="background:var(--text-muted)"></i><span>text.muted</span></div>
+        <div class="sw"><i style="background:var(--brand)"></i><span>brand</span></div>
+        <div class="sw"><i style="background:var(--brand-subtle)"></i><span>brand.subtle</span></div>
+        <div class="sw"><i style="background:var(--brand-solid)"></i><span>brand.solid</span></div>
+        <div class="sw"><i style="background:var(--warning)"></i><span>warning</span></div>
+        <div class="sw"><i style="background:var(--danger)"></i><span>danger</span></div>
+      </div>
+    </div>
+
+    <div>
+      <h4>字体层级</h4>
+      <div style="margin-top:10px">
+        <div class="typerow"><span class="tag">display 24</span><span class="demo" style="font-size:22px;font-weight:700;color:var(--text-title)">焦点标题</span></div>
+        <div class="typerow"><span class="tag">h1 24</span><span class="demo" style="font-size:19px;font-weight:700">文章标题</span></div>
+        <div class="typerow"><span class="tag">h2 20</span><span class="demo" style="font-size:17px;font-weight:600">区块标题</span></div>
+        <div class="typerow"><span class="tag">h3 17</span><span class="demo" style="font-size:15px;font-weight:600">列表项标题</span></div>
+        <div class="typerow"><span class="tag">reading 17</span><span class="demo" style="font-size:15px">正文阅读</span></div>
+        <div class="typerow"><span class="tag">body 15</span><span class="demo" style="font-size:14px">常规正文</span></div>
+        <div class="typerow"><span class="tag">caption 13</span><span class="demo" style="font-size:12px;color:var(--text-muted)">摘要与说明</span></div>
+        <div class="typerow"><span class="tag">micro 11</span><span class="demo" style="font-size:11px;color:var(--text-muted)">时间 · 计数</span></div>
+      </div>
+    </div>
+
+    <div>
+      <h4>状态徽章（图文并存）</h4>
+      <div class="chips" style="margin-top:12px">
+        <span class="chip pub"><svg class="icon"><use href="#i-check"/></svg>已发布</span>
+        <span class="chip pen"><svg class="icon"><use href="#i-clock"/></svg>待审核</span>
+        <span class="chip dr"><svg class="icon"><use href="#i-pen"/></svg>草稿</span>
+        <span class="chip tagp">Node 后端</span>
+        <span class="chip tagp">Next.js</span>
+      </div>
+    </div>
+
+    <div>
+      <h4>按钮</h4>
+      <div class="btn-demo" style="margin-top:12px">
+        <button class="b pri">主按钮</button>
+        <button class="b sec">次级按钮</button>
+        <button class="b txt">文字按钮</button>
+        <button class="b dis" aria-disabled="true">禁用态</button>
+      </div>
+    </div>
+
+    <div>
+      <h4>输入框</h4>
+      <div class="field-demo" style="margin-top:12px">请输入标题（16sp 起，防聚焦缩放）</div>
+      <div class="field-note">静止边界 <b>#8397AB</b>（3.01:1，非文本图形门槛 3:1）<br />
+        聚焦：边界换 brand ＋ 2dp 焦点环<br />错误：边界 danger ＋ 下方文案，颜色与文字双表达</div>
+    </div>
+
+    <div class="legend">
+      <h4 style="margin-bottom:8px">本样稿已验算</h4>
+      正文字号对比度 <b>9.68:1</b> · 次要文字 <b>4.94:1</b> · 链接 <b>4.73:1</b><br />
+      深色正文 <b>10.45:1</b> · 深色链接 <b>5.73:1</b><br />
+      触控目标 <b>≥44dp</b> · 状态 <b>图标＋文字</b> · 深色 <b>独立设计</b>
+    </div>
+  </aside>
+
+  <!-- ============ 首页 ============ -->
+  <div class="phone-col">
+    <div class="phone">
+      <div class="statusbar">
+        <span>9:41</span>
+        <span class="sb-right">
+          <span class="sb-bars"><i></i><i></i><i></i><i></i></span>
+          <span class="sb-batt"><i></i></span>
+        </span>
+      </div>
+      <div class="appbar">
+        <span class="brand"><span class="brand-mark">{ }</span>成为全栈</span>
+        <span class="grow"></span>
+        <button class="iconbtn" aria-label="搜索"><svg class="icon"><use href="#i-search"/></svg></button>
+      </div>
+      <div class="screen">
+        <div class="hero">
+          <span class="eyebrow">焦点阅读</span>
+          <h2>一套后端双部署：适配层如何让一份代码跑在两套运行时</h2>
+          <p>Cloudflare Workers 与普通 Linux 的差异不在语法，而在请求、存储与生命周期的边界。</p>
+          <div class="dots"><i class="on"></i><i></i><i></i></div>
+        </div>
+
+        <div class="sec-head">
+          <h3>最新文章</h3>
+          <a href="#">全部<svg class="icon"><use href="#i-chevr"/></svg></a>
+        </div>
+        <div class="entry">
+          <div class="body">
+            <h4>数据建模手艺：状态机、冗余计数与适配层的心法清单</h4>
+            <p class="sum">状态机管流转，冗余计数管性能，适配层管差异——三者合起来才是一个能长期维护的后端骨架。</p>
+            <div class="meta"><span>成为全栈</span><i></i><span>10-01</span><i></i><span>2.4k 阅读</span></div>
+          </div>
+          <div class="thumb">API</div>
+        </div>
+        <div class="entry">
+          <div class="body">
+            <h4>分类树：无限级分类的存储、查询与环检测</h4>
+            <p class="sum">自关联表看起来简单，真正难的是移动节点时的环检测与树的构建成本。</p>
+            <div class="meta"><span>Node 后端</span><i></i><span>09-29</span><i></i><span>1.8k 阅读</span></div>
+          </div>
+          <div class="thumb">SQL</div>
+        </div>
+        <div class="entry noimg">
+          <div class="body">
+            <h4>阅读量防刷：去重、冷却与计数写分离</h4>
+            <p class="sum">阅读量不是简单的 +1，去重窗口、冷却时间和写入分离决定了它值不值得信。</p>
+            <div class="meta"><span>Node 后端</span><i></i><span>09-28</span><i></i><span>1.2k 阅读</span></div>
+          </div>
+        </div>
+        <div class="entry">
+          <div class="body">
+            <h4>契约先行：设计一套被七个端复用的 API</h4>
+            <p class="sum">七个子项目共享一份契约，改一处就要重跑两道门——这才叫契约先行。</p>
+            <div class="meta"><span>产品篇</span><i></i><span>09-16</span><i></i><span>3.1k 阅读</span></div>
+          </div>
+          <div class="thumb">SPEC</div>
+        </div>
+
+        <div class="sec-head">
+          <h3>热门阅读</h3>
+          <a href="#">更多<svg class="icon"><use href="#i-chevr"/></svg></a>
+        </div>
+        <div class="rank"><b>01</b><span class="rt">分层架构：Controller、Service、Repository 的边界</span><span>9.6k</span></div>
+        <div class="rank"><b>02</b><span class="rt">权限模型：从认证到 RBAC</span><span>8.2k</span></div>
+        <div class="rank"><b>03</b><span class="rt">为什么前端工程师要走向全栈：边界、价值与代价</span><span>7.4k</span></div>
+        <div class="rank"><b>04</b><span class="rt">统一响应结构：HTTP 状态码与业务码如何分工</span><span>6.1k</span></div>
+        <div class="rank"><b>05</b><span class="rt">一套后端双部署：适配层如何让一份代码跑在两套运行时</span><span>5.3k</span></div>
+        <div style="height:24px"></div>
+      </div>
+      <nav class="tabbar">
+        <button class="on"><svg class="icon"><use href="#i-home"/></svg>首页</button>
+        <button><svg class="icon"><use href="#i-layers"/></svg>分类</button>
+        <button><svg class="icon"><use href="#i-search"/></svg>搜索</button>
+        <button><svg class="icon"><use href="#i-user"/></svg>我的<span class="tab-dot"></span></button>
+      </nav>
+    </div>
+    <span class="phone-label">PS-01 首页 · 焦点 → 最新 → 热门 → 底部导航</span>
+  </div>
+
+  <!-- ============ 文章详情 ============ -->
+  <div class="phone-col">
+    <div class="phone">
+      <div class="statusbar">
+        <span>9:41</span>
+        <span class="sb-right">
+          <span class="sb-bars"><i></i><i></i><i></i><i></i></span>
+          <span class="sb-batt"><i></i></span>
+        </span>
+      </div>
+      <div class="appbar">
+        <button class="iconbtn" style="margin:0 0 0 -10px" aria-label="返回"><svg class="icon"><use href="#i-back"/></svg></button>
+        <span class="appbar-title">文章</span>
+        <button class="iconbtn" aria-label="更多"><svg class="icon"><use href="#i-more"/></svg></button>
+      </div>
+      <div class="screen">
+        <div class="crumb">产品篇<svg class="icon"><use href="#i-chevr"/></svg>Node 后端</div>
+        <div class="art-head">
+          <span class="art-tag">Node 后端</span>
+          <h1>一套后端双部署：适配层如何让一份代码跑在两套运行时</h1>
+          <div class="byline">
+            <span class="avatar">全</span>
+            <span class="who">
+              <strong>成为全栈</strong>
+              <small>2026-09-30 · 2.4k 阅读 · 128 赞</small>
+            </span>
+          </div>
+        </div>
+
+        <div class="lead">Cloudflare Workers 与普通 Linux 的差异不在语法，而在请求、存储与生命周期的边界。这篇文章把适配层拆开讲清楚。</div>
+
+        <div class="prose">
+          <p>同一份 Hono 代码，要同时跑在 Cloudflare Workers 和一台普通 Linux 机器上。硬编码运行时判断会让代码迅速腐烂，正确的做法是把差异收敛到一层薄的适配接口。</p>
+
+          <h2>一、差异从哪里来</h2>
+          <p>运行时差异集中在三处：环境的读取方式、文件存储的位置、以及后台任务的调度能力。把它们列成一张表，适配层的边界就清楚了。</p>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>能力</th><th>Workers</th><th>Linux</th></tr></thead>
+              <tbody>
+                <tr><td>环境变量</td><td><code>env</code> 绑定</td><td><code>process.env</code></td></tr>
+                <tr><td>对象存储</td><td>R2 绑定</td><td>本地磁盘目录</td></tr>
+                <tr><td>定时任务</td><td>Cron Triggers</td><td>外部调度器</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h2>二、把差异收敛成一个接口</h2>
+          <p>适配层只暴露能力，不暴露实现细节。调用方永远拿到的是一组稳定的函数签名。</p>
+          <div class="codebox">
+            <div class="bar"><span>storage.ts</span><span>TypeScript</span></div>
+<pre><span class="c">// 两种驱动，一个契约</span>
+<span class="k">export interface</span> Storage {
+  put(key: <span class="k">string</span>, body: ReadableStream): <span class="k">Promise</span>&lt;<span class="k">void</span>&gt;;
+  get(key: <span class="k">string</span>): <span class="k">Promise</span>&lt;ReadableStream | <span class="k">null</span>&gt;;
+}
+
+<span class="k">export const</span> createStorage = (driver: <span class="s">"r2"</span> | <span class="s">"local"</span>): Storage =&gt;
+  driver === <span class="s">"r2"</span> ? r2Storage() : localStorage();</pre>
+          </div>
+
+          <blockquote>适配层不是抽象层。它只解决"同一件事在两套运行时怎么做"，不解决"以后可能换别的什么"。</blockquote>
+
+          <h2>三、收敛成本</h2>
+          <p>把差异收敛之后，业务代码里不再出现任何运行时判断。部署到 Cloudflare 只是换一个环境变量，而不是换一份代码。</p>
+        </div>
+
+        <details class="toc-bar" open>
+          <summary>
+            <svg class="icon" style="font-size:16px"><use href="#i-list"/></svg>
+            本文目录
+            <span class="cnt">3 节</span>
+            <svg class="icon" style="font-size:15px;margin-left:8px"><use href="#i-chevd"/></svg>
+          </summary>
+          <ol>
+            <li>一、差异从哪里来</li>
+            <li>二、把差异收敛成一个接口</li>
+            <li class="lv2">代码块与表格的移动端折行策略</li>
+            <li class="lv2">错误码到用户文案的映射</li>
+            <li>三、收敛成本</li>
+          </ol>
+        </details>
+
+        <div class="actions">
+          <button class="act on"><svg class="icon"><use href="#i-heart"/></svg>128</button>
+          <button class="act"><svg class="icon"><use href="#i-bookmark"/></svg>收藏</button>
+          <button class="act"><svg class="icon"><use href="#i-share"/></svg>分享</button>
+        </div>
+
+        <div class="adj">
+          <a href="#"><small>上一篇</small>分类树：无限级分类的存储、查询与环检测</a>
+          <a href="#"><small>下一篇</small>数据建模手艺：状态机、冗余计数与适配层的心法清单</a>
+        </div>
+
+        <div class="cmt-head">
+          <h3>评论<span class="n">36</span></h3>
+        </div>
+        <div class="cmt">
+          <span class="avatar" style="width:36px;height:36px;flex:0 0 36px;font-size:14px">阿</span>
+          <div class="cbody">
+            <div class="cname">阿七</div>
+            <div class="ctext">适配层这一层薄接口很有启发，我们项目里就是到处 if (isWorker)，后来改起来特别痛。</div>
+            <div class="cfoot"><span>2 小时前</span><button>回复</button></div>
+            <div class="reply">
+              <div class="rto">回复 阿七</div>
+              <div class="rq">适配层这一层薄接口很有启发，我们项目里就是到处 if (isWorker)，后来改起来特别痛。</div>
+              <div class="ra">是的，判断散落在业务里最难收回来。建议先只收存储和环境两项，见效最快。</div>
+              <div class="cfoot" style="margin-top:8px"><span>1 小时前</span><button>回复</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="cmt">
+          <span class="avatar" style="width:36px;height:36px;flex:0 0 36px;font-size:14px">M</span>
+          <div class="cbody">
+            <div class="cname">Ming<span class="opt">复核中</span></div>
+            <div class="ctext">定时任务那一段能不能再展开？Cron 和外部调度器的行为差异挺大的。</div>
+            <div class="cfoot"><span>3 小时前</span><button>回复</button></div>
+          </div>
+        </div>
+        <div style="height:16px"></div>
+      </div>
+      <div class="composer">
+        <span class="fake">写下你的评论…</span>
+        <button class="send" aria-label="发送"><svg class="icon"><use href="#i-send"/></svg></button>
+      </div>
+    </div>
+    <span class="phone-label">PS-05 文章详情 · 正文优先 → 目录 → 互动 → 叠楼评论</span>
+  </div>
+
+</div>
+
+<script>
+  const html = document.documentElement;
+  const btnLight = document.getElementById('btnLight');
+  const btnDark = document.getElementById('btnDark');
+  const setTheme = (t) => {
+    html.setAttribute('data-theme', t);
+    btnLight.setAttribute('aria-pressed', String(t === 'light'));
+    btnDark.setAttribute('aria-pressed', String(t === 'dark'));
+  };
+  btnLight.addEventListener('click', () => setTheme('light'));
+  btnDark.addEventListener('click', () => setTheme('dark'));
+  const forced = new URLSearchParams(location.search).get('theme');
+  if (forced === 'light' || forced === 'dark') setTheme(forced);
+  else if (window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme('dark');
+</script>
+</body>
+</html>

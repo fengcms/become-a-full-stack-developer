@@ -56,8 +56,15 @@ M0 开篇 / M1 Node / M2 React / M3 Next / M4 Flutter / M5 Taro / M6 Go / M7 Vue
 - **⚠️ 线上占位残留（2026-09-28 实测，必修）**：blog AI 的已发布正文备份（`/Users/fungleo/Documents/Blogs/old-blogs/*.md`，抓自线上页）中，**37 篇**含 `{{LINK:Mx-yy}}` 原始文本、共 **72 处**（Top：M0-08×10、M1-29×6、M0-04×4）。**根因是「前向引用」**：文章发布时它指向的篇尚未发布，占位无处可填（如 M0-01~07 都指向收官篇 M0-08）。**结论：本地源干净 ≠ 线上干净**；收官「全量更新」必须**逐篇以本地源重新覆盖**才能真正消除——建议收官前单独做一轮「全量重发」而非「按需精选」。这是当前线上最显性的质量缺陷。
 - **待最终全量更新清单**（本地源已改、等系列发完统一重发）：`M1-02`、`M1-06`、`M1-07`、`M1-09`、`M1-14`、`M1-17`、`M1-18`、`M1-19`、`M1-20`、`M1-21`、`M1-22`、`M1-23`、`M1-24`、`M1-25`、`M1-26`、`M1-27`、`M1-28`、`M1-29`、`M1-30`、`M1-31`、`M2-02`、`M2-03`、`M2-05`、`M2-06`、`M2-09`、`M2-10`、`M2-11`、`M2-13`、`M2-17`、`M2-19`、`M2-20`、`M2-21`、`M2-22`、`M3-01`、`M3-02`、`M3-05`、`M3-06`、`M3-07`、`M0-03`（含 09-19 坏链 9 处、09-22 错链 2 处、09-23 M2-10/M2-13 回填、09-28 M2-17/19/20/21/22 + M3-01/02 回填、09-29 M3-05 回填 `{{LINK:M3-04}}`、09-30 M3-06/07 互指回填；10-02 本轮回填目标均为未发布篇，无新增）。⚠️ 此清单**不完整**，见「发布维护 SOP」小节末条。
 - **SOP-C 审计基线（2026-10-02）**：正文唯一 ID 69 / 索引 469 / 已发布 72 篇，幽灵链 0、错链 0、占位残留 0（`check_links.py` 退出码 0）。存疑未改：`M2-07` 文案多写「与权限模型」但目标（M1-12 认证方案）正确。
-- **M3 Next 前台已启动（2026-09-24+）**：存在**双前台目录歧义**——`web-frontend/`(pkg `web-frontend-codex`，Codex 初版) 与 `web-frontend-trae/`(pkg `web-frontend`，Trae 重做版·**当前主力**) 并存；根 `README.md` 仍写 M3 在 `web-frontend/`，待 owner 定 canonical 并清理。M3 文章 4 篇（1 已发），路线图已「调整规模」（末提交 `0ce72a0`）。
-- **七端缩水观察**：`go-backend/` 与 `app-frontend/`(Flutter) 仍 **0 文件**；实际仅交付 Node 后端 + `manage-frontend`(React) + `web-frontend`(Next) 三端。Go/Flutter/Taro(M5) 是否仍属范围待 owner 确认。
+- **M3 Next 前台已启动（2026-09-24+）**：存在**双前台目录歧义**，2026-10-02 复核澄清——`web-frontend/`(pkg `web-frontend-codex`) = **纯白／晴蓝 A 方案**（2182 行 CSS，含会员投稿/叠楼评论，最后改动 09-28，`docs/` 齐全）为**当前主力**；`web-frontend-trae/`(pkg `web-frontend`) = **极简编辑风**（米白 `#fbfaf7`＋衬线标题，226 行 CSS，最后改动 09-18），`web-frontend/docs/01-设计与工程落地方案.md` 已明示「旧『极简编辑风』由本次已确认方案替代」。**故任何端取视觉基准一律以 `web-frontend/` 为准**。根 `README.md` 仍写 M3 在 `web-frontend/`，待 owner 定 canonical 并清理。M3 文章 4 篇（1 已发），路线图已「调整规模」（末提交 `0ce72a0`）。
+- **M4 Flutter APP（2026-10-02 启动）**：规划基线 6 篇 `docs/flutter-app/README + 01~05` 已过第一轮评审（91/100，无阻塞，可进 Phase 0）；**UI 设计三步已全部交付**（owner 逐步确认「满意」）：
+  - ① `docs/flutter-app/06-UI设计规范与设计令牌.md` — 视觉唯一事实源。浅色继承网站 A 方案，深色为 APP 新增独立设计；对比度脚本实算全达标。**三处必须保留的刻意例外**：浅蓝底上的文字用 `brand.onSubtle #2A6AA3`（`#3277B5` 在其上仅 4.29:1）；深色主按钮实底 `#37709F`；待审 `#7A6122`/草稿 `#5C6C80` 已加深（网站原值 4.23:1 不达标）。
+  - ② `docs/flutter-app/prototype/01-基本页面样稿.html` — 首页 + 文章详情双屏，双主题。
+  - ③ `docs/flutter-app/prototype/02-高保真可交互原型.html` — 单文件自包含，覆盖 `02-页面地图` 全 18 页 + 未知路由兜底；hash 路由 / 三主题 / 状态注入 / 登录态切换；左导航树 + 中 393×852 设备 + 右页面规格说明。
+  - ③ 配套 `docs/flutter-app/prototype/app_theme.dart` — Flutter `ThemeExtension` 全量令牌 + `buildAppTheme()` + 状态/错误文案映射，M4 建工程后移到 `lib/app/theme/`。
+  - **验证链（可复用）**：`node --check` 语法 → headless 注入 `window.onerror` 写 `data-err` 后 `--dump-dom` 定位运行时错误 → 注入自动化交互测试（32/32 通过）→ 逐路由 dump（20/20）→ 2x 截图 + PIL 裁切核对细节。
+  - **两个必修坑**：① **跨 `<script>` 块的函数声明不提升**，路由表等「立即求值且引用后续函数」的常量必须放在所有视图函数之后，否则 ReferenceError + TDZ 连锁导致整页空白；② `dump-dom` 含 `<script>` 源码，用字符串包含判断「是否渲染成功」会假阳性，须去 script 或直接量元素内容。
+- **七端缩水观察**：`go-backend/` 与 `app-frontend/`(Flutter) 仍 **0 文件**；实际仅交付 Node 后端 + `manage-frontend`(React) + `web-frontend`(Next) 三端，Flutter 已进入规划与设计阶段（尚无 Dart 代码）。Go/Taro(M5) 是否仍属范围待 owner 确认。
 
 ## M2 前端（React 管理后台）
 - 目录 `manage-frontend/`（已建）。栈：Vite8 + React19 + TS6 + Tailwind4 + shadcn/ui + TanStack Query5 + Zustand5（仅鉴权）+ RHF7+Zod4 + Biome2.5；已开 `strict`。dev 端口 12000。

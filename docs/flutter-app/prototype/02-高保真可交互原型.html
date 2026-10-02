@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flutter APP · 高保真可交互原型（步骤三）</title>
+<style>
+/* ================================================================
+   令牌：与 docs/flutter-app/06-UI设计规范与设计令牌.md 一一对应
+   浅色继承网站 A 方案（纯白／晴蓝）；深色为 APP 新增独立设计
+   ================================================================ */
+:root{
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s8:32px; --s10:40px;
+  --r-xs:4px; --r-sm:6px; --r-md:8px; --r-lg:12px; --r-full:999px;
+  --font-cn:"PingFang SC","Noto Sans SC",-apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif;
+  --font-mono:"SFMono-Regular",Consolas,"Roboto Mono",monospace;
+}
+html[data-theme="light"]{
+  --bg:#FFFFFF; --bg-subtle:#F7FAFD; --surface:#FFFFFF; --surface-sunken:#F5F9FC;
+  --surface-elevated:#FFFFFF; --line:#E9EFF5; --line-strong:#D5E2ED; --field-border:#8397AB;
+  --text-title:#2F4256; --text-body:#34465A; --text-muted:#607286;
+  --text-placeholder:#8A99A8; --text-inverse:#FFFFFF;
+  --brand:#3277B5; --brand-hover:#245D91; --brand-solid:#3277B5;
+  --brand-subtle:#EDF5FC; --brand-on-subtle:#2A6AA3; --focus-ring:#3277B5;
+  --success:#276954; --success-bg:#EDF7F2;
+  --warning:#7A6122; --warning-bg:#FAF5E9;
+  --danger:#9E3D3D;  --danger-bg:#FCF1F1;
+  --st-pub:#3277B5; --st-pub-bg:#EDF5FC;
+  --st-pen:#7A6122; --st-pen-bg:#FAF5E9;
+  --st-drf:#5C6C80; --st-drf-bg:#F0F3F6;
+  --st-rej:#9E3D3D; --st-rej-bg:#FCF1F1;
+  --hero-wash:linear-gradient(115deg,#F0F7FE,#E4F0FB);
+  --hero-ink:#2F4256; --hero-sub:#617D96;
+  --code-bg:#F7FAFD; --code-fg:#3E627F;
+  --k:#8B5CF6; --s:#0F766E;
+  --skeleton:#EDF3F8; --skeleton-2:#E2EBF3;
+  --scrim:rgba(18,24,32,.45);
+  --shadow-card:0 1px 3px rgba(41,78,117,.06);
+  --shadow-overlay:0 8px 24px rgba(41,78,117,.12);
+  --shadow-sheet:0 -2px 16px rgba(41,78,117,.10);
+  --doc-bg:#EEF1F5; --doc-fg:#2F4256; --doc-muted:#607286;
+  --doc-panel:#FFFFFF; --doc-line:#E3E9EF;
+}
+html[data-theme="dark"]{
+  --bg:#121820; --bg-subtle:#171E27; --surface:#1A222C; --surface-sunken:#161C24;
+  --surface-elevated:#212B36; --line:#2E3A46; --line-strong:#3A4754; --field-border:#4A5A69;
+  --text-title:#E8EFF6; --text-body:#C6D2DE; --text-muted:#8FA0B2;
+  --text-placeholder:#6E7E8F; --text-inverse:#FFFFFF;
+  --brand:#5EA0D8; --brand-hover:#7FB6E4; --brand-solid:#37709F;
+  --brand-subtle:#1C2E3E; --brand-on-subtle:#7FB6E4; --focus-ring:#5EA0D8;
+  --success:#7FCBA8; --success-bg:#17281F;
+  --warning:#E0BC72; --warning-bg:#2E2718;
+  --danger:#EF9A9A;  --danger-bg:#2F1D1D;
+  --st-pub:#7FB6E4; --st-pub-bg:#1C2E3E;
+  --st-pen:#E0BC72; --st-pen-bg:#2E2718;
+  --st-drf:#93A4B6; --st-drf-bg:#232B34;
+  --st-rej:#EF9A9A; --st-rej-bg:#2F1D1D;
+  --hero-wash:linear-gradient(115deg,#1B2733,#16202A);
+  --hero-ink:#E8EFF6; --hero-sub:#9DB0C2;
+  --code-bg:#161C24; --code-fg:#9CC4E4;
+  --k:#C4A0F5; --s:#6FCFB4;
+  --skeleton:#212B36; --skeleton-2:#2A3540;
+  --scrim:rgba(0,0,0,.6);
+  --shadow-card:0 0 0 1px var(--line-strong);
+  --shadow-overlay:0 8px 24px rgba(0,0,0,.45);
+  --shadow-sheet:0 -2px 16px rgba(0,0,0,.4);
+  --doc-bg:#0C1116; --doc-fg:#E8EFF6; --doc-muted:#8FA0B2;
+  --doc-panel:#161D26; --doc-line:#2E3A46;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  font-family:var(--font-cn); background:var(--doc-bg); color:var(--doc-fg);
+  min-height:100vh; padding:var(--s5) var(--s6) 48px; -webkit-font-smoothing:antialiased;
+  transition:background .2s;
+}
+svg.i{width:1em; height:1em; fill:none; stroke:currentColor; stroke-width:1.6;
+  stroke-linecap:round; stroke-linejoin:round; display:block; flex:0 0 auto;}
+button{font-family:inherit;}
+
+/* ================= 展示壳 ================= */
+.topbar{max-width:1500px; margin:0 auto var(--s5); display:flex; align-items:center;
+  justify-content:space-between; gap:var(--s4); flex-wrap:wrap;}
+.topbar h1{font-size:17px; font-weight:600; color:var(--doc-fg);}
+.topbar .sub{font-size:12px; color:var(--doc-muted); margin-top:5px; line-height:1.6;}
+.tools{display:flex; align-items:center; gap:var(--s3); flex-wrap:wrap;}
+.tool-group{display:flex; align-items:center; gap:var(--s2);}
+.tool-group>label{font-size:11px; color:var(--doc-muted); white-space:nowrap;}
+.seg{display:flex; background:var(--doc-panel); border:1px solid var(--doc-line);
+  border-radius:var(--r-sm); overflow:hidden;}
+.seg button{border:0; background:none; color:var(--doc-muted); font-size:12px;
+  padding:6px 12px; cursor:pointer; min-height:32px; white-space:nowrap;}
+.seg button[aria-pressed="true"]{background:var(--brand-subtle); color:var(--brand-on-subtle); font-weight:500;}
+
+.layout{max-width:1500px; margin:0 auto; display:flex; gap:var(--s6); align-items:flex-start;
+  justify-content:center;}
+/* 左侧导航树 */
+.navtree{width:250px; flex:0 0 250px; background:var(--doc-panel); border:1px solid var(--doc-line);
+  border-radius:var(--r-lg); padding:var(--s4); max-height:calc(100vh - 130px); overflow-y:auto;}
+.navtree h2{font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--doc-muted);
+  margin:var(--s4) 0 var(--s2); font-weight:600;}
+.navtree h2:first-child{margin-top:0;}
+.navtree a{display:flex; align-items:center; gap:var(--s2); padding:6px 8px; border-radius:var(--r-sm);
+  font-size:12.5px; color:var(--doc-fg); text-decoration:none; line-height:1.4; min-width:0;}
+.navtree a:hover{background:var(--bg-subtle);}
+.navtree a.on{background:var(--brand-subtle); color:var(--brand-on-subtle); font-weight:600;}
+.navtree a code{font-family:var(--font-mono); font-size:10px; color:var(--doc-muted); margin-left:auto;
+  opacity:.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:104px; min-width:0;}
+.navtree a.on code{color:var(--brand-on-subtle); opacity:1;}
+
+/* 中间设备 */
+.device-wrap{display:flex; flex-direction:column; align-items:center; gap:var(--s2);}
+.caption{font-size:11.5px; color:var(--doc-muted); text-align:center; line-height:1.6;}
+.device{width:393px; height:852px; border-radius:26px; background:var(--bg);
+  border:1px solid var(--line); overflow:hidden; display:flex; flex-direction:column;
+  box-shadow:var(--shadow-overlay); position:relative; transition:background .2s;}
+.statusbar{height:32px; flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
+  padding:0 20px; font-size:12px; font-weight:600; color:var(--text-title); background:var(--surface);}
+.sb-r{display:flex; align-items:center; gap:5px;}
+.sb-bars{display:flex; align-items:flex-end; gap:2px; height:10px;}
+.sb-bars i{width:3px; background:currentColor; border-radius:1px; display:block;}
+.sb-bars i:nth-child(1){height:4px;} .sb-bars i:nth-child(2){height:6px;}
+.sb-bars i:nth-child(3){height:8px;} .sb-bars i:nth-child(4){height:10px;}
+.sb-batt{width:22px; height:11px; border:1.4px solid currentColor; border-radius:3px; position:relative;}
+.sb-batt::after{content:""; position:absolute; right:-3.5px; top:3px; width:2px; height:5px;
+  background:currentColor; border-radius:0 1px 1px 0;}
+.sb-batt i{position:absolute; inset:1.6px; width:70%; background:currentColor; border-radius:1.5px; display:block;}
+
+/* 顶部栏 */
+.appbar{flex:0 0 auto; min-height:52px; display:flex; align-items:center; gap:var(--s2);
+  padding:0 var(--s4); background:var(--surface); border-bottom:1px solid var(--line);}
+.appbar .brand{display:flex; align-items:center; gap:var(--s2); font-weight:700; font-size:16px;
+  color:var(--text-title); letter-spacing:-.3px;}
+.brand-mark{background:var(--brand-subtle); color:var(--brand-on-subtle); font-family:var(--font-mono);
+  font-size:15px; font-weight:700; padding:3px 7px; border-radius:var(--r-xs); line-height:1.2;}
+.appbar .grow{flex:1;}
+.appbar-title{font-size:15px; font-weight:600; color:var(--text-title); flex:1; min-width:0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.iconbtn{width:44px; height:44px; display:grid; place-items:center; border:0; background:none;
+  color:var(--text-body); cursor:pointer; font-size:20px; border-radius:var(--r-full); position:relative;}
+.iconbtn:hover{background:var(--bg-subtle);}
+.iconbtn:active{background:var(--brand-subtle);}
+.iconbtn.edge{margin-left:-10px;} .iconbtn.edge-r{margin-right:-10px;}
+.badge-dot{position:absolute; top:9px; right:9px; min-width:15px; height:15px; border-radius:8px;
+  background:var(--danger); color:#fff; font-size:9px; font-weight:600; display:grid;
+  place-items:center; padding:0 4px; border:1.5px solid var(--surface);}
+
+/* 内容区 */
+.screen{flex:1; overflow-y:auto; overflow-x:hidden; background:var(--bg); scrollbar-width:none;
+  scroll-behavior:auto; position:relative;}
+.screen::-webkit-scrollbar{display:none;}
+.fade{animation:fade .18s ease-out;}
+@keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+@media (prefers-reduced-motion:reduce){ .fade{animation:none;} }
+
+/* 底部 Tab */
+.tabbar{flex:0 0 auto; height:56px; display:flex; background:var(--surface); border-top:1px solid var(--line);}
+.tabbar button{flex:1; border:0; background:none; cursor:pointer; color:var(--text-muted);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  font-size:10px; position:relative; min-height:56px;}
+.tabbar button svg.i{font-size:22px;}
+.tabbar button.on{color:var(--brand); font-weight:600;}
+.tab-dot{position:absolute; top:9px; left:calc(50% + 7px); width:7px; height:7px; border-radius:50%;
+  background:var(--danger);}
+
+/* ================= 通用页面元素 ================= */
+.px{padding-left:var(--s4); padding-right:var(--s4);}
+.sec-head{display:flex; align-items:center; justify-content:space-between; gap:var(--s3);
+  margin:var(--s6) var(--s4) 0; padding-bottom:var(--s3); border-bottom:1px solid var(--line);}
+.sec-head h3{font-size:17px; font-weight:600; color:var(--text-title);}
+.sec-head .more{font-size:12px; color:var(--brand); text-decoration:none; display:flex;
+  align-items:center; gap:2px; background:none; border:0; cursor:pointer; min-height:24px;}
+.sec-head .more svg.i{font-size:14px;}
+.page-title{padding:var(--s5) var(--s4) var(--s2);}
+.page-title h1{font-size:24px; font-weight:700; color:var(--text-title); line-height:1.35;}
+.page-title p{font-size:12.5px; color:var(--text-muted); margin-top:6px; line-height:1.65;}
+
+/* 文章列表项 */
+.entry{display:flex; gap:var(--s3); padding:var(--s4); border-bottom:1px solid var(--line);
+  align-items:flex-start; cursor:pointer; background:none; border-left:0; border-right:0;
+  border-top:0; width:100%; text-align:left;}
+.entry:hover{background:var(--bg-subtle);}
+.entry:active{background:var(--brand-subtle);}
+.entry .eb{flex:1; min-width:0;}
+.entry h4{font-size:16px; line-height:1.5; font-weight:600; color:var(--text-title); margin-bottom:6px;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+.entry .sum{font-size:12.5px; line-height:1.65; color:var(--text-muted); margin-bottom:8px;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+.entry .meta{font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.entry .meta i{width:2px; height:2px; border-radius:50%; background:currentColor; opacity:.6; display:block;}
+.thumb{width:96px; height:72px; flex:0 0 96px; border-radius:var(--r-xs); background:var(--brand-subtle);
+  color:var(--brand-on-subtle); display:grid; place-items:center; font-family:var(--font-mono);
+  font-size:14px; font-weight:600; border:1px solid var(--line);}
+.entry.noimg .thumb{display:none;}
+
+/* 徽章 */
+.chip{display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:500;
+  padding:3px 8px; border-radius:var(--r-xs); white-space:nowrap;}
+.chip svg.i{font-size:12px;}
+.chip.pub{background:var(--st-pub-bg); color:var(--st-pub);}
+.chip.pen{background:var(--st-pen-bg); color:var(--st-pen);}
+.chip.drf{background:var(--st-drf-bg); color:var(--st-drf);}
+.chip.rej{background:var(--st-rej-bg); color:var(--st-rej);}
+.chip.tagp{background:var(--brand-subtle); color:var(--brand-on-subtle); border-radius:var(--r-full);}
+
+/* 按钮 */
+.b{display:inline-flex; align-items:center; justify-content:center; gap:6px; font-size:14px;
+  font-weight:500; border-radius:var(--r-md); min-height:44px; padding:0 var(--s5);
+  border:1px solid transparent; cursor:pointer; text-decoration:none;}
+.b svg.i{font-size:17px;}
+.b.pri{background:var(--brand-solid); color:#fff;}
+.b.pri:active{background:var(--brand-hover);}
+.b.sec{background:var(--surface); border-color:var(--line-strong); color:var(--brand);}
+.b.sec:active{background:var(--brand-subtle);}
+.b.txt{background:none; color:var(--brand); padding:0 var(--s2);}
+.b.dgr{background:var(--danger); color:#fff;}
+.b.wide{width:100%;}
+.b:disabled{opacity:.55; cursor:default;}
+
+/* 表单 */
+.field{display:block; margin-bottom:var(--s4);}
+.field .lb{font-size:13px; font-weight:500; color:var(--text-body); margin-bottom:7px; display:block;}
+.field .lb .req{color:var(--danger); margin-left:2px;}
+.inp{width:100%; border:1px solid var(--field-border); border-radius:var(--r-sm); background:var(--surface-elevated);
+  color:var(--text-body); font-size:16px; padding:11px 12px; min-height:44px;}
+.inp::placeholder{color:var(--text-placeholder);}
+.inp:focus{outline:2px solid var(--focus-ring); outline-offset:1px; border-color:var(--brand);}
+.inp.err{border-color:var(--danger);}
+textarea.inp{min-height:96px; resize:vertical; line-height:1.7;}
+.field .hint{font-size:11px; color:var(--text-muted); margin-top:6px; line-height:1.6;}
+.field .errtxt{font-size:11px; color:var(--danger); margin-top:6px; display:flex; align-items:center; gap:4px;}
+.field .errtxt svg.i{font-size:13px;}
+.counter{font-size:11px; color:var(--text-muted); text-align:right; margin-top:5px;}
+.counter.warn{color:var(--warning); font-weight:500;}
+
+/* 分段控件 */
+.segs{display:flex; gap:var(--s2); overflow-x:auto; padding:var(--s3) var(--s4);
+  scrollbar-width:none; border-bottom:1px solid var(--line);}
+.segs::-webkit-scrollbar{display:none;}
+.segs button{border:1px solid var(--line); background:var(--surface); color:var(--text-muted);
+  font-size:12.5px; padding:0 14px; height:32px; border-radius:var(--r-full); cursor:pointer;
+  white-space:nowrap; flex:0 0 auto;}
+.segs button.on{background:var(--brand-subtle); color:var(--brand-on-subtle); border-color:var(--brand-subtle);
+  font-weight:600;}
+
+/* 卡片 */
+.card{margin:var(--s4); border:1px solid var(--line); border-radius:var(--r-md); background:var(--surface);
+  overflow:hidden;}
+.card-pad{padding:var(--s4);}
+.row{display:flex; align-items:center; gap:var(--s3); padding:var(--s4); border-bottom:1px solid var(--line);}
+.row:last-child{border-bottom:0;}
+.row .rt{flex:1; min-width:0; font-size:14.5px; color:var(--text-body);}
+.row .rt small{display:block; font-size:11.5px; color:var(--text-muted); margin-top:4px;}
+.row .rv{font-size:13px; color:var(--text-muted);}
+.row.link{cursor:pointer;} .row.link:hover{background:var(--bg-subtle);}
+.row svg.i.arw{font-size:15px; color:var(--text-muted);}
+
+/* 头像 */
+.avatar{border-radius:50%; background:var(--brand-subtle); color:var(--brand-on-subtle);
+  display:grid; place-items:center; font-weight:600; flex:0 0 auto; width:40px; height:40px; font-size:15px;}
+.avatar.sm{width:32px; height:32px; font-size:13px;}
+.avatar.xs{width:26px; height:26px; font-size:11px;}
+.avatar.lg{width:64px; height:64px; font-size:24px;}
+
+/* 空态 / 错误态 / 加载 */
+.state{padding:64px var(--s6); text-align:center;}
+.state .ic{width:76px; height:76px; border-radius:50%; background:var(--brand-subtle); color:var(--brand-on-subtle);
+  display:grid; place-items:center; margin:0 auto var(--s4); font-size:30px;}
+.state h2{font-size:19px; font-weight:600; color:var(--text-title); margin-bottom:var(--s2);}
+.state p{font-size:13px; color:var(--text-muted); line-height:1.7; max-width:280px; margin:0 auto var(--s5);}
+.state .acts{display:flex; gap:var(--s2); justify-content:center; flex-wrap:wrap;}
+.state.err .ic{background:var(--danger-bg); color:var(--danger);}
+.sk{padding:var(--s4); display:flex; gap:var(--s3); border-bottom:1px solid var(--line);}
+.sk .skb{flex:1;}
+.skline{height:14px; border-radius:var(--r-xs); background:var(--skeleton); margin-bottom:10px;
+  animation:breathe 1.2s ease-in-out infinite;}
+.skline.w82{width:82%;} .skline.w45{width:45%;} .skline.w60{width:60%;} .skline.h18{height:18px;}
+.skbox{width:96px; height:72px; flex:0 0 96px; border-radius:var(--r-xs); background:var(--skeleton);
+  animation:breathe 1.2s ease-in-out infinite;}
+@keyframes breathe{0%,100%{opacity:1;} 50%{opacity:.55;}}
+@media (prefers-reduced-motion:reduce){ .skline,.skbox{animation:none;} }
+
+/* Toast */
+.toast{position:absolute; left:50%; bottom:84px; transform:translateX(-50%) translateY(8px);
+  background:var(--text-title); color:var(--bg); font-size:13px; padding:10px 18px;
+  border-radius:var(--r-full); opacity:0; pointer-events:none; transition:.2s; z-index:60;
+  max-width:300px; text-align:center; box-shadow:var(--shadow-overlay);}
+.toast.show{opacity:.96; transform:translateX(-50%) translateY(0);}
+/* 遮罩与底部面板 */
+.scrim{position:absolute; inset:0; background:var(--scrim); opacity:0; pointer-events:none;
+  transition:.2s; z-index:40;}
+.scrim.show{opacity:1; pointer-events:auto;}
+.sheet{position:absolute; left:0; right:0; bottom:0; background:var(--surface);
+  border-radius:var(--r-lg) var(--r-lg) 0 0; box-shadow:var(--shadow-sheet); z-index:50;
+  transform:translateY(100%); transition:transform .24s cubic-bezier(.22,.61,.36,1);
+  max-height:78%; display:flex; flex-direction:column;}
+.sheet.show{transform:none;}
+.sheet .sh{padding:var(--s4); border-bottom:1px solid var(--line); display:flex; align-items:center;
+  justify-content:space-between; gap:var(--s3);}
+.sheet .sh h3{font-size:16px; font-weight:600; color:var(--text-title);}
+.sheet .sb{overflow-y:auto; padding:var(--s2) 0 var(--s4); scrollbar-width:none;}
+.sheet .sb::-webkit-scrollbar{display:none;}
+.sheet .grab{width:36px; height:4px; border-radius:2px; background:var(--line-strong); margin:10px auto 0;}
+@media (prefers-reduced-motion:reduce){ .sheet{transition:none;} }
+
+/* ================= 首页 ================= */
+.hero{margin:var(--s4) var(--s4) 0; border-radius:var(--r-md); background:var(--hero-wash);
+  padding:var(--s5); position:relative; overflow:hidden; cursor:pointer;}
+.hero::before{content:"{ API }"; position:absolute; right:14px; top:-6px; font-family:var(--font-mono);
+  font-size:46px; font-weight:600; color:var(--hero-ink); opacity:.08; pointer-events:none;}
+.hero .eb{font-size:11px; font-weight:600; color:var(--brand-on-subtle); letter-spacing:.06em;
+  display:block; margin-bottom:var(--s2); position:relative;}
+.hero h2{font-size:24px; line-height:1.35; font-weight:700; color:var(--hero-ink); margin-bottom:var(--s2);
+  position:relative; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
+.hero p{font-size:13px; line-height:1.7; color:var(--hero-sub); position:relative;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+.dots{display:flex; gap:6px;}
+.dots i{height:4px; width:20px; border-radius:2px; background:var(--brand); opacity:.28; display:block;}
+.dots i.on{opacity:1;}
+.heroctrl{display:flex; justify-content:space-between; align-items:center; padding:0 var(--s4); margin-top:var(--s3);}
+.heroctrl .mid{display:flex; align-items:center; gap:var(--s3);}
+.heroctrl .mid>span{font-size:11px; color:var(--text-muted); font-family:var(--font-mono);}
+.heroctrl button{border:1px solid var(--line-strong); background:var(--surface); color:var(--text-muted);
+  width:32px; height:32px; border-radius:var(--r-full); display:grid; place-items:center; cursor:pointer; font-size:15px;}
+.heroctrl button:hover{background:var(--brand-subtle); color:var(--brand-on-subtle); border-color:var(--brand-subtle);}
+
+/* 排行 */
+.rank{display:flex; gap:var(--s3); padding:var(--s3) var(--s4); border-bottom:1px solid var(--line);
+  align-items:baseline; cursor:pointer; background:none; border-left:0; border-right:0; border-top:0; width:100%; text-align:left;}
+.rank:hover{background:var(--bg-subtle);}
+.rank b{font-family:var(--font-mono); font-size:14px; color:var(--brand); min-width:18px; font-weight:700; opacity:.75;}
+.rank .rtx{flex:1; font-size:14px; line-height:1.55; color:var(--text-body);
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+.rank span{font-size:11px; color:var(--text-muted); white-space:nowrap;}
+
+/* ================= 文章详情 ================= */
+.crumb{padding:var(--s3) var(--s4) 0; display:flex; align-items:center; gap:6px; font-size:12px;
+  color:var(--text-muted); flex-wrap:wrap;}
+.crumb button{background:none; border:0; color:var(--text-muted); font-size:12px; cursor:pointer; padding:0;}
+.crumb svg.i{font-size:13px; opacity:.7;}
+.art-head{padding:var(--s4);}
+.art-head h1{font-size:24px; line-height:1.4; font-weight:700; color:var(--text-title); margin:var(--s3) 0 var(--s4);}
+.byline{display:flex; align-items:center; gap:var(--s3); padding-bottom:var(--s4); border-bottom:1px solid var(--line);}
+.byline .who{flex:1; min-width:0;}
+.byline .who strong{display:block; font-size:14px; font-weight:600; color:var(--text-body);}
+.byline .who small{font-size:11px; color:var(--text-muted);}
+.lead{margin:var(--s4); padding:var(--s4); background:var(--surface-sunken);
+  border-left:3px solid var(--brand-subtle); border-radius:0 var(--r-sm) var(--r-sm) 0;
+  font-size:14px; line-height:1.8; color:var(--text-muted);}
+.prose{padding:0 var(--s4); font-size:17px; line-height:1.85; color:var(--text-body); overflow-wrap:anywhere;}
+.prose p{margin-bottom:var(--s5);}
+.prose h2{font-size:20px; line-height:1.45; font-weight:600; color:var(--text-title);
+  margin:var(--s8) 0 var(--s3); padding-left:10px; border-left:3px solid var(--brand);}
+.prose code{font-family:var(--font-mono); font-size:.86em; background:var(--code-bg);
+  border:1px solid var(--line); border-radius:3px; padding:1px 5px; color:var(--code-fg);}
+.prose a{color:var(--brand); text-decoration:underline; text-underline-offset:3px;}
+.codebox{margin:var(--s4) 0 var(--s5); background:var(--code-bg); border:1px solid var(--line);
+  border-radius:var(--r-sm); overflow:hidden;}
+.codebox .bar{display:flex; justify-content:space-between; align-items:center; padding:7px var(--s3);
+  border-bottom:1px solid var(--line); font-size:11px; color:var(--text-muted); font-family:var(--font-mono);}
+.codebox pre{padding:var(--s3); font-family:var(--font-mono); font-size:12.5px; line-height:1.85;
+  color:var(--code-fg); overflow-x:auto; white-space:pre;}
+.codebox .k{color:var(--k);} .codebox .s{color:var(--s);} .codebox .c{opacity:.6;}
+.tbl-wrap{margin:var(--s4) 0 var(--s5); overflow-x:auto;}
+.prose table{width:100%; min-width:340px; border-collapse:collapse; font-size:13px;}
+.prose th,.prose td{border:1px solid var(--line); padding:9px 11px; text-align:left; line-height:1.6;}
+.prose th{background:var(--surface-sunken); font-weight:500; color:var(--text-title);}
+.prose blockquote{margin:var(--s4) 0 var(--s5); padding:var(--s3) var(--s4); background:var(--surface-sunken);
+  border-left:3px solid var(--brand-subtle); border-radius:0 var(--r-sm) var(--r-sm) 0;
+  color:var(--text-muted); font-size:15px;}
+.toc-bar{margin:var(--s6) var(--s4) var(--s4); border:1px solid var(--line); border-radius:var(--r-md); overflow:hidden;}
+.toc-bar summary{list-style:none; display:flex; align-items:center; gap:var(--s2); padding:var(--s3) var(--s4);
+  font-size:13px; font-weight:500; color:var(--brand); cursor:pointer; min-height:44px;}
+.toc-bar summary::-webkit-details-marker{display:none;}
+.toc-bar summary .cnt{margin-left:auto; font-size:11px; color:var(--text-muted); font-weight:400;}
+.toc-bar ol{padding:0 var(--s4) var(--s3); list-style:none;}
+.toc-bar li{padding:8px 0; font-size:13px; color:var(--text-muted); border-top:1px solid var(--line); cursor:pointer;}
+.toc-bar li.lv2{padding-left:14px;}
+.toc-bar li:hover{color:var(--brand);}
+.actions{display:flex; justify-content:center; gap:var(--s3); padding:var(--s5) var(--s4);
+  border-top:1px solid var(--line); border-bottom:1px solid var(--line);}
+.act{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+  min-width:72px; min-height:56px; padding:var(--s2) var(--s3); border:1px solid var(--line);
+  border-radius:var(--r-md); background:var(--surface); color:var(--text-muted); font-size:11px; cursor:pointer;}
+.act svg.i{font-size:19px;}
+.act.on{border-color:var(--brand); background:var(--brand-subtle); color:var(--brand-on-subtle); font-weight:600;}
+.act.on svg.i{fill:currentColor; stroke:currentColor;}
+.adj{padding:var(--s4); display:grid; gap:var(--s2);}
+.adj button{display:block; padding:var(--s3) var(--s4); border:1px solid var(--line);
+  border-radius:var(--r-md); background:none; text-align:left; color:var(--text-body);
+  font-size:13.5px; line-height:1.55; cursor:pointer; font-family:inherit;}
+.adj button:hover{background:var(--bg-subtle);}
+.adj small{display:block; font-size:11px; color:var(--text-muted); margin-bottom:5px;}
+.cmt{display:flex; gap:var(--s3); padding:var(--s4); border-bottom:1px solid var(--line);}
+.cmt .cb{flex:1; min-width:0;}
+.cmt .cn{font-size:13px; font-weight:600; color:var(--text-body); display:flex; align-items:center; gap:var(--s2);}
+.cmt .ct{font-size:13.5px; line-height:1.75; color:var(--text-body); margin:6px 0 8px; overflow-wrap:anywhere;}
+.cmt .cf{display:flex; gap:var(--s5); font-size:11px; color:var(--text-muted); align-items:center;}
+.cmt .cf button{border:0; background:none; font-size:11px; color:var(--text-muted); cursor:pointer;
+  padding:4px 0; min-height:28px; font-family:inherit;}
+.cmt .cf button:hover{color:var(--brand);}
+.reply{margin-top:var(--s3); padding:var(--s3); background:var(--surface-sunken); border-radius:var(--r-sm);}
+.reply .rto{font-size:12px; color:var(--brand); font-weight:500; margin-bottom:5px;}
+.reply .rq{font-size:12.5px; line-height:1.7; color:var(--text-muted); padding-left:9px;
+  border-left:2px solid var(--line-strong); display:-webkit-box; -webkit-line-clamp:2;
+  -webkit-box-orient:vertical; overflow:hidden;}
+.reply .ra{font-size:13.5px; line-height:1.75; color:var(--text-body); margin-top:6px;}
+.composer{flex:0 0 auto; display:flex; align-items:center; gap:var(--s2); padding:var(--s2) var(--s3);
+  border-top:1px solid var(--line); background:var(--surface);}
+.composer .fake{flex:1; height:38px; border:1px solid var(--field-border); border-radius:var(--r-full);
+  display:flex; align-items:center; padding:0 var(--s4); font-size:13px; color:var(--text-placeholder);
+  background:var(--bg-subtle); cursor:pointer;}
+.composer .send{width:38px; height:38px; border-radius:50%; background:var(--brand-solid); color:#fff;
+  border:0; display:grid; place-items:center; font-size:17px; cursor:pointer;}
+
+/* ================= 分类 / 标签 ================= */
+.ctree{padding:var(--s2) 0;}
+.cnode{border-bottom:1px solid var(--line);}
+.cnode>.crow{display:flex; align-items:center; gap:var(--s2); padding:var(--s4); cursor:pointer;}
+.cnode>.crow:hover{background:var(--bg-subtle);}
+.cnode>.crow .nm{flex:1; font-size:15px; font-weight:500; color:var(--text-body);}
+.cnode>.crow .cnt{font-size:11.5px; color:var(--text-muted);}
+.cnode>.crow svg.i{font-size:15px; color:var(--text-muted); transition:transform .18s;}
+.cnode.open>.crow svg.i.chev{transform:rotate(90deg);}
+.csub{display:none; padding-left:var(--s4); background:var(--bg-subtle);}
+.cnode.open>.csub{display:block;}
+.csub button{display:block; width:100%; text-align:left; background:none; border:0; border-bottom:1px solid var(--line);
+  padding:var(--s3) var(--s4); font-size:13.5px; color:var(--text-body); cursor:pointer; font-family:inherit;}
+.csub button:hover{color:var(--brand);}
+.tiles{display:grid; grid-template-columns:1fr 1fr; gap:var(--s3); padding:var(--s4);}
+.tile{border:1px solid var(--line); border-radius:var(--r-md); padding:var(--s4); background:var(--surface);
+  cursor:pointer; text-align:left; display:flex; flex-direction:column; gap:5px;}
+.tile:hover{background:var(--bg-subtle);}
+.tile strong{font-size:15px; font-weight:500; color:var(--text-body);}
+.tile span{font-size:11.5px; color:var(--text-muted);}
+
+/* ================= 搜索 ================= */
+.searchbar{display:flex; gap:var(--s2); padding:var(--s3) var(--s4); border-bottom:1px solid var(--line);}
+.searchbar .wrap{flex:1; display:flex; align-items:center; gap:var(--s2); border:1px solid var(--field-border);
+  border-radius:var(--r-full); padding:0 var(--s3); background:var(--bg-subtle); min-height:40px;}
+.searchbar .wrap svg.i{font-size:16px; color:var(--text-muted);}
+.searchbar input{flex:1; border:0; background:none; font-size:15px; color:var(--text-body); outline:none; min-width:0;}
+.searchbar input::placeholder{color:var(--text-placeholder);}
+.hist{padding:var(--s4);}
+.hist h3{font-size:13px; font-weight:600; color:var(--text-muted); margin-bottom:var(--s3);}
+.hist .tags{display:flex; flex-wrap:wrap; gap:var(--s2);}
+.hist .tags button{border:1px solid var(--line); background:var(--surface); color:var(--text-body);
+  font-size:12.5px; padding:6px 12px; border-radius:var(--r-full); cursor:pointer; font-family:inherit;}
+.hist .tags button:hover{background:var(--brand-subtle); color:var(--brand-on-subtle); border-color:var(--brand-subtle);}
+mark{background:var(--brand-subtle); color:var(--brand-on-subtle); padding:0 2px; border-radius:2px;}
+
+/* ================= 会员中心 ================= */
+.identity{margin:var(--s4); border:1px solid var(--line); border-radius:var(--r-md);
+  background:var(--hero-wash); padding:var(--s5); display:flex; align-items:center; gap:var(--s4);}
+.identity .who{flex:1; min-width:0;}
+.identity .who strong{display:block; font-size:17px; font-weight:600; color:var(--text-title);}
+.identity .who small{font-size:11.5px; color:var(--text-muted); display:block; margin-top:4px;}
+.grid6{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s3); padding:0 var(--s4) var(--s4);}
+.grid6 button{border:1px solid var(--line); border-radius:var(--r-md); background:var(--surface);
+  padding:var(--s4) var(--s2); display:flex; flex-direction:column; align-items:center; gap:var(--s2);
+  cursor:pointer; position:relative; min-height:88px; justify-content:center;}
+.grid6 button:hover{background:var(--bg-subtle);}
+.grid6 button svg.i{font-size:22px; color:var(--brand);}
+.grid6 button span{font-size:12px; color:var(--text-body);}
+.grid6 button .n{position:absolute; top:8px; right:10px; font-size:10px; color:var(--text-muted);
+  background:var(--bg-subtle); border-radius:var(--r-full); padding:1px 6px;}
+.grid6 button .n.hot{background:var(--danger); color:#fff; font-weight:600;}
+.stat-row{display:flex; padding:0 var(--s4) var(--s4); gap:var(--s3);}
+.stat{flex:1; border:1px solid var(--line); border-radius:var(--r-md); padding:var(--s3);
+  text-align:center; background:var(--surface);}
+.stat b{display:block; font-size:18px; font-weight:700; color:var(--text-title); font-family:var(--font-mono);}
+.stat span{font-size:11px; color:var(--text-muted);}
+
+/* 通知 */
+.notice{display:flex; gap:var(--s3); padding:var(--s4); border-bottom:1px solid var(--line); cursor:pointer;}
+.notice:hover{background:var(--bg-subtle);}
+.notice.unread{background:var(--brand-subtle);}
+.notice.unread:hover{background:var(--brand-subtle);}
+.notice .ni{width:36px; height:36px; flex:0 0 36px; border-radius:var(--r-md); background:var(--surface);
+  color:var(--brand); display:grid; place-items:center; font-size:16px; border:1px solid var(--line);}
+.notice .nb{flex:1; min-width:0;}
+.notice h4{font-size:14px; font-weight:600; color:var(--text-title); display:flex;
+  align-items:center; gap:var(--s2);}
+.notice h4 i{width:6px; height:6px; border-radius:50%; background:var(--danger); flex:0 0 6px;}
+.notice p{font-size:13px; line-height:1.7; color:var(--text-muted); margin:5px 0 6px;}
+.notice time{font-size:11px; color:var(--text-muted);}
+
+/* 编辑器 */
+.editor-head{padding:var(--s4); border-bottom:1px solid var(--line);}
+.editor-mode{display:flex; gap:var(--s2); padding:var(--s3) var(--s4); border-bottom:1px solid var(--line);
+  align-items:center;}
+.editor-mode .seg{display:flex; border:1px solid var(--line-strong); border-radius:var(--r-sm); overflow:hidden;}
+.editor-mode .seg button{border:0; background:var(--surface); color:var(--text-muted); font-size:13px;
+  padding:8px 20px; cursor:pointer; min-height:38px; font-family:inherit;}
+.editor-mode .seg button.on{background:var(--brand-subtle); color:var(--brand-on-subtle); font-weight:600;}
+.editor-mode .sp{flex:1;}
+.editor-mode .cnt{font-size:11px; color:var(--text-muted);}
+.edit-area{padding:var(--s4);}
+.edit-area .inp{border-radius:var(--r-sm);}
+.md-area{width:100%; min-height:320px; border:1px solid var(--field-border); border-radius:var(--r-sm);
+  padding:var(--s3); font-family:var(--font-mono); font-size:13px; line-height:1.85;
+  color:var(--text-body); background:var(--surface-elevated); resize:vertical;}
+.toolbar{display:flex; gap:var(--s1); flex-wrap:wrap; padding:var(--s2) 0; border-top:1px solid var(--line); margin-top:var(--s3);}
+.toolbar button{width:40px; height:40px; border:1px solid var(--line); background:var(--surface);
+  border-radius:var(--r-sm); color:var(--text-muted); cursor:pointer; font-size:14px; font-family:var(--font-mono);}
+.toolbar button:hover{background:var(--brand-subtle); color:var(--brand-on-subtle); border-color:var(--brand-subtle);}
+.editor-acts{flex:0 0 auto; display:flex; gap:var(--s2); padding:var(--s3) var(--s4);
+  border-top:1px solid var(--line); background:var(--surface);}
+.editor-acts .b{flex:1; min-height:44px; font-size:13px; padding:0 var(--s2);}
+
+/* 预览提示条 */
+.preview-bar{background:var(--warning-bg); color:var(--warning); font-size:12px; padding:10px var(--s4);
+  display:flex; align-items:center; gap:var(--s2); border-bottom:1px solid var(--line);}
+.preview-bar svg.i{font-size:14px;}
+
+/* 设置项 */
+.setting{display:flex; align-items:center; gap:var(--s3); padding:var(--s4); border-bottom:1px solid var(--line);}
+.setting .st{flex:1; min-width:0;}
+.setting .st strong{display:block; font-size:14px; font-weight:500; color:var(--text-body);}
+.setting .st small{display:block; font-size:11.5px; color:var(--text-muted); margin-top:4px; line-height:1.6;}
+.switch{width:46px; height:28px; border-radius:14px; background:var(--line-strong); border:0;
+  position:relative; cursor:pointer; flex:0 0 46px; transition:.18s;}
+.switch::after{content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%;
+  background:#fff; transition:.18s; box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.switch.on{background:var(--brand-solid);}
+.switch.on::after{transform:translateX(18px);}
+.radio{width:22px; height:22px; border-radius:50%; border:2px solid var(--line-strong); flex:0 0 22px;
+  display:grid; place-items:center; color:transparent;}
+.radio.on{border-color:var(--brand); color:var(--brand);}
+.radio.on::after{content:""; width:10px; height:10px; border-radius:50%; background:var(--brand); display:block;}
+
+/* 右侧说明 */
+.notes{width:300px; flex:0 0 300px; background:var(--doc-panel); border:1px solid var(--doc-line);
+  border-radius:var(--r-lg); padding:var(--s5); max-height:calc(100vh - 130px); overflow-y:auto;}
+.notes h3{font-size:14px; font-weight:600; color:var(--doc-fg); margin-bottom:var(--s2);}
+.notes .route{font-family:var(--font-mono); font-size:11.5px; color:var(--brand);
+  background:var(--brand-subtle); padding:5px 9px; border-radius:var(--r-xs); display:inline-block;
+  margin-bottom:var(--s4); word-break:break-all;}
+.notes h4{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--doc-muted);
+  margin:var(--s4) 0 var(--s2); font-weight:600;}
+.notes ul{list-style:none;}
+.notes li{font-size:12.5px; line-height:1.7; color:var(--doc-fg); padding-left:14px; position:relative;
+  margin-bottom:5px;}
+.notes li::before{content:""; position:absolute; left:0; top:8px; width:5px; height:5px;
+  border-radius:50%; background:var(--brand); opacity:.5;}
+.notes .api{font-family:var(--font-mono); font-size:11px; color:var(--doc-muted); line-height:1.8;
+  word-break:break-all;}
+.notes .tip{margin-top:var(--s4); padding:var(--s3); background:var(--bg-subtle); border-radius:var(--r-sm);
+  font-size:11.5px; line-height:1.7; color:var(--doc-muted);}
+@media (max-width:1280px){
+  .layout{flex-wrap:wrap; justify-content:center;}
+  .notes{width:100%; flex:1 1 100%; max-height:none;}
+  .navtree{width:100%; flex:1 1 100%; max-height:none;}
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.4 12 3.2l9 7.2"/><path d="M5.6 9.2V19a2 2 0 0 0 2 2h8.8a2 2 0 0 0 2-2V9.2"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3 3 7.5l9 4.5 9-4.5z"/><path d="M3 12.6 12 17.1l9-4.5"/><path d="M3 17.1 12 21.6l9-4.5"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4.2 4.2"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.8"/><path d="M4.5 21c.6-3.9 3.8-6.2 7.5-6.2s6.9 2.3 7.5 6.2"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M15 4.5 7.5 12 15 19.5"/></symbol>
+<symbol id="i-more" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18.5" cy="12" r="1.4"/></symbol>
+<symbol id="i-chevr" viewBox="0 0 24 24"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></symbol>
+<symbol id="i-chevd" viewBox="0 0 24 24"><path d="m5.5 9.5 6.5 6.5 6.5-6.5"/></symbol>
+<symbol id="i-chevu" viewBox="0 0 24 24"><path d="m5.5 14.5 6.5-6.5 6.5 6.5"/></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.3s-7.4-4.6-7.4-9.9A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.4 2.8c0 5.3-7.4 9.9-7.4 9.9Z"/></symbol>
+<symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M7 3.8h10a1 1 0 0 1 1 1v15.5L12 15.9l-6 4.4V4.8a1 1 0 0 1 1-1Z"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15.5V3.6"/><path d="m8.2 7.2 3.8-3.6 3.8 3.6"/><path d="M5 13v6.4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V13"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.6" cy="6.5" r="1.1"/><circle cx="4.6" cy="12" r="1.1"/><circle cx="4.6" cy="17.5" r="1.1"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.3"/><path d="M12 7.4V12l3.2 2"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.3"/><path d="m8.4 12.3 2.6 2.6 4.6-5.2"/></symbol>
+<symbol id="i-check2" viewBox="0 0 24 24"><path d="m4.5 12.5 5 5 10-11"/></symbol>
+<symbol id="i-pen" viewBox="0 0 24 24"><path d="M13 4H7a1.6 1.6 0 0 0-1.6 1.6v13A1.6 1.6 0 0 0 7 20.2h10a1.6 1.6 0 0 0 1.6-1.6V9.6z"/><path d="M13 4v5.6h5.6"/></symbol>
+<symbol id="i-msg" viewBox="0 0 24 24"><path d="M20 11.6a7.3 7.3 0 0 1-7.3 7.3H8.2L4 21.5V11.6a7.3 7.3 0 0 1 7.3-7.3h1.4A7.3 7.3 0 0 1 20 11.6Z"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.6 12S6.2 6.4 12 6.4 21.4 12 21.4 12 17.8 17.6 12 17.6 2.6 12 2.6 12Z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+<symbol id="i-send" viewBox="0 0 24 24"><path d="m4 11.5 16-7-7 16-2.4-6.6z"/></symbol>
+<symbol id="i-tag" viewBox="0 0 24 24"><path d="M11.6 3.4H20v8.4l-8.8 8.8a1.4 1.4 0 0 1-2 0l-6.4-6.4a1.4 1.4 0 0 1 0-2z"/><circle cx="16.2" cy="7.8" r="1.4"/></symbol>
+<symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6Z"/><path d="M10.5 19.5a2 2 0 0 0 3 0"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3.6 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 9.8l5.9-.8z"/></symbol>
+<symbol id="i-clockback" viewBox="0 0 24 24"><path d="M3.6 12a8.4 8.4 0 1 0 2.6-6.1"/><path d="M3.4 4.6v4.6h4.6"/><path d="M12 8v4.3l3 1.8"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.6" y="10.4" width="14.8" height="10" rx="2"/><path d="M8.2 10.4V7.6a3.8 3.8 0 0 1 7.6 0v2.8"/></symbol>
+<symbol id="i-logout" viewBox="0 0 24 24"><path d="M14.5 4.5h3.9a1.6 1.6 0 0 1 1.6 1.6v11.8a1.6 1.6 0 0 1-1.6 1.6h-3.9"/><path d="M10 8.3 6 12l4 3.7"/><path d="M6 12h8.6"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.3"/><path d="M12 7.6v5"/><circle cx="12" cy="16" r=".9"/></symbol>
+<symbol id="i-wifi-off" viewBox="0 0 24 24"><path d="M3 4l18 16"/><path d="M5.2 10.4a11 11 0 0 1 4-2.2"/><path d="M18.4 11a11 11 0 0 0-3.1-2.1"/><path d="M8.2 14.2a6 6 0 0 1 2.4-1.1"/><path d="M15 14.6a6 6 0 0 0-1.3-.9"/><circle cx="12" cy="18" r="1.1"/></symbol>
+<symbol id="i-empty" viewBox="0 0 24 24"><path d="M4 7.5h16v11a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5z"/><path d="M4 7.5 6.2 4h11.6L20 7.5"/><path d="M9.5 12h5"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="8.6" cy="9.6" r="1.6"/><path d="m4 17 4.6-4.6 4 4 3-2.6 4.4 3.8"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4.5"/><path d="m8 8.5 4-4 4 4"/><path d="M4.5 15v3.9a1.6 1.6 0 0 0 1.6 1.6h11.8a1.6 1.6 0 0 0 1.6-1.6V15"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4 17 7M7 17l-1.6 1.6"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 13.4A8.4 8.4 0 0 1 10.6 4a8.4 8.4 0 1 0 9.4 9.4Z"/></symbol>
+<symbol id="i-cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a1.9 1.9 0 1 1-2.7 2.7l-.1-.1a1.6 1.6 0 0 0-2.7 1.1v.3a1.9 1.9 0 1 1-3.8 0v-.2a1.6 1.6 0 0 0-2.8-1.1l-.1.1a1.9 1.9 0 1 1-2.7-2.7l.1-.1A1.6 1.6 0 0 0 4.6 15a1.9 1.9 0 0 1 0-3.8h.3A1.6 1.6 0 0 0 6 8.4l-.1-.1a1.9 1.9 0 1 1 2.7-2.7l.1.1a1.6 1.6 0 0 0 2.7-1.1v-.3a1.9 1.9 0 1 1 3.8 0v.2a1.6 1.6 0 0 0 2.8 1.1l.1-.1a1.9 1.9 0 1 1 2.7 2.7l-.1.1a1.6 1.6 0 0 0 1.1 2.7h.3a1.9 1.9 0 0 1 0 3.8h-.3"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20.4 12a8.4 8.4 0 1 1-2.5-6"/><path d="M20.6 4.6v4.6h-4.6"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+<symbol id="i-signal" viewBox="0 0 24 24"><path d="M4 20V10M9.3 20V5M14.7 20v-7M20 20V8"/></symbol>
+</defs></svg>
+
+<div class="topbar">
+  <div>
+    <h1>Flutter APP · 高保真可交互原型</h1>
+    <div class="sub">令牌与 <code style="font-family:var(--font-mono)">06-UI设计规范与设计令牌.md</code> 一一对应 · 内容与字段对齐冻结契约 · 点击左侧导航或直接操作界面</div>
+  </div>
+  <div class="tools">
+    <div class="tool-group">
+      <label>主题</label>
+      <div class="seg" role="group" aria-label="主题">
+        <button data-theme-set="light" aria-pressed="true">浅色</button>
+        <button data-theme-set="dark" aria-pressed="false">深色</button>
+        <button data-theme-set="system" aria-pressed="false">跟随系统</button>
+      </div>
+    </div>
+    <div class="tool-group">
+      <label>状态</label>
+      <div class="seg" role="group" aria-label="状态注入">
+        <button data-state-set="normal" aria-pressed="true">正常</button>
+        <button data-state-set="loading" aria-pressed="false">加载中</button>
+        <button data-state-set="empty" aria-pressed="false">空</button>
+        <button data-state-set="error" aria-pressed="false">错误</button>
+      </div>
+    </div>
+    <div class="tool-group">
+      <label>登录态</label>
+      <div class="seg" role="group" aria-label="登录态">
+        <button data-auth-set="out" aria-pressed="false">未登录</button>
+        <button data-auth-set="in" aria-pressed="true">已登录</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="navtree" id="navtree" aria-label="页面导航"></nav>
+
+  <div class="device-wrap">
+    <div class="device" id="device">
+      <div class="statusbar"><span>9:41</span><span class="sb-r"><span class="sb-bars"><i></i><i></i><i></i><i></i></span><span class="sb-batt"><i></i></span></span></div>
+      <div id="appbar"></div>
+      <div class="screen" id="screen"></div>
+      <div id="tabbar"></div>
+      <div id="overlay"></div>
+    </div>
+    <div class="caption" id="caption"></div>
+  </div>
+
+  <aside class="notes" id="notes"></aside>
+</div>
+
+<script>
+/* ================================================================
+   数据层：字段与 docs/api/openapi.v1.yaml 对齐
+   Article/ArticleSummary: id,title,slug,summary,coverImage,authorId,
+   authorName,categoryId,categoryName,tags[],status,viewCount,likeCount,publishedAt
+   ================================================================ */
+const ME = {id:1, username:'fungleo', nickname:'刘峰峰', role:'member', level:3, avatar:'刘'};
+
+const CATEGORIES = [
+  {id:1, name:'M0 产品篇', slug:'m0', count:8},
+  {id:2, name:'M1 Node 后端', slug:'m1', count:31, children:[
+    {id:21, name:'工程基建', slug:'m1-base', count:9},
+    {id:22, name:'数据与模型', slug:'m1-data', count:7},
+    {id:23, name:'接口与功能', slug:'m1-api', count:11},
+    {id:24, name:'工程化与上线', slug:'m1-ops', count:4}
+  ]},
+  {id:3, name:'M2 React 管理后台', slug:'m2', count:22, children:[
+    {id:31, name:'架构与规范', slug:'m2-arch', count:6},
+    {id:32, name:'页面与交互', slug:'m2-page', count:13},
+    {id:33, name:'构建与优化', slug:'m2-build', count:3}
+  ]},
+  {id:4, name:'M3 Next 前台', slug:'m3', count:24, children:[
+    {id:41, name:'渲染与路由', slug:'m3-render', count:8},
+    {id:42, name:'数据与缓存', slug:'m3-data', count:7},
+    {id:43, name:'体验与发布', slug:'m3-ship', count:9}
+  ]}
+];
+
+const TAGS = [
+  {id:1,name:'Hono',slug:'hono',articleCount:12},{id:2,name:'Drizzle',slug:'drizzle',articleCount:8},
+  {id:3,name:'Cloudflare',slug:'cloudflare',articleCount:11},{id:4,name:'D1',slug:'d1',articleCount:6},
+  {id:5,name:'JWT',slug:'jwt',articleCount:5},{id:6,name:'RBAC',slug:'rbac',articleCount:4},
+  {id:7,name:'TypeScript',slug:'typescript',articleCount:19},{id:8,name:'React',slug:'react',articleCount:17},
+  {id:9,name:'Next.js',slug:'nextjs',articleCount:14},{id:10,name:'契约先行',slug:'contract',articleCount:7},
+  {id:11,name:'状态机',slug:'state-machine',articleCount:5},{id:12,name:'性能优化',slug:'perf',articleCount:9}
+];
+
+const T = { // 缩略图文字
+  a:'API', b:'SQL', c:'SPEC', d:'JWT', e:'React', f:'Next', g:'D1', h:'HONO'
+};
+
+const ARTICLES = [
+  {id:101,title:'一套后端双部署：适配层如何让一份代码跑在两套运行时',slug:'dual-deploy',
+   summary:'Cloudflare Workers 与普通 Linux 的差异不在语法，而在请求、存储与生命周期的边界。',
+   authorId:1,authorName:'成为全栈',categoryId:2,categoryName:'Node 后端',tags:['Hono','Cloudflare'],
+   status:'published',viewCount:2400,likeCount:128,publishedAt:'2026-09-30',thumb:T.a},
+  {id:102,title:'数据建模手艺：状态机、冗余计数与适配层的心法清单',slug:'modeling-craft',
+   summary:'状态机管流转，冗余计数管性能，适配层管差异——三者合起来才是一个能长期维护的后端骨架。',
+   authorId:1,authorName:'成为全栈',categoryId:2,categoryName:'Node 后端',tags:['状态机','Drizzle'],
+   status:'published',viewCount:1860,likeCount:96,publishedAt:'2026-10-01',thumb:T.b},
+  {id:103,title:'分类树：无限级分类的存储、查询与环检测',slug:'category-tree',
+   summary:'自关联表看起来简单，真正难的是移动节点时的环检测与树的构建成本。',
+   authorId:1,authorName:'成为全栈',categoryId:2,categoryName:'Node 后端',tags:['D1','SQL'],
+   status:'published',viewCount:1800,likeCount:74,publishedAt:'2026-09-29',thumb:T.b},
+  {id:104,title:'阅读量防刷：去重、冷却与计数写分离',slug:'view-dedup',
+   summary:'阅读量不是简单的 +1，去重窗口、冷却时间和写入分离决定了它值不值得信。',
+   authorId:1,authorName:'成为全栈',categoryId:2,categoryName:'Node 后端',tags:['D1','性能优化'],
+   status:'published',viewCount:1200,likeCount:58,publishedAt:'2026-09-28',thumb:null},
+  {id:105,title:'通知系统：事件消费与已读态管理',slug:'notification',
+   summary:'通知不该由业务直接写表，事件消费 + 已读态才是能扩展的做法。',
+   authorId:1,authorName:'成为全栈',categoryId:2,categoryName:'Node 后端',tags:['TypeScript'],
+   status:'published',viewCount:980,likeCount:41,publishedAt:'2026-09-27',thumb:T.d},
+  {id:106,title:'点赞系统：幂等点赞与计数原子增减',slug:'like-idempotent',
+   summary:'幂等是点赞接口的第一要求，重复点、并发点都要落到同一个结果上。',
+   authorId:1,authorName:'成为全栈',categoryId:2,categoryName:'Node 后端',tags:['D1','性能优化'],
+   status:'published',viewCount:1100,likeCount:63,publishedAt:'2026-09-26',thumb:null},
+  {id:107,title:'权限模型：从认证到 RBAC',slug:'rbac',
+   summary:'认证回答"你是谁"，授权回答"你能做什么"，两件事不能混在一层里做。',
+   authorId:1,authorName:'成为全栈',categoryId:2,categoryName:'Node 后端',tags:['RBAC','JWT'],
+   status:'published',viewCount:8200,likeCount:310,publishedAt:'2026-09-12',thumb:T.d},
+  {id:108,title:'分层架构：Controller、Service、Repository 的边界',slug:'layers',
+   summary:'分层不是为了好看，是为了让改一处不至于牵动全身。',
+   authorId:1,authorName:'成为全栈',categoryId:2,categoryName:'Node 后端',tags:['TypeScript'],
+   status:'published',viewCount:9600,likeCount:402,publishedAt:'2026-09-08',thumb:T.c},
+  {id:109,title:'契约先行：设计一套被七个端复用的 API',slug:'contract-first',
+   summary:'七个子项目共享一份契约，改一处就要重跑两道门——这才叫契约先行。',
+   authorId:1,authorName:'成为全栈',categoryId:1,categoryName:'M0 产品篇',tags:['契约先行'],
+   status:'published',viewCount:3100,likeCount:156,publishedAt:'2026-09-16',thumb:T.c},
+  {id:110,title:'为什么前端工程师要走向全栈：边界、价值与代价',slug:'why-fullstack',
+   summary:'全栈不是什么都干，而是能把一件事从界面一直做到存储。',
+   authorId:1,authorName:'成为全栈',categoryId:1,categoryName:'M0 产品篇',tags:['契约先行'],
+   status:'published',viewCount:7400,likeCount:288,publishedAt:'2026-08-24',thumb:null},
+  {id:111,title:'统一响应结构：HTTP 状态码与业务码如何分工',slug:'response',
+   summary:'HTTP 状态码管协议层，业务码管领域层，混用会让错误处理失控。',
+   authorId:1,authorName:'成为全栈',categoryId:2,categoryName:'Node 后端',tags:['TypeScript'],
+   status:'published',viewCount:6100,likeCount:221,publishedAt:'2026-09-05',thumb:T.a},
+  {id:112,title:'React 管理后台的路由与权限收口',slug:'admin-routing',
+   summary:'路由守卫不是装饰，要能在会话失效时把人干净地送回登录页。',
+   authorId:1,authorName:'成为全栈',categoryId:3,categoryName:'M2 React 管理后台',tags:['React'],
+   status:'published',viewCount:2900,likeCount:118,publishedAt:'2026-09-22',thumb:T.e},
+  {id:113,title:'Next.js App Router 的缓存边界：什么时候不该缓存',slug:'next-cache',
+   summary:'缓存是默认行为的时代，搞清楚什么时候退出缓存比开启更重要。',
+   authorId:1,authorName:'成为全栈',categoryId:4,categoryName:'M3 Next 前台',tags:['Next.js'],
+   status:'published',viewCount:3400,likeCount:142,publishedAt:'2026-09-25',thumb:T.f},
+  {id:114,title:'Next.js SEO：metadata、结构化数据、sitemap 与 robots',slug:'next-seo',
+   summary:'SEO 不是加几个 meta 标签，而是让每一条内容都有可被索引的确定性。',
+   authorId:1,authorName:'成为全栈',categoryId:4,categoryName:'M3 Next 前台',tags:['Next.js'],
+   status:'published',viewCount:1900,likeCount:77,publishedAt:'2026-10-01',thumb:T.f}
+];
+
+// 我的稿件（投稿状态机）：draft / pending / published
+const MY_DRAFTS = [
+  {id:201,title:'Flutter 起步：为什么移动端不是把网页缩小',slug:null,
+   summary:'同一份契约，换一种信息组织方式，页面结构必须重排。',
+   categoryName:'M4 Flutter APP',tags:['Flutter'],status:'draft',viewCount:0,likeCount:0,
+   createdAt:'2026-10-02',updatedAt:'2026-10-02 11:20'},
+  {id:202,title:'移动端会话：单飞刷新与令牌旋转的坑',slug:null,
+   summary:'并发 401 只允许一次刷新，否则旧 token 重放会作废整个 token family。',
+   categoryName:'M4 Flutter APP',tags:['JWT','Flutter'],status:'pending',viewCount:0,likeCount:0,
+   createdAt:'2026-10-01',updatedAt:'2026-10-01 20:05',rejectedReason:null},
+  {id:203,title:'成为全栈·Node 后端篇·点赞系统：幂等点赞与计数原子增减',slug:'like-idempotent',
+   summary:'幂等是点赞接口的第一要求，重复点、并发点都要落到同一个结果上。',
+   categoryName:'M1 Node 后端',tags:['D1'],status:'published',viewCount:1100,likeCount:63,
+   createdAt:'2026-09-26',updatedAt:'2026-09-26 09:12'},
+  {id:204,title:'Flutter 主题：三套主题与设计令牌落地',slug:null,
+   summary:'浅色继承网站，深色独立设计，令牌集中在一处。',
+   categoryName:'M4 Flutter APP',tags:['Flutter'],status:'draft',viewCount:0,likeCount:0,
+   createdAt:'2026-09-29',updatedAt:'2026-09-29 17:40'}
+];
+
+const COMMENTS = [
+  {id:1,userId:7,userName:'阿七',parentId:null,status:'approved',content:'适配层这一层薄接口很有启发，我们项目里就是到处 if (isWorker)，后来改起来特别痛。',createdAt:'2 小时前',
+   replies:[{id:2,userId:1,userName:'成为全栈',parentId:1,status:'approved',
+     replyTo:'阿七',quote:'适配层这一层薄接口很有启发，我们项目里就是到处 if (isWorker)，后来改起来特别痛。',
+     content:'是的，判断散落在业务里最难收回来。建议先只收存储和环境两项，见效最快。',createdAt:'1 小时前'}]},
+  {id:3,userId:9,userName:'Ming',parentId:null,status:'reviewing',content:'定时任务那一段能不能再展开？Cron 和外部调度器的行为差异挺大的。',createdAt:'3 小时前',replies:[]},
+  {id:4,userId:11,userName:'小林',parentId:null,status:'approved',content:'转发收藏了。之前一直把适配层和抽象层混着用，现在清楚多了。',createdAt:'5 小时前',replies:[]}
+];
+
+const NOTIFICATIONS = [
+  {id:1,type:'article_published',title:'文章已发布',body:'《数据建模手艺：状态机、冗余计数与适配层的心法清单》已通过审核并发布。',link:'#/articles/modeling-craft',isRead:false,createdAt:'10 分钟前'},
+  {id:2,type:'comment_approved',title:'评论已通过',body:'你在《一套后端双部署》下的评论已通过审核。',link:'#/articles/dual-deploy',isRead:false,createdAt:'2 小时前'},
+  {id:3,type:'system',title:'草稿尚未提交',body:'《Flutter 主题：三套主题与设计令牌落地》还是草稿，确认后可以提交审核。',link:'#/member/articles',isRead:false,createdAt:'昨天 17:40'},
+  {id:4,type:'article_published',title:'文章已发布',body:'《Next.js SEO：metadata、结构化数据、sitemap 与 robots》已发布。',link:'#/articles/next-seo',isRead:true,createdAt:'10-01 14:26'},
+  {id:5,type:'system',title:'会话已在其他设备刷新',body:'你的令牌发生轮换，如非本人操作请及时修改密码。',link:'#/member/password',isRead:true,createdAt:'09-30 09:02'}
+];
+
+/* ================================================================
+   全局状态
+   ================================================================ */
+const S = {
+  theme:'light', themeMode:'light', ui:'normal', auth:'in',
+  liked:new Set([102]), faved:new Set([107,109]),
+  history:[103,113,102,111,110],
+  readNotif:new Set([4,5]),
+  article:{liked:new Set(),faved:new Set()},
+  draft:{id:null,title:'',summary:'',body:'',mode:'edit'},
+  searchQ:'',
+  redirect:null,
+  catOpen:new Set(),
+  myFilter:'all',
+  toastTimer:null
+};
+
+/* ================================================================
+   工具
+   ================================================================ */
+const esc = (s) => String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmt = (n) => n >= 10000 ? (n/10000).toFixed(1).replace(/\.0$/,'') + 'w'
+  : n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/,'') + 'k' : String(n);
+const ico = (n, cls) => `<svg class="i${cls ? ' ' + cls : ''}"><use href="#i-${n}"/></svg>`;
+const isIn = () => S.auth === 'in';
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(S.toastTimer);
+  S.toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function go(hash){
+  if(location.hash === hash){ render(); }
+  else location.hash = hash;
+}
+
+/* 错误态文案按 doc 01 §4 硬要求分类，不使用笼统的「加载失败」 */
+const ERROR_KINDS = {
+  offline:{t:'网络不可用', d:'当前设备没有网络连接，已保留你正在浏览的内容。', ic:'wifi-off'},
+  timeout:{t:'请求超时',  d:'服务器响应超过 15 秒。可以重试，或用下拉刷新再试一次。', ic:'clock'},
+  e401:{t:'登录已过期',   d:'会话已失效，需要重新登录后继续。', ic:'lock', act:'重新登录'},
+  e403:{t:'没有访问权限', d:'当前账号无权查看该内容。', ic:'alert'},
+  e404:{t:'内容不存在',   d:'该内容可能已被删除或链接有误。', ic:'empty'},
+  e429:{t:'请求过于频繁', d:'请稍后重试。公开列表与搜索接口有频率限制。', ic:'clock'},
+  e500:{t:'服务器异常',   d:'服务端暂时不可用，与你的操作无关。', ic:'alert'},
+  validation:{t:'表单校验未通过', d:'请检查标出的字段后重新提交。', ic:'alert'}
+};
+function stateBlock(kind, opt){
+  opt = opt || {};
+  const cfg = ERROR_KINDS[kind] || ERROR_KINDS.e500;
+  const primary = opt.primary || '重试';
+  return `<div class="state err fade">
+    <div class="ic">${ico(cfg.ic)}</div>
+    <h2>${esc(opt.title || cfg.t)}</h2>
+    <p>${esc(opt.desc || cfg.d)}</p>
+    <div class="acts">
+      <button class="b pri" data-act="${opt.act || 'retry'}">${esc(primary)}</button>
+      <button class="b sec" data-nav="${opt.back || '#/'}">返回首页</button>
+    </div></div>`;
+}
+function emptyBlock(title, desc, action, nav){
+  return `<div class="state fade"><div class="ic">${ico('empty')}</div>
+    <h2>${esc(title)}</h2><p>${esc(desc)}</p>
+    <div class="acts">${action ? `<button class="b pri" data-nav="${nav || '#/'}">${esc(action)}</button>` : ''}</div></div>`;
+}
+function skeletonList(n){
+  let h = '';
+  for(let i = 0; i < (n || 4); i++){
+    h += `<div class="sk"><div class="skb">
+      <div class="skline h18 w82"></div><div class="skline w82"></div>
+      <div class="skline w45"></div></div><div class="skbox"></div></div>`;
+  }
+  return `<div class="fade">${h}</div>`;
+}
+/* 列表类页面统一走三态门 */
+function listGate(normalFn){
+  if(S.ui === 'loading') return skeletonList(4);
+  if(S.ui === 'empty') return emptyBlock('这里还没有内容', '当有新的已发布文章时，会出现在这里。', '回到首页', '#/');
+  if(S.ui === 'error') return stateBlock('e500');
+  return normalFn();
+}
+
+/* 文章列表项 */
+function entry(a){
+  const noimg = !a.thumb;
+  return `<button class="entry${noimg ? ' noimg' : ''}" data-nav="#/articles/${esc(a.slug || a.id)}">
+    <div class="eb">
+      <h4>${esc(a.title)}</h4>
+      ${a.summary ? `<div class="sum">${esc(a.summary)}</div>` : ''}
+      <div class="meta"><span>${esc(a.categoryName || '未分类')}</span><i></i>
+        <span>${esc((a.publishedAt || '').slice(5))}</span><i></i>
+        <span>${fmt(a.viewCount)} 阅读</span></div>
+    </div>
+    ${noimg ? '' : `<div class="thumb">${esc(a.thumb)}</div>`}
+  </button>`;
+}
+function statusChip(st){
+  if(st === 'published') return `<span class="chip pub">${ico('check')}已发布</span>`;
+  if(st === 'pending')   return `<span class="chip pen">${ico('clock')}待审核</span>`;
+  return `<span class="chip drf">${ico('pen')}草稿</span>`;
+}
+const bySlug = (k) => ARTICLES.find(a => a.slug === k || String(a.id) === String(k));
+
+/* ================================================================
+   路由
+   ================================================================ */
+function parseHash(){
+  const raw = location.hash.replace(/^#/, '') || '/';
+  const [path, qs] = raw.split('?');
+  const seg = path.split('/').filter(Boolean);
+  return {path, seg, q:new URLSearchParams(qs || '')};
+}
+
+/* 路由表定义在最后一个脚本块（见 render 之前）：
+   函数声明只在同一个 <script> 块内提升，跨块不会提升，
+   若路由表在此处立即求值引用后面的视图函数，会抛 ReferenceError。 */
+function matchRoute(seg){
+  for(const r of ROUTES){
+    const rp = r.p.split('/').filter(Boolean);
+    if(rp.length !== seg.length) continue;
+    const params = {};
+    let ok = true;
+    for(let i = 0; i < rp.length; i++){
+      if(rp[i].startsWith(':')) params[rp[i].slice(1)] = seg[i];
+      else if(rp[i] !== seg[i]){ ok = false; break; }
+    }
+    if(ok) return {route:r, params};
+  }
+  return null;
+}
+const TAB_ROUTES = [
+  {h:'#/',          n:'首页', ic:'home'},
+  {h:'#/categories',n:'分类', ic:'layers'},
+  {h:'#/search',    n:'搜索', ic:'search'},
+  {h:'#/member',    n:'我的', ic:'user'}
+];
+
+/* ================================================================
+   页面：首页
+   ================================================================ */
+const HEROES = [
+  ARTICLES[0], ARTICLES[1], ARTICLES[12]
+];
+let heroIdx = 0;
+
+function vHome(){
+  const h = HEROES[heroIdx];
+  const latest = ARTICLES.filter(a => a.id !== h.id).slice(0, 4);
+  const hot = [...ARTICLES].sort((a,b) => b.viewCount - a.viewCount).slice(0, 5);
+  const body = `
+    <div class="hero" data-act="hero:open">
+      <span class="eb">焦点阅读</span>
+      <h2>${esc(h.title)}</h2>
+      <p>${esc(h.summary)}</p>
+    </div>
+    <div class="heroctrl">
+      <button data-act="hero:prev" aria-label="上一条" style="transform:rotate(180deg)">${ico('chevr')}</button>
+      <span class="mid"><span class="dots">${HEROES.map((_, i) => `<i class="${i === heroIdx ? 'on' : ''}"></i>`).join('')}</span>
+        <span>${heroIdx + 1} / ${HEROES.length}</span></span>
+      <button data-act="hero:next" aria-label="下一条">${ico('chevr')}</button>
+    </div>
+
+    <div class="sec-head"><h3>最新文章</h3>
+      <button class="more" data-nav="#/categories">全部${ico('chevr')}</button></div>
+    ${listGate(() => latest.map(entry).join(''))}
+
+    <div class="sec-head"><h3>热门阅读</h3>
+      <button class="more" data-nav="#/tags">更多${ico('chevr')}</button></div>
+    ${listGate(() => hot.map((a, i) => `
+      <button class="rank" data-nav="#/articles/${esc(a.slug || a.id)}">
+        <b>${String(i + 1).padStart(2, '0')}</b>
+        <span class="rtx">${esc(a.title)}</span>
+        <span>${fmt(a.viewCount)}</span></button>`).join(''))}
+    <div style="height:24px"></div>`;
+  return {
+    appbar:`<div class="appbar">
+      <span class="brand"><span class="brand-mark">{ }</span>成为全栈</span>
+      <span class="grow"></span>
+      <button class="iconbtn" data-nav="#/search" aria-label="搜索">${ico('search')}</button>
+      <button class="iconbtn edge-r" data-nav="${isIn() ? '#/member/notifications' : '#/login'}" aria-label="通知">
+        ${ico('bell')}${unreadCount() ? `<span class="badge-dot">${unreadCount()}</span>` : ''}</button>
+    </div>`,
+    body, tab:true, tabIdx:0,
+    caption:'PS-01 首页 · 焦点 → 最新 → 热门 → 底部导航',
+    notes:{
+      route:'/  ·  底部 Tab 第 1 项',
+      goals:['一屏内让读者找到值得读的内容','焦点不自动抢阅读，手动切换','列表可持续加载，加载失败保留已读内容'],
+      states:['首屏加载骨架','刷新（下拉刷新语义）','空态：全站无已发布内容','错误：离线 / 超时 / 500 / 429'],
+      api:['GET /articles?sort=-publishedAt','GET /articles?sort=-viewCount','GET /site/settings'],
+      tip:'焦点位在移动端改单张大图 + 指示点。无真实广告数据时不做商业广告位，改为站内导读。'
+    }
+  };
+}
+function unreadCount(){
+  return NOTIFICATIONS.filter(n => !S.readNotif.has(n.id)).length;
+}
+
+/* ================================================================
+   页面：分类 / 标签
+   ================================================================ */
+function vCategories(){
+  const body = `
+    <div class="page-title"><h1>分类</h1><p>按学习路径划分，父分类包含全部后代分类的文章。</p></div>
+    ${listGate(() => `<div class="ctree">${CATEGORIES.map(c => `
+      <div class="cnode ${S.catOpen.has(c.id) ? 'open' : ''}" data-cat="${c.id}">
+        <div class="crow" data-act="cat:toggle:${c.id}">
+          ${c.children ? ico('chevr', 'chev') : '<span style="width:1em"></span>'}
+          <span class="nm">${esc(c.name)}</span>
+          <span class="cnt">${c.count} 篇</span>
+        </div>
+        ${c.children ? `<div class="csub">${c.children.map(s => `
+          <button data-nav="#/categories?slug=${esc(s.slug)}">${esc(s.name)}
+            <span style="color:var(--text-muted);font-size:11.5px"> · ${s.count} 篇</span></button>`).join('')}
+          <button data-nav="#/categories?slug=${esc(c.slug)}">查看「${esc(c.name)}」全部 ${c.count} 篇</button>
+        </div>` : ''}
+      </div>`).join('')}</div>`)}
+    <div style="height:24px"></div>`;
+  return {
+    appbar:`<div class="appbar"><span class="appbar-title">分类</span>
+      <button class="iconbtn edge-r" data-nav="#/tags" aria-label="标签">${ico('tag')}</button></div>`,
+    body, tab:true, tabIdx:1,
+    caption:'PS-02 分类 · 多级分类树，支持展开/收起',
+    notes:{
+      route:'/categories',
+      goals:['展示无限级分类树（后端最大 4 级）','点击父分类进入聚合列表页','子分类逐级展开，不用一次压满屏幕'],
+      states:['展开 / 收起','空分类','加载失败'],
+      api:['GET /categories/tree','GET /categories/{slug}/articles'],
+      tip:'分类页也提供标签入口。分类跳转用 slug，不能用数字 id 拼路由。'
+    }
+  };
+}
+function vTags(){
+  const body = `
+    <div class="page-title"><h1>标签</h1><p>用标签横向串联不同模块的文章。</p></div>
+    <div class="searchbar" style="border-top:0">
+      <div class="wrap">${ico('search')}<input placeholder="筛选标签" data-tagfilter /></div>
+    </div>
+    ${listGate(() => `<div class="tiles" id="tagTiles">${TAGS.map(t => `
+      <button class="tile" data-nav="#/search?q=${encodeURIComponent(t.name)}">
+        <strong>${esc(t.name)}</strong><span>${t.articleCount} 篇文章</span></button>`).join('')}</div>`)}
+    <div style="height:24px"></div>`;
+  return {
+    appbar:`<div class="appbar">
+      <button class="iconbtn edge" data-nav="#/categories" aria-label="返回">${ico('back')}</button>
+      <span class="appbar-title">标签</span></div>`,
+    body, tab:true, tabIdx:1,
+    caption:'PS-03 标签 · 索引与文章数',
+    notes:{
+      route:'/tags',
+      goals:['按真实标签数据索引','点击标签进入该标签文章列表','标签名与 slug 都取接口值，不臆造'],
+      states:['筛选输入中','空态'],
+      api:['GET /tags'],
+      tip:'标签数量少于预期时留白，不留空占位图。'
+    }
+  };
+}
+
+/* ================================================================
+   页面：搜索
+   ================================================================ */
+function vSearch(){
+  const q = S.searchQ;
+  const results = q ? ARTICLES.filter(a =>
+    a.title.includes(q) || (a.summary || '').includes(q) ||
+    (a.tags || []).some(t => t.includes(q))) : [];
+  const body = `
+    <div class="searchbar">
+      <div class="wrap">${ico('search')}
+        <input id="q" value="${esc(q)}" placeholder="搜索文章、标签" autocomplete="off" /></div>
+      <button class="b pri" style="min-height:40px;padding:0 16px" data-act="search:submit">搜索</button>
+    </div>
+    ${q ? `
+      ${S.ui === 'error'
+        ? stateBlock('e429', {title:'请求过于频繁', desc:'搜索接口有频率限制，请稍后再试。', primary:'稍后重试'})
+        : results.length ? `
+          <div class="sec-head"><h3>搜索结果</h3><span style="font-size:12px;color:var(--text-muted)">${results.length} 条</span></div>
+          ${results.map(a => `
+            <button class="entry" data-nav="#/articles/${esc(a.slug || a.id)}"><div class="eb">
+              <h4>${hilite(a.title, q)}</h4>
+              <div class="sum">${hilite(a.summary || '', q)}</div>
+              <div class="meta"><span>${esc(a.categoryName)}</span><i></i><span>${fmt(a.viewCount)} 阅读</span></div>
+            </div>${a.thumb ? `<div class="thumb">${esc(a.thumb)}</div>` : ''}</button>`).join('')}`
+        : emptyBlock('没有找到相关内容', `换个关键词试试，或者去分类里翻一翻。「${q}」`,
+            '浏览分类', '#/categories')}
+    ` : `
+      <div class="hist">
+        <h3>搜索历史</h3>
+        <div class="tags">${['适配层','RBAC','Drizzle','缓存','Hono'].map(k =>
+          `<button data-act="search:quick:${esc(k)}">${esc(k)}</button>`).join('')}</div>
+      </div>
+      <div class="sec-head"><h3>热门标签</h3>
+        <button class="more" data-nav="#/tags">全部${ico('chevr')}</button></div>
+      <div class="hist"><div class="tags">${TAGS.slice(0, 8).map(t =>
+        `<button data-act="search:quick:${esc(t.name)}">${esc(t.name)}</button>`).join('')}</div></div>
+      <div style="height:24px"></div>`}`;
+  return {
+    appbar:`<div class="appbar"><span class="appbar-title">搜索</span></div>`,
+    body, tab:true, tabIdx:2,
+    caption:'PS-04 搜索 · 输入 / 提交 / 无结果 / 限流',
+    notes:{
+      route:'/search?q=',
+      goals:['提交后请求，避免每敲一个键就发一次请求','关键词进 URL，刷新与分享可复现','无结果不等于错误'],
+      states:['输入中','提交中','无结果','429 限流','失败'],
+      api:['GET /search?q={kw}&type=article'],
+      tip:'搜索与列表的 keyword 检索范围不同，不能用文章列表冒充全文搜索。'
+    }
+  };
+}
+function hilite(text, q){
+  return esc(text).split(esc(q)).join(`<mark>${esc(q)}</mark>`);
+}
+</script>
+<script>
+/* ================================================================
+   页面：文章详情
+   ================================================================ */
+const ARTICLE_BODY = `
+<p>同一份 Hono 代码，要同时跑在 Cloudflare Workers 和一台普通 Linux 机器上。硬编码运行时判断会让代码迅速腐烂，正确的做法是把差异收敛到一层薄的适配接口。</p>
+<h2>一、差异从哪里来</h2>
+<p>运行时差异集中在三处：环境的读取方式、文件存储的位置、以及后台任务的调度能力。把它们列成一张表，适配层的边界就清楚了。</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>能力</th><th>Workers</th><th>Linux</th></tr></thead>
+<tbody>
+<tr><td>环境变量</td><td><code>env</code> 绑定</td><td><code>process.env</code></td></tr>
+<tr><td>对象存储</td><td>R2 绑定</td><td>本地磁盘目录</td></tr>
+<tr><td>定时任务</td><td>Cron Triggers</td><td>外部调度器</td></tr>
+</tbody></table></div>
+<h2>二、把差异收敛成一个接口</h2>
+<p>适配层只暴露能力，不暴露实现细节。调用方永远拿到的是一组稳定的函数签名。</p>
+<div class="codebox"><div class="bar"><span>storage.ts</span><span>TypeScript</span></div>
+<pre><span class="c">// 两种驱动，一个契约</span>
+<span class="k">export interface</span> Storage {
+  put(key: <span class="k">string</span>, body: ReadableStream): <span class="k">Promise</span>&lt;<span class="k">void</span>&gt;;
+  get(key: <span class="k">string</span>): <span class="k">Promise</span>&lt;ReadableStream | <span class="k">null</span>&gt;;
+}
+
+<span class="k">export const</span> createStorage = (driver: <span class="s">"r2"</span> | <span class="s">"local"</span>): Storage =&gt;
+  driver === <span class="s">"r2"</span> ? r2Storage() : localStorage();</pre></div>
+<blockquote>适配层不是抽象层。它只解决"同一件事在两套运行时怎么做"，不解决"以后可能换别的什么"。</blockquote>
+<h2>三、收敛成本</h2>
+<p>把差异收敛之后，业务代码里不再出现任何运行时判断。部署到 Cloudflare 只是换一个环境变量，而不是换一份代码。</p>
+<p>这一步做完，后面每个新功能都只需要在业务层写一遍，两套部署自动都拿到。</p>`;
+
+function articleChrome(idx){
+  return {
+    prev:idx > 0 ? ARTICLES[idx - 1] : null,
+    next:idx < ARTICLES.length - 1 ? ARTICLES[idx + 1] : null
+  };
+}
+function vArticle(p){
+  const a = bySlug(p.slug);
+  if(!a) return {
+    appbar:`<div class="appbar"><button class="iconbtn edge" data-nav="#/" aria-label="返回">${ico('back')}</button>
+      <span class="appbar-title">文章</span></div>`,
+    body:stateBlock('e404'), caption:'文章详情 · 404',
+    notes:{route:'/articles/:slug', goals:['资源不存在时给出明确出口'], states:['404'], api:['GET /articles/{idOrSlug}'],
+      tip:'未发布文章对匿名一律 404，不泄露存在性。'}
+  };
+  const idx = ARTICLES.indexOf(a);
+  const {prev, next} = articleChrome(idx);
+  const liked = S.article.liked.has(a.id) || S.liked.has(a.id);
+  const faved = S.article.faved.has(a.id) || S.faved.has(a.id);
+
+  const body = `
+    <div class="crumb"><button data-nav="#/">首页</button>${ico('chevr')}
+      <button data-nav="#/categories">${esc(a.categoryName)}</button></div>
+    <div class="art-head">
+      <span class="chip tagp">${esc(a.categoryName)}</span>
+      <h1>${esc(a.title)}</h1>
+      <div class="byline">
+        <span class="avatar">${esc(a.authorName.slice(0,1))}</span>
+        <span class="who"><strong>${esc(a.authorName)}</strong>
+          <small>${esc(a.publishedAt)} · ${fmt(a.viewCount)} 阅读 · ${fmt(a.likeCount)} 赞</small></span>
+        <button class="iconbtn edge-r" data-act="article:more" aria-label="更多">${ico('more')}</button>
+      </div>
+    </div>
+    <div class="lead">${esc(a.summary || '')}</div>
+    <div class="prose">${ARTICLE_BODY}</div>
+    <details class="toc-bar" open>
+      <summary>${ico('list')}本文目录<span class="cnt">3 节</span>${ico('chevd')}</summary>
+      <ol>
+        <li data-act="toc:1">一、差异从哪里来</li>
+        <li data-act="toc:2">二、把差异收敛成一个接口</li>
+        <li class="lv2" data-act="toc:3">代码块与表格的移动端折行策略</li>
+        <li class="lv2" data-act="toc:4">错误码到用户文案的映射</li>
+        <li data-act="toc:5">三、收敛成本</li>
+      </ol>
+    </details>
+    <div class="actions">
+      <button class="act ${liked ? 'on' : ''}" data-act="like:${a.id}">${ico('heart')}${fmt(a.likeCount + (liked ? 1 : 0))}</button>
+      <button class="act ${faved ? 'on' : ''}" data-act="fav:${a.id}">${ico('bookmark')}${faved ? '已收藏' : '收藏'}</button>
+      <button class="act" data-act="share:${a.id}">${ico('share')}分享</button>
+    </div>
+    <div class="adj">
+      ${prev ? `<button data-nav="#/articles/${esc(prev.slug || prev.id)}"><small>上一篇</small>${esc(prev.title)}</button>` : ''}
+      ${next ? `<button data-nav="#/articles/${esc(next.slug || next.id)}"><small>下一篇</small>${esc(next.title)}</button>` : ''}
+    </div>
+    <div class="sec-head"><h3>评论<span style="font-size:12px;color:var(--text-muted);font-weight:400"> ${COMMENTS.length}</span></h3></div>
+    ${S.ui === 'loading' ? skeletonList(2) : COMMENTS.map(c => `
+      <div class="cmt">
+        <span class="avatar sm">${esc(c.userName.slice(0,1))}</span>
+        <div class="cb">
+          <div class="cn">${esc(c.userName)}
+            ${c.status === 'reviewing' ? `<span class="chip pen">${ico('clock')}复核中</span>` : ''}
+            ${c.status === 'rejected' ? `<span class="chip rej">${ico('alert')}未通过</span>` : ''}</div>
+          <div class="ct">${esc(c.content)}</div>
+          <div class="cf"><span>${esc(c.createdAt)}</span><button data-act="reply:${c.id}">回复</button>
+            ${c.userId === ME.id ? '<button data-act="cmt-del:' + c.id + '">删除</button>' : ''}</div>
+          ${c.replies.map(r => `
+            <div class="reply">
+              <div class="rto">回复 ${esc(r.replyTo)}</div>
+              ${r.quote ? `<div class="rq">${esc(r.quote)}</div>` : ''}
+              <div class="ra">${esc(r.content)}</div>
+              <div class="cf" style="margin-top:8px"><span>${esc(r.createdAt)}</span><button data-act="reply:${r.id}">回复</button></div>
+            </div>`).join('')}
+        </div>
+      </div>`).join('')}
+    <div style="height:16px"></div>`;
+
+  return {
+    appbar:`<div class="appbar">
+      <button class="iconbtn edge" data-act="back" aria-label="返回">${ico('back')}</button>
+      <span class="appbar-title">文章</span>
+      <button class="iconbtn edge-r" data-act="article:more" aria-label="更多">${ico('more')}</button></div>`,
+    body,
+    bottom:`<div class="composer">
+      <span class="fake" data-act="comment:open">写下你的评论…</span>
+      <button class="send" data-act="comment:open" aria-label="发送">${ico('send')}</button></div>`,
+    caption:'PS-05 文章详情 · 正文优先 → 目录 → 互动 → 叠楼评论',
+    notes:{
+      route:'/articles/:slug',
+      goals:['正文是第一优先级，操作条不遮挡正文','目录用可折叠面板，点击后关闭并滚动到标题','评论叠楼：回复显示「回复某某」与原文摘要，深层只缩进一档'],
+      states:['长文 / 代码 / 表格','图片加载失败','404','离线','评论复核中 / 未通过'],
+      api:['GET /articles/{idOrSlug}','GET /articles/{id}/adjacent','GET /articles/{id}/toc',
+        'GET/POST /articles/{id}/like','GET /articles/{id}/like-status','GET/POST/DELETE /me/favorites',
+        'GET /articles/{id}/comments','POST /comments'],
+      tip:'点赞/收藏未登录时先跳登录并保留回跳路径；状态查询以当前账号为 key，账号切换要清。'
+    }
+  };
+}
+
+/* ================================================================
+   页面：会员公开主页
+   ================================================================ */
+function vMemberPublic(p){
+  const list = ARTICLES.slice(0, 5);
+  return {
+    appbar:`<div class="appbar"><button class="iconbtn edge" data-act="back" aria-label="返回">${ico('back')}</button>
+      <span class="appbar-title">作者主页</span></div>`,
+    body:`
+      <div class="identity">
+        <span class="avatar lg">刘</span>
+        <div class="who"><strong>刘峰峰</strong>
+          <small>Lv.3 · 全栈开发工程师 · 已发布 ${ARTICLES.length} 篇文章</small></div>
+      </div>
+      <div class="sec-head" style="margin-top:0"><h3>他的文章</h3>
+        <span style="font-size:12px;color:var(--text-muted)">仅公开已发布</span></div>
+      ${listGate(() => list.map(entry).join(''))}
+      <div style="height:24px"></div>`,
+    caption:'PS-06 会员公开主页 · 公开资料 + 已发布文章',
+    notes:{
+      route:'/members/:id',
+      goals:['只显示公开资料与 published 文章','禁用账号（status=disabled）主页返回 404'],
+      states:['空文章','分页','禁用会员 → 404'],
+      api:['GET /members/{id}'],
+      tip:'不含 email 等隐私字段；未发布稿件绝不链接到公开详情。'
+    }
+  };
+}
+
+/* ================================================================
+   页面：登录 / 注册
+   ================================================================ */
+function authShell(title, subtitle, fields, submitLabel, footer){
+  return `<div class="page-title" style="padding-top:var(--s8)">
+      <span class="brand-mark" style="display:inline-block;margin-bottom:var(--s4)">{ }</span>
+      <h1>${esc(title)}</h1><p>${esc(subtitle)}</p></div>
+    <div class="px" style="padding-top:var(--s5)">${fields}
+      ${S.ui === 'error' ? stateBlock('e401', {title:'账号或密码错误',
+        desc:'请确认后重试。连续失败会被限流。', primary:'重新填写', act:'retry'}) : ''}
+      ${S.ui === 'loading' ? `<div class="skline h18 w60"></div><div class="skline w82"></div>` : ''}
+      <button class="b pri wide" data-act="auth:submit" style="margin-top:var(--s2)">${esc(submitLabel)}</button>
+      ${footer}
+      <div style="height:32px"></div></div>`;
+}
+function vLogin(){
+  return {
+    appbar:`<div class="appbar"><button class="iconbtn edge" data-act="back" aria-label="返回">${ico('back')}</button></div>`,
+    body:authShell('登录', '登录后可以收藏、评论和投稿。', `
+      <label class="field"><span class="lb">账号</span>
+        <input class="inp" id="acct" placeholder="用户名或邮箱" value="fungleo" /></label>
+      <label class="field"><span class="lb">密码</span>
+        <input class="inp" id="pwd" type="password" placeholder="请输入密码" value="123456" />
+        <span class="hint">access token 只放内存，refresh token 进安全存储，都不落普通偏好。</span></label>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--s4)">
+        <span style="font-size:12.5px;color:var(--text-muted)">忘记密码请联系管理员</span>
+        <button class="b txt" style="min-height:32px;font-size:12.5px" data-nav="#/register">注册新账号</button></div>`,
+      '登录', `<div style="height:8px"></div>`),
+    caption:'PS-07 登录 · 账号密码（第一阶段只做这一种）',
+    notes:{
+      route:'/login',
+      goals:['未登录进入私有路径时记住原路径，登录后回跳','错误分类呈现：凭据错误 / 账号禁用 / 限流'],
+      states:['校验失败','凭据错误 1001','账号禁用 1005','限流 5001'],
+      api:['POST /auth/login','POST /auth/refresh'],
+      tip:'第三方登录有契约占位但不在本期主线；这里不放第三方入口。'
+    }
+  };
+}
+function vRegister(){
+  return {
+    appbar:`<div class="appbar"><button class="iconbtn edge" data-act="back" aria-label="返回">${ico('back')}</button></div>`,
+    body:authShell('注册', '注册后默认为普通会员，可以投稿。', `
+      <label class="field"><span class="lb">用户名<span class="req">*</span></span>
+        <input class="inp" placeholder="2–32 个字符" /></label>
+      <label class="field"><span class="lb">邮箱<span class="req">*</span></span>
+        <input class="inp" placeholder="用于登录与通知" /></label>
+      <label class="field"><span class="lb">昵称<span class="req">*</span></span>
+        <input class="inp" placeholder="展示给其他读者" /></label>
+      <label class="field"><span class="lb">密码<span class="req">*</span></span>
+        <input class="inp" type="password" placeholder="至少 8 位" />
+        <span class="errtxt">${ico('alert')}两次输入不一致</span></label>`,
+      '注册', `<div style="height:8px"></div>`),
+    caption:'PS-08 注册 · 字段校验与错误反馈',
+    notes:{
+      route:'/register',
+      goals:['客户端提前校验长度与格式，服务端仍是最终裁决','4001 校验错误读 data.errors 映射到具体字段'],
+      states:['字段错误','邮箱已存在','提交中'],
+      api:['POST /auth/register'],
+      tip:'注册成功默认 member 角色；不要把角色选择暴露给用户。'
+    }
+  };
+}
+
+/* ================================================================
+   页面：会员中心
+   ================================================================ */
+function requireLogin(inner){
+  if(isIn()) return inner();
+  return {
+    appbar:`<div class="appbar"><span class="appbar-title">我的</span></div>`,
+    body:`<div class="state"><div class="ic">${ico('user')}</div>
+      <h2>还没有登录</h2>
+      <p>登录后可以收藏文章、参与评论、投稿你自己的文章。</p>
+      <div class="acts"><button class="b pri" data-nav="#/login">登录</button>
+      <button class="b sec" data-nav="#/register">注册</button></div></div>`,
+    tab:true, tabIdx:3,
+    caption:'会员中心 · 未登录态',
+    notes:{route:'/member*', goals:['未登录给出明确出口，不做空白页'],
+      states:['未登录'], api:['GET /me','GET /me/profile'],
+      tip:'登录后回跳原路径（redirect 保存一次，用掉即清）。'}
+  };
+}
+function vMemberHome(){
+  return requireLogin(() => {
+    const unread = unreadCount();
+    return {
+      appbar:`<div class="appbar"><span class="appbar-title">我的</span>
+        <button class="iconbtn" data-nav="#/member/notifications" aria-label="通知">${ico('bell')}
+          ${unread ? `<span class="badge-dot">${unread}</span>` : ''}</button>
+        <button class="iconbtn edge-r" data-nav="#/member/profile" aria-label="设置">${ico('cog')}</button></div>`,
+      body:`
+        <div class="identity">
+          <span class="avatar lg">${esc(ME.avatar)}</span>
+          <div class="who"><strong>${esc(ME.nickname)}</strong>
+            <small>Lv.${ME.level} · 会员 · @${esc(ME.username)}</small></div>
+          <button class="iconbtn edge-r" data-nav="#/member/profile" aria-label="编辑资料">${ico('chevr')}</button>
+        </div>
+        <div class="stat-row">
+          <div class="stat"><b>${S.faved.size}</b><span>收藏</span></div>
+          <div class="stat"><b>${S.liked.size}</b><span>点赞</span></div>
+          <div class="stat"><b>${S.history.length}</b><span>足迹</span></div>
+          <div class="stat"><b>${MY_DRAFTS.length}</b><span>稿件</span></div>
+        </div>
+        <div class="grid6">
+          <button data-nav="#/member/favorites">${ico('star')}<span>我的收藏</span></button>
+          <button data-nav="#/member/likes">${ico('heart')}<span>我的点赞</span></button>
+          <button data-nav="#/member/history">${ico('clockback')}<span>阅读历史</span></button>
+          <button data-nav="#/member/articles">${ico('pen')}<span>我的文章</span></button>
+          <button data-nav="#/member/notifications">${ico('bell')}<span>通知</span>
+            ${unread ? `<span class="n hot">${unread}</span>` : ''}</button>
+          <button data-nav="#/member/profile">${ico('cog')}<span>个人资料</span></button>
+        </div>
+        <div class="sec-head"><h3>继续阅读</h3>
+          <button class="more" data-nav="#/member/history">历史${ico('chevr')}</button></div>
+        ${S.history.slice(0, 3).map(id => {
+          const a = ARTICLES.find(x => x.id === id); return a ? entry(a) : '';
+        }).join('')}
+        <div class="card"><div class="row link" data-nav="#/member/articles/new">
+          <span style="color:var(--brand)">${ico('plus')}</span>
+          <span class="rt">写一篇文章<small>草稿会按账号隔离保存在本机</small></span>
+          ${ico('chevr', 'arw')}</div></div>
+        <div style="height:24px"></div>`,
+      tab:true, tabIdx:3,
+      caption:'PS-09 会员首页 · 身份卡 + 六类入口',
+      notes:{
+        route:'/member',
+        goals:['身份卡 + 六类入口，一眼看到全部私有数据位置','列表页不把未发布稿件链到公开详情'],
+        states:['未登录','空数据','刷新','会话过期'],
+        api:['GET /me','GET /me/favorites','GET /me/likes','GET /me/history','GET /me/articles','GET /me/notifications'],
+        tip:'私有请求不进公共缓存；退出与切换账号要清空私有状态 key。'
+      }
+    };
+  });
+}
+
+/* 列表型会员页共用外壳 */
+function memberListPage(cfg){
+  return requireLogin(() => ({
+    appbar:`<div class="appbar"><button class="iconbtn edge" data-act="back" aria-label="返回">${ico('back')}</button>
+      <span class="appbar-title">${esc(cfg.title)}</span>
+      ${cfg.action || ''}</div>`,
+    body:`${cfg.head || ''}${listGate(cfg.listFn)}<div style="height:24px"></div>`,
+    caption:cfg.caption,
+    notes:cfg.notes
+  }));
+}
+function vFav(){
+  return memberListPage({
+    title:'我的收藏',
+    action:`<span style="font-size:12px;color:var(--text-muted)">${S.faved.size} 篇</span>`,
+    listFn:() => {
+      const list = ARTICLES.filter(a => S.faved.has(a.id));
+      if(!list.length) return emptyBlock('还没有收藏', '在文章底部点「收藏」，之后会出现在这里。', '去首页看看', '#/');
+      return list.map(a => `
+        <div class="entry" style="align-items:center">
+          <button class="eb" style="background:none;border:0;padding:0;text-align:left;cursor:pointer"
+            data-nav="#/articles/${esc(a.slug || a.id)}">
+            <h4>${esc(a.title)}</h4>
+            <div class="meta"><span>${esc(a.categoryName)}</span><i></i><span>${fmt(a.viewCount)} 阅读</span></div>
+          </button>
+          <button class="b txt" style="min-height:36px;font-size:12.5px" data-act="fav:${a.id}">取消</button>
+        </div>`).join('');
+    },
+    caption:'PS-10 我的收藏 · 可取消，末页与错误态',
+    notes:{
+      route:'/member/favorites',
+      goals:['收藏以账号为 key，切换账号后不串数据','取消收藏乐观更新，失败要回滚'],
+      states:['删除','末页','错误','账号切换'],
+      api:['GET /me/favorites','DELETE /me/favorites/{articleId}'],
+      tip:'列表分页读 pagination 字段，不要把滚动状态当后端游标。'
+    }
+  });
+}
+function vLikes(){
+  return memberListPage({
+    title:'我的点赞',
+    action:`<span style="font-size:12px;color:var(--text-muted)">${S.liked.size} 篇</span>`,
+    listFn:() => {
+      const list = ARTICLES.filter(a => S.liked.has(a.id));
+      if(!list.length) return emptyBlock('还没有点赞', '读到喜欢的文章，点个赞吧。', '去首页看看', '#/');
+      return list.map(entry).join('');
+    },
+    caption:'PS-11 我的点赞 · 与收藏分开维护',
+    notes:{
+      route:'/member/likes',
+      goals:['点赞与收藏是两个独立状态，接口也不同','幂等写入：重复点赞不叠加计数'],
+      states:['空态','末页','错误'],
+      api:['GET /me/likes','POST/DELETE /articles/{id}/like'],
+      tip:'契约中 GET /me/likes 的分页形态待整改，实现时按实际返回适配。'
+    }
+  });
+}
+function vHistory(){
+  return memberListPage({
+    title:'阅读历史',
+    action:`<button class="b txt" style="min-height:36px;font-size:12.5px" data-act="history:clear">清空</button>`,
+    listFn:() => {
+      if(!S.history.length) return emptyBlock('还没有阅读记录', '读过的文章会按时间倒序出现在这里。', '去首页看看', '#/');
+      return S.history.map((id, i) => {
+        const a = ARTICLES.find(x => x.id === id); if(!a) return '';
+        const prog = [0.75, 0.4, 0.9, 0.2, 0.55][i % 5];
+        return `<button class="entry" data-nav="#/articles/${esc(a.slug || a.id)}">
+          <div class="eb">
+            <h4>${esc(a.title)}</h4>
+            <div class="meta"><span>${esc(a.categoryName)}</span><i></i><span>已读 ${Math.round(prog * 100)}%</span></div>
+            <div style="height:6px;border-radius:3px;background:var(--line);margin-top:10px;overflow:hidden">
+              <div style="height:100%;width:${prog * 100}%;background:var(--brand)"></div></div>
+          </div></button>`;
+      }).join('');
+    },
+    caption:'PS-12 阅读历史 · 进度与继续阅读',
+    notes:{
+      route:'/member/history',
+      goals:['阅读进度按文章记录，用于「继续阅读」','写入节流，避免每滚一屏就写一次'],
+      states:['清空确认','空态','错误'],
+      api:['GET /me/history','POST /me/history'],
+      tip:'历史属私有数据，no-cache，且绝不进入公共缓存。'
+    }
+  });
+}
+</script>
+<script>
+/* ================================================================
+   页面：我的文章（草稿 / 待审核 / 已发布）
+   ================================================================ */
+function vMyArticles(){
+  return requireLogin(() => {
+    const f = S.myFilter;
+    const list = MY_DRAFTS.filter(d => f === 'all' || d.status === f);
+    const count = (s) => MY_DRAFTS.filter(d => d.status === s).length;
+    const segBtn = (k, label, n) =>
+      `<button class="${f === k ? 'on' : ''}" data-act="filter:${k}">${label}${n ? ' ' + n : ''}</button>`;
+    return {
+      appbar:`<div class="appbar">
+        <button class="iconbtn edge" data-act="back" aria-label="返回">${ico('back')}</button>
+        <span class="appbar-title">我的文章</span>
+        <button class="iconbtn edge-r" data-nav="#/member/articles/new" aria-label="写文章">${ico('plus')}</button></div>`,
+      body:`
+        <div class="segs">
+          ${segBtn('all', '全部', MY_DRAFTS.length)}
+          ${segBtn('draft', '草稿', count('draft'))}
+          ${segBtn('pending', '待审核', count('pending'))}
+          ${segBtn('published', '已发布', count('published'))}
+        </div>
+        ${listGate(() => {
+          if(!list.length) return emptyBlock('这个状态下没有稿件',
+            f === 'pending' ? '提交审核后，稿件会显示在这里。' : '点右上角加号开始写一篇。',
+            '写一篇文章', '#/member/articles/new');
+          return list.map(d => `
+            <div style="border-bottom:1px solid var(--line)">
+              <div style="padding:var(--s4) var(--s4) var(--s2)">
+                <div style="display:flex;gap:var(--s2);align-items:center;margin-bottom:8px">
+                  ${statusChip(d.status)}
+                  <span style="font-size:11px;color:var(--text-muted)">${esc(d.updatedAt)} 更新</span>
+                </div>
+                <div style="font-size:15.5px;font-weight:600;line-height:1.5;color:var(--text-title)">${esc(d.title)}</div>
+                <div style="font-size:12.5px;color:var(--text-muted);line-height:1.65;margin-top:6px">${esc(d.summary)}</div>
+                ${d.status === 'pending' ? `<div class="chip pen" style="margin-top:10px">${ico('clock')}审核中，可以编辑后撤回</div>` : ''}
+              </div>
+              <div style="display:flex;gap:var(--s2);padding:0 var(--s4) var(--s4);flex-wrap:wrap">
+                ${d.status === 'published'
+                  ? `<button class="b sec" style="min-height:36px;font-size:12.5px" data-nav="#/articles/${esc(d.slug)}">查看</button>
+                     <button class="b sec" style="min-height:36px;font-size:12.5px" data-act="draft:edit:${d.id}">修改</button>
+                     <button class="b txt" style="min-height:36px;font-size:12.5px" data-act="draft:resubmit:${d.id}">重新送审</button>`
+                  : `<button class="b sec" style="min-height:36px;font-size:12.5px" data-act="draft:edit:${d.id}">编辑</button>
+                     <button class="b sec" style="min-height:36px;font-size:12.5px" data-nav="#/member/articles/${d.id}/preview">预览</button>
+                     ${d.status === 'draft'
+                       ? `<button class="b pri" style="min-height:36px;font-size:12.5px" data-act="draft:submit:${d.id}">提交审核</button>`
+                       : `<button class="b txt" style="min-height:36px;font-size:12.5px" data-act="draft:withdraw:${d.id}">撤回</button>`}
+                     <button class="b txt" style="min-height:36px;font-size:12.5px;color:var(--danger)" data-act="draft:del:${d.id}">删除</button>`}
+              </div>
+            </div>`).join('');
+        })}
+        <div style="height:24px"></div>`,
+      caption:'PS-13 我的文章 · 三态筛选与状态相关操作',
+      notes:{
+        route:'/member/articles',
+        goals:['按 draft/pending/published 筛选','操作随状态变化：草稿可提交、待审可撤回、已发布修改后转待审'],
+        states:['操作确认','状态变化','空态','会话过期'],
+        api:['GET /me/articles','POST /articles/{id}/submit','PUT /articles/{id}','DELETE /articles/{id}'],
+        tip:'「保存」已发布稿件会进入待审核，必须在 UI 上说明，不能让用户误以为只存私有版本。'
+      }
+    };
+  });
+}
+
+/* ================================================================
+   页面：投稿编辑器 / 预览
+   ================================================================ */
+function ensureDraft(id){
+  const key = id || 'new';
+  if(S.draft.id === key) return;
+  const src = id ? MY_DRAFTS.find(d => String(d.id) === String(id)) : null;
+  S.draft = {
+    id:key,
+    title:src ? src.title : '',
+    summary:src ? src.summary : '',
+    body:src ? `## 引言\n\n${src.summary}\n\n## 一、问题从哪里来\n\n在这里展开。\n\n## 二、怎么做\n\n\`\`\`ts\nexport const go = () => {};\n\`\`\`\n` : '',
+    status:src ? src.status : 'draft',
+    mode:'edit'
+  };
+}
+function vEditor(p){
+  return requireLogin(() => {
+    ensureDraft(p.id);
+    const d = S.draft;
+    const isPreview = d.mode === 'preview';
+    const titleLen = d.title.length, bodyLen = d.body.length;
+    const published = d.status === 'published';
+    return {
+      appbar:`<div class="appbar">
+        <button class="iconbtn edge" data-act="editor:close" aria-label="返回">${ico('back')}</button>
+        <span class="appbar-title">${published ? '修改已发布文章' : (d.id === 'new' ? '写文章' : '编辑稿件')}</span>
+        <button class="iconbtn edge-r" data-act="editor:more" aria-label="更多">${ico('more')}</button></div>`,
+      body:`
+        ${published ? `<div class="preview-bar">${ico('alert')}
+          这是已发布文章，保存后会进入<strong>待审核</strong>，不会立刻对外生效。</div>` : ''}
+        <div class="editor-mode">
+          <div class="seg">
+            <button class="${!isPreview ? 'on' : ''}" data-act="editor:mode:edit">编辑</button>
+            <button class="${isPreview ? 'on' : ''}" data-act="editor:mode:preview">预览</button>
+          </div>
+          <span class="sp"></span>
+          <span class="cnt">${bodyLen} / 65535</span>
+        </div>
+        ${isPreview ? `
+          <div class="art-head"><h1>${esc(d.title || '（未填写标题）')}</h1>
+            <div class="byline"><span class="avatar sm">${esc(ME.avatar)}</span>
+              <span class="who"><strong>${esc(ME.nickname)}</strong><small>预览 · 尚未发布</small></span></div></div>
+          <div class="lead">${esc(d.summary || '（未填写摘要）')}</div>
+          <div class="prose" style="padding-bottom:var(--s4)">${md2html(d.body)}</div>`
+        : `<div class="edit-area">
+            <label class="field"><span class="lb">标题<span class="req">*</span></span>
+              <input class="inp" data-draft="title" value="${esc(d.title)}" placeholder="不超过 200 字" />
+              <div class="counter ${titleLen > 180 ? 'warn' : ''}">${titleLen} / 200</div></label>
+            <label class="field"><span class="lb">摘要</span>
+              <textarea class="inp" data-draft="summary" style="min-height:76px"
+                placeholder="一到两句话说清这篇文章解决什么问题">${esc(d.summary)}</textarea>
+              <div class="counter ${d.summary.length > 450 ? 'warn' : ''}">${d.summary.length} / 500</div></label>
+            <span class="lb">正文（Markdown）</span>
+            <textarea class="md-area" data-draft="body">${esc(d.body)}</textarea>
+            <div class="toolbar">
+              <button data-act="md:bold" title="加粗">B</button>
+              <button data-act="md:h2" title="标题">H2</button>
+              <button data-act="md:code" title="代码块">&lt;/&gt;</button>
+              <button data-act="md:table" title="表格">▦</button>
+              <button data-act="md:quote" title="引用">"</button>
+              <button data-act="md:list" title="列表">≣</button>
+              <button data-act="md:img" title="插入图片" style="width:auto;padding:0 10px">${ico('image')} 图片</button>
+            </div>
+            <div style="display:flex;gap:var(--s2);align-items:center;margin-top:var(--s3);
+              padding:var(--s3);background:var(--surface-sunken);border-radius:var(--r-sm)">
+              <span style="color:var(--brand)">${ico('upload')}</span>
+              <span style="font-size:12px;color:var(--text-muted);line-height:1.6">
+                图片走上传队列，失败不影响正文；类型与大小在选中时先校验。</span>
+            </div>
+          </div>`}
+        <div style="height:16px"></div>`,
+      bottom:`<div class="editor-acts">
+        <button class="b sec" data-act="editor:mode:${isPreview ? 'edit' : 'preview'}">${isPreview ? '继续编辑' : '预览'}</button>
+        <button class="b sec" data-act="editor:save">保存草稿</button>
+        <button class="b pri" data-act="editor:submit">提交审核</button></div>`,
+      caption:'PS-14 投稿编辑器 · 编辑/预览、字数计数、图片上传',
+      notes:{
+        route:'/member/articles/new · /:id/edit',
+        goals:['手机默认编辑模式，预览用与详情一致的 Markdown 样式','底部操作：预览 / 保存草稿 / 提交审核','离开、切账号、上传中都要保护输入'],
+        states:['未保存离开','上传中','保存失败','冲突 3002','本机恢复'],
+        api:['POST /articles','PUT /articles/{id}','POST /articles/{id}/submit','POST /upload','GET /files/{key}'],
+        tip:'本机恢复副本按「账号 + 稿件 ID」隔离，恢复前必须让用户确认；已发布稿件保存后转 pending 要显式提示。'
+      }
+    };
+  });
+}
+function md2html(md){
+  const lines = String(md || '').split('\n');
+  let h = '', inCode = false, code = '';
+  const out = [];
+  for(const ln of lines){
+    if(ln.trim().startsWith('```')){
+      if(inCode){ out.push(`<div class="codebox"><div class="bar"><span>code</span><span></span></div><pre>${esc(code)}</pre></div>`); code = ''; }
+      inCode = !inCode; continue;
+    }
+    if(inCode){ code += ln + '\n'; continue; }
+    const t = ln.trim();
+    if(!t){ continue; }
+    if(t.startsWith('### ')) out.push(`<h3 style="font-size:18px;margin:20px 0 10px">${esc(t.slice(4))}</h3>`);
+    else if(t.startsWith('## ')) out.push(`<h2>${esc(t.slice(3))}</h2>`);
+    else if(t.startsWith('# ')) out.push(`<h1 style="font-size:24px;margin:20px 0 12px">${esc(t.slice(2))}</h1>`);
+    else if(t.startsWith('> ')) out.push(`<blockquote>${esc(t.slice(2))}</blockquote>`);
+    else if(t.startsWith('- ')) out.push(`<p style="padding-left:16px">• ${esc(t.slice(2))}</p>`);
+    else out.push(`<p>${esc(t)}</p>`);
+  }
+  if(inCode && code) out.push(`<div class="codebox"><pre>${esc(code)}</pre></div>`);
+  h = out.join('');
+  return h || '<p style="color:var(--text-muted)">正文还是空的。</p>';
+}
+function vPreview(p){
+  return requireLogin(() => {
+    const src = MY_DRAFTS.find(d => String(d.id) === String(p.id));
+    const t = src ? src.title : (S.draft.title || '（未填写标题）');
+    const s = src ? src.summary : S.draft.summary;
+    const b = src ? `## 引言\n\n${src.summary}\n` : S.draft.body;
+    return {
+      appbar:`<div class="appbar">
+        <button class="iconbtn edge" data-act="back" aria-label="返回">${ico('back')}</button>
+        <span class="appbar-title">预览</span>
+        <button class="iconbtn edge-r" data-act="draft:edit:${esc(p.id)}" aria-label="编辑">${ico('pen')}</button></div>`,
+      body:`
+        <div class="preview-bar">${ico('lock')}私人预览 · 不会被公开索引，其他人看不到</div>
+        <div class="art-head">
+          ${src ? statusChip(src.status) : ''}
+          <h1 style="margin-top:var(--s3)">${esc(t)}</h1>
+          <div class="byline"><span class="avatar sm">${esc(ME.avatar)}</span>
+            <span class="who"><strong>${esc(ME.nickname)}</strong>
+              <small>${esc(src ? src.updatedAt : '刚刚')} · 仅自己可见</small></span></div>
+        </div>
+        <div class="lead">${esc(s || '（未填写摘要）')}</div>
+        <div class="prose" style="padding-bottom:var(--s5)">${md2html(b)}</div>`,
+      caption:'PS-15 投稿预览 · 私人预览不可公开索引',
+      notes:{
+        route:'/member/articles/:id/preview',
+        goals:['用与公开详情一致的渲染样式，提前发现排版问题','明确标注私人预览，避免误解为已发布'],
+        states:['非本人稿件','稿件不存在'],
+        api:['GET /me/articles/{id}'],
+        tip:'预览页不能出现在公开索引与分享结果里。'
+      }
+    };
+  });
+}
+
+/* ================================================================
+   页面：通知 / 资料 / 密码
+   ================================================================ */
+function vNotifications(){
+  return requireLogin(() => {
+    const list = NOTIFICATIONS.map(n => ({...n, isRead:n.isRead || S.readNotif.has(n.id)}));
+    const unread = list.filter(n => !n.isRead).length;
+    const ic = (t) => t === 'article_published' ? 'check' : t === 'comment_approved' ? 'msg' : 'bell';
+    return {
+      appbar:`<div class="appbar">
+        <button class="iconbtn edge" data-act="back" aria-label="返回">${ico('back')}</button>
+        <span class="appbar-title">通知</span>
+        ${unread ? `<button class="b txt" style="min-height:36px;font-size:12.5px" data-act="notif:readall">全部已读</button>` : ''}</div>`,
+      body:`${listGate(() => {
+        if(S.ui === 'empty') return emptyBlock('没有新通知', '文章发布、评论通过时会通知你。', '回到首页', '#/');
+        return list.map(n => `
+          <div class="notice ${n.isRead ? '' : 'unread'}" data-act="notif:read:${n.id}">
+            <span class="ni">${ico(ic(n.type))}</span>
+            <div class="nb">
+              <h4>${n.isRead ? '' : '<i></i>'}${esc(n.title)}</h4>
+              <p>${esc(n.body)}</p>
+              <time>${esc(n.createdAt)}</time>
+            </div></div>`).join('');
+      })}<div style="height:24px"></div>`,
+      caption:'PS-16 通知 · 未读高亮与标记已读',
+      notes:{
+        route:'/member/notifications',
+        goals:['未读用底色 + 圆点双重表达，不只靠颜色','点击进入对应资源并标记已读'],
+        states:['未读 / 已读','全部已读','空态'],
+        api:['GET /me/notifications','PATCH /me/notifications/{id}'],
+        tip:'第一版只做站内通知；推送不在本期范围。'
+      }
+    };
+  });
+}
+function vProfile(){
+  return requireLogin(() => ({
+    appbar:`<div class="appbar">
+      <button class="iconbtn edge" data-act="back" aria-label="返回">${ico('back')}</button>
+      <span class="appbar-title">个人资料</span></div>`,
+    body:`
+      <div class="card">
+        <div class="row">
+          <span class="avatar lg">${esc(ME.avatar)}</span>
+          <span class="rt">${esc(ME.nickname)}<small>@${esc(ME.username)} · Lv.${ME.level}</small></span>
+          <button class="b txt" style="min-height:36px;font-size:12.5px" data-act="upload">更换头像</button>
+        </div>
+        <div class="card-pad">
+          <label class="field"><span class="lb">昵称</span>
+            <input class="inp" value="${esc(ME.nickname)}" /></label>
+          <label class="field"><span class="lb">个人简介</span>
+            <textarea class="inp" style="min-height:72px" placeholder="一句话介绍自己">全栈开发工程师，正在写「成为全栈」系列。</textarea></label>
+          <label class="field"><span class="lb">邮箱</span>
+            <input class="inp" value="fungleo@example.com" disabled />
+            <span class="hint">邮箱仅本人与管理员可见，公开主页不返回。</span></label>
+          <button class="b pri wide" data-act="profile:submit">保存</button>
+        </div>
+      </div>
+
+      <div class="sec-head"><h3>外观</h3></div>
+      <div class="card" style="margin-top:var(--s3)">
+        <div class="setting"><span style="color:var(--brand);font-size:19px">${ico('cog')}</span>
+          <span class="st"><strong>主题</strong><small>跟随系统 / 浅色 / 深色，选择会持久化到本地</small></span></div>
+        <div class="setting" data-act="setting:theme:system">
+          <span style="color:var(--text-muted);font-size:19px">${ico('cog')}</span>
+          <span class="st"><strong>跟随系统</strong></span>
+          <span class="radio ${S.themeMode === 'system' ? 'on' : ''}">${ico('check2')}</span></div>
+        <div class="setting" data-act="setting:theme:light">
+          <span style="color:var(--brand);font-size:19px">${ico('sun')}</span>
+          <span class="st"><strong>浅色</strong><small>白色内容面、深蓝灰文字</small></span>
+          <span class="radio ${S.themeMode === 'light' ? 'on' : ''}">${ico('check2')}</span></div>
+        <div class="setting" data-act="setting:theme:dark">
+          <span style="color:var(--brand);font-size:19px">${ico('moon')}</span>
+          <span class="st"><strong>深色</strong><small>深蓝灰背景、低亮度蓝色强调</small></span>
+          <span class="radio ${S.themeMode === 'dark' ? 'on' : ''}">${ico('check2')}</span></div>
+      </div>
+
+      <div class="sec-head"><h3>账号</h3></div>
+      <div class="card" style="margin-top:var(--s3)">
+        <div class="row link" data-nav="#/member/password">
+          <span style="color:var(--text-muted)">${ico('lock')}</span>
+          <span class="rt">修改密码<small>修改后其他设备的会话会失效</small></span>${ico('chevr', 'arw')}</div>
+        <div class="row link" data-act="logout">
+          <span style="color:var(--danger)">${ico('logout')}</span>
+          <span class="rt" style="color:var(--danger)">退出登录</span>${ico('chevr', 'arw')}</div>
+      </div>
+      <div style="height:24px"></div>`,
+    caption:'PS-17 个人资料 · 表单、主题设置与退出',
+    notes:{
+      route:'/member/profile',
+      goals:['资料字段与隐私边界一致（邮箱不外泄）','主题三选项，重启后保持'],
+      states:['保存失败','会话过期','头像上传失败'],
+      api:['GET /me/profile','PUT /me/profile','POST /upload'],
+      tip:'退出登录后清除 access、refresh 与全部私有缓存，并丢弃在途请求的迟到响应。'
+    }
+  }));
+}
+function vPassword(){
+  return requireLogin(() => ({
+    appbar:`<div class="appbar">
+      <button class="iconbtn edge" data-act="back" aria-label="返回">${ico('back')}</button>
+      <span class="appbar-title">修改密码</span></div>`,
+    body:`
+      <div class="card"><div class="card-pad">
+        <label class="field"><span class="lb">当前密码<span class="req">*</span></span>
+          <input class="inp" type="password" placeholder="请输入当前密码" /></label>
+        <label class="field"><span class="lb">新密码<span class="req">*</span></span>
+          <input class="inp" type="password" id="np" placeholder="至少 8 位" />
+          <span class="hint">建议包含大小写字母与数字。</span></label>
+        <label class="field"><span class="lb">确认新密码<span class="req">*</span></span>
+          <input class="inp" type="password" id="np2" placeholder="再输入一次" /></label>
+        <div style="padding:var(--s3);background:var(--surface-sunken);border-radius:var(--r-sm);
+          font-size:12px;color:var(--text-muted);line-height:1.7;margin-bottom:var(--s4)">
+          修改成功后，其他设备上的会话会失效，需要重新登录。</div>
+        <button class="b pri wide" data-act="password:submit">确认修改</button>
+      </div></div>
+      <div style="height:24px"></div>`,
+    caption:'PS-18 修改密码 · 校验与影响说明',
+    notes:{
+      route:'/member/password',
+      goals:['改密后旧会话失效，避免旧请求恢复旧账号','两次输入不一致在客户端先拦下'],
+      states:['当前密码错误','两次不一致','提交中','限流'],
+      api:['PUT /me/password'],
+      tip:'任何情况下都不把密码写入日志或本地存储。'
+    }
+  }));
+}
+
+/* ================================================================
+   渲染引擎
+   ================================================================ */
+const NAV = [
+  {g:'公开阅读', items:[
+    {n:'首页', h:'#/', p:'/'},
+    {n:'分类', h:'#/categories', p:'/categories'},
+    {n:'标签', h:'#/tags', p:'/tags'},
+    {n:'搜索', h:'#/search', p:'/search'},
+    {n:'文章详情', h:'#/articles/dual-deploy', p:'/articles'},
+    {n:'会员公开主页', h:'#/members/1', p:'/members'}
+  ]},
+  {g:'认证', items:[
+    {n:'登录', h:'#/login', p:'/login'},
+    {n:'注册', h:'#/register', p:'/register'}
+  ]},
+  {g:'会员中心', items:[
+    {n:'会员首页', h:'#/member', p:'/member'},
+    {n:'我的收藏', h:'#/member/favorites', p:'/member/favorites'},
+    {n:'我的点赞', h:'#/member/likes', p:'/member/likes'},
+    {n:'阅读历史', h:'#/member/history', p:'/member/history'},
+    {n:'我的文章', h:'#/member/articles', p:'/member/articles'},
+    {n:'通知', h:'#/member/notifications', p:'/member/notifications'},
+    {n:'个人资料', h:'#/member/profile', p:'/member/profile'},
+    {n:'修改密码', h:'#/member/password', p:'/member/password'}
+  ]},
+  {g:'投稿', items:[
+    {n:'写文章', h:'#/member/articles/new', p:'/member/articles/new'},
+    {n:'编辑稿件', h:'#/member/articles/201/edit', p:'/member/articles/201/edit'},
+    {n:'投稿预览', h:'#/member/articles/202/preview', p:'/member/articles/202/preview'}
+  ]}
+];
+function renderNav(activePath){
+  return NAV.map(g => `<h2>${esc(g.g)}</h2>${g.items.map(it => {
+    const on = activePath === it.p || (it.p !== '/' && activePath.startsWith(it.p + '/'))
+      || (it.p === '/member' && activePath === '/member');
+    return `<a href="${it.h}" class="${on ? 'on' : ''}">${esc(it.n)}<code>${esc(it.h.replace('#', ''))}</code></a>`;
+  }).join('')}`).join('');
+}
+function notesHTML(n){
+  if(!n) return '';
+  const li = (arr) => (arr || []).map(x => `<li>${esc(x)}</li>`).join('');
+  return `<h3>当前页面</h3><div class="route">${esc(n.route || '')}</div>
+    ${n.goals ? `<h4>要完成什么</h4><ul>${li(n.goals)}</ul>` : ''}
+    ${n.states ? `<h4>必须状态</h4><ul>${li(n.states)}</ul>` : ''}
+    ${n.api ? `<h4>涉及接口</h4><div class="api">${(n.api || []).map(esc).join('<br />')}</div>` : ''}
+    ${n.tip ? `<div class="tip">${esc(n.tip)}</div>` : ''}`;
+}
+function tabbarHTML(idx){
+  const unread = isIn() ? unreadCount() : 0;
+  return `<div class="tabbar">${TAB_ROUTES.map((t, i) =>
+    `<button class="${i === idx ? 'on' : ''}" data-nav="${t.h}">${ico(t.ic)}${esc(t.n)}
+      ${i === 3 && unread ? '<span class="tab-dot"></span>' : ''}</button>`).join('')}</div>`;
+}
+
+/* 路由表：必须放在所有视图函数声明之后（跨 <script> 块不提升函数声明） */
+const ROUTES = [
+  {p:'/',                            render:vHome,        hideNav:false},
+  {p:'/categories',                  render:vCategories,  hideNav:false},
+  {p:'/tags',                        render:vTags,        hideNav:false},
+  {p:'/search',                      render:vSearch,      hideNav:false},
+  {p:'/articles/:slug',              render:vArticle,     hideNav:true},
+  {p:'/members/:id',                 render:vMemberPublic,hideNav:true},
+  {p:'/login',                       render:vLogin,       hideNav:true},
+  {p:'/register',                    render:vRegister,    hideNav:true},
+  {p:'/member',                      render:vMemberHome,  hideNav:false},
+  {p:'/member/favorites',            render:vFav,         hideNav:true},
+  {p:'/member/likes',                render:vLikes,       hideNav:true},
+  {p:'/member/history',              render:vHistory,     hideNav:true},
+  {p:'/member/articles',             render:vMyArticles,  hideNav:true},
+  {p:'/member/notifications',        render:vNotifications,hideNav:true},
+  {p:'/member/profile',              render:vProfile,     hideNav:true},
+  {p:'/member/password',             render:vPassword,    hideNav:true},
+  {p:'/member/articles/new',         render:vEditor,      hideNav:true},
+  {p:'/member/articles/:id/edit',    render:vEditor,      hideNav:true},
+  {p:'/member/articles/:id/preview', render:vPreview,     hideNav:true}
+];
+
+let lastPath = null;
+let lastSig = null;
+function render(){
+  const {seg} = parseHash();
+  const m = matchRoute(seg);
+  const appbar = document.getElementById('appbar');
+  const screen = document.getElementById('screen');
+  const tabbar = document.getElementById('tabbar');
+  const overlay = document.getElementById('overlay');
+  const caption = document.getElementById('caption');
+  const notes = document.getElementById('notes');
+  overlay.innerHTML = '';
+
+  if(!m){
+    const path = seg.join('/') || '/';
+    appbar.innerHTML = `<div class="appbar">
+      <button class="iconbtn edge" data-act="back" aria-label="返回">${ico('back')}</button>
+      <span class="appbar-title">页面不存在</span></div>`;
+    screen.innerHTML = `<div class="fade">${stateBlock('e404', {
+      title:'这个地址无法识别', desc:'链接可能已经失效，或者内容已被移除。'})}</div>`;
+    tabbar.innerHTML = tabbarHTML(0);
+    caption.textContent = '未识别路由 · ' + location.hash;
+    notes.innerHTML = notesHTML({route:location.hash, goals:['深链无法识别时进入明确错误页，不留空白'],
+      states:['404'], api:[], tip:'无权限与不存在要区分文案，不能统一显示「加载失败」。'});
+    document.getElementById('navtree').innerHTML = renderNav('/' + path);
+    if(lastPath !== path){ screen.scrollTop = 0; lastPath = path; }
+    return;
+  }
+
+  const view = m.route.render(m.params) || {};
+  appbar.innerHTML = view.appbar || '';
+  /* 渲染签名：只包含会影响「已渲染 HTML」的状态。
+     编辑器草稿正文不在其中，因此按键不会触发重渲染，输入内容不会被冲掉。 */
+  const sig = [
+    m.route.p, JSON.stringify(m.params), S.ui, S.auth, S.myFilter, S.searchQ,
+    [...S.article.liked].sort().join(','), [...S.article.faved].sort().join(','),
+    S.readNotif.size, S.history.length, S.draft.mode, heroIdx,
+    [...S.catOpen].sort().join(','),
+    MY_DRAFTS.map(d => d.status + d.updatedAt).join('|')
+  ].join('~');
+  if(lastSig !== sig){
+    screen.innerHTML = `<div class="fade">${view.body || ''}</div>`;
+    lastSig = sig;
+  }
+  if(view.bottom) tabbar.innerHTML = view.bottom;
+  else if(view.tab) tabbar.innerHTML = tabbarHTML(view.tabIdx || 0);
+  else tabbar.innerHTML = '';
+  caption.textContent = view.caption || '';
+  notes.innerHTML = notesHTML(view.notes);
+  document.getElementById('navtree').innerHTML = renderNav(m.route.p);
+  if(lastPath !== m.route.p){ screen.scrollTop = 0; lastPath = m.route.p; }
+}
+
+/* ================================================================
+   交互
+   ================================================================ */
+function needLogin(){
+  if(isIn()) return false;
+  S.redirect = location.hash;
+  toast('请先登录');
+  go('#/login');
+  return true;
+}
+function openSheet(title, html){
+  const overlay = document.getElementById('overlay');
+  overlay.innerHTML = `<div class="scrim show" data-act="sheet:close"></div>
+    <div class="sheet show"><div class="grab"></div>
+      <div class="sh"><h3>${esc(title)}</h3>
+        <button class="iconbtn edge-r" data-act="sheet:close" aria-label="关闭">${ico('close')}</button></div>
+      <div class="sb">${html}</div></div>`;
+}
+function sheetChoice(text, hint, act, danger){
+  return `<div class="row link" data-act="${act}">
+    <span class="rt" ${danger ? 'style="color:var(--danger)"' : ''}>${esc(text)}
+      ${hint ? `<small>${esc(hint)}</small>` : ''}</span>${ico('chevr', 'arw')}</div>`;
+}
+
+function handleAct(act){
+  const [k, a, b] = act.split(':');
+  switch(k){
+    case 'back':
+      if(history.length > 1) history.back(); else go('#/');
+      break;
+    case 'retry': S.ui = 'normal'; render(); break;
+
+    case 'hero':
+      if(a === 'next') heroIdx = (heroIdx + 1) % HEROES.length;
+      if(a === 'prev') heroIdx = (heroIdx - 1 + HEROES.length) % HEROES.length;
+      if(a === 'open'){ go('#/articles/' + (HEROES[heroIdx].slug || HEROES[heroIdx].id)); break; }
+      screen_reset();
+      render();
+      break;
+
+    case 'cat':
+      if(a === 'toggle'){
+        S.catOpen.has(+b) ? S.catOpen.delete(+b) : S.catOpen.add(+b);
+        render();
+      }
+      break;
+
+    case 'search':
+      if(a === 'submit'){
+        const el = document.getElementById('q');
+        S.searchQ = (el ? el.value : '').trim();
+        if(!S.searchQ){ toast('请输入关键词'); break; }
+        S.ui = 'normal';
+        render();
+      }
+      if(a === 'quick'){ S.searchQ = b; S.ui = 'normal'; render(); }
+      break;
+
+    case 'like': {
+      const id = +a;
+      if(needLogin()) break;
+      const set = S.article.liked;
+      const was = set.has(id) || S.liked.has(id);
+      if(was){ set.delete(id); S.liked.delete(id); } else { set.add(id); S.liked.add(id); }
+      toast(was ? '已取消点赞' : '已点赞');
+      render();
+      break;
+    }
+    case 'fav': {
+      const id = +a;
+      if(needLogin()) break;
+      const set = S.article.faved;
+      const was = set.has(id) || S.faved.has(id);
+      if(was){ set.delete(id); S.faved.delete(id); } else { set.add(id); S.faved.add(id); }
+      toast(was ? '已取消收藏' : '已收藏');
+      render();
+      break;
+    }
+    case 'share': toast('实现阶段接入系统分享面板'); break;
+    case 'reply':
+      if(needLogin()) break;
+      toast('已定位到该楼层，可开始回复');
+      break;
+    case 'cmt-del':
+      openSheet('评论操作',
+        sheetChoice('删除这条评论', '删除后其回复会一起隐藏', 'cmt-del-ok:' + a, true) +
+        sheetChoice('取消', '', 'sheet:close'));
+      break;
+    case 'cmt-del-ok': toast('已删除'); break;
+    case 'comment':
+      if(needLogin()) break;
+      toast('调起评论输入框');
+      break;
+    case 'article':
+      openSheet('文章操作',
+        sheetChoice('复制链接', '', 'share:' + a) +
+        sheetChoice('举报内容', '提交后由管理员复核', 'report') +
+        sheetChoice('取消', '', 'sheet:close'));
+      break;
+    case 'report': toast('已提交，管理员会复核'); break;
+    case 'toc': toast('目录已定位到对应章节'); break;
+
+    case 'auth':
+      if(a === 'submit'){
+        S.ui = 'normal'; S.auth = 'in';
+        const back = S.redirect || '#/member';
+        S.redirect = null;
+        toast('登录成功');
+        go(back);
+      }
+      break;
+    case 'logout':
+      openSheet('退出登录',
+        sheetChoice('确认退出', '会清除本机保存的登录状态与私有缓存', 'logout-ok', true) +
+        sheetChoice('取消', '', 'sheet:close'));
+      break;
+    case 'logout-ok':
+      S.auth = 'out'; S.liked.clear(); S.faved.clear(); S.history = [];
+      render(); toast('已退出登录'); go('#/');
+      break;
+
+    case 'notif':
+      if(a === 'read'){ S.readNotif.add(+b); render(); }
+      if(a === 'readall'){ NOTIFICATIONS.forEach(n => S.readNotif.add(n.id)); render(); toast('已全部标为已读'); }
+      break;
+    case 'history':
+      if(a === 'clear'){
+        openSheet('清空阅读历史', sheetChoice('确认清空', '清空后无法恢复', 'history-clear-ok', true) +
+          sheetChoice('取消', '', 'sheet:close'));
+      }
+      break;
+    case 'history-clear-ok': S.history = []; render(); toast('已清空'); break;
+
+    case 'filter': S.myFilter = a; render(); break;
+    case 'draft':
+      if(a === 'edit'){ go('#/member/articles/' + b + '/edit'); }
+      if(a === 'submit' || a === 'resubmit'){
+        const d = MY_DRAFTS.find(x => String(x.id) === String(b));
+        if(d){ d.status = 'pending'; d.updatedAt = '刚刚'; }
+        render(); toast('已提交审核，等待管理员通过');
+      }
+      if(a === 'withdraw'){
+        const d = MY_DRAFTS.find(x => String(x.id) === String(b));
+        if(d){ d.status = 'draft'; d.updatedAt = '刚刚'; }
+        render(); toast('已撤回为草稿');
+      }
+      if(a === 'del'){
+        openSheet('删除稿件', sheetChoice('删除《' +
+          ((MY_DRAFTS.find(x => String(x.id) === String(b)) || {}).title || '') + '》',
+          '删除后无法恢复', 'draft-del-ok:' + b, true) + sheetChoice('取消', '', 'sheet:close'));
+      }
+      break;
+    case 'draft-del-ok': {
+      const i = MY_DRAFTS.findIndex(x => String(x.id) === String(a));
+      if(i > -1) MY_DRAFTS.splice(i, 1);
+      render(); toast('已删除');
+      break;
+    }
+
+    case 'editor':
+      if(a === 'mode'){ S.draft.mode = b; render(); }
+      if(a === 'close'){
+        openSheet('离开编辑器', sheetChoice('保存草稿后离开', '未提交的内容会保留在本机', 'editor-save-leave') +
+          sheetChoice('直接离开', '未保存的改动会丢失', 'editor-leave', true) +
+          sheetChoice('继续编辑', '', 'sheet:close'));
+      }
+      if(a === 'save' || a === 'save-leave'){ render(); toast('草稿已保存到本机'); }
+      if(a === 'submit'){
+        S.draft.mode = 'edit'; render();
+        toast('已提交审核，状态变为待审核');
+      }
+      if(a === 'more') toast('可在此清空本机恢复副本');
+      break;
+    case 'editor-save-leave': toast('草稿已保存'); go('#/member/articles'); break;
+    case 'editor-leave': go('#/member/articles'); break;
+    case 'md': toast('编辑器工具栏在实现阶段做技术 Spike 后再定'); break;
+
+    case 'setting':
+      if(b){ S.themeMode = b; applyTheme(b); render(); toast('主题已切换：' + (b === 'light' ? '浅色' : b === 'dark' ? '深色' : '跟随系统')); }
+      break;
+    case 'profile': toast('资料已保存'); break;
+    case 'upload': toast('调起系统图片选择'); break;
+    case 'password':
+      if(a === 'submit'){
+        const n1 = document.getElementById('np'), n2 = document.getElementById('np2');
+        if(n1 && n2 && n1.value && n1.value !== n2.value){ toast('两次输入的新密码不一致'); break; }
+        toast('密码已修改，其他设备会话将失效');
+      }
+      break;
+
+    case 'sheet': render(); break;
+    default: break;
+  }
+}
+function screen_reset(){
+  const s = document.getElementById('screen');
+  if(s) s.scrollTop = 0;
+}
+
+/* 主题 */
+function applyTheme(mode){
+  S.themeMode = mode;
+  let t = mode;
+  if(mode === 'system') t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  S.theme = t;
+  document.documentElement.setAttribute('data-theme', t);
+  document.querySelectorAll('[data-theme-set]').forEach(b =>
+    b.setAttribute('aria-pressed', String(b.dataset.themeSet === mode)));
+}
+
+/* 事件绑定 */
+document.addEventListener('click', (e) => {
+  const navEl = e.target.closest('[data-nav]');
+  if(navEl){
+    e.preventDefault();
+    const h = navEl.getAttribute('data-nav');
+    if(h === '#/' && location.hash === '' ){ render(); } else { go(h); }
+    return;
+  }
+  const actEl = e.target.closest('[data-act]');
+  if(actEl){ e.preventDefault(); handleAct(actEl.getAttribute('data-act')); }
+});
+document.addEventListener('keydown', (e) => {
+  if(e.target.id === 'q' && e.key === 'Enter'){
+    S.searchQ = e.target.value.trim();
+    if(S.searchQ) render(); else toast('请输入关键词');
+  }
+});
+document.addEventListener('input', (e) => {
+  const t = e.target;
+  if(t.id === 'q'){ S.searchQ = t.value; return; }
+  if(t.dataset && t.dataset.draft){ S.draft[t.dataset.draft] = t.value; }
+  if(t.hasAttribute && t.hasAttribute('data-tagfilter')){
+    const v = t.value.trim().toLowerCase();
+    document.querySelectorAll('#tagTiles .tile').forEach(el => {
+      el.style.display = el.textContent.toLowerCase().includes(v) ? '' : 'none';
+    });
+  }
+});
+window.addEventListener('hashchange', () => render());
+
+/* 顶部工具条 */
+document.querySelectorAll('[data-theme-set]').forEach(b =>
+  b.addEventListener('click', () => { applyTheme(b.dataset.themeSet); render(); }));
+document.querySelectorAll('[data-state-set]').forEach(b =>
+  b.addEventListener('click', () => {
+    S.ui = b.dataset.stateSet;
+    document.querySelectorAll('[data-state-set]').forEach(x =>
+      x.setAttribute('aria-pressed', String(x === b)));
+    render();
+  }));
+document.querySelectorAll('[data-auth-set]').forEach(b =>
+  b.addEventListener('click', () => {
+    S.auth = b.dataset.authSet === 'in' ? 'in' : 'out';
+    document.querySelectorAll('[data-auth-set]').forEach(x =>
+      x.setAttribute('aria-pressed', String(x === b)));
+    render();
+  }));
+
+/* 初始化 */
+(function init(){
+  const toastEl = document.createElement('div');
+  toastEl.className = 'toast'; toastEl.id = 'toast';
+  document.getElementById('device').appendChild(toastEl);
+
+  const params = new URLSearchParams(location.search);
+  const t = params.get('theme');
+  applyTheme(t === 'dark' || t === 'light' ? t : (t === 'system' ? 'system' : 'light'));
+
+  if(!location.hash) location.hash = '#/';
+  document.getElementById('navtree').innerHTML = renderNav('/');
+  render();
+})();
+</script>
+<!--APPEND-->
+
+
+
+</body>
+</html>
