@@ -1,85 +1,96 @@
 # 项目长期记忆 ·《成为一个全栈开发工程师》
 
 ## 项目性质
-用真实多端文章系统作素材载体写全栈技术专栏。核心定位：**文章是产品，代码是素材**；文章优先，每切片成文即停，不追求生产级完备。主阵地 CSDN（`blog.csdn.net/fungleo`）。
-用户 FungLeo，CSDN 前端专家。文风以项目章程第九节为准（克制结构化），动笔前仍读全局脱敏规则。
+用真实多端文章系统作素材载体写全栈技术专栏。核心定位：**文章是产品，代码是素材**；文章优先，每切片成文即停，不追求生产级完备。主阵地 CSDN（`blog.csdn.net/fungleo`）。用户 FungLeo，CSDN 前端专家。
 
 ## 关键决策（不可随意变更）
 - 技术栈：Hono + Drizzle + Cloudflare D1/R2，兼容普通 Linux（须写适配层）。
 - 角色三角 `member/editor/admin`：注册默认 member；admin 经 `PATCH /users/{id}` 升 editor；editor 管全站内容不管用户/角色/站点配置。
 - 文章三态 `draft/pending/published`（会员投稿默认 pending）；评论三态 `approved/rejected/reviewing`。
 - 分类无限级树（`GET /categories/tree`）；阅读量防刷（去重+24h 冷却+计数写分离）；附件 R2 主/本地兜底（`STORAGE_DRIVER`）。
-- **公开可见性铁律**：公开 `GET /articles` 只返 published；未发布详情/评论对匿名 404；后台筛选走 `GET /admin/articles`。
-- 领域模型+API 契约是七端共同地基，实现不得偏离；变更先改 OpenAPI 再改实现。
+- **公开可见性铁律**：公开 `GET /articles` 只返 published；未发布详情/评论对匿名 404；**但 `GET /articles/{idOrSlug}` 对作者本人与 admin 放宽**（故投稿预览页用它，不需私有端点）。后台筛选走 `GET /admin/articles`。
+- 领域模型+API 契约是七端共同地基；**变更先改 OpenAPI 再改实现**。
 
-## 契约基线（v1.14 / openapi 1.11.0，已冻结）
-- 经「内容审阅→四轮架构评审（R1–R11 / N1–N6 / N7–N9 / N10+N9-2）→终评结案」六轮，**2026-08-11 评审终结、契约冻结**，无第五轮。
-- 双门全绿：结构门 OK；语义门 `check_contract.py` **33 OK**（53 路径 / 67 操作 / 45 schema / 46 x-authz）。
-- 机器化约束：`x-authz`（minRole+ownerOverride）自包含；`Article.status.x-allowed-transitions` 状态转移矩阵；错误码数字分段（1xxx 认证 / 2xxx 授权 / 3xxx 资源 / 4xxx 参数 / 5xxx 服务，5001=限流）。
-- 改契约后必复跑双门（venv `/Users/fungleo/.workbuddy/binaries/python/envs/default`）。
-- 非阻塞 TODO：§2.2 树环检测 / §3.3 阅读去重 / Comment 状态机未机器化（刻意留 PRD 层）；F2 应急集 33/35 计数复核；OAuth redirect 白名单（M3-09）；`GET /me/likes` 契约内部矛盾（裸数组 vs page/pageSize）待整改。
+## 契约基线（v1.14 / openapi 1.11.0，已冻结 2026-08-11）
+- 双门全绿：结构门 OK；语义门 `check_contract.py` **33 OK**（**53 路径 / 67 操作** / 45 schema / 46 x-authz）。改契约后必复跑双门（venv `/Users/fungleo/.workbuddy/binaries/python/envs/default`）。
+- 机器化约束：`x-authz`（minRole+ownerOverride）；`Article.status.x-allowed-transitions`；错误码分段（1xxx 认证 / 2xxx 授权 / 3xxx 资源 / 4xxx 参数 / 5xxx 服务，5001=限流）。
+- 非阻塞 TODO：树环检测、阅读去重、Comment 状态机未机器化（刻意留 PRD 层）；OAuth redirect 白名单；`GET /me/likes` 分页形态内部矛盾待整改。
+- **易踩的 schema 级陷阱**：`articleCount` 只在 `Tag` / `CategoryStat` / `SiteStats` / `MemberProfile` 上；**`Category` 与 `CategoryNode`（分类树返回项）没有**——分类树别照抄标签页的数字，需按分类计数要另取 `GET /categories/stats`。
 
 ## 文章编号体系
-M0 开篇 / M1 Node / M2 React / M3 Next / M4 Flutter / M5 Taro / M6 Go / M7 Vue3 / M8 收官 / B 支线。主线 115 + 支线 15 = 130 篇（最小可交付 41 篇），周更 2 篇。
-**git tag 里程碑式**：契约/各端冻结时打 `contract-v1.11.0`、`node-backend-v1.0` 等；M0 产品侧不打 tag；废止 per-article tag。根 `ARTICLES.md` 做「标题 ↔ 代码里程碑 ↔ URL」对照。
+M0 开篇 / M1 Node / M2 React / M3 Next / M4 Flutter / M5 Taro / M6 Go / M7 Vue3 / M8 收官 / B 支线。主线 115 + 支线 15 = 130 篇，周更 2 篇。
+git tag 里程碑式（`contract-v1.11.0`、`node-backend-v1.0`…）；M0 不打 tag；废止 per-article tag。根 `ARTICLES.md` 做「标题 ↔ 代码里程碑 ↔ URL」对照。
 
-## 协作约定
-- **blog AI 链接/发布**：blog AI 工作目录 `/Users/fungleo/Documents/Blogs`，`csdn_backup.py` 公开抓取，`links` 命令生成 `materials/csdn-已发布链接.md`（单一真相源）；统筹 AI 只读消费并镜像进根 `ARTICLES.md`。内链占位 `{{LINK:Mx-yy}}`，某里程碑全发完后一次性注入。详见 `docs/链接与发布协作约定.md`。
-- **索引滞后的兜底（owner 已授权，见 `docs/链接与发布协作约定.md` §四）**：索引过期时**不算阻断**，可自行跑同款脚本刷新——`run` 增量补齐备份、`links` 重生成索引。命令：`/Users/fungleo/.workbuddy/binaries/python/envs/default/bin/python /Users/fungleo/Documents/Blogs/csdn_backup.py run --refresh-ids` 后接 `… csdn_backup.py links`（脚本依赖 `requests`+`markdownify`，**系统 python3 没有，必须用托管 venv**）。`links` 只从 `old-blogs/*.md` 的 frontmatter 聚合，**不抓网**；新文章未备份时 `links` 无效，须先 `run`。`_ids.json` 是 RSS 近期窗口（约 20 条），非全量，属正常。
-- **写作分工（A 计划）**：文章写作归统筹 AI（M0 已写、M1~M8 续写）；发布维护 M0 由统筹 AI 顺手做，M1 起委派独立「发布维护 Agent」（`docs/发布维护-agent-岗位说明书.md`）。
-- **发布维护 SOP（2026-09-21 owner 定稿）**：
-  - 每轮三件事：① SOP-A 把新发布 URL 镜像进根 `ARTICLES.md`（🟢 已发布）；② 回填所有指向已发布文章的 `{{LINK:Mx-yy}}`；③ **全量链接审计**——把全仓正文引用的 CSDN ID 与 `materials/csdn-已发布链接.md` 比对，查两类缺陷：**ID 不在索引＝幽灵链**、**文案与目标标题不符＝错链**。此项已由 owner 定为**每轮标准动作**。
-  - **中途不重发（owner 2026-09-21 决策）**：系列发布期间 owner **不更新**已发布文章；本地源改动（回填内链、修复坏链）一律**累积**，待全系列发完、owner 统一打磨后**一次性全量更新到 CSDN**。故不再逐轮提示"必须重发"，只累积记录。
-  - 占位形态：M1 为裸 `{{LINK:Mx-yy}}`（替换成完整 `[标题](URL)`）；M2 为 `[标题]({{LINK:Mx-yy}})`（**只填 URL**）。同文件多占位必须**串行** Edit，不同文件可并行。
-  - 检索纪律：查具体文章前先 Glob 拿真实文件名（勿猜编号）；查回填目标按**目标编号逐个精确 grep**，核验覆盖全部已发布编号。索引里搜不到 ≠ 未发布（标题可能含空格，优先用系列名拉整段清单）。
-  - **已固化进岗位文档（2026-09-22）**：上述裁定已写入 `docs/发布维护-agent-岗位说明书.md`（§6 SOP-C 全量审计、§8 铁律 3 中途不重发、§4 步骤 3 逐轮回填）与 `docs/发布维护-agent-启动提示词.md`。**回填时机已由「里程碑全发完统一处理」改为「逐轮」**（与 M1 实际执行一致）。另：同文件多处编辑必须**串行**（并行会写竞争静默丢改动），不同文件才可并行。
-  - **SOP-C 已落成脚本（2026-09-30，owner 点头）**：`docs/publish-maintenance/check_links.py`（+ 同目录 `README.md` 用法与口径说明）。一条命令出三类缺陷：**A 幽灵链 / B 真错链（严格口径）/ C 占位残留**，退出码 `0` 全绿 / `1` 有缺陷 / `2` 输入缺失。仅标准库，托管 venv 与系统 python3 均可跑；`--json` 出机器可读、`--no-placeholder` 跳过 C。**两个真相源**：A/B 用 blog AI 索引（线上已发布），C 用 `ARTICLES.md` 的 🟢 行（本地源已发布范围）。此前每轮临时重写脚本的手工分片流程（超长行省略 + 沙箱 SIGTERM 两坑）已废弃，降为兜底。**已实测注入样本可检出三类缺陷**（幽灵/错链/残留各 1，退出码 1）。
-  - **错链判定要用「严格口径」（2026-09-23 定）**：正文链接文案常是**改写式**（如「阅读量：时间桶去重与原子计数」指向《阅读量防刷：去重、冷却与计数写分离》），字面不等 ≠ 错链。判定法：对每条引用取「改写文案 vs 目标标题」相似度，与「vs 全索引其余 450 条标题」的最高分比较，**只有当别的标题明显更吻合（差值 > 0.28 且 > 0.55）才算错链**。实测字面口径会误报 12 条，严格口径为 0。
-  - **多 Agent 并行改同仓（2026-09-24 观察）**：写作线（统筹 AI）会在发布维护期间继续打磨 `articles/M2-18/19` 等待发草稿，实测同一文件在回填后 1 小时内被改写，**行号会漂移**（M2-18 链接 124→126）。规程：① 回填/注入前先读目标文件最新内容，勿套用上轮行号；② 回填后**再复核一次**目标 URL 仍在位（防被覆盖）。
-  - **「已发布范围内零残留」是移动靶（2026-09-29 教训）**：不能默认其恒为真。写作线并发改稿时会**新写入指向已发布篇的占位**（本轮实测 `M3-24`/`M3-11`/`M3-21` 三处 `{{LINK:M3-01}}`/`{{LINK:M3-02}}` 漏网）。规程：每轮收尾必须**动态核验**一遍 `{{LINK:M0-|{{LINK:M1-|{{LINK:M2-|{{LINK:M3-0[1~已发布尾号]`，命中即补回填，然后再跑 SOP-C。
-  - ⚠️ **累积清单不完整**：下方「待最终全量更新清单」经复核有遗漏（`M1-01`/`M1-04`/`M1-05` 等也在发布后被回填，未列入）。若收官时执行「全量更新一切已发布篇」则无需精确；若要按需精选，需重建。
+## 协作约定（权威文本在 docs，本处只留要点）
+- **写作分工（A 计划）**：文章写作归统筹 AI；发布维护 M1 起归独立「发布维护 Agent」（`docs/发布维护-agent-岗位说明书.md` + `启动提示词`）。
+- **blog AI**：工作目录 `/Users/fungleo/Documents/Blogs`；`csdn_backup.py` 公开抓取；`links` 生成 `materials/csdn-已发布链接.md`（单一真相源，**只聚合 `old-blogs/*.md` 的 frontmatter，不抓网**）。索引过期时**不算阻断**，owner 已授权自跑 `run --refresh-ids` → `links`（**必须用托管 venv**，系统 python3 缺依赖）。详见 `docs/链接与发布协作约定.md`。
+- **每轮发布维护三件事**：① 新 URL 镜像进 `ARTICLES.md`（🟢）；② **逐轮**回填指向已发布篇的 `{{LINK:Mx-yy}}`；③ 全量链接审计。已落成脚本 **`docs/publish-maintenance/check_links.py`**（+同目录 README）：出 A 幽灵链 / B 真错链（严格口径）/ C 占位残留，退出码 0 绿 / 1 有缺陷 / 2 输入缺失。两个真相源：A/B 用 blog AI 索引，C 用 `ARTICLES.md` 的 🟢 行。
+- **中途不重发**（owner 2026-09-21）：系列发布期间不更新已发布文章，本地源改动一律累积，**全系列发完后一次性全量更新到 CSDN**。
+- **占位形态**：M1 裸 `{{LINK:Mx-yy}}`（替换成完整 `[标题](URL)`）；M2 `[标题]({{LINK:Mx-yy}})`（**只填 URL**）。
+- **并发写铁律**：同文件多处编辑必须**串行**（并行会写竞争静默丢改动），不同文件才可并行；改前先读目标文件最新内容（行号会漂移），改后再复核一次。
+- 检索纪律：查文章先 Glob 拿真实文件名（勿猜编号）；按目标编号逐个精确 grep 核验覆盖。
+- 占位残留是**移动靶**：写作线并发改稿会新写入占位，每轮收尾须动态复核，命中即补。
 
 ## 文档位置
 - 00-项目章程（v1.14）/ 02-领域模型与API契约（v1.14）/ 01-内容路线图（v1.15）
 - 契约 `docs/api/openapi.v1.yaml`（1.11.0）；语义自查 `docs/api/check_contract.py`
-- M1 计划 `docs/prd/M1-后端实现计划.md` + 批次任务包 `docs/prd/m1-tasks/00~07`；`docs/prd/README.md` 索引
-- 发布维护：岗位说明书 `docs/发布维护-agent-岗位说明书.md` + 启动提示词；**SOP-C 审计脚本 `docs/publish-maintenance/check_links.py`**（+ 同目录 `README.md`）
+- M1 计划 `docs/prd/M1-后端实现计划.md` + 批次任务包 `docs/prd/m1-tasks/00~07`
+- 发布维护：岗位说明书 + 启动提示词 + **SOP-C 脚本 `docs/publish-maintenance/`**
+- M4 Flutter：`docs/flutter-app/README + 01~06`、`prototype/`、`review/`
 
 ## 当前进度
-- **M0 产品篇：8 篇全量收官**（2026-08-29，全发 CSDN + 内链穿插 + `ARTICLES.md` 回填 URL）。
-- **M1 Node 后端：已冻结**（tag `node-backend-v1.0`，2026-08-27）。冻结证据：tsc 0 / biome 0 / vitest 133 passed / 契约双门 33 OK / yaml 字节未改。交付 `docs/node-backend/M1-后端交付文档.md`。后续 BUG 走增量维护（fix→门禁复绿→commit→必要时 bump patch tag），不热改主干。
-  - **已部署 Cloudflare 全链路 GREEN**（2026-08-29）：Worker 启动 / D1 查询 / CORS / admin 登录（bcryptjs rounds=12 同源）/ R2 读写全部线上实测通过；自定义域名 `api-befull.kao9.com`。部署指南 `docs/node-backend/部署到Cloudflare指南.md`，验收报告 `docs/node-backend/M1-后端部署到Cloudflare-验收报告.md`。
-  - 部署 FAQ 四坑：① R2 binding 名须对齐 `env.ts` 的 `R2_BUCKET`；② D1 改密码须 bcryptjs(12) 同源且含 `$` 用 heredoc；③ curl `-F file=@` 的 `~` 不展开；④ **`GET /files/<key>` 挂在根路径不带 `/api/v1`**（策略 A 中转）。
-  - **本地运行与种子（2026-09-25 新增）**：`bash scripts/dev-local.sh` 起本地服（默认 :11000，DB `./data/app.db`，admin/admin123456）；`scripts/seed-articles.ts` 可把 `articles/` 下 M0–M3 的 md 解析后以 published 状态写入（自带管理员 + 按模块分类 m0–m3，**幂等**，复用 `createArticleRow`/`updateArticleRow`）。`readEnv` 强制要求 `JWT_SECRET`，独立跑脚本须显式传入（如 `JWT_SECRET=x DB_FILE=./data/app.db pnpm tsx scripts/seed-articles.ts`）。
-- **下一步**：M1 冻结后写「M1 后端文章」（M1-01~M1-31，31 篇）；M2 前端按「契约→主计划→批次任务包」推进。
-- **发布进度（2026-10-02）**：M0 全 8 篇、M1 全 31 篇（09-16 收官）、**M2 全 22 篇（09-28 收官）**、**M3-01~11 已发布**（M3-01=`166690841`/M3-02=`166737733`/M3-03=`166737776`；M3-04=`166784128`/M3-05=`166784376`，09-28；M3-06=`166835906`/M3-07=`166836287`，09-29；M3-08=`166885283`/M3-09=`166885558`，09-30；M3-10=`166945924`/M3-11=`166945972`，10-01；M3-12/13 当日待发）。M2 尾部 ID：M2-18=`166582519`、M2-19=`166582771`、M2-20=`166643861`、M2-21=`166643883`、M2-22=`166690803`。M3 共 24 篇（M3-01~24）。`{{LINK:}}` 占位在**本地源已发布范围内零残留**（每轮须动态复核，见 SOP 小节）。
-- **⚠️ 线上占位残留（2026-09-28 实测，必修）**：blog AI 的已发布正文备份（`/Users/fungleo/Documents/Blogs/old-blogs/*.md`，抓自线上页）中，**37 篇**含 `{{LINK:Mx-yy}}` 原始文本、共 **72 处**（Top：M0-08×10、M1-29×6、M0-04×4）。**根因是「前向引用」**：文章发布时它指向的篇尚未发布，占位无处可填（如 M0-01~07 都指向收官篇 M0-08）。**结论：本地源干净 ≠ 线上干净**；收官「全量更新」必须**逐篇以本地源重新覆盖**才能真正消除——建议收官前单独做一轮「全量重发」而非「按需精选」。这是当前线上最显性的质量缺陷。
-- **待最终全量更新清单**（本地源已改、等系列发完统一重发）：`M1-02`、`M1-06`、`M1-07`、`M1-09`、`M1-14`、`M1-17`、`M1-18`、`M1-19`、`M1-20`、`M1-21`、`M1-22`、`M1-23`、`M1-24`、`M1-25`、`M1-26`、`M1-27`、`M1-28`、`M1-29`、`M1-30`、`M1-31`、`M2-02`、`M2-03`、`M2-05`、`M2-06`、`M2-09`、`M2-10`、`M2-11`、`M2-13`、`M2-17`、`M2-19`、`M2-20`、`M2-21`、`M2-22`、`M3-01`、`M3-02`、`M3-05`、`M3-06`、`M3-07`、`M0-03`（含 09-19 坏链 9 处、09-22 错链 2 处、09-23 M2-10/M2-13 回填、09-28 M2-17/19/20/21/22 + M3-01/02 回填、09-29 M3-05 回填 `{{LINK:M3-04}}`、09-30 M3-06/07 互指回填；10-02 本轮回填目标均为未发布篇，无新增）。⚠️ 此清单**不完整**，见「发布维护 SOP」小节末条。
-- **SOP-C 审计基线（2026-10-02）**：正文唯一 ID 69 / 索引 469 / 已发布 72 篇，幽灵链 0、错链 0、占位残留 0（`check_links.py` 退出码 0）。存疑未改：`M2-07` 文案多写「与权限模型」但目标（M1-12 认证方案）正确。
-- **M3 Next 前台已启动（2026-09-24+）**：存在**双前台目录歧义**，2026-10-02 复核澄清——`web-frontend/`(pkg `web-frontend-codex`) = **纯白／晴蓝 A 方案**（2182 行 CSS，含会员投稿/叠楼评论，最后改动 09-28，`docs/` 齐全）为**当前主力**；`web-frontend-trae/`(pkg `web-frontend`) = **极简编辑风**（米白 `#fbfaf7`＋衬线标题，226 行 CSS，最后改动 09-18），`web-frontend/docs/01-设计与工程落地方案.md` 已明示「旧『极简编辑风』由本次已确认方案替代」。**故任何端取视觉基准一律以 `web-frontend/` 为准**。根 `README.md` 仍写 M3 在 `web-frontend/`，待 owner 定 canonical 并清理。M3 文章 4 篇（1 已发），路线图已「调整规模」（末提交 `0ce72a0`）。
-- **M4 Flutter APP（2026-10-02 启动）**：规划基线 6 篇 `docs/flutter-app/README + 01~05` 已过第一轮评审（91/100，无阻塞，可进 Phase 0）；**UI 设计三步已全部交付**（owner 逐步确认「满意」）：
-  - ① `docs/flutter-app/06-UI设计规范与设计令牌.md` — 视觉唯一事实源。浅色继承网站 A 方案，深色为 APP 新增独立设计；对比度脚本实算全达标。**三处必须保留的刻意例外**：浅蓝底上的文字用 `brand.onSubtle #2A6AA3`（`#3277B5` 在其上仅 4.29:1）；深色主按钮实底 `#37709F`；待审 `#7A6122`/草稿 `#5C6C80` 已加深（网站原值 4.23:1 不达标）。
-  - ② `docs/flutter-app/prototype/01-基本页面样稿.html` — 首页 + 文章详情双屏，双主题。
-  - ③ `docs/flutter-app/prototype/02-高保真可交互原型.html` — 单文件自包含，覆盖 `02-页面地图` 全 18 页 + 未知路由兜底；hash 路由 / 三主题 / 状态注入 / 登录态切换；左导航树 + 中 393×852 设备 + 右页面规格说明。
-  - ③ 配套 `docs/flutter-app/prototype/app_theme.dart` — Flutter `ThemeExtension` 全量令牌 + `buildAppTheme()` + 状态/错误文案映射，M4 建工程后移到 `lib/app/theme/`。
-  - **验证链（可复用）**：`node --check` 语法 → headless 注入 `window.onerror` 写 `data-err` 后 `--dump-dom` 定位运行时错误 → 注入自动化交互测试（32/32 通过）→ 逐路由 dump（20/20）→ 2x 截图 + PIL 裁切核对细节。
-  - **两个必修坑**：① **跨 `<script>` 块的函数声明不提升**，路由表等「立即求值且引用后续函数」的常量必须放在所有视图函数之后，否则 ReferenceError + TDZ 连锁导致整页空白；② `dump-dom` 含 `<script>` 源码，用字符串包含判断「是否渲染成功」会假阳性，须去 script 或直接量元素内容。
-- **七端缩水观察**：`go-backend/` 与 `app-frontend/`(Flutter) 仍 **0 文件**；实际仅交付 Node 后端 + `manage-frontend`(React) + `web-frontend`(Next) 三端，Flutter 已进入规划与设计阶段（尚无 Dart 代码）。Go/Taro(M5) 是否仍属范围待 owner 确认。
+- **M0 产品篇 8 篇收官**（08-29）；**M1 Node 后端已冻结**（tag `node-backend-v1.0`，08-27；tsc 0 / biome 0 / vitest 133 / 契约双门 33 OK），已部署 Cloudflare 全链路 GREEN（`api-befull.kao9.com`），域名、部署指南与验收报告在 `docs/node-backend/`。后续 BUG 走增量维护，不热改主干。
+  - 部署 FAQ 四坑：R2 binding 名对齐 `env.ts` 的 `R2_BUCKET`；D1 改密码须 bcryptjs(12) 同源且含 `$` 用 heredoc；curl `-F file=@` 的 `~` 不展开；**`GET /files/<key>` 挂根路径不带 `/api/v1`**（也**不在契约 paths 中**，属已知例外）。
+  - 本地：`bash scripts/dev-local.sh`（:11000，admin/admin123456）；`scripts/seed-articles.ts`（幂等，把 M0–M3 md 以 published 写入）；`readEnv` 强制 `JWT_SECRET`。
+- **发布进度（2026-10-02）**：M0 全 8、M1 全 31（09-16 收官）、M2 全 22（09-28 收官）、**M3-01~11 已发布**（10-01 止，M3-12/13 待发）。M3 共 24 篇。
+  - ⚠️ **线上占位残留**（09-28 实测）：已发布正文备份中 37 篇含 `{{LINK}}` 原始文本共 72 处，根因是**前向引用**（发布时目标篇尚未发）。**结论：本地源干净 ≠ 线上干净**；收官须**逐篇以本地源重新覆盖**（做一轮「全量重发」，不做按需精选）。
+  - SOP-C 审计基线（10-02）：幽灵链 0 / 错链 0 / 占位残留 0。
+- **双前台目录歧义已澄清（10-02）**：`web-frontend/`＝**纯白／晴蓝 A 方案**（2182 行 CSS，含会员投稿/叠楼评论，**当前主力**）；`web-frontend-trae/`＝极简编辑风（226 行，已被 `web-frontend/docs/01` 明示替代）。**任何端取视觉基准一律以 `web-frontend/` 为准**。根 `README.md` 仍写旧说法，待 owner 定 canonical。
+- **七端缩水观察**：`go-backend/` 与 `app-frontend/` 仍 0 文件；实际只交付 Node 后端 + `manage-frontend`(React) + `web-frontend`(Next)，Flutter 进入设计阶段。Go/Taro 是否仍属范围待 owner 确认。
+- **下一步**：M4 Flutter 进 Phase 0（工程骨架 + 认证链路）；M3 继续发文章。
+
+## M4 Flutter APP（2026-10-02 启动）
+- 规划基线 `docs/flutter-app/README + 01~05` 已过第一轮评审（91/100，可进 Phase 0）。
+- **UI 设计三步已交付**（owner 确认「满意」）：
+  - ① `06-UI设计规范与设计令牌.md` — **视觉唯一事实源**。浅色继承网站 A 方案，深色为 APP 新增独立设计。**三处必须保留的刻意例外**：浅蓝底上文字用 `brand.onSubtle #2A6AA3`（`#3277B5` 在其上仅 4.29:1，不达标）；深色主按钮实底 `#37709F`；待审 `#7A6122`、草稿 `#5C6C80` 已加深（网站原值不达标）。
+  - ② `prototype/01-基本页面样稿.html` — 首页 + 详情双屏、双主题。
+  - ③ `prototype/02-高保真可交互原型.html` — 单文件自包含，覆盖 `02-页面地图` 全 18 页 + 兜底；hash 路由 / 三主题 / 状态四态注入 / 登录态切换；左导航树 + 393×852 设备 + 右页面规格说明。
+  - ③ 配套 `prototype/app_theme.dart` — `ThemeExtension` 全量令牌 + `buildAppTheme()` + `AppLayout`（textScaler 夹紧 1.3）+ 状态/错误文案映射；M4 建工程后移到 `lib/app/theme/`。
+- **第一轮评审与回复（2026-10-02，xtgxiso）**：评审报告 `review/M4-设计AI原型第一轮评审报告.md`（本侧 88.5/100）+ 产品 AI 侧同目录另一份；我的回复 `review/M4-设计AI原型第一轮评审回复.md`（**v2**）。**B-1~B-7 + B-0 八项全部采纳，无驳回**；**另加 1 项自查发现 N-1**。门禁（v2）：语法 OK / 运行时零错误 / 交互 **69/69** / 全路由 **20/20**（19 路由 + 兜底，从源码 `ROUTES` 程序化抽取）/ **原型 57 条 API 标注与契约 57/57 一致** / Dart **39:39:39:39**（字段·构造器·copyWith·lerp 四表交叉）。
+  - 关键改动：移除「举报内容」（契约无端点）；清掉详情页不可达的**评论审核态徽章**（含评审未指出的 `rejected` 徽章）并新增「发帖被拒即时反馈」；订正 10 处 API 标注 + 补 5 个遗漏端点；复制链接改走剪贴板（失败不谎报成功）；删除评论措辞改「一并删除」；补 `heroWashFrom/To` 与 `AppLayout`；压 hero 高度（首屏露出 2 条列表）+ 详情顶栏加「目录」入口。
+  - **一处部分采纳**：评审建议把目录入口移到正文前，但 `02 §4` 有「正文优先、操作条不遮挡正文」硬要求 → 改为**顶栏加入口**，面板位置不动。
+  - **🔴 N-1（评审未指出、我自查，本轮最高价值）**：编辑页对任何状态都无条件渲染「保存草稿」→ 待审稿件点它即**变相撤回**（契约对「会员更新 draft/pending」结果未定义，`PUT` 只写 published→pending，请求体 `status` 无约束而 `draft` 是合法枚举）→ Node/Go 会分歧。**B-0 只堵了显式按钮，隐式后门还在**。已修：按钮矩阵 `draft`→保存草稿(次)+提交审核(主)；`pending`→保存(主)、无提交审核；`published`→保存(转 pending)。**口径与文档侧一致**（产品 AI 已落 `02:49-50` 状态矩阵 + `03:49` 不得下发 status）。
+  - **并发写保护经验**：动手前发现 `prototype/01·02`、`app_theme.dart` 及多个 docs 已被另一批未提交改动覆盖 → **核哈希 → 确认写入方停手（md5 稳定两次）→ 按当前磁盘状态续做，不回退他人改动**。`06` 归属有争议（评审划给产品 AI，实为设计 AI 撰写且已被产品 AI 修订），本轮只做 1 行最小订正，**已请 owner 明确归属防双写**。
+  - **可复用规程**：① 能程序化从被测对象自身推导的期望值（路由表/字段表/端点表）**绝不手写**——手写清单会把「清单写错」伪装成「测试通过」；② `switch` 判 `act.split(':')[0]` 时 case **不能含冒号**；③ 断言「某文本已消失」必须先排除 `<script>` 源码（在 `<body>` 内）。
+  - **两条复用纪律**：① 详情页这类「只返 approved」的公开接口，**不可渲染 reviewing/rejected 态**（不可达 = 误导性 UI）；② 判断「某文本是否消失」时**必须先排除 `<script>` 源码**（`body.textContent` 含脚本源码→假阳性）。
+  - **坑**：`handleAct` 里 `switch` 判的是 `act.split(':')[0]`，写 `case 'toc:panel'` 永远匹配不上且**静默失效不报错**——复合 case 必须写成 `case 'k'` + `if(a === '...')`。
+  - ⚠️ **发现并发写**：本轮动手前 `prototype/*` 与 `docs/flutter-app/*` 已被另一 Agent 部分修改。规程：先核对哈希 + 确认写入方停手，再按当前磁盘状态续做，不回退他人改动。
+- **第二轮评审与回复（2026-10-02，eno，89/100）**：报告 `review/M4-设计AI原型第二轮评审报告.md`；回复 `review/M4-设计AI原型第二轮评审回复.md`（**v2**）。**N-2-1~N-2-6 六项全对，零驳回**（逐条独立复现，含反向核查）。
+  - N-2-1 🔴 P1 目录点击**只弹 toast 不滚动**（评审实测 `scrollTop 420→420, Δ=0`）→ 根因是**手写 `TOC` 与正文各写一份**（双源必漂移）→ 改**单一真相源** `SECTIONS[]` 渲染正文 + 派生 `TOC` + `scrollToSection()` 真滚动（拿不到锚点返 false 如实提示）。
+  - N-2-2 文章对象挂 `Comment` 专属 `rejectedReason` → 删；N-2-3 `POST/DELETE` 未统一（**门禁归一化把这类真缺陷洗掉了** → 加断言「分隔符必须逗号」）；N-2-4 `01` 样稿详情顶栏缺「目录」→ 补；N-2-6 正文内 `.toc-bar` 是 `02 §4` 未枚举的第三形态 → **选方案 B 删除**。
+  - N-2-5（流程）**门禁脚本未随交付 = 第三方无法复跑** → 新建 **`prototype/gates/`（881 行、零第三方依赖、`bash run_all.sh` 一键、退出码 0）**：路由 **41/41**（从源码 `ROUTES` 程序化抽取）/ API vs 契约 **57/57**（零依赖 YAML 扫描，契约键带 `/api/v1` 须先归一）/ Dart **40:40:40:40** + 65 色值逐值 / 交互 **51/51**（真点击读 DOM/`scrollTop`）。**做过两次注入回归证明断言非空转**。
+  - **🔴 我额外自查发现 2 项**：① **「删除评论」流程完全不可达**（`cmt-del` 只在「顶层评论 且自作者」渲染，而种子数据 ME 只有回复 → 两条路都死；同 B-2 类）；② **`color.line.button` 规范有、Dart 无** → B-6 实际 3 项 → 令牌 **39:39:39:39 → 40:40:40:40**。
+  - **D 门禁反查出的规范缺口**：`codeBg`/`codeFg`/`skeleton` 在 Dart 与原型 CSS 都在用，`06 §2.1~2.4` 却**没写**（属规范侧问题，不计 Dart 的错）。
+  - **新增可复用：第三方 harness 交叉复现**（防「自写门禁自证清白」）——用与本侧零代码共享的通用探针复测 P1：`scrollTop 0 → 1362`、toast 为第 3 节真实标题 → 两套 harness 结论一致。
+  - **🔴 环境坑（耗时最多）**：本机跑无头 Chrome **必须同时加 `--no-sandbox` + `--no-proxy-server`**。缺前者 → `sandbox initialization failed: Operation not permitted` → GPU 退出 → 网络服务崩 → CDP 端口永不开启；但 Node 侧只报 `unsettled top-level await` + **退出码 13**，**报错完全指向探针脚本而非环境**。缺后者 → 本机 `HTTP_PROXY=http://127.0.0.1:65413` 使 Chrome 连 `127.0.0.1` 也走代理。排查：spawn 时别 `stdio:'ignore'`，看 Chrome stderr。**已回写 `~/.workbuddy/skills/html-artifact-headless-probe/`**（probe.mjs 默认带上 + `--keep-sandbox` 可关；cdp-recipes 陷阱 11–13）。
+  - ⚠️ **BSD grep `\|` 假阴性本轮又踩一次**：查 N-2-3 时 `grep "a\|b"` 返 0 命中，一度以为评审错了 → 必须 `grep -E`。
+
+- **产品 AI 文档评审（第一~五轮，2026-10-02）**：报告 `review/M4-产品AI设计文档第N轮评审报告.md`，评分 91→93→94→**95**（第五轮）。第四轮 6/6 全闭环；第五轮新增 N-18~N-24。
+  - **满分冲刺工单已交付**：`review/M4-产品AI设计文档满分冲刺工单-95到100.md` —— 5 分扣分账本 + G-1~G-5 **六段式**工单（扣分归属/契约证据/精确落点/**现状原文**/**可直接替换的成稿文本**/复核命令）+ **10 条自检脚本**（改前实跑验证 `PASS=0 FAIL=10`）+ 权限边界声明。改动量约 12~15 行，改完自检全过 → 第六轮预期 **100**。
+  - **🔑 本轮核心洞察（可复用）**：前四轮补的是「**契约有、文档没写**」→ 补登记即闭环；剩余 5 分全部是「**契约没写、文档当有**」→ 必须**降级为待验证项 + 登记 + 设实测落点**。这是"补登记"方法的盲区。
+  - **第五轮报告已发 v1.1 自我订正两处**：`§3.4` 差异表行数 16→**12**（笔误，脚本实测）；`§2 N-21` 补引 `/adjacent` 404 原文「文章不存在**或不可见**」（初版漏引）。补正后定性更锐利：同族三端 `view` 明确 / `adjacent` 隐含 / **`toc` 完全未表态**。
+  - 关键契约事实：**67 operation / 21 声明 429**（含 callback）；`ArticleCreate.status` **只约束 `published`**（`slug` 自陈"与 status 同规格"却写全三路径矩阵 → 反证 status 是**遗漏**非刻意模糊）；`TocItem`=`level/text/anchor`，**无顺序字段**，`anchor` 全契约仅 2 处命中。
+  - ⏳ **待 owner 拍板**：`06` 归属（建议设计 AI）；契约回流建议（`TocItem` 补顺序保证 + `ArticleCreate.status` 补 member×取值矩阵——属"把已有实现的事实写成文字"，最易推动）。
 
 ## M2 前端（React 管理后台）
-- 目录 `manage-frontend/`（已建）。栈：Vite8 + React19 + TS6 + Tailwind4 + shadcn/ui + TanStack Query5 + Zustand5（仅鉴权）+ RHF7+Zod4 + Biome2.5；已开 `strict`。dev 端口 12000。
-- 文档：`docs/manage-frontend/开发规范.md`（箭头函数/文件头 TSDoc/单文件≤200 行；豁免 `components/ui/*`、`api.gen.ts`）+ `M2-开发计划.md` + `review/` 审阅报告与回复。
-- **契约差异（请求层已适配）**：信封 `{code,message,data,requestId,timestamp}`，`code:0` 成功；base `/api/v1`；错误码数字分段；accessToken 内存不落 localStorage；登录取 `data.accessToken`。
-- **取数铁律**：分页一律 `data.list` + `data.pagination.{page,pageSize,total,totalPages}`（**不是**参考项目的 `{items,total}`，YAML 里的 `items` 是 OpenAPI 数组元素保留字）。已由 `src/api/articles.test.ts` 反向断言守卫。
-- **附件 URL**：`ORIGIN + /files/<key>`，**不带 `/api/v1`**（否则 404），由 `fileUrl()` 处理。
-- **CORS 方案 B（owner 暂定决策）**：dev 走 Vite 同源代理绕开 CORS，代价是 `core.ts`「空体→HttpOnly Cookie」分支 dev 无实测，上线前须明确验证方式。
-- **构建**：`vite.config.ts` 用 `manualChunks` 把编辑器生态独立成 chunk；并 alias `refractor/all` → `build/refractor-languages.ts`（41 种语言，替换默认 297 种全量）。注意官方 common 集**无 jsx/tsx**，需补。
-- **第一轮审阅已收口**（2026-08-29，综合 83/100）：A-P2-2 开 strict（0 错）、P3-1 移除死依赖、P3-2 chunk -47%、P3-3 状态色语义令牌、P3-4 清 `_tmp_*`、P3-5 补 28 测试 + CI。回复 `docs/manage-frontend/review/M2-第一轮审阅回复.md`。
-- **owner 已裁决三项（无阻塞）**：① md-editor 563 kB 超 500 kB 告警线**接受不改**（文章系统须含优质编辑器，属主动取舍；懒加载仅编辑页一次）；② 高亮语言集 297→41 目视通过；③ Cookie 刷新分支验证延至上线前。可选未做：调 `chunkSizeWarningLimit` 至 700 消除告警噪音（须附注释说明，等 owner 点头）。
-- 下一步：Phase 2 评论审核。
+- 目录 `manage-frontend/`。栈：Vite8 + React19 + TS6 + Tailwind4 + shadcn/ui + TanStack Query5 + Zustand5（仅鉴权）+ RHF7+Zod4 + Biome2.5；已开 `strict`；dev 端口 12000。文档在 `docs/manage-frontend/`。
+- **取数铁律**：分页一律 `data.list` + `data.pagination.{page,pageSize,total,totalPages}`（**不是** `{items,total}`）；信封 `{code,message,data,requestId,timestamp}`，`code:0` 成功；base `/api/v1`；accessToken 内存不落 localStorage。
+- **附件 URL**：`ORIGIN + /files/<key>`，**不带 `/api/v1`**（否则 404）。
+- **CORS 方案 B（owner 暂定）**：dev 走 Vite 同源代理；代价是「空体→HttpOnly Cookie」分支 dev 无实测，上线前须验证。
+- 第一轮审阅已收口（83/100）；owner 已裁决：编辑器 chunk 563 kB 超线**接受不改**、高亮语言 297→41、Cookie 分支延至上线前。下一步 Phase 2 评论审核。
 
 ## 通用工作铁律
-- **评审角色铁律（2026-08-26）**：BackendArchitect 只审查、给结论、写审阅报告与复审批复；**不写代码、不修 BUG、不代写回复文档**（那是开发 AI 的活）。收到越界指令先判断是否误发。
-- **阻碍即停铁律（2026-08-27）**：遇阻断性卡点必须立刻停下报 owner，不得自行绕过或自造 workaround 后继续。**注意边界**：已被 owner 书面授权的「兜底路径」（如 `docs/链接与发布协作约定.md` §四 自跑同步脚本）**不属于**「自行绕过」，属正常执行。
-- **不采信自陈**：所有结论附实测证据（门禁输出、grep 取证、哨兵验证）；改配置后验证是否真生效，而非只看"没报错"。
-- 用户自管 git commit，AI 不自动提交。门禁：`pnpm typecheck` / `pnpm lint` / `pnpm test` / `pnpm build`。
+- **评审角色铁律**：评审 AI 只审、只写报告，**不写代码、不修 BUG、不代写回复文档**。
+- **阻碍即停**：遇阻断性卡点立刻停下报 owner，不得自行绕过自造 workaround（**例外**：owner 已书面授权的兜底路径属正常执行）。
+- **不采信自陈**：结论必附实测证据（门禁输出、脚本比对、grep 取证）；改配置后验证是否真生效，而非只看"没报错"。**包括不采信评审报告本身**——逐条独立复验。
+- 用户自管 git commit，AI 不自动提交。门禁：`pnpm typecheck` / `lint` / `test` / `build`。

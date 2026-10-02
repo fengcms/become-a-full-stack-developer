@@ -228,6 +228,8 @@ svg.icon{width:1em; height:1em; fill:none; stroke:currentColor; stroke-width:1.6
 .prose p{margin-bottom:var(--space5);}
 .prose h2{font-size:20px; line-height:1.45; font-weight:600; color:var(--text-title);
   margin:var(--space8) 0 var(--space3); padding-left:10px; border-left:3px solid var(--brand);}
+.prose h3{font-size:16.5px; line-height:1.5; font-weight:600; color:var(--text-title);
+  margin:var(--space6) 0 var(--space3);}
 .prose code{font-family:var(--font-mono); font-size:.86em; background:var(--code-bg);
   border:1px solid var(--line); border-radius:3px; padding:1px 5px; color:var(--code-fg);}
 .codebox{margin:var(--space4) 0 var(--space5); background:var(--code-bg);
@@ -249,18 +251,6 @@ html[data-theme="dark"] .codebox .s{color:#6FCFB4;}
   background:var(--surface-sunken); border-left:3px solid var(--brand-subtle);
   border-radius:0 var(--r-sm) var(--r-sm) 0; color:var(--text-muted); font-size:15px;}
 
-/* 目录折叠条 */
-.toc-bar{margin:var(--space6) var(--space4); border:1px solid var(--line);
-  border-radius:var(--r-md); overflow:hidden;}
-.toc-bar summary{list-style:none; display:flex; align-items:center; gap:var(--space2);
-  padding:var(--space3) var(--space4); font-size:13px; font-weight:500;
-  color:var(--brand); cursor:pointer; min-height:44px;}
-.toc-bar summary::-webkit-details-marker{display:none;}
-.toc-bar summary .cnt{margin-left:auto; font-size:11px; color:var(--text-muted);
-  font-weight:400;}
-.toc-bar ol{padding:0 var(--space4) var(--space3); list-style:none;}
-.toc-bar li{padding:7px 0; font-size:13px; color:var(--text-muted); border-top:1px solid var(--line);}
-.toc-bar li.lv2{padding-left:14px;}
 
 /* 互动工具条 */
 .actions{display:flex; justify-content:center; gap:var(--space3); padding:var(--space5) var(--space4);
@@ -567,6 +557,7 @@ html[data-theme="dark"] .codebox .s{color:#6FCFB4;}
       <div class="appbar">
         <button class="iconbtn" style="margin:0 0 0 -10px" aria-label="返回"><svg class="icon"><use href="#i-back"/></svg></button>
         <span class="appbar-title">文章</span>
+        <button class="iconbtn" aria-label="目录"><svg class="icon"><use href="#i-list"/></svg></button>
         <button class="iconbtn" aria-label="更多"><svg class="icon"><use href="#i-more"/></svg></button>
       </div>
       <div class="screen">
@@ -617,25 +608,17 @@ html[data-theme="dark"] .codebox .s{color:#6FCFB4;}
 
           <blockquote>适配层不是抽象层。它只解决"同一件事在两套运行时怎么做"，不解决"以后可能换别的什么"。</blockquote>
 
+          <h3>代码块与表格的移动端折行策略</h3>
+          <p>桌面端可以横着铺开的代码块和表格，到了 393dp 宽度上必须换一种活法：代码块整体横向滚动、不折行，行号才能对齐；表格则包一层可横滑的容器，超出的列不给省略号，避免把数据藏起来。</p>
+          <p>两者都不能撑破正文宽度——一旦撑破，整页跟着横向滚动，正文的阅读节奏就断了。</p>
+
+          <h3>错误码到用户文案的映射</h3>
+          <p>同一个失败在两套运行时下的表现并不一致：一方抛结构化错误码，另一方可能直接抛底层异常。适配层的职责是把它们压成同一组错误码，页面只认这组码。</p>
+          <p>映射表集中在一个文件里维护。页面上不允许出现「按错误消息文本判断分支」的写法——那等于把后端文案当成了契约。</p>
+
           <h2>三、收敛成本</h2>
           <p>把差异收敛之后，业务代码里不再出现任何运行时判断。部署到 Cloudflare 只是换一个环境变量，而不是换一份代码。</p>
         </div>
-
-        <details class="toc-bar" open>
-          <summary>
-            <svg class="icon" style="font-size:16px"><use href="#i-list"/></svg>
-            本文目录
-            <span class="cnt">3 节</span>
-            <svg class="icon" style="font-size:15px;margin-left:8px"><use href="#i-chevd"/></svg>
-          </summary>
-          <ol>
-            <li>一、差异从哪里来</li>
-            <li>二、把差异收敛成一个接口</li>
-            <li class="lv2">代码块与表格的移动端折行策略</li>
-            <li class="lv2">错误码到用户文案的映射</li>
-            <li>三、收敛成本</li>
-          </ol>
-        </details>
 
         <div class="actions">
           <button class="act on"><svg class="icon"><use href="#i-heart"/></svg>128</button>

@@ -36,6 +36,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.heroWashTo,
     required this.line,
     required this.lineStrong,
+    required this.lineButton,
     required this.fieldBorder,
     required this.textTitle,
     required this.textBody,
@@ -82,6 +83,9 @@ class AppColors extends ThemeExtension<AppColors> {
   // 描边
   final Color line;            // 列表与模块分割线
   final Color lineStrong;      // 需要更明确边界的容器
+  // 次级按钮边界。06 §2.1 已立此令牌（#C7DBEA）；06 §2.4 未列深色取值，
+  // 此处沿用深色 lineStrong 的值，待产品 AI 确认是否要在 §2.4 单列。
+  final Color lineButton;
   final Color fieldBorder;     // 输入框静止边界（非文本图形，门槛 3:1）
 
   // 文字
@@ -133,6 +137,7 @@ class AppColors extends ThemeExtension<AppColors> {
     heroWashTo: Color(0xFFE4F0FB),
     line: Color(0xFFE9EFF5),
     lineStrong: Color(0xFFD5E2ED),
+    lineButton: Color(0xFFC7DBEA),
     fieldBorder: Color(0xFF8397AB),
     textTitle: Color(0xFF2F4256),
     textBody: Color(0xFF34465A),
@@ -175,6 +180,7 @@ class AppColors extends ThemeExtension<AppColors> {
     heroWashTo: Color(0xFF16202A),
     line: Color(0xFF2E3A46),
     lineStrong: Color(0xFF3A4754),
+    lineButton: Color(0xFF3A4754),
     fieldBorder: Color(0xFF4A5A69),
     textTitle: Color(0xFFE8EFF6),
     textBody: Color(0xFFC6D2DE),
@@ -236,7 +242,7 @@ class AppColors extends ThemeExtension<AppColors> {
   AppColors copyWith({
     Color? bgBase, Color? bgSubtle, Color? surface, Color? surfaceSunken,
     Color? surfaceElevated, Color? heroWashFrom, Color? heroWashTo,
-    Color? line, Color? lineStrong, Color? fieldBorder,
+    Color? line, Color? lineStrong, Color? lineButton, Color? fieldBorder,
     Color? textTitle, Color? textBody, Color? textMuted, Color? textPlaceholder,
     Color? textInverse, Color? brand, Color? brandHover, Color? brandSolid,
     Color? brandSubtle, Color? brandOnSubtle, Color? focusRing, Color? scrim,
@@ -256,6 +262,7 @@ class AppColors extends ThemeExtension<AppColors> {
       heroWashTo: heroWashTo ?? this.heroWashTo,
       line: line ?? this.line,
       lineStrong: lineStrong ?? this.lineStrong,
+      lineButton: lineButton ?? this.lineButton,
       fieldBorder: fieldBorder ?? this.fieldBorder,
       textTitle: textTitle ?? this.textTitle,
       textBody: textBody ?? this.textBody,
@@ -303,6 +310,7 @@ class AppColors extends ThemeExtension<AppColors> {
       heroWashTo: mix(heroWashTo, other.heroWashTo),
       line: mix(line, other.line),
       lineStrong: mix(lineStrong, other.lineStrong),
+      lineButton: mix(lineButton, other.lineButton),
       fieldBorder: mix(fieldBorder, other.fieldBorder),
       textTitle: mix(textTitle, other.textTitle),
       textBody: mix(textBody, other.textBody),
