@@ -23,7 +23,7 @@
 | 明确 `flutter_secure_storage`、锁定 Riverpod、补 CI | 采纳 | 技术栈固定依赖名称；Phase 0 增加依赖锁定与 CI 的 `flutter analyze`、`flutter test` 门禁。 |
 | 明确 Universal Links/App Links 与开发环境 deep link | 采纳 | 页面交互文档增加 deep link 策略：生产使用 HTTPS Universal Links/App Links，开发环境允许 `app://`，统一由路由层处理登录回跳和文章详情跳转。 |
 | 修正投稿提交路径 | 采纳 | 将投稿流程精确为 `GET /api/v1/me/articles`、`POST /api/v1/articles`、`PUT /api/v1/articles/{id}`、`POST /api/v1/articles/{id}/submit`、`DELETE /api/v1/articles/{id}`。 |
-| 补充点赞状态和“我的点赞”接口 | 采纳 | 区分点赞与收藏的状态接口，并补充 `GET /api/v1/articles/{id}/like-status`、`GET /api/v1/me/likes` 的客户端映射。 |
+| 补充点赞状态和“我的点赞”接口 | 采纳 | 区分点赞与收藏的状态接口，并补充 `GET /api/v1/articles/{id}/like/status`、`GET /api/v1/me/likes` 的客户端映射。 |
 
 ## 需要修正理解的地方
 
@@ -45,3 +45,12 @@
 本轮不修改后端接口，也不提前开始页面编码。下一步直接进入 Phase 0：建立 Flutter 工程骨架，锁定依赖，接入认证存储与 API 客户端，并用真实或隔离测试环境完成认证链路冒烟验证。只有这条链路通过后，才进入首页、文章详情、会员中心和投稿页面的实现。
 
 本轮没有发现需要整份驳回的评审意见；被调整的是术语范围和风险等级，而不是评审报告提出的技术方向。
+
+## 对产品 AI 设计审计的后续处理
+
+针对《M4-产品AI设计文档第一轮评审报告》，采纳其契约核对结果，并执行零契约变更方案：
+
+1. **会员撤回待审稿件：移除。** 当前契约只有管理员状态置位端点，APP 保留“待审核可编辑”，不提供“撤回为草稿”。如果产品未来需要该能力，必须先提交契约变更，再更新接口、页面和原型。
+2. **评论三态：改为即时反馈。** APP 只处理发表评论接口返回的 approved/rejected；rejected 保留输入并展示服务端原因（若返回），不宣称可以读取 reviewing 或用户自己的 rejected 历史。
+3. **令牌规范：接受修订。** 焦点区渐变由 `heroWashFrom` / `heroWashTo` 两个主题色令牌表达；次级按钮使用 `line.button`；Flutter 以 `MediaQuery.textScaler` 承担 `sp` 语义。
+4. **接口笔误：已确认。** 点赞状态接口统一使用 `/api/v1/articles/{id}/like/status`，回应文档中曾出现的 `like-status` 仅是文字笔误。

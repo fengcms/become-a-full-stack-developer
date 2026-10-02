@@ -11,6 +11,7 @@
 //     theme: buildAppTheme(Brightness.light),
 //     darkTheme: buildAppTheme(Brightness.dark),
 //     themeMode: themeMode,          // 跟随系统 / 浅色 / 深色，持久化到本地
+//     builder: AppLayout.clampTextScale,   // 夹紧系统字体缩放（06 §3）
 //   )
 //   // 业务里取色：
 //   final c = Theme.of(context).extension<AppColors>()!;
@@ -31,6 +32,8 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.surface,
     required this.surfaceSunken,
     required this.surfaceElevated,
+    required this.heroWashFrom,
+    required this.heroWashTo,
     required this.line,
     required this.lineStrong,
     required this.fieldBorder,
@@ -71,6 +74,10 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color surface;         // 卡片、弹层、抽屉
   final Color surfaceSunken;   // 代码块、引用块、表头
   final Color surfaceElevated; // 抽屉、浮层、输入框
+  // 焦点区渐变（06 §2.1 `color.bg.wash`）。ThemeExtension 不能直接持有
+  // LinearGradient，故拆成两色，组件用 `heroWash` getter 取渐变。
+  final Color heroWashFrom;
+  final Color heroWashTo;
 
   // 描边
   final Color line;            // 列表与模块分割线
@@ -104,7 +111,7 @@ class AppColors extends ThemeExtension<AppColors> {
   // 业务状态（对齐契约枚举）
   final Color statusPublished;   // Article.status = published
   final Color statusPublishedBg;
-  final Color statusPending;     // pending / Comment.status = reviewing
+  final Color statusPending;     // pending article status; comments expose only immediate POST results
   final Color statusPendingBg;
   final Color statusDraft;       // draft
   final Color statusDraftBg;
@@ -122,6 +129,8 @@ class AppColors extends ThemeExtension<AppColors> {
     surface: Color(0xFFFFFFFF),
     surfaceSunken: Color(0xFFF5F9FC),
     surfaceElevated: Color(0xFFFFFFFF),
+    heroWashFrom: Color(0xFFF0F7FE),
+    heroWashTo: Color(0xFFE4F0FB),
     line: Color(0xFFE9EFF5),
     lineStrong: Color(0xFFD5E2ED),
     fieldBorder: Color(0xFF8397AB),
@@ -162,6 +171,8 @@ class AppColors extends ThemeExtension<AppColors> {
     surface: Color(0xFF1A222C),
     surfaceSunken: Color(0xFF161C24),
     surfaceElevated: Color(0xFF212B36),
+    heroWashFrom: Color(0xFF1B2733),
+    heroWashTo: Color(0xFF16202A),
     line: Color(0xFF2E3A46),
     lineStrong: Color(0xFF3A4754),
     fieldBorder: Color(0xFF4A5A69),
@@ -196,6 +207,14 @@ class AppColors extends ThemeExtension<AppColors> {
     codeFg: Color(0xFF9CC4E4),
   );
 
+  /// 焦点区渐变。CSS 侧写作 `linear-gradient(115deg, from, to)`，
+  /// 115deg 的走向近似左上 → 右下，此处用对角对齐。
+  LinearGradient get heroWash => LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[heroWashFrom, heroWashTo],
+      );
+
   /// 按契约枚举取文章状态色，避免各页面各写一套。
   Color statusColor(String status) => switch (status) {
         'published' => statusPublished,
@@ -216,7 +235,8 @@ class AppColors extends ThemeExtension<AppColors> {
   @override
   AppColors copyWith({
     Color? bgBase, Color? bgSubtle, Color? surface, Color? surfaceSunken,
-    Color? surfaceElevated, Color? line, Color? lineStrong, Color? fieldBorder,
+    Color? surfaceElevated, Color? heroWashFrom, Color? heroWashTo,
+    Color? line, Color? lineStrong, Color? fieldBorder,
     Color? textTitle, Color? textBody, Color? textMuted, Color? textPlaceholder,
     Color? textInverse, Color? brand, Color? brandHover, Color? brandSolid,
     Color? brandSubtle, Color? brandOnSubtle, Color? focusRing, Color? scrim,
@@ -232,6 +252,8 @@ class AppColors extends ThemeExtension<AppColors> {
       surface: surface ?? this.surface,
       surfaceSunken: surfaceSunken ?? this.surfaceSunken,
       surfaceElevated: surfaceElevated ?? this.surfaceElevated,
+      heroWashFrom: heroWashFrom ?? this.heroWashFrom,
+      heroWashTo: heroWashTo ?? this.heroWashTo,
       line: line ?? this.line,
       lineStrong: lineStrong ?? this.lineStrong,
       fieldBorder: fieldBorder ?? this.fieldBorder,
@@ -277,6 +299,8 @@ class AppColors extends ThemeExtension<AppColors> {
       surface: mix(surface, other.surface),
       surfaceSunken: mix(surfaceSunken, other.surfaceSunken),
       surfaceElevated: mix(surfaceElevated, other.surfaceElevated),
+      heroWashFrom: mix(heroWashFrom, other.heroWashFrom),
+      heroWashTo: mix(heroWashTo, other.heroWashTo),
       line: mix(line, other.line),
       lineStrong: mix(lineStrong, other.lineStrong),
       fieldBorder: mix(fieldBorder, other.fieldBorder),
@@ -354,6 +378,33 @@ abstract final class AppDuration {
   static const Duration base = Duration(milliseconds: 200); // 淡入、展开
   static const Duration page = Duration(milliseconds: 250); // 页面转场
   static const Curve curve = Curves.easeOutCubic;
+}
+
+// ---------------------------------------------------------------------------
+// 布局与系统字体缩放
+// ---------------------------------------------------------------------------
+
+/// 06 §3：字号单位是 sp，Flutter 侧的缩放由 `MediaQuery.textScaler` 承担。
+/// 放大到 1.3 倍时正文（`AppType.reading`）不得横向溢出——
+/// 这里夹紧上限，配合文本组件的 `maxLines` / `TextOverflow.ellipsis` 兜底；
+/// 正文若被截断，应改为整体放大字号而非省略号截断。
+abstract final class AppLayout {
+  /// 允许的最大系统文本缩放倍数（06 §3 验收值）。
+  static const double maxTextScale = 1.3;
+
+  /// 挂在 `MaterialApp.builder` 上：
+  /// `MaterialApp(builder: AppLayout.clampTextScale, ...)`
+  static Widget clampTextScale(BuildContext context, Widget? child) =>
+      MediaQuery.withClampedTextScaling(
+        maxScaleFactor: maxTextScale,
+        child: child ?? const SizedBox.shrink(),
+      );
+
+  /// 需要按缩放自适应间距时使用（缩放越大，留白同步放宽）。
+  static double scaledSpace(BuildContext context, double space) {
+    final s = MediaQuery.textScalerOf(context).scale(1.0).clamp(1.0, maxTextScale);
+    return space * s;
+  }
 }
 
 // ---------------------------------------------------------------------------

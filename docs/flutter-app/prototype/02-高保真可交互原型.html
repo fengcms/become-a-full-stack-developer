@@ -304,24 +304,28 @@ textarea.inp{min-height:96px; resize:vertical; line-height:1.7;}
 
 /* ================= 首页 ================= */
 .hero{margin:var(--s4) var(--s4) 0; border-radius:var(--r-md); background:var(--hero-wash);
-  padding:var(--s5); position:relative; overflow:hidden; cursor:pointer;}
+  padding:var(--s4); position:relative; overflow:hidden; cursor:pointer;}
 .hero::before{content:"{ API }"; position:absolute; right:14px; top:-6px; font-family:var(--font-mono);
   font-size:46px; font-weight:600; color:var(--hero-ink); opacity:.08; pointer-events:none;}
 .hero .eb{font-size:11px; font-weight:600; color:var(--brand-on-subtle); letter-spacing:.06em;
-  display:block; margin-bottom:var(--s2); position:relative;}
-.hero h2{font-size:24px; line-height:1.35; font-weight:700; color:var(--hero-ink); margin-bottom:var(--s2);
-  position:relative; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;}
-.hero p{font-size:13px; line-height:1.7; color:var(--hero-sub); position:relative;
+  display:block; margin-bottom:var(--s1); position:relative;}
+.hero h2{font-size:22px; line-height:1.32; font-weight:700; color:var(--hero-ink); margin-bottom:var(--s2);
+  position:relative; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+.hero p{font-size:13px; line-height:1.62; color:var(--hero-sub); position:relative;
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
 .dots{display:flex; gap:6px;}
 .dots i{height:4px; width:20px; border-radius:2px; background:var(--brand); opacity:.28; display:block;}
 .dots i.on{opacity:1;}
-.heroctrl{display:flex; justify-content:space-between; align-items:center; padding:0 var(--s4); margin-top:var(--s3);}
+.heroctrl{display:flex; justify-content:space-between; align-items:center; padding:0 var(--s4); margin-top:var(--s2);}
 .heroctrl .mid{display:flex; align-items:center; gap:var(--s3);}
 .heroctrl .mid>span{font-size:11px; color:var(--text-muted); font-family:var(--font-mono);}
 .heroctrl button{border:1px solid var(--line-strong); background:var(--surface); color:var(--text-muted);
   width:32px; height:32px; border-radius:var(--r-full); display:grid; place-items:center; cursor:pointer; font-size:15px;}
 .heroctrl button:hover{background:var(--brand-subtle); color:var(--brand-on-subtle); border-color:var(--brand-subtle);}
+.cmtrej{display:flex; gap:var(--s2); margin:0 var(--s4) var(--s4); padding:var(--s3);
+  border:1px solid var(--danger); border-radius:var(--r-md); background:var(--danger-bg);
+  font-size:12.5px; line-height:1.6; color:var(--danger); align-items:flex-start;}
+.cmtrej strong{display:block; margin-bottom:2px;}
 
 /* 排行 */
 .rank{display:flex; gap:var(--s3); padding:var(--s3) var(--s4); border-bottom:1px solid var(--line);
@@ -617,6 +621,7 @@ mark{background:var(--brand-subtle); color:var(--brand-on-subtle); padding:0 2px
         <button data-state-set="loading" aria-pressed="false">加载中</button>
         <button data-state-set="empty" aria-pressed="false">空</button>
         <button data-state-set="error" aria-pressed="false">错误</button>
+        <button data-state-set="reject" aria-pressed="false">发帖被拒</button>
       </div>
     </div>
     <div class="tool-group">
@@ -771,7 +776,7 @@ const COMMENTS = [
    replies:[{id:2,userId:1,userName:'成为全栈',parentId:1,status:'approved',
      replyTo:'阿七',quote:'适配层这一层薄接口很有启发，我们项目里就是到处 if (isWorker)，后来改起来特别痛。',
      content:'是的，判断散落在业务里最难收回来。建议先只收存储和环境两项，见效最快。',createdAt:'1 小时前'}]},
-  {id:3,userId:9,userName:'Ming',parentId:null,status:'reviewing',content:'定时任务那一段能不能再展开？Cron 和外部调度器的行为差异挺大的。',createdAt:'3 小时前',replies:[]},
+  {id:3,userId:9,userName:'Ming',parentId:null,status:'approved',content:'定时任务那一段能不能再展开？Cron 和外部调度器的行为差异挺大的。',createdAt:'3 小时前',replies:[]},
   {id:4,userId:11,userName:'小林',parentId:null,status:'approved',content:'转发收藏了。之前一直把适配层和抽象层混着用，现在清楚多了。',createdAt:'5 小时前',replies:[]}
 ];
 
@@ -817,6 +822,28 @@ function toast(msg){
   t.classList.add('show');
   clearTimeout(S.toastTimer);
   S.toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+/** 复制文本到剪贴板。失败不谎报成功（B-5：复制链接 = 剪贴板动作，不是系统分享）。 */
+function copyLink(text){
+  const fallback = () => {
+    try{
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed'; ta.style.top = '-1000px'; ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select(); ta.setSelectionRange(0, text.length);
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    }catch(e){ return false; }
+  };
+  const settle = (ok) => toast(ok ? '已复制链接' : '当前环境不支持自动复制，请手动复制地址栏链接');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(() => settle(true), () => settle(fallback()));
+  }else{
+    settle(fallback());
+  }
 }
 
 function go(hash){
@@ -890,6 +917,15 @@ function statusChip(st){
   return `<span class="chip drf">${ico('pen')}草稿</span>`;
 }
 const bySlug = (k) => ARTICLES.find(a => a.slug === k || String(a.id) === String(k));
+
+/** 本文目录。实现由 GET /articles/{id}/toc 解析正文生成；原型用静态数据等价表达。 */
+const TOC = [
+  {n:1, t:'一、差异从哪里来'},
+  {n:2, t:'二、把差异收敛成一个接口'},
+  {n:3, t:'代码块与表格的移动端折行策略', lv2:true},
+  {n:4, t:'错误码到用户文案的映射', lv2:true},
+  {n:5, t:'三、收敛成本'}
+];
 
 /* ================================================================
    路由
@@ -1014,8 +1050,8 @@ function vCategories(){
       route:'/categories',
       goals:['展示无限级分类树（后端最大 4 级）','点击父分类进入聚合列表页','子分类逐级展开，不用一次压满屏幕'],
       states:['展开 / 收起','空分类','加载失败'],
-      api:['GET /categories/tree','GET /categories/{slug}/articles'],
-      tip:'分类页也提供标签入口。分类跳转用 slug，不能用数字 id 拼路由。'
+      api:['GET /categories/tree','GET /articles?category={slug}'],
+      tip:'分类页也提供标签入口。分类树含 articleCount，直接取用。分类跳转用 slug，不能用数字 id 拼路由；列表数据走 GET /articles?category={slug}（按 slug 匹配并级联包含后代子分类），契约没有 /categories/{slug}/articles 这个端点。'
     }
   };
 }
@@ -1169,11 +1205,7 @@ function vArticle(p){
     <details class="toc-bar" open>
       <summary>${ico('list')}本文目录<span class="cnt">3 节</span>${ico('chevd')}</summary>
       <ol>
-        <li data-act="toc:1">一、差异从哪里来</li>
-        <li data-act="toc:2">二、把差异收敛成一个接口</li>
-        <li class="lv2" data-act="toc:3">代码块与表格的移动端折行策略</li>
-        <li class="lv2" data-act="toc:4">错误码到用户文案的映射</li>
-        <li data-act="toc:5">三、收敛成本</li>
+        ${TOC.map(t => `<li class="${t.lv2 ? 'lv2' : ''}" data-act="toc:${t.n}">${esc(t.t)}</li>`).join('')}
       </ol>
     </details>
     <div class="actions">
@@ -1185,14 +1217,13 @@ function vArticle(p){
       ${prev ? `<button data-nav="#/articles/${esc(prev.slug || prev.id)}"><small>上一篇</small>${esc(prev.title)}</button>` : ''}
       ${next ? `<button data-nav="#/articles/${esc(next.slug || next.id)}"><small>下一篇</small>${esc(next.title)}</button>` : ''}
     </div>
+    ${S.ui === 'reject' ? `<div class="cmtrej">${ico('alert')}<span><strong>评论未通过审核</strong>触发规则「含外链」。内容已保留，修改后可再次提交——这是发表评论的即时响应，不是可回查的历史状态。</span></div>` : ''}
     <div class="sec-head"><h3>评论<span style="font-size:12px;color:var(--text-muted);font-weight:400"> ${COMMENTS.length}</span></h3></div>
     ${S.ui === 'loading' ? skeletonList(2) : COMMENTS.map(c => `
       <div class="cmt">
         <span class="avatar sm">${esc(c.userName.slice(0,1))}</span>
         <div class="cb">
-          <div class="cn">${esc(c.userName)}
-            ${c.status === 'reviewing' ? `<span class="chip pen">${ico('clock')}复核中</span>` : ''}
-            ${c.status === 'rejected' ? `<span class="chip rej">${ico('alert')}未通过</span>` : ''}</div>
+          <div class="cn">${esc(c.userName)}</div>
           <div class="ct">${esc(c.content)}</div>
           <div class="cf"><span>${esc(c.createdAt)}</span><button data-act="reply:${c.id}">回复</button>
             ${c.userId === ME.id ? '<button data-act="cmt-del:' + c.id + '">删除</button>' : ''}</div>
@@ -1211,6 +1242,7 @@ function vArticle(p){
     appbar:`<div class="appbar">
       <button class="iconbtn edge" data-act="back" aria-label="返回">${ico('back')}</button>
       <span class="appbar-title">文章</span>
+      <button class="iconbtn" data-act="toc:panel" aria-label="目录">${ico('list')}</button>
       <button class="iconbtn edge-r" data-act="article:more" aria-label="更多">${ico('more')}</button></div>`,
     body,
     bottom:`<div class="composer">
@@ -1220,11 +1252,13 @@ function vArticle(p){
     notes:{
       route:'/articles/:slug',
       goals:['正文是第一优先级，操作条不遮挡正文','目录用可折叠面板，点击后关闭并滚动到标题','评论叠楼：回复显示「回复某某」与原文摘要，深层只缩进一档'],
-      states:['长文 / 代码 / 表格','图片加载失败','404','离线','评论复核中 / 未通过'],
+      states:['长文 / 代码 / 表格','图片加载失败','404','离线','评论列表空态','评论加载失败','发帖被拒即时反馈'],
       api:['GET /articles/{idOrSlug}','GET /articles/{id}/adjacent','GET /articles/{id}/toc',
-        'GET/POST /articles/{id}/like','GET /articles/{id}/like-status','GET/POST/DELETE /me/favorites',
-        'GET /articles/{id}/comments','POST /comments'],
-      tip:'点赞/收藏未登录时先跳登录并保留回跳路径；状态查询以当前账号为 key，账号切换要清。'
+        'GET /categories/{id}/breadcrumb','GET /articles/{id}/related','POST /articles/{id}/view',
+        'POST,DELETE /articles/{id}/like','GET /articles/{id}/like/status',
+        'GET,POST /me/favorites','DELETE /me/favorites/{articleId}',
+        'GET /articles/{idOrSlug}/comments','POST /articles/{idOrSlug}/comments'],
+      tip:'点赞/收藏未登录时先跳登录并保留回跳路径；状态查询以当前账号为 key，账号切换要清。阅读量上报走 POST /articles/{id}/view（只递增、不写历史）。评论列表只返回 approved，rejected/reviewing 不会出现在这里，故本页不渲染审核态徽章。'
     }
   };
 }
@@ -1336,7 +1370,7 @@ function requireLogin(inner){
     tab:true, tabIdx:3,
     caption:'会员中心 · 未登录态',
     notes:{route:'/member*', goals:['未登录给出明确出口，不做空白页'],
-      states:['未登录'], api:['GET /me','GET /me/profile'],
+      states:['未登录'], api:['GET /auth/me','GET /me/profile'],
       tip:'登录后回跳原路径（redirect 保存一次，用掉即清）。'}
   };
 }
@@ -1386,7 +1420,7 @@ function vMemberHome(){
         route:'/member',
         goals:['身份卡 + 六类入口，一眼看到全部私有数据位置','列表页不把未发布稿件链到公开详情'],
         states:['未登录','空数据','刷新','会话过期'],
-        api:['GET /me','GET /me/favorites','GET /me/likes','GET /me/history','GET /me/articles','GET /me/notifications'],
+        api:['GET /auth/me','GET /me/favorites','GET /me/likes','GET /me/history','GET /me/articles','GET /me/notifications'],
         tip:'私有请求不进公共缓存；退出与切换账号要清空私有状态 key。'
       }
     };
@@ -1473,7 +1507,7 @@ function vHistory(){
       route:'/member/history',
       goals:['阅读进度按文章记录，用于「继续阅读」','写入节流，避免每滚一屏就写一次'],
       states:['清空确认','空态','错误'],
-      api:['GET /me/history','POST /me/history'],
+      api:['GET /me/history','POST /me/history','DELETE /me/history','DELETE /me/history/{articleId}'],
       tip:'历史属私有数据，no-cache，且绝不进入公共缓存。'
     }
   });
@@ -1515,7 +1549,7 @@ function vMyArticles(){
                 </div>
                 <div style="font-size:15.5px;font-weight:600;line-height:1.5;color:var(--text-title)">${esc(d.title)}</div>
                 <div style="font-size:12.5px;color:var(--text-muted);line-height:1.65;margin-top:6px">${esc(d.summary)}</div>
-                ${d.status === 'pending' ? `<div class="chip pen" style="margin-top:10px">${ico('clock')}审核中，可以编辑后撤回</div>` : ''}
+                ${d.status === 'pending' ? `<div class="chip pen" style="margin-top:10px">${ico('clock')}审核中，可以继续编辑</div>` : ''}
               </div>
               <div style="display:flex;gap:var(--s2);padding:0 var(--s4) var(--s4);flex-wrap:wrap">
                 ${d.status === 'published'
@@ -1526,8 +1560,8 @@ function vMyArticles(){
                      <button class="b sec" style="min-height:36px;font-size:12.5px" data-nav="#/member/articles/${d.id}/preview">预览</button>
                      ${d.status === 'draft'
                        ? `<button class="b pri" style="min-height:36px;font-size:12.5px" data-act="draft:submit:${d.id}">提交审核</button>`
-                       : `<button class="b txt" style="min-height:36px;font-size:12.5px" data-act="draft:withdraw:${d.id}">撤回</button>`}
-                     <button class="b txt" style="min-height:36px;font-size:12.5px;color:var(--danger)" data-act="draft:del:${d.id}">删除</button>`}
+                       : ''}
+                     <button class=\"b txt\" style=\"min-height:36px;font-size:12.5px;color:var(--danger)\" data-act="draft:del:${d.id}">删除</button>`}
               </div>
             </div>`).join('');
         })}
@@ -1535,7 +1569,7 @@ function vMyArticles(){
       caption:'PS-13 我的文章 · 三态筛选与状态相关操作',
       notes:{
         route:'/member/articles',
-        goals:['按 draft/pending/published 筛选','操作随状态变化：草稿可提交、待审可撤回、已发布修改后转待审'],
+        goals:['按 draft/pending/published 筛选','操作随状态变化：草稿可提交、待审可编辑、已发布修改后转待审'],
         states:['操作确认','状态变化','空态','会话过期'],
         api:['GET /me/articles','POST /articles/{id}/submit','PUT /articles/{id}','DELETE /articles/{id}'],
         tip:'「保存」已发布稿件会进入待审核，必须在 UI 上说明，不能让用户误以为只存私有版本。'
@@ -1681,8 +1715,8 @@ function vPreview(p){
         route:'/member/articles/:id/preview',
         goals:['用与公开详情一致的渲染样式，提前发现排版问题','明确标注私人预览，避免误解为已发布'],
         states:['非本人稿件','稿件不存在'],
-        api:['GET /me/articles/{id}'],
-        tip:'预览页不能出现在公开索引与分享结果里。'
+        api:['GET /articles/{idOrSlug}'],
+        tip:'预览页不能出现在公开索引与分享结果里。作者本人与 admin 可见未发布详情，依据是 GET /articles/{idOrSlug} 的可选鉴权放宽，不是另一个私有端点。'
       }
     };
   });
@@ -1717,7 +1751,7 @@ function vNotifications(){
         route:'/member/notifications',
         goals:['未读用底色 + 圆点双重表达，不只靠颜色','点击进入对应资源并标记已读'],
         states:['未读 / 已读','全部已读','空态'],
-        api:['GET /me/notifications','PATCH /me/notifications/{id}'],
+        api:['GET /me/notifications','PATCH /me/notifications/{id}','GET /me/notifications/unread-count'],
         tip:'第一版只做站内通知；推送不在本期范围。'
       }
     };
@@ -1780,7 +1814,7 @@ function vProfile(){
       route:'/member/profile',
       goals:['资料字段与隐私边界一致（邮箱不外泄）','主题三选项，重启后保持'],
       states:['保存失败','会话过期','头像上传失败'],
-      api:['GET /me/profile','PUT /me/profile','POST /upload'],
+      api:['GET /me/profile','PATCH /me/profile','POST /upload'],
       tip:'退出登录后清除 access、refresh 与全部私有缓存，并丢弃在途请求的迟到响应。'
     }
   }));
@@ -1810,7 +1844,7 @@ function vPassword(){
       route:'/member/password',
       goals:['改密后旧会话失效，避免旧请求恢复旧账号','两次输入不一致在客户端先拦下'],
       states:['当前密码错误','两次不一致','提交中','限流'],
-      api:['PUT /me/password'],
+      api:['POST /me/change-password'],
       tip:'任何情况下都不把密码写入日志或本地存储。'
     }
   }));
@@ -2032,7 +2066,7 @@ function handleAct(act){
       break;
     case 'cmt-del':
       openSheet('评论操作',
-        sheetChoice('删除这条评论', '删除后其回复会一起隐藏', 'cmt-del-ok:' + a, true) +
+        sheetChoice('删除这条评论', '删除后其所有回复会一并删除，不可恢复', 'cmt-del-ok:' + a, true) +
         sheetChoice('取消', '', 'sheet:close'));
       break;
     case 'cmt-del-ok': toast('已删除'); break;
@@ -2042,12 +2076,24 @@ function handleAct(act){
       break;
     case 'article':
       openSheet('文章操作',
-        sheetChoice('复制链接', '', 'share:' + a) +
-        sheetChoice('举报内容', '提交后由管理员复核', 'report') +
+        sheetChoice('复制链接', '', 'copy:' + a) +
+        sheetChoice('系统分享', '实现阶段接入系统分享面板', 'share:' + a) +
         sheetChoice('取消', '', 'sheet:close'));
       break;
-    case 'report': toast('已提交，管理员会复核'); break;
-    case 'toc': toast('目录已定位到对应章节'); break;
+    case 'copy': {
+      const art = ARTICLES.find(x => String(x.id) === String(a));
+      copyLink(location.origin + location.pathname + '#/articles/' + (art ? (art.slug || art.id) : a));
+      break;
+    }
+    case 'toc:panel':
+      openSheet('本文目录',
+        TOC.map(t => sheetChoice(t.t, t.lv2 ? '二级标题' : '一级标题', 'toc:' + t.n)).join('') +
+        sheetChoice('取消', '', 'sheet:close'));
+      break;
+    case 'toc':
+      render();
+      toast('目录已定位到对应章节');
+      break;
 
     case 'auth':
       if(a === 'submit'){
@@ -2087,11 +2133,6 @@ function handleAct(act){
         const d = MY_DRAFTS.find(x => String(x.id) === String(b));
         if(d){ d.status = 'pending'; d.updatedAt = '刚刚'; }
         render(); toast('已提交审核，等待管理员通过');
-      }
-      if(a === 'withdraw'){
-        const d = MY_DRAFTS.find(x => String(x.id) === String(b));
-        if(d){ d.status = 'draft'; d.updatedAt = '刚刚'; }
-        render(); toast('已撤回为草稿');
       }
       if(a === 'del'){
         openSheet('删除稿件', sheetChoice('删除《' +

@@ -141,16 +141,16 @@ svg.icon{width:1em; height:1em; fill:none; stroke:currentColor; stroke-width:1.6
 
 /* ================= 首页 ================= */
 .hero{margin:var(--space4) var(--space4) 0; border-radius:var(--r-md);
-  background:var(--hero-wash); padding:var(--space5); position:relative; overflow:hidden;}
+  background:var(--hero-wash); padding:var(--space4); position:relative; overflow:hidden;}
 .hero::before{content:"{ API }"; position:absolute; right:14px; top:-6px;
   font-family:var(--font-mono); font-size:46px; font-weight:600; color:var(--hero-ink);
   opacity:.08; pointer-events:none;}
 .hero .eyebrow{font-size:11px; font-weight:600; color:var(--brand-on-subtle);
-  letter-spacing:.06em; display:block; margin-bottom:var(--space2); position:relative;}
-.hero h2{font-size:24px; line-height:1.35; font-weight:700; color:var(--hero-ink);
+  letter-spacing:.06em; display:block; margin-bottom:var(--space1); position:relative;}
+.hero h2{font-size:22px; line-height:1.32; font-weight:700; color:var(--hero-ink);
   position:relative; margin-bottom:var(--space2);}
-.hero p{font-size:13px; line-height:1.7; color:var(--hero-sub); position:relative;}
-.hero .dots{display:flex; gap:6px; margin-top:var(--space4); position:relative;}
+.hero p{font-size:13px; line-height:1.62; color:var(--hero-sub); position:relative;}
+.hero .dots{display:flex; gap:6px; margin-top:var(--space3); position:relative;}
 .hero .dots i{height:4px; width:20px; border-radius:2px; background:var(--brand);
   opacity:.28; display:block;}
 .hero .dots i.on{opacity:1;}
@@ -668,7 +668,7 @@ html[data-theme="dark"] .codebox .s{color:#6FCFB4;}
         <div class="cmt">
           <span class="avatar" style="width:36px;height:36px;flex:0 0 36px;font-size:14px">M</span>
           <div class="cbody">
-            <div class="cname">Ming<span class="opt">复核中</span></div>
+            <div class="cname">Ming</div>
             <div class="ctext">定时任务那一段能不能再展开？Cron 和外部调度器的行为差异挺大的。</div>
             <div class="cfoot"><span>3 小时前</span><button>回复</button></div>
           </div>
