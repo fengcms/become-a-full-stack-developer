@@ -2,7 +2,7 @@
 
 > Route Handler 代理不是把一个 URL 原样转发到另一个 URL。它还要限制目标地址、保留查询串、正确处理多个 Set-Cookie、隔离私有缓存，并拒绝明确的跨站写入。
 
-{{IMG:M3-12-封面}}
+![成为全栈·Next.js 网站前台篇·同源 BFF 代理：API、附件、Cookie 与跨站写入保护](https://i-blog.csdnimg.cn/direct/476540ec6b184e2ca8e98e101fd24c2a.png)
 
 ## 前言
 
@@ -24,7 +24,7 @@
 
 BFF 增加了一跳和一处运行成本，换来的是协议集中与前端部署边界。是否采用它，取决于系统现状，而不是“Next.js 项目必须有 BFF”。
 
-{{IMG:M3-12-BFF边界}}
+![BFF边界](https://i-blog.csdnimg.cn/direct/fa74981bf47f4f37b5da241e2b71640a.png)
 
 ## 动态路径首先要阻止越界
 
@@ -239,7 +239,7 @@ const body = ['GET', 'HEAD'].includes(request.method)
 | 会员资料响应 | `Cache-Control: private, no-store` |
 | multipart 附件 | 字节和 Content-Type 保持一致 |
 
-{{IMG:M3-12-代理验收矩阵}}
+![代理验收矩阵](https://i-blog.csdnimg.cn/direct/6e866ea0e5054d7cb4d69001f3c027d0.png)
 
 ```bash
 curl -i 'http://localhost:3000/api/v1/articles?page=2'
@@ -264,7 +264,7 @@ curl -i -X POST 'http://localhost:3000/api/v1/auth/refresh' \
 
 ## 延伸阅读
 
-- [C 端认证：内存令牌、HttpOnly Cookie 与会话代次]({{LINK:M3-11}})
+- [C 端认证：内存令牌、HttpOnly Cookie 与会话代次](https://blog.csdn.net/fungleo/article/details/166945972)
 - [HTTP 协议：前端天天用却说不清的那些事]({{LINK:B-01}})
 - [会员中心：资料、密码与个人数据]({{LINK:M3-13}})
 

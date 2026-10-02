@@ -165,7 +165,7 @@ return fetch(url, {
 
 ## 延伸阅读
 
-- [Next.js SEO]({{LINK:M3-10}})
+- [Next.js SEO](https://blog.csdn.net/fungleo/article/details/166945924)
 - [会员公开主页与通知中心]({{LINK:M3-18}})
 - [响应式、可访问性与错误状态]({{LINK:M3-20}})
 

@@ -96,8 +96,8 @@
 | 成为全栈·Next.js 网站前台篇·文章列表：服务端首屏与客户端持续加载怎样协作 | — | `articles/M3-07-文章列表-服务端首屏与客户端持续加载怎样协作.md` | https://blog.csdn.net/fungleo/article/details/166836287 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·文章详情：Markdown、代码高亮与目录必须共享解析结果 | — | `articles/M3-08-文章详情-Markdown代码高亮与目录必须共享解析结果.md` | https://blog.csdn.net/fungleo/article/details/166885283 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·文章阅读辅助：上下篇、面包屑、相关文章与阅读记录 | — | `articles/M3-09-文章阅读辅助-上下篇面包屑相关文章与阅读记录.md` | https://blog.csdn.net/fungleo/article/details/166885558 | 🟢 已发布 |
-| 成为全栈·Next.js 网站前台篇·Next.js SEO：metadata、结构化数据、sitemap 与 robots | — | `articles/M3-10-Nextjs-SEO-metadata结构化数据sitemap与robots.md` | — | 🟡 草稿中 |
-| 成为全栈·Next.js 网站前台篇·C 端认证：内存令牌、HttpOnly Cookie 与会话代次 | — | `articles/M3-11-C端认证-内存令牌HttpOnly-Cookie与会话代次.md` | — | 🟡 草稿中 |
+| 成为全栈·Next.js 网站前台篇·Next.js SEO：metadata、结构化数据、sitemap 与 robots | — | `articles/M3-10-Nextjs-SEO-metadata结构化数据sitemap与robots.md` | https://blog.csdn.net/fungleo/article/details/166945924 | 🟢 已发布 |
+| 成为全栈·Next.js 网站前台篇·C 端认证：内存令牌、HttpOnly Cookie 与会话代次 | — | `articles/M3-11-C端认证-内存令牌HttpOnly-Cookie与会话代次.md` | https://blog.csdn.net/fungleo/article/details/166945972 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·同源 BFF 代理：API、附件、Cookie 与跨站写入保护 | — | `articles/M3-12-同源BFF代理-API附件Cookie与跨站写入保护.md` | — | 🟡 草稿中 |
 | 成为全栈·Next.js 网站前台篇·会员中心：资料、密码与个人数据为什么不能进公共缓存 | — | `articles/M3-13-会员中心-资料密码与个人数据为什么不能进公共缓存.md` | — | 🟡 草稿中 |
 | 成为全栈·Next.js 网站前台篇·点赞、收藏与阅读历史：三种互动状态的所有权不同 | — | `articles/M3-14-点赞收藏与阅读历史-三种互动状态的所有权不同.md` | — | 🟡 草稿中 |
