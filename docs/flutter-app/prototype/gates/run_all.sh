@@ -34,10 +34,12 @@ run() {
   "$@" || fail=1
 }
 
-run "门禁 1/4 · 路由覆盖"        "$NODE_BIN" check_routes.mjs
-run "门禁 2/4 · API 标注 vs 契约" "$PY_BIN"  check_api_vs_contract.py
-run "门禁 3/4 · Dart 令牌"        "$PY_BIN"  check_dart_tokens.py
-run "门禁 4/4 · 交互回归"        "$NODE_BIN" probe.mjs
+run "门禁 1/6 · 路由覆盖"        "$NODE_BIN" check_routes.mjs
+run "门禁 2/6 · API 标注 vs 契约" "$PY_BIN"  check_api_vs_contract.py
+run "门禁 3/6 · Dart 令牌"        "$PY_BIN"  check_dart_tokens.py
+run "门禁 4/6 · 图标几何"        "$PY_BIN"  check_icons.py --selftest
+run "门禁 5/6 · 交互回归"        "$NODE_BIN" probe.mjs
+run "门禁 6/6 · UI 组件标准"      "$PY_BIN"  check_ui_standard.py --selftest
 
 echo
 echo "════════════════════════════════════════════════════════════════"

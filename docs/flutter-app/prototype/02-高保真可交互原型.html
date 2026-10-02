@@ -12,12 +12,13 @@
 :root{
   --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:20px; --s6:24px; --s8:32px; --s10:40px;
   --r-xs:4px; --r-sm:6px; --r-md:8px; --r-lg:12px; --r-full:999px;
+  --dur-fast:120ms; --dur-base:200ms; --dur-page:250ms;
   --font-cn:"PingFang SC","Noto Sans SC",-apple-system,BlinkMacSystemFont,"Microsoft YaHei",sans-serif;
   --font-mono:"SFMono-Regular",Consolas,"Roboto Mono",monospace;
 }
 html[data-theme="light"]{
   --bg:#FFFFFF; --bg-subtle:#F7FAFD; --surface:#FFFFFF; --surface-sunken:#F5F9FC;
-  --surface-elevated:#FFFFFF; --line:#E9EFF5; --line-strong:#D5E2ED; --field-border:#8397AB;
+  --surface-elevated:#FFFFFF; --line:#E9EFF5; --line-strong:#D5E2ED; --line-button:#C7DBEA; --field-border:#8397AB;
   --text-title:#2F4256; --text-body:#34465A; --text-muted:#607286;
   --text-placeholder:#8A99A8; --text-inverse:#FFFFFF;
   --brand:#3277B5; --brand-hover:#245D91; --brand-solid:#3277B5;
@@ -43,7 +44,7 @@ html[data-theme="light"]{
 }
 html[data-theme="dark"]{
   --bg:#121820; --bg-subtle:#171E27; --surface:#1A222C; --surface-sunken:#161C24;
-  --surface-elevated:#212B36; --line:#2E3A46; --line-strong:#3A4754; --field-border:#4A5A69;
+  --surface-elevated:#212B36; --line:#2E3A46; --line-strong:#3A4754; --line-button:#3A4754; --field-border:#4A5A69;
   --text-title:#E8EFF6; --text-body:#C6D2DE; --text-muted:#8FA0B2;
   --text-placeholder:#6E7E8F; --text-inverse:#FFFFFF;
   --brand:#5EA0D8; --brand-hover:#7FB6E4; --brand-solid:#37709F;
@@ -71,7 +72,7 @@ html[data-theme="dark"]{
 body{
   font-family:var(--font-cn); background:var(--doc-bg); color:var(--doc-fg);
   min-height:100vh; padding:var(--s5) var(--s6) 48px; -webkit-font-smoothing:antialiased;
-  transition:background .2s;
+  transition:background var(--dur-base);
 }
 svg.i{width:1em; height:1em; fill:none; stroke:currentColor; stroke-width:1.6;
   stroke-linecap:round; stroke-linejoin:round; display:block; flex:0 0 auto;}
@@ -112,7 +113,7 @@ button{font-family:inherit;}
 .caption{font-size:11.5px; color:var(--doc-muted); text-align:center; line-height:1.6;}
 .device{width:393px; height:852px; border-radius:26px; background:var(--bg);
   border:1px solid var(--line); overflow:hidden; display:flex; flex-direction:column;
-  box-shadow:var(--shadow-overlay); position:relative; transition:background .2s;}
+  box-shadow:var(--shadow-overlay); position:relative; transition:background var(--dur-base);}
 .statusbar{height:32px; flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
   padding:0 20px; font-size:12px; font-weight:600; color:var(--text-title); background:var(--surface);}
 .sb-r{display:flex; align-items:center; gap:5px;}
@@ -209,9 +210,11 @@ button{font-family:inherit;}
 .b svg.i{font-size:17px;}
 .b.pri{background:var(--brand-solid); color:#fff;}
 .b.pri:active{background:var(--brand-hover);}
-.b.sec{background:var(--surface); border-color:var(--line-strong); color:var(--brand);}
+.b.sec{background:var(--surface); border-color:var(--line-button); color:var(--brand);}
 .b.sec:active{background:var(--brand-subtle);}
 .b.txt{background:none; color:var(--brand); padding:0 var(--s2);}
+/* 危险按钮：06 §6.1 已立此变体，当前原型无消费方（危险语义走 .cell.danger），
+   按「规范完整」保留，消费方与形态见 07-UI组件标准 §3.4 */
 .b.dgr{background:var(--danger); color:#fff;}
 .b.wide{width:100%;}
 .b:disabled{opacity:.55; cursor:default;}
@@ -223,7 +226,7 @@ button{font-family:inherit;}
 .inp{width:100%; border:1px solid var(--field-border); border-radius:var(--r-sm); background:var(--surface-elevated);
   color:var(--text-body); font-size:16px; padding:11px 12px; min-height:44px;}
 .inp::placeholder{color:var(--text-placeholder);}
-.inp:focus{outline:2px solid var(--focus-ring); outline-offset:1px; border-color:var(--brand);}
+.inp:focus{outline:2px solid var(--focus-ring); outline-offset:2px; border-color:var(--brand);}
 .inp.err{border-color:var(--danger);}
 textarea.inp{min-height:96px; resize:vertical; line-height:1.7;}
 .field .hint{font-size:11px; color:var(--text-muted); margin-top:6px; line-height:1.6;}
@@ -282,16 +285,16 @@ textarea.inp{min-height:96px; resize:vertical; line-height:1.7;}
 /* Toast */
 .toast{position:absolute; left:50%; bottom:84px; transform:translateX(-50%) translateY(8px);
   background:var(--text-title); color:var(--bg); font-size:13px; padding:10px 18px;
-  border-radius:var(--r-full); opacity:0; pointer-events:none; transition:.2s; z-index:60;
+  border-radius:var(--r-full); opacity:0; pointer-events:none; transition:var(--dur-base); z-index:60;
   max-width:300px; text-align:center; box-shadow:var(--shadow-overlay);}
 .toast.show{opacity:.96; transform:translateX(-50%) translateY(0);}
 /* 遮罩与底部面板 */
 .scrim{position:absolute; inset:0; background:var(--scrim); opacity:0; pointer-events:none;
-  transition:.2s; z-index:40;}
+  transition:var(--dur-base); z-index:40;}
 .scrim.show{opacity:1; pointer-events:auto;}
 .sheet{position:absolute; left:0; right:0; bottom:0; background:var(--surface);
   border-radius:var(--r-lg) var(--r-lg) 0 0; box-shadow:var(--shadow-sheet); z-index:50;
-  transform:translateY(100%); transition:transform .24s cubic-bezier(.22,.61,.36,1);
+  transform:translateY(100%); transition:transform var(--dur-page) cubic-bezier(.22,.61,.36,1);
   max-height:78%; display:flex; flex-direction:column;}
 .sheet.show{transform:none;}
 .sheet .sh{padding:var(--s4); border-bottom:1px solid var(--line); display:flex; align-items:center;
@@ -300,7 +303,7 @@ textarea.inp{min-height:96px; resize:vertical; line-height:1.7;}
 .sheet .sb{overflow-y:auto; padding:var(--s2) 0 var(--s4); scrollbar-width:none;}
 .sheet .sb::-webkit-scrollbar{display:none;}
 .sheet .grab{width:36px; height:4px; border-radius:2px; background:var(--line-strong); margin:10px auto 0;}
-@media (prefers-reduced-motion:reduce){ .sheet{transition:none;} }
+@media (prefers-reduced-motion:reduce){ .sheet,.radio::after{transition:none;} }
 
 /* ================= 首页 ================= */
 .hero{margin:var(--s4) var(--s4) 0; border-radius:var(--r-md); background:var(--hero-wash);
@@ -416,7 +419,7 @@ textarea.inp{min-height:96px; resize:vertical; line-height:1.7;}
 .cnode>.crow:hover{background:var(--bg-subtle);}
 .cnode>.crow .nm{flex:1; font-size:15px; font-weight:500; color:var(--text-body);}
 .cnode>.crow .cnt{font-size:11.5px; color:var(--text-muted);}
-.cnode>.crow svg.i{font-size:15px; color:var(--text-muted); transition:transform .18s;}
+.cnode>.crow svg.i{font-size:15px; color:var(--text-muted); transition:transform var(--dur-base);}
 .cnode.open>.crow svg.i.chev{transform:rotate(90deg);}
 .csub{display:none; padding-left:var(--s4); background:var(--bg-subtle);}
 .cnode.open>.csub{display:block;}
@@ -451,16 +454,27 @@ mark{background:var(--brand-subtle); color:var(--brand-on-subtle); padding:0 2px
 .identity .who{flex:1; min-width:0;}
 .identity .who strong{display:block; font-size:17px; font-weight:600; color:var(--text-title);}
 .identity .who small{font-size:11.5px; color:var(--text-muted); display:block; margin-top:4px;}
-.grid6{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--s3); padding:0 var(--s4) var(--s4);}
-.grid6 button{border:1px solid var(--line); border-radius:var(--r-md); background:var(--surface);
-  padding:var(--s4) var(--s2); display:flex; flex-direction:column; align-items:center; gap:var(--s2);
-  cursor:pointer; position:relative; min-height:88px; justify-content:center;}
-.grid6 button:hover{background:var(--bg-subtle);}
-.grid6 button svg.i{font-size:22px; color:var(--brand);}
-.grid6 button span{font-size:12px; color:var(--text-body);}
-.grid6 button .n{position:absolute; top:8px; right:10px; font-size:10px; color:var(--text-muted);
-  background:var(--bg-subtle); border-radius:var(--r-full); padding:1px 6px;}
-.grid6 button .n.hot{background:var(--danger); color:#fff; font-weight:600;}
+/* Cell 列表：入口 / 设置类菜单的统一形态（组件标准见 07-UI组件标准 §4） */
+.cellgroup{margin:0 var(--s4); background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--r-md); overflow:hidden;}
+.cellgroup + .cellgroup, .sec-head + .cellgroup{margin-top:var(--s3);}
+.cell{display:flex; align-items:center; gap:var(--s3); width:100%; min-height:52px;
+  padding:10px var(--s4); border:0; border-bottom:1px solid var(--line); background:none;
+  font-family:inherit; font-size:14.5px; text-align:left; color:var(--text-body); cursor:pointer;}
+.cell:last-child{border-bottom:0;}
+.cell:hover{background:var(--bg-subtle);}
+.cell .ci{width:22px; flex:0 0 22px; display:grid; place-items:center; font-size:20px; color:var(--brand);}
+.cell .ci.mut{color:var(--text-muted);}
+.cell .ct{flex:1; min-width:0;}
+.cell .ct strong{display:block; font-size:14.5px; font-weight:400; color:var(--text-body);}
+.cell .ct small{display:block; font-size:11.5px; color:var(--text-muted); margin-top:3px; line-height:1.6;}
+.cell .cv{flex:0 0 auto; font-size:13px; color:var(--text-muted);}
+.cell svg.i.arw{font-size:15px; color:var(--text-muted);}
+.cell .cd{flex:0 0 auto; min-width:18px; height:18px; padding:0 5px; border-radius:var(--r-full);
+  background:var(--danger); color:#fff; font-size:10px; font-weight:600; display:grid; place-items:center;}
+.cell.danger .ci, .cell.danger .ct strong{color:var(--danger);}
+.cell.plain{cursor:default;}
+.cell.plain:hover{background:none;}
 .stat-row{display:flex; padding:0 var(--s4) var(--s4); gap:var(--s3);}
 .stat{flex:1; border:1px solid var(--line); border-radius:var(--r-md); padding:var(--s3);
   text-align:center; background:var(--surface);}
@@ -485,7 +499,9 @@ mark{background:var(--brand-subtle); color:var(--brand-on-subtle); padding:0 2px
 .editor-head{padding:var(--s4); border-bottom:1px solid var(--line);}
 .editor-mode{display:flex; gap:var(--s2); padding:var(--s3) var(--s4); border-bottom:1px solid var(--line);
   align-items:center;}
-.editor-mode .seg{display:flex; border:1px solid var(--line-strong); border-radius:var(--r-sm); overflow:hidden;}
+/* 应用内分段控件：容器三属性全部用应用令牌，不继承外壳 .seg 的 --doc-panel / --doc-muted */
+.editor-mode .seg{display:flex; background:var(--surface); border:1px solid var(--line-strong);
+  border-radius:var(--r-sm); overflow:hidden;}
 .editor-mode .seg button{border:0; background:var(--surface); color:var(--text-muted); font-size:13px;
   padding:8px 20px; cursor:pointer; min-height:38px; font-family:inherit;}
 .editor-mode .seg button.on{background:var(--brand-subtle); color:var(--brand-on-subtle); font-weight:600;}
@@ -513,20 +529,18 @@ mark{background:var(--brand-subtle); color:var(--brand-on-subtle); padding:0 2px
 .preview-bar>span{flex:1; min-width:0;}
 
 /* 设置项 */
-.setting{display:flex; align-items:center; gap:var(--s3); padding:var(--s4); border-bottom:1px solid var(--line);}
-.setting .st{flex:1; min-width:0;}
-.setting .st strong{display:block; font-size:14px; font-weight:500; color:var(--text-body);}
-.setting .st small{display:block; font-size:11.5px; color:var(--text-muted); margin-top:4px; line-height:1.6;}
-.switch{width:46px; height:28px; border-radius:14px; background:var(--line-strong); border:0;
-  position:relative; cursor:pointer; flex:0 0 46px; transition:.18s;}
-.switch::after{content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%;
-  background:#fff; transition:.18s; box-shadow:0 1px 3px rgba(0,0,0,.2);}
-.switch.on{background:var(--brand-solid);}
-.switch.on::after{transform:translateX(18px);}
+/* 开关（Switch）当前无消费方：推送类属 Non-goal，形态定义见 07-UI组件标准 §5，原型不留空样式 */
+/* 单选：只保留一个指示器（圆点）。
+   旧写法在 .radio 里同时放了勾选图标与 ::after 圆点，而 .radio 是 display:grid，
+   Grid 会把两个子项排成两行 —— 内容总高 14.5+10=24.5px 溢出 22px 圆框，
+   实测渲染出「勾戳出圆外、圆点吊在圆下」的破图形。现改为只有一个 ::after 子项。
+   命中区由所在的 .cell（min-height 52px）承担，不依赖这 22px 的视觉尺寸。 */
 .radio{width:22px; height:22px; border-radius:50%; border:2px solid var(--line-strong); flex:0 0 22px;
-  display:grid; place-items:center; color:transparent;}
-.radio.on{border-color:var(--brand); color:var(--brand);}
-.radio.on::after{content:""; width:10px; height:10px; border-radius:50%; background:var(--brand); display:block;}
+  display:grid; place-items:center; background:none;}
+.radio::after{content:""; width:10px; height:10px; border-radius:50%; background:var(--brand);
+  transform:scale(0); transition:transform var(--dur-fast);}
+.radio.on{border-color:var(--brand);}
+.radio.on::after{transform:scale(1);}
 
 /* 右侧说明 */
 .notes{width:300px; flex:0 0 300px; background:var(--doc-panel); border:1px solid var(--doc-line);
@@ -544,6 +558,9 @@ mark{background:var(--brand-subtle); color:var(--brand-on-subtle); padding:0 2px
   border-radius:50%; background:var(--brand); opacity:.5;}
 .notes .api{font-family:var(--font-mono); font-size:11px; color:var(--doc-muted); line-height:1.8;
   word-break:break-all;}
+.notes .api.opt{margin-top:var(--s3); padding-top:var(--s3); border-top:1px dashed var(--doc-line);}
+.notes .api .optmark{margin-left:6px; padding:0 6px; border-radius:var(--r-full); background:var(--bg-subtle);
+  color:var(--doc-muted); font-family:var(--font-cn); font-size:10.5px; word-break:keep-all;}
 .notes .tip{margin-top:var(--s4); padding:var(--s3); background:var(--bg-subtle); border-radius:var(--r-sm);
   font-size:11.5px; line-height:1.7; color:var(--doc-muted);}
 @media (max-width:1280px){
@@ -571,7 +588,6 @@ mark{background:var(--brand-subtle); color:var(--brand-on-subtle); padding:0 2px
 <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><circle cx="4.6" cy="6.5" r="1.1"/><circle cx="4.6" cy="12" r="1.1"/><circle cx="4.6" cy="17.5" r="1.1"/></symbol>
 <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.3"/><path d="M12 7.4V12l3.2 2"/></symbol>
 <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.3"/><path d="m8.4 12.3 2.6 2.6 4.6-5.2"/></symbol>
-<symbol id="i-check2" viewBox="0 0 24 24"><path d="m4.5 12.5 5 5 10-11"/></symbol>
 <symbol id="i-pen" viewBox="0 0 24 24"><path d="M13 4H7a1.6 1.6 0 0 0-1.6 1.6v13A1.6 1.6 0 0 0 7 20.2h10a1.6 1.6 0 0 0 1.6-1.6V9.6z"/><path d="M13 4v5.6h5.6"/></symbol>
 <symbol id="i-msg" viewBox="0 0 24 24"><path d="M20 11.6a7.3 7.3 0 0 1-7.3 7.3H8.2L4 21.5V11.6a7.3 7.3 0 0 1 7.3-7.3h1.4A7.3 7.3 0 0 1 20 11.6Z"/></symbol>
 <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.6 12S6.2 6.4 12 6.4 21.4 12 21.4 12 17.8 17.6 12 17.6 2.6 12 2.6 12Z"/><circle cx="12" cy="12" r="2.6"/></symbol>
@@ -589,7 +605,7 @@ mark{background:var(--brand-subtle); color:var(--brand-on-subtle); padding:0 2px
 <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4.5"/><path d="m8 8.5 4-4 4 4"/><path d="M4.5 15v3.9a1.6 1.6 0 0 0 1.6 1.6h11.8a1.6 1.6 0 0 0 1.6-1.6V15"/></symbol>
 <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.6v2.2M12 19.2v2.2M2.6 12h2.2M19.2 12h2.2M5.4 5.4l1.6 1.6M17 17l1.6 1.6M18.6 5.4 17 7M7 17l-1.6 1.6"/></symbol>
 <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 13.4A8.4 8.4 0 0 1 10.6 4a8.4 8.4 0 1 0 9.4 9.4Z"/></symbol>
-<symbol id="i-cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a1.9 1.9 0 1 1-2.7 2.7l-.1-.1a1.6 1.6 0 0 0-2.7 1.1v.3a1.9 1.9 0 1 1-3.8 0v-.2a1.6 1.6 0 0 0-2.8-1.1l-.1.1a1.9 1.9 0 1 1-2.7-2.7l.1-.1A1.6 1.6 0 0 0 4.6 15a1.9 1.9 0 0 1 0-3.8h.3A1.6 1.6 0 0 0 6 8.4l-.1-.1a1.9 1.9 0 1 1 2.7-2.7l.1.1a1.6 1.6 0 0 0 2.7-1.1v-.3a1.9 1.9 0 1 1 3.8 0v.2a1.6 1.6 0 0 0 2.8 1.1l.1-.1a1.9 1.9 0 1 1 2.7 2.7l-.1.1a1.6 1.6 0 0 0 1.1 2.7h.3a1.9 1.9 0 0 1 0 3.8h-.3"/></symbol>
+<symbol id="i-cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"/><path d="M20.314 10.233A8.5 8.5 0 0 1 20.314 13.767L18.456 13.79A6.7 6.7 0 0 1 17.831 15.299L19.129 16.629A8.5 8.5 0 0 1 16.629 19.129L15.299 17.831A6.7 6.7 0 0 1 13.79 18.456L13.767 20.314A8.5 8.5 0 0 1 10.233 20.314L10.21 18.456A6.7 6.7 0 0 1 8.701 17.831L7.371 19.129A8.5 8.5 0 0 1 4.871 16.629L6.169 15.299A6.7 6.7 0 0 1 5.544 13.79L3.686 13.767A8.5 8.5 0 0 1 3.686 10.233L5.544 10.21A6.7 6.7 0 0 1 6.169 8.701L4.871 7.371A8.5 8.5 0 0 1 7.371 4.871L8.701 6.169A6.7 6.7 0 0 1 10.21 5.544L10.233 3.686A8.5 8.5 0 0 1 13.767 3.686L13.79 5.544A6.7 6.7 0 0 1 15.299 6.169L16.629 4.871A8.5 8.5 0 0 1 19.129 7.371L17.831 8.701A6.7 6.7 0 0 1 18.456 10.21L20.314 10.233Z"/></symbol>
 <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20.4 12a8.4 8.4 0 1 1-2.5-6"/><path d="M20.6 4.6v4.6h-4.6"/></symbol>
 <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
 <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
@@ -653,7 +669,8 @@ mark{background:var(--brand-subtle); color:var(--brand-on-subtle); padding:0 2px
    Article/ArticleSummary: id,title,slug,summary,coverImage,authorId,
    authorName,categoryId,categoryName,tags[],status,viewCount,likeCount,publishedAt
    ================================================================ */
-const ME = {id:1, username:'fungleo', nickname:'刘峰峰', role:'member', level:3, avatar:'刘'};
+const ME = {id:1, username:'fungleo', nickname:'刘峰峰', role:'member', level:3, avatar:'刘',
+  email:'fungleo@example.com', createdAt:'2026-03-14'};
 
 const CATEGORIES = [
   {id:1, name:'M0 产品篇', slug:'m0', count:8},
@@ -1135,7 +1152,12 @@ function hilite(text, q){
    ⚠️ 锚点值取自 SECTIONS[i].anchor，它模拟的是 /toc 返回的 anchor（slug 化标题），
    不是本地序号。开发实现时标题的 Widget key 必须用服务端返回的 anchor ——
    产品侧 01 §2 与 03 §6 已冻结「key 值采用服务端 anchor；客户端不自行生成目录数据，也不自行 slug 化」。
-   上一轮此处把锚点写成 h-N 形式的本地序号，与该冻结口径冲突，已改。 */
+   上一轮此处把锚点写成 h-N 形式的本地序号，与该冻结口径冲突，已改。
+   ⚠️ 辅助子资源的失败态：目录数据由本地 SECTIONS 派生，所以原型演示不出「目录请求加载中 / 失败」，
+   而真实实现里 /toc 是一次独立请求。目录失败时该给什么出口属于产品口径——产品侧 02 §3 的状态枚举
+   当前只有「图片失败 / 404 / 离线」，未列目录失败。本原型不擅自新增一个冻结口径里没有的状态，
+   此项作为跨侧待决项提给 owner；开发实现时请记住：目录 / 面包屑 / 相关文章都是辅助子资源，
+   失败不应阻塞正文渲染。 */
 const SECTIONS = [
   {level:1, anchor:'cha-yi-cong-na-li-lai', text:'一、差异从哪里来', html:`
 <p>运行时差异集中在三处：环境的读取方式、文件存储的位置、以及后台任务的调度能力。把它们列成一张表，适配层的边界就清楚了。</p>
@@ -1170,7 +1192,12 @@ const SECTIONS = [
 ];
 const ARTICLE_LEAD = `<p>同一份 Hono 代码，要同时跑在 Cloudflare Workers 和一台普通 Linux 机器上。硬编码运行时判断会让代码迅速腐烂，正确的做法是把差异收敛到一层薄的适配接口。</p>`;
 const ARTICLE_BODY = ARTICLE_LEAD + SECTIONS.map(s => {
-  /* level 1 落到页面级 h2（h1 留给文章标题），level 2 落 h3，与契约 level(1-6) 一一对应 */
+  /* level 1 落到页面级 h2（h1 留给文章标题），level 2 落 h3，与契约 level(1-6) 一一对应。
+     本原型正文只演示 1-2 级，下面两条派生在 level >= 3 时都未验证：
+       · 目录面板标签：改为按真实 level 取名（此前 3 级及以上一律显示「二级标题」，是对数据的错误陈述）；
+       · h 标签派生：'h' + (level + 1) 在 level=6 时会得到非法标签 h7。把它钳到 h6 也不是答案——
+         那是把「非法标签」换成「两个层级静默撞成同一个标签」，两种都错。
+     正确取法取决于「目录最多支持几级」，属产品口径，未冻结，本原型不擅自决定，列为跨侧待决项。 */
   const tag = 'h' + (s.level + 1);
   return `<${tag} id="${s.anchor}">${s.text}</${tag}>${s.html}`;
 }).join('');
@@ -1259,11 +1286,14 @@ function vArticle(p){
       goals:['正文是第一优先级，操作条不遮挡正文','目录用可折叠面板，点击后关闭并滚动到标题','评论叠楼：回复显示「回复某某」与原文摘要，深层只缩进一档'],
       states:['长文 / 代码 / 表格','图片加载失败','404','离线','评论列表空态','评论加载失败','发帖被拒即时反馈'],
       api:['GET /articles/{idOrSlug}','GET /articles/{id}/adjacent','GET /articles/{id}/toc',
-        'GET /categories/{id}/breadcrumb','GET /articles/{id}/related','POST /articles/{id}/view',
+        'GET /categories/{id}/breadcrumb','POST /articles/{id}/view',
         'POST,DELETE /articles/{id}/like','GET /articles/{id}/like/status',
         'GET,POST /me/favorites','DELETE /me/favorites/{articleId}',
         'GET /articles/{idOrSlug}/comments','POST /articles/{idOrSlug}/comments'],
-      tip:'点赞/收藏未登录时先跳登录并保留回跳路径；状态查询以当前账号为 key，账号切换要清。阅读量上报走 POST /articles/{id}/view（只递增、不写历史）。评论列表只返回 approved，rejected/reviewing 不会出现在这里，故本页不渲染审核态徽章。'
+      /* 契约里存在、但本页本阶段不渲染成 UI 的可选端点。单列一栏，避免与「本页会调用」混为一谈；
+         它同样要能被契约门禁校验（check_api_vs_contract.py 会一起扫）。 */
+      apiOptional:['GET /articles/{id}/related'],
+      tip:'点赞/收藏未登录时先跳登录并保留回跳路径；状态查询以当前账号为 key，账号切换要清。阅读量上报走 POST /articles/{id}/view（只递增、不写历史）。评论列表只返回 approved，rejected/reviewing 不会出现在这里，故本页不渲染审核态徽章。目录、面包屑、相关文章都是辅助子资源，失败时不应阻塞正文。'
     }
   };
 }
@@ -1386,7 +1416,7 @@ function vMemberHome(){
       appbar:`<div class="appbar"><span class="appbar-title">我的</span>
         <button class="iconbtn" data-nav="#/member/notifications" aria-label="通知">${ico('bell')}
           ${unread ? `<span class="badge-dot">${unread}</span>` : ''}</button>
-        <button class="iconbtn edge-r" data-nav="#/member/profile" aria-label="设置">${ico('cog')}</button></div>`,
+        <button class="iconbtn edge-r" data-nav="#/member/settings" aria-label="设置">${ico('cog')}</button></div>`,
       body:`
         <div class="identity">
           <span class="avatar lg">${esc(ME.avatar)}</span>
@@ -1400,14 +1430,30 @@ function vMemberHome(){
           <div class="stat"><b>${S.history.length}</b><span>足迹</span></div>
           <div class="stat"><b>${MY_DRAFTS.length}</b><span>稿件</span></div>
         </div>
-        <div class="grid6">
-          <button data-nav="#/member/favorites">${ico('star')}<span>我的收藏</span></button>
-          <button data-nav="#/member/likes">${ico('heart')}<span>我的点赞</span></button>
-          <button data-nav="#/member/history">${ico('clockback')}<span>阅读历史</span></button>
-          <button data-nav="#/member/articles">${ico('pen')}<span>我的文章</span></button>
-          <button data-nav="#/member/notifications">${ico('bell')}<span>通知</span>
-            ${unread ? `<span class="n hot">${unread}</span>` : ''}</button>
-          <button data-nav="#/member/profile">${ico('cog')}<span>个人资料</span></button>
+        <div class="cellgroup">
+          <button class="cell" data-nav="#/member/favorites"><span class="ci">${ico('star')}</span>
+            <span class="ct"><strong>我的收藏</strong><small>${S.faved.size} 篇文章</small></span>
+            ${ico('chevr', 'arw')}</button>
+          <button class="cell" data-nav="#/member/likes"><span class="ci">${ico('heart')}</span>
+            <span class="ct"><strong>我的点赞</strong><small>${S.liked.size} 篇文章</small></span>
+            ${ico('chevr', 'arw')}</button>
+          <button class="cell" data-nav="#/member/history"><span class="ci">${ico('clockback')}</span>
+            <span class="ct"><strong>阅读历史</strong><small>最近 ${S.history.length} 条</small></span>
+            ${ico('chevr', 'arw')}</button>
+          <button class="cell" data-nav="#/member/articles"><span class="ci">${ico('pen')}</span>
+            <span class="ct"><strong>我的文章</strong><small>${MY_DRAFTS.length} 篇稿件</small></span>
+            ${ico('chevr', 'arw')}</button>
+          <button class="cell" data-nav="#/member/notifications"><span class="ci">${ico('bell')}</span>
+            <span class="ct"><strong>通知</strong><small>收藏、评论与审核结果</small></span>
+            ${unread ? `<span class="cd">${unread}</span>` : ''}${ico('chevr', 'arw')}</button>
+        </div>
+        <div class="cellgroup">
+          <button class="cell" data-nav="#/member/profile"><span class="ci">${ico('user')}</span>
+            <span class="ct"><strong>个人资料</strong><small>头像、昵称与邮箱</small></span>
+            ${ico('chevr', 'arw')}</button>
+          <button class="cell" data-nav="#/member/settings"><span class="ci">${ico('cog')}</span>
+            <span class="ct"><strong>设置</strong><small>外观、账号与退出登录</small></span>
+            ${ico('chevr', 'arw')}</button>
         </div>
         <div class="sec-head"><h3>继续阅读</h3>
           <button class="more" data-nav="#/member/history">历史${ico('chevr')}</button></div>
@@ -1420,10 +1466,11 @@ function vMemberHome(){
           ${ico('chevr', 'arw')}</div></div>
         <div style="height:24px"></div>`,
       tab:true, tabIdx:3,
-      caption:'PS-09 会员首页 · 身份卡 + 六类入口',
+      caption:'PS-09 会员首页 · 身份卡 + Cell 菜单',
       notes:{
         route:'/member',
-        goals:['身份卡 + 六类入口，一眼看到全部私有数据位置','列表页不把未发布稿件链到公开详情'],
+        goals:['身份卡 + Cell 菜单，一眼看到全部私有数据位置','资料编辑与偏好设置分离，入口不混用',
+          '列表页不把未发布稿件链到公开详情'],
         states:['未登录','空数据','刷新','会话过期'],
         api:['GET /auth/me','GET /me/favorites','GET /me/likes','GET /me/history','GET /me/articles','GET /me/notifications'],
         tip:'私有请求不进公共缓存；退出与切换账号要清空私有状态 key。'
@@ -1778,52 +1825,89 @@ function vProfile(){
           <button class="b txt" style="min-height:36px;font-size:12.5px" data-act="upload">更换头像</button>
         </div>
         <div class="card-pad">
-          <label class="field"><span class="lb">昵称</span>
-            <input class="inp" value="${esc(ME.nickname)}" /></label>
-          <label class="field"><span class="lb">个人简介</span>
-            <textarea class="inp" style="min-height:72px" placeholder="一句话介绍自己">全栈开发工程师，正在写「成为全栈」系列。</textarea></label>
-          <label class="field"><span class="lb">邮箱</span>
-            <input class="inp" value="fungleo@example.com" disabled />
-            <span class="hint">邮箱仅本人与管理员可见，公开主页不返回。</span></label>
+          <label class="field"><span class="lb">昵称<span class="req">*</span></span>
+            <input class="inp" value="${esc(ME.nickname)}" maxlength="32" />
+            <span class="hint">最多 32 个字符。公开主页只显示昵称与头像。</span></label>
+          <label class="field"><span class="lb">邮箱<span class="req">*</span></span>
+            <input class="inp" value="${esc(ME.email)}" />
+            <span class="hint">邮箱全局唯一，冲突返回 409。仅本人与管理员可见，公开主页不返回。</span></label>
           <button class="b pri wide" data-act="profile:submit">保存</button>
         </div>
       </div>
 
+      <div class="sec-head"><h3>账号信息</h3></div>
+      <div class="cellgroup">
+        <div class="cell plain"><span class="ci mut">${ico('user')}</span>
+          <span class="ct"><strong>用户名</strong><small>注册后不可修改</small></span>
+          <span class="cv">@${esc(ME.username)}</span></div>
+        <div class="cell plain"><span class="ci mut">${ico('star')}</span>
+          <span class="ct"><strong>会员等级</strong><small>由管理员调整</small></span>
+          <span class="cv">Lv.${ME.level}</span></div>
+        <div class="cell plain"><span class="ci mut">${ico('clock')}</span>
+          <span class="ct"><strong>注册时间</strong></span>
+          <span class="cv">${esc(ME.createdAt)}</span></div>
+      </div>
+
+      <div style="height:24px"></div>`,
+    caption:'PS-17 个人资料 · 仅放可编辑字段',
+    notes:{
+      route:'/member/profile',
+      goals:['本页只放 PATCH /me/profile 能改的字段（昵称 / 头像 / 邮箱）',
+             '偏好与账号操作已分离到 /member/settings，两页职责不重叠',
+             '隐私边界：邮箱仅本人与管理员可见，公开主页不返回'],
+      states:['保存失败','邮箱冲突(409/3002)','头像上传失败','会话过期'],
+      api:['GET /me/profile','PATCH /me/profile','POST /upload'],
+      tip:'用户名、等级、注册时间本人均不可改（等级仅 admin 可改），因此以只读行呈现。'
+    }
+  }));
+}
+function vSettings(){
+  return requireLogin(() => ({
+    appbar:`<div class="appbar">
+      <button class="iconbtn edge" data-act="back" aria-label="返回">${ico('back')}</button>
+      <span class="appbar-title">设置</span></div>`,
+    body:`
       <div class="sec-head"><h3>外观</h3></div>
-      <div class="card" style="margin-top:var(--s3)">
-        <div class="setting"><span style="color:var(--brand);font-size:19px">${ico('cog')}</span>
-          <span class="st"><strong>主题</strong><small>跟随系统 / 浅色 / 深色，选择会持久化到本地</small></span></div>
-        <div class="setting" data-act="setting:theme:system">
-          <span style="color:var(--text-muted);font-size:19px">${ico('cog')}</span>
-          <span class="st"><strong>跟随系统</strong></span>
-          <span class="radio ${S.themeMode === 'system' ? 'on' : ''}">${ico('check2')}</span></div>
-        <div class="setting" data-act="setting:theme:light">
-          <span style="color:var(--brand);font-size:19px">${ico('sun')}</span>
-          <span class="st"><strong>浅色</strong><small>白色内容面、深蓝灰文字</small></span>
-          <span class="radio ${S.themeMode === 'light' ? 'on' : ''}">${ico('check2')}</span></div>
-        <div class="setting" data-act="setting:theme:dark">
-          <span style="color:var(--brand);font-size:19px">${ico('moon')}</span>
-          <span class="st"><strong>深色</strong><small>深蓝灰背景、低亮度蓝色强调</small></span>
-          <span class="radio ${S.themeMode === 'dark' ? 'on' : ''}">${ico('check2')}</span></div>
+      <div class="cellgroup">
+        <div class="cell" data-act="setting:theme:system"><span class="ci">${ico('cog')}</span>
+          <span class="ct"><strong>跟随系统</strong><small>随系统的浅色 / 深色自动切换</small></span>
+          <span class="radio ${S.themeMode === 'system' ? 'on' : ''}"></span></div>
+        <div class="cell" data-act="setting:theme:light"><span class="ci">${ico('sun')}</span>
+          <span class="ct"><strong>浅色</strong><small>白色内容面、深蓝灰文字</small></span>
+          <span class="radio ${S.themeMode === 'light' ? 'on' : ''}"></span></div>
+        <div class="cell" data-act="setting:theme:dark"><span class="ci">${ico('moon')}</span>
+          <span class="ct"><strong>深色</strong><small>深蓝灰背景、低亮度蓝色强调</small></span>
+          <span class="radio ${S.themeMode === 'dark' ? 'on' : ''}"></span></div>
       </div>
 
       <div class="sec-head"><h3>账号</h3></div>
-      <div class="card" style="margin-top:var(--s3)">
-        <div class="row link" data-nav="#/member/password">
-          <span style="color:var(--text-muted)">${ico('lock')}</span>
-          <span class="rt">修改密码<small>修改后其他设备的会话会失效</small></span>${ico('chevr', 'arw')}</div>
-        <div class="row link" data-act="logout">
-          <span style="color:var(--danger)">${ico('logout')}</span>
-          <span class="rt" style="color:var(--danger)">退出登录</span>${ico('chevr', 'arw')}</div>
+      <div class="cellgroup">
+        <button class="cell" data-nav="#/member/profile"><span class="ci">${ico('user')}</span>
+          <span class="ct"><strong>个人资料</strong><small>头像、昵称与邮箱</small></span>
+          ${ico('chevr', 'arw')}</button>
+        <button class="cell" data-nav="#/member/password"><span class="ci">${ico('lock')}</span>
+          <span class="ct"><strong>修改密码</strong><small>修改后其他设备的会话会失效</small></span>
+          ${ico('chevr', 'arw')}</button>
+        <div class="cell danger" data-act="logout"><span class="ci">${ico('logout')}</span>
+          <span class="ct"><strong>退出登录</strong><small>清除本机登录状态与私有缓存</small></span>
+          ${ico('chevr', 'arw')}</div>
+      </div>
+
+      <div class="sec-head"><h3>关于</h3></div>
+      <div class="cellgroup">
+        <div class="cell plain"><span class="ci mut">${ico('layers')}</span>
+          <span class="ct"><strong>版本</strong></span>
+          <span class="cv">v0.1.0 · 原型</span></div>
       </div>
       <div style="height:24px"></div>`,
-    caption:'PS-17 个人资料 · 表单、主题设置与退出',
+    caption:'PS-19 设置 · 外观 / 账号 / 关于',
     notes:{
-      route:'/member/profile',
-      goals:['资料字段与隐私边界一致（邮箱不外泄）','主题三选项，重启后保持'],
-      states:['保存失败','会话过期','头像上传失败'],
-      api:['GET /me/profile','PATCH /me/profile','POST /upload'],
-      tip:'退出登录后清除 access、refresh 与全部私有缓存，并丢弃在途请求的迟到响应。'
+      route:'/member/settings',
+      goals:['资料编辑与偏好设置分离：这里只放外观偏好、账号操作与版本',
+             '主题是客户端本地状态，不产生任何网络请求'],
+      states:['会话过期','退出确认'],
+      api:['POST /auth/logout'],
+      tip:'主题需持久化到本机；退出登录要清空 access / refresh 与全部私有缓存，并丢弃在途请求的迟到响应。'
     }
   }));
 }
@@ -1882,6 +1966,7 @@ const NAV = [
     {n:'我的文章', h:'#/member/articles', p:'/member/articles'},
     {n:'通知', h:'#/member/notifications', p:'/member/notifications'},
     {n:'个人资料', h:'#/member/profile', p:'/member/profile'},
+    {n:'设置', h:'#/member/settings', p:'/member/settings'},
     {n:'修改密码', h:'#/member/password', p:'/member/password'}
   ]},
   {g:'投稿', items:[
@@ -1903,7 +1988,10 @@ function notesHTML(n){
   return `<h3>当前页面</h3><div class="route">${esc(n.route || '')}</div>
     ${n.goals ? `<h4>要完成什么</h4><ul>${li(n.goals)}</ul>` : ''}
     ${n.states ? `<h4>必须状态</h4><ul>${li(n.states)}</ul>` : ''}
-    ${n.api ? `<h4>涉及接口</h4><div class="api">${(n.api || []).map(esc).join('<br />')}</div>` : ''}
+    ${(n.api || n.apiOptional) ? `<h4>涉及接口</h4>
+      ${n.api ? `<div class="api">${n.api.map(esc).join('<br />')}</div>` : ''}
+      ${n.apiOptional ? `<div class="api opt">${n.apiOptional.map(x =>
+        `${esc(x)}<span class="optmark">本阶段不实现</span>`).join('<br />')}</div>` : ''}` : ''}
     ${n.tip ? `<div class="tip">${esc(n.tip)}</div>` : ''}`;
 }
 function tabbarHTML(idx){
@@ -1930,6 +2018,7 @@ const ROUTES = [
   {p:'/member/articles',             render:vMyArticles,  hideNav:true},
   {p:'/member/notifications',        render:vNotifications,hideNav:true},
   {p:'/member/profile',              render:vProfile,     hideNav:true},
+  {p:'/member/settings',             render:vSettings,    hideNav:true},
   {p:'/member/password',             render:vPassword,    hideNav:true},
   {p:'/member/articles/new',         render:vEditor,      hideNav:true},
   {p:'/member/articles/:id/edit',    render:vEditor,      hideNav:true},
@@ -1968,9 +2057,13 @@ function render(){
   const view = m.route.render(m.params) || {};
   appbar.innerHTML = view.appbar || '';
   /* 渲染签名：只包含会影响「已渲染 HTML」的状态。
-     编辑器草稿正文不在其中，因此按键不会触发重渲染，输入内容不会被冲掉。 */
+     编辑器草稿正文不在其中，因此按键不会触发重渲染，输入内容不会被冲掉。
+     S.themeMode 必须在列：主题单选圆点的选中态由它决定，
+     漏掉会造成「点了深色、界面变暗，但勾还留在浅色上」——
+     因为 applyTheme 直接改 data-theme，不经过重渲染。 */
   const sig = [
     m.route.p, JSON.stringify(m.params), S.ui, S.auth, S.myFilter, S.searchQ,
+    S.themeMode,
     [...S.article.liked].sort().join(','), [...S.article.faved].sort().join(','),
     S.readNotif.size, S.history.length, S.draft.mode, heroIdx,
     [...S.catOpen].sort().join(','),
@@ -2106,7 +2199,11 @@ function handleAct(act){
     case 'toc': {
       if(a === 'panel'){
         openSheet('本文目录',
-          TOC.map(t => sheetChoice(t.text, t.level > 1 ? '二级标题' : '一级标题', 'toc:' + t.anchor)).join('') +
+          TOC.map(t => {
+            const lvName = ['', '一级标题', '二级标题', '三级标题', '四级标题', '五级标题', '六级标题'][t.level]
+              || (t.level + ' 级标题');
+            return sheetChoice(t.text, lvName, 'toc:' + t.anchor);
+          }).join('') +
           sheetChoice('取消', '', 'sheet:close'));
         break;
       }

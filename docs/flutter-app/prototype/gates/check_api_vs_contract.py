@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""门禁 2/4 · 原型 api 标注 vs 冻结契约
+"""门禁 2/6 · 原型 api 标注 vs 冻结契约
 
 做什么：
-  1. 从原型里抽出全部 `api:[...]` 标注，展开成 (方法, 路径) 对；
+  1. 从原型里抽出全部 `api:[...]`（以及第四轮新增的 `apiOptional:[...]`）标注，
+     展开成 (方法, 路径) 对；
   2. 从 openapi.v1.yaml 抽出真实 (方法, 路径) 全集；
   3. 断言：标注里没有幽灵端点、没有方法错、没有参数名错。
+
+  ⚠️ 标注写法的硬约束：数组元素必须是 `<方法> <路径>` 两段，**路径后不能再接任何
+     说明文字**。解析按第一个空格切分，路径带着尾巴去比对契约就会变成幽灵端点
+     （第四轮实测过：加个「（本阶段不实现）」后缀即报 FAIL）。要做语义标记请用
+     `apiOptional` 这类**独立字段**，而不是往字符串里塞注释。
 
 为什么不用 PyYAML：本项目语义门（docs/api/check_contract.py）已经依赖它，
 但门禁要能被「任何有 python3 的环境」复跑，所以这里自带一个够用的
@@ -62,20 +68,28 @@ def parse_contract_paths(text):
 
 
 def extract_annotations(text, fname):
-    """抽出 api:[...] 里的条目，返回 [(原文, 方法, 路径, 文件)]。"""
+    """抽出 api / apiOptional 标注，返回 [(原文, 方法, 路径, 文件, 是否可选)]。
+
+    两个数组都要抽：
+      · api          —— 本页会调用 / 已渲染的端点；
+      · apiOptional  —— 契约里存在、但本页本阶段不渲染成 UI 的端点（第四轮 A-8）。
+    语义上分栏，但**契约校验覆盖必须一致**：可选端点也得真在契约里，
+    否则"可选"就成了幽灵端点的后门。故此处共用同一套抽取与后续校验。
+    """
     rows = []
-    for m in re.finditer(r'api:\s*\[(.*?)\]', text, re.S):
-        blob = m.group(1)
+    for m in re.finditer(r'api(Optional)?:\s*\[(.*?)\]', text, re.S):
+        opt = bool(m.group(1))
+        blob = m.group(2)
         for lit in re.findall(r"'([^']*)'", blob):
             lit = lit.strip()
             if not lit:
                 continue
             parts = lit.split(' ', 1)
             if len(parts) != 2:
-                rows.append((lit, None, None, fname))
+                rows.append((lit, None, None, fname, opt))
                 continue
             methods, path = parts[0], parts[1].strip()
-            rows.append((lit, methods, path, fname))
+            rows.append((lit, methods, path, fname, opt))
     return rows
 
 
@@ -136,7 +150,7 @@ def main():
 
     fails = []
     used_exceptions = set()
-    for raw, methods, path, fname in rows:
+    for raw, methods, path, fname, opt in rows:
         if methods is None:
             fails.append((fname, raw, '标注格式无法解析（期望 "<方法> <路径>"）'))
             continue
@@ -163,8 +177,9 @@ def main():
     for fname, raw, why in fails:
         print(f'  FAIL  [{fname}] {raw}\n        {why}')
     if not fails:
-        for raw, *_ in rows:
-            print(f'  PASS  {raw}')
+        for row in rows:
+            mark = '   〔本阶段不实现〕' if row[4] else ''
+            print(f'  PASS  {row[0]}{mark}')
     print()
     for k, v in EXCEPTIONS.items():
         mark = '已命中' if k in used_exceptions else '未命中（可清理）'
@@ -173,7 +188,9 @@ def main():
     if fails:
         print(f'结论：{len(fails)} 条标注与契约不符 ❌')
         return 1
-    print(f'结论：{len(rows)} 条标注全部与契约一致 ✅（已声明例外 {len(EXCEPTIONS)} 条）')
+    nopt = sum(1 for r in rows if r[4])
+    print(f'结论：{len(rows)} 条标注全部与契约一致 ✅'
+          f'（含 apiOptional 本阶段不实现 {nopt} 条；已声明例外 {len(EXCEPTIONS)} 条）')
     return 0
 
 
