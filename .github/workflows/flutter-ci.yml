@@ -1,0 +1,23 @@
+name: Flutter checks
+on:
+  push:
+    paths: ['flutter-app/**', '.github/workflows/flutter-ci.yml']
+  pull_request:
+    paths: ['flutter-app/**', '.github/workflows/flutter-ci.yml']
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: flutter-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.1'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: dart format --output=none --set-exit-if-changed lib test integration_test
+      - run: flutter analyze
+      - run: flutter test

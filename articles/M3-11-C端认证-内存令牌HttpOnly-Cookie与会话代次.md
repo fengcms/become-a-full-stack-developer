@@ -231,8 +231,8 @@ token 放在哪里只是认证设计的第一层。完整的会话还需要启�
 ## 延伸阅读
 
 - [服务端组件与客户端组件](https://blog.csdn.net/fungleo/article/details/166737733)
-- [同源 BFF 代理]({{LINK:M3-12}})
-- [会员中心：资料、密码与个人数据]({{LINK:M3-13}})
+- [同源 BFF 代理](https://blog.csdn.net/fungleo/article/details/166991347)
+- [会员中心：资料、密码与个人数据](https://blog.csdn.net/fungleo/article/details/166991388)
 
 ---
 

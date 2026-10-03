@@ -1,0 +1,24 @@
+{
+  "mode": "profile",
+  "environment": "production public read-only",
+  "initialRequests": 6,
+  "initialSequenceMs": 4971,
+  "memorySequenceMs": 5,
+  "restartDiskSequenceMs": 187,
+  "repeatSequenceAdditionalRequests": 0,
+  "tabRevisitAdditionalRequests": 0,
+  "memoryMetrics": {
+    "miss": 4,
+    "network": 4,
+    "freshHit": 4
+  },
+  "restartMetrics": {
+    "diskHit": 4,
+    "freshHit": 10,
+    "staleHit": 1,
+    "network": 6,
+    "miss": 6,
+    "joined": 1
+  },
+  "offlineStaleAndForcedFailure": "passed"
+}
