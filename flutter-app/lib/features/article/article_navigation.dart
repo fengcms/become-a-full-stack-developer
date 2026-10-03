@@ -122,4 +122,15 @@ class _ArticleNavigation {
         icon: const PrototypeIcon('more'),
       ),
   ];
+  // 评论入口和目录同属页内定位，不参与正文加载或缓存状态。
+  void openComment(GlobalKey commentKey) {
+    final target = commentKey.currentContext;
+    if (target != null) {
+      Scrollable.ensureVisible(
+        target,
+        duration: const Duration(milliseconds: 250),
+        alignment: 1,
+      );
+    }
+  }
 }

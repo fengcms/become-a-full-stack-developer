@@ -35,10 +35,10 @@ class ArticleReader {
       );
       if (persisted != null) {
         canonical = CacheKey.tryParse(persisted)!.path
-            .substring('/reader/article/'.length);
+            .substring(CacheKeys.articlePrefix.length);
       }
     }
-    final k = key('/reader/article/$canonical', const {});
+    final k = key(CacheKeys.article(canonical), const {});
     trackKey(k);
     final data = jsonMap(
       await cache.get(
@@ -67,7 +67,7 @@ class ArticleReader {
     return (meta['aliases'] as List? ?? []).contains(id) &&
         parsed?.baseUrl == baseUrl &&
         parsed?.scope == 'public' &&
-        (parsed?.path.startsWith('/reader/article/') ?? false);
+        (parsed?.path.startsWith(CacheKeys.articlePrefix) ?? false);
   }
 
   // 公开正文始终匿名获取，不能把作者预览权限带入可落盘内容。

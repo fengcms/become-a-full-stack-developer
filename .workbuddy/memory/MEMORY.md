@@ -28,7 +28,7 @@
 - **双前台歧义已澄清**：`web-frontend/` = 纯白/晴蓝 A 方案（2182 行，含会员投稿/叠楼评论，**主力**）；`web-frontend-trae/` = 极简编辑风（226 行，已被替代）。**取视觉基准一律以 `web-frontend/` 为准**。
 - 七端缩水：`go-backend/` 仍 0 文件；实交付 Node 后端 + `manage-frontend`(React) + `web-frontend`(Next) + **`flutter-app`(Flutter，已交付)**。
 
-## M4 Flutter APP（APP 已交付；设计侧已冻结，代码侧首轮审阅 57/100）
+## M4 Flutter APP（APP 已交付；设计侧已冻结；代码侧第二轮审阅 87/100）
 - 文档 `docs/flutter-app/README + 01~07` + `prototype/` + `review/`。`06-UI设计规范与设计令牌.md` = **视觉唯一事实源**（浅色继承网站 A 方案，深色为 APP 新增）；三处刻意例外：浅蓝底文字用 `brand.onSubtle #2A6AA3`、深色主按钮实底 `#37709F`、待审 `#7A6122`/草稿 `#5C6C80` 已加深。
 - `prototype/01` 静态样稿；`prototype/02` 单文件可交互原型（18 页 + 兜底、三主题、四态注入）；`app_theme.dart` = ThemeExtension 全量令牌。
 - **产品 AI 侧：第五轮 95 → 满分冲刺工单（10 条自检断言）→ 整改验收 100/100，已冻结**（基线 `18da8b9`）。核心洞察：前四轮补的是「契约有、文档没写」（补登记即闭环）；剩余 5 分是「**契约没写、文档当有**」→ 必须降级为待验证项 + 登记 + 设实测落点。
@@ -41,10 +41,11 @@
 - 待 owner 拍板 13 项（全表见 `07 §12`）。**优先：06 内部自相矛盾** —— D6 焦点环 offset（§2.1=3 / §6.2=2，本轮按「专门条款优先于通表备注」取 2）、D1 底部 Tab 图标 22/24 + 文字 10/11 + 字重（§6.7=500 vs §10 Q4=600）。其余：目录失败态是否进产品侧口径、目录最多几级、`06 §2.4` 缺 `color.line.button` 深色值、`06` 补 `codeBg`/`codeFg`/`skeleton`、**`color.info` 06 有而 `AppColors` 无（悬空令牌）**、`06 §2.1` 补 `surface.elevated` 浅色值、`06` 归属、契约回流（`TocItem` 顺序 + slug 规则）、`.b.dgr` 与按钮 `loading`·`disabled` 零消费方、`.seg` 与 `.segs` 同名不同物。
 - **A-5 口径（别搞反）**：目录失败态**只注释声明、不进 `notes.states`**（后者渲染成「必须状态」＝已覆盖清单，加演示不出的状态＝死标注，且等于替 owner 决定跨侧口径）→ 应表述为「声明 + 升级为跨侧待决」。**A-6 分界**：面板标签按真实 `level` 取名属**口径中性**（原「3 级显示二级标题」是事实错误）→ 改；`'h'+(level+1)` 的 `level=6 → h7`（实测 `h7` 是 `HTMLUnknownElement`）属**口径问题** → **只声明不钳制**。
 - 跨侧遗留：目录锚点配对规则须用**含重复标题 / 代码块内 `#` 行 / Setext 标题**的夹具文章实测（**原型 mock 不具备这三类样本，能跳转 ≠ 已验证**）；`/toc` 对未发布文章按产品侧方案 A 规避。
-- **开发 AI 代码已交付**（commit `d4450fe`；`flutter-app/` 23 个 Dart 文件 / 8364 代码行；`flutter analyze` EXIT=0、`flutter test` 30/30 EXIT=0，均我独立复跑）。**首轮审阅 57/100**（`review/M4-开发AI代码第一轮审阅报告.md`）：**功能/契约层优良，问题全部集中在「结构抽离 + 注释」**——架构分层、DI、错误码 12/12 对齐、并发防护（单飞刷新/epoch 代次/写入串行化）达生产水准，`shared/` 14 个组件（泛型 `AsyncPane`、`CellGroup`）抽得好 → 定性**「标准未落地」而非「能力不足」**。
-  - 硬指标：业务代码**中文注释 0 处**（`app_theme.dart` 82 处是唯一例外，多为从 `06` 搬运）；最大函数 **324 行**（`article_page.dart:460-783` 的 build，含 11 区块零子组件）；>80 行函数 8 个、最大嵌套 7 层；裸 `fontSize` **60** / `EdgeInsets` **92**（而 `AppType`/`AppSpacing` 令牌齐备却被绕过）；端点字面量 **51 路径 / 149 次**；`member.dart` 1141 行含 **7 个公开类**（`discovery.dart` 同）；`repository.dart` 624 行**上帝类**（缓存策略/别名/收藏索引 7 字段/反应态/失效推导 6 职责）。
-  - 最脆弱：`repository.dart:251-253` **裸下标 `[3]`** 访问自己序列化的缓存 key；跨文件**位置契约**——`overview()` 的 `counts` 数组顺序传到 `member.dart:157` 的 `['收藏','点赞','足迹','稿件'][i]`，调序即**静默错位**。
-  - 整改 **A-1~A-14**（全为不动业务逻辑的机械重构）；门禁 **`review/check_code_quality.py`**（13 断言，基线 `PASS=0/FAIL=13`）。**待开发 AI 整改后做第二轮**。
+- **开发 AI 代码**：首轮 `d4450fe` 23 文件/8364 行 → 首轮审阅 **57/100**（功能契约层优良，问题全在「结构抽离 + 注释」→ 定性**「标准未落地」而非「能力不足」**）。整改 `eda7860` → 第二轮审阅 **87/100**（`review/M4-开发AI代码第二轮审阅报告.md`）：23→**101 文件**，`repository` 624→**293**，业务中文注释 **0→182 处/88 文件**，裸 fontSize/EdgeInsets/circular/色值 60/92/12+4/10 → **0/5/0/0**，最长文件 1141→399，依赖环 0，`analyze` 0 issue、`test` **34 通过**。**保持优点**：令牌消费为真实消费非合规剧场（60 处 fontSize 全走 `AppType.*`、`Color(0x…)` 0 处、`context.colors.*` 136 次）。
+- **🔴 教训：门禁量程不足会把「未达标」判成「达标」**。首轮我交付的 `check_code_quality.py`（v1）用**逐行正则**量函数长度 → 漏掉**箭头表达式体**与**多行签名**，恰是 Flutter 里最长的那些函数。后果链：① 首轮报告写「>80 行函数 **8** 个」，真实 **13** 个；② A-3 位置清单**漏列** `profile_page:build`(147 行) 与 `notifications_page:build`(106 行)；③ 开发 AI 照清单改完、复跑我的脚本 `PASS=13/FAIL=0` 就提交了 —— **责任大半在我**。**正确量法**：从 `{` / `=>` 反向回溯到上一个 `;{}`，再匹配签名（多行签名天然覆盖）。**量程修正后新增 `review/check_code_quality_v2.py`（15 断言，当前真实 `PASS=9/FAIL=6`）并保留 v1**（v1 记录了错误量程，两把尺子的差异本身是最大发现）。第三轮验收**必须用 v2**，期望 `PASS=15/FAIL=0`。
+- 代码侧剩余 **R2-1~R2-9**：**4 个 >80 行函数**（`profile_page:build` **147** / `auth_page:build` 125 / `notifications_page:build` 106 / `data_cache:_fetch` 103·深度6）——前 3 个都是「文件分了、函数没分」的箭头 build；缓存 key 命名空间 `/reader/article/` **跨 3 文件硬编码 5 次**；`api_client.dart:165-167` 3 处裸路径前缀；`features/member.dart` **零引用桶文件**；`AppType` 21 成员语义层未贯通；`part`（64 条）文件中「页面私有→part、跨页面复用→独立库」判据待写入 `08`。
+- **`part` 取舍**：合理（私有组件 + 不扩大公开 API + 已确认收窄参数，`_ArticleContent` 收 10 个窄参数而非整个 State）；代价是 part 文件**不能自有 import、不能独立测试**，且**文件数 ≠ 模块数**。
+- 作者自陈的可信度处置（**可复用判据**）：✅ 加分 = 主动标注证据边界（"脚本不完整覆盖多行签名和箭头表达式"）、主动纠正我「core 不依赖 features」的错前提（实有 4 处分层越界，均为既有）、**拒绝用有缺陷的数字宣布 100 分**；⚠️ 未完成 = **察觉到了量具局限，却只写免责声明、没有换尺子补量一次**。
 
 ## M2 前端（React 管理后台）
 目录 `manage-frontend/`，Vite8 + React19 + TS6 + Tailwind4 + shadcn/ui + TanStack Query5 + Zustand5 + RHF7/Zod4 + Biome2.5，已开 `strict`，dev 12000。取数：分页一律 `data.list` + `data.pagination.{page,pageSize,total,totalPages}`（非 `{items,total}`）；信封 `{code,message,data,requestId,timestamp}`，`code:0` 成功；base `/api/v1`；token 内存不落 localStorage；附件 `ORIGIN + /files/<key>`。CORS 方案 B（owner 暂定）：dev 走 Vite 同源代理，Cookie 分支上线前须验证。

@@ -137,6 +137,55 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(cache.peek('one'), isNull);
   });
+  test(
+    'Age and must-revalidate prevent stale fallback past freshness',
+    () async {
+      await cache.get(
+        'aged',
+        policy,
+        () async => CacheReply(
+          1,
+          control: 'max-age=20, must-revalidate',
+          age: const Duration(seconds: 5),
+        ),
+      );
+      expect(cache.peek('aged'), 1);
+      clock = clock.add(const Duration(seconds: 6));
+      expect(cache.peek('aged'), isNull);
+      await expectLater(
+        cache.get(
+          'aged',
+          policy,
+          () async => throw const ApiFailure('offline'),
+        ),
+        throwsA(isA<ApiFailure>()),
+      );
+    },
+  );
+  test('late forbidden failure cannot evict a newer mutation value', () async {
+    final events = <CacheEvent>[];
+    final subscription = cache.events.listen(events.add);
+    addTearDown(subscription.cancel);
+    final gate = Completer<CacheReply>();
+    final pending = cache.get(
+      'one',
+      policy,
+      () => gate.future,
+      tags: {'article'},
+      forbidden: (e) => e is ApiFailure && e.status == 404,
+    );
+    final failure = expectLater(pending, throwsA(isA<ApiFailure>()));
+    cache.fence({'article'});
+    cache.seed('one', 2, policy, {'article'});
+    gate.completeError(const ApiFailure('deleted', status: 404));
+    await failure;
+    await Future<void>.delayed(Duration.zero);
+    expect(cache.peek('one'), 2);
+    expect(
+      events.where((e) => e.kind == 'removed' || e.kind == 'failed'),
+      isEmpty,
+    );
+  });
   test('no-store, no-cache and server max-age are respected', () async {
     for (final control in ['no-store', 'no-cache', 'max-age=0']) {
       await cache.get(

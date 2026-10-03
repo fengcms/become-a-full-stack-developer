@@ -222,78 +222,17 @@ class DataCache {
         if (epoch != _epoch || version != (_version(key))) {
           throw CacheSuperseded();
         }
-        final control = response.control.toLowerCase();
-        // 本地策略只能缩短服务端约束；no-store、no-cache 和 private 各有不同含义。
-        final noStore = control.contains('no-store');
-        var fresh = policy.fresh;
-        var max = policy.maxAge;
-        final maxSeconds = int.tryParse(
-          RegExp(r'(?:^|,)\s*max-age\s*=\s*"?(\d+)')
-                  .firstMatch(control)
-                  ?.group(1) ??
-              '',
-        );
-        if (maxSeconds != null) {
-          final age = Duration(seconds: maxSeconds);
-          if (age < fresh) fresh = age;
-          if (age < max) max = age;
-        }
-        if (control.contains('no-cache')) {
-          fresh = Duration.zero;
-          max = Duration.zero;
-        }
-        if (control.contains('must-revalidate') && fresh < max) max = fresh;
-        final entry = CacheEntry(
-          // 保存时间扣除服务端 Age，重启或代理缓存命中不会额外延长 TTL。
-          response.value,
-          now().subtract(response.age),
-          fresh,
-          max,
-          tags,
-        );
-        // 只有允许保存的响应才产生缓存更新事件，避免不可缓存响应触发重载循环。
-        if (!noStore && max > Duration.zero) {
-          _put(key, entry);
-          if (policy.disk &&
-              !control.contains('private') &&
-              entry.bytes <= CacheLimits.diskEntryBytes) {
-            unawaited(
-              disk.write(
-                key,
-                Uint8List.fromList(utf8.encode(jsonEncode(entry.toJson()))),
-                entry.saved.add(max),
-                metadata: {
-                  'tags': tags.toList(),
-                  if (tags.contains('articleBodies') &&
-                      response.value is Map &&
-                      response.value['article'] is Map)
-                    'aliases': [
-                      '${response.value['article']['id']}',
-                      if (response.value['article']['slug'] is String)
-                        response.value['article']['slug'],
-                    ],
-                },
-              ),
-            );
-          }
+        final adjusted = _applyControlHeaders(response, policy, tags);
+        if (adjusted.storable) {
+          _persistEntry(key, adjusted.entry, adjusted.disk);
+          emit(CacheEvent(key, 'updated'));
         } else {
           _entries.remove(key);
           unawaited(disk.removeWhere((k, _) => k == key));
         }
-        if (!noStore && max > Duration.zero) emit(CacheEvent(key, 'updated'));
         return response.value;
       } catch (e) {
-        if (epoch == _epoch &&
-            version == (_version(key)) &&
-            e is! CacheSuperseded) {
-          if (forbidden?.call(e) == true) {
-            _entries.remove(key);
-            unawaited(disk.removeWhere((k, _) => k == key));
-            emit(CacheEvent(key, 'removed', error: e));
-          } else {
-            emit(CacheEvent(key, 'failed', error: e));
-          }
-        }
+        _handleFailure(key, e, epoch, version, forbidden);
         rethrow;
       } finally {
         if (identical(_flights[key], task)) {
@@ -304,6 +243,87 @@ class DataCache {
     }();
     _flights[key] = task;
     return task;
+  }
+
+  // 缓存策略只允许收紧服务端限制；Age 扣减保存时间，不重置存活期。
+  ({CacheEntry entry, bool storable, bool disk}) _applyControlHeaders(
+    CacheReply response,
+    CachePolicy policy,
+    Set<String> tags,
+  ) {
+    final control = response.control.toLowerCase();
+    var fresh = policy.fresh, max = policy.maxAge;
+    final seconds = int.tryParse(
+      RegExp(r'(?:^|,)\s*max-age\s*=\s*"?(\d+)')
+              .firstMatch(control)
+              ?.group(1) ??
+          '',
+    );
+    if (seconds != null) {
+      final age = Duration(seconds: seconds);
+      if (age < fresh) fresh = age;
+      if (age < max) max = age;
+    }
+    if (control.contains('no-cache')) {
+      fresh = Duration.zero;
+      max = Duration.zero;
+    }
+    if (control.contains('must-revalidate') && fresh < max) max = fresh;
+    return (
+      entry: CacheEntry(
+        response.value,
+        now().subtract(response.age),
+        fresh,
+        max,
+        tags,
+      ),
+      storable: !control.contains('no-store') && max > Duration.zero,
+      disk: policy.disk && !control.contains('private'),
+    );
+  }
+
+  // 内存先安装；磁盘写入保持异步，由 BlobStore 的队列和清理代际保护。
+  void _persistEntry(String key, CacheEntry entry, bool allowDisk) {
+    _put(key, entry);
+    if (!allowDisk || entry.bytes > CacheLimits.diskEntryBytes) return;
+    final article = entry.value is Map ? entry.value['article'] : null;
+    unawaited(
+      disk.write(
+        key,
+        Uint8List.fromList(utf8.encode(jsonEncode(entry.toJson()))),
+        entry.saved.add(entry.maxAge),
+        metadata: {
+          'tags': entry.tags.toList(),
+          if (entry.tags.contains(CacheTags.articleBodies) && article is Map)
+            'aliases': [
+              '${article['id']}',
+              if (article['slug'] is String) article['slug'],
+            ],
+        },
+      ),
+    );
+  }
+
+  // 旧代际的失败不驱逐新值；仅当前权限/删除错误移除缓存，弱网保留可用内容。
+  void _handleFailure(
+    String key,
+    Object error,
+    int epoch,
+    Object version,
+    bool Function(Object)? forbidden,
+  ) {
+    if (epoch != _epoch ||
+        version != _version(key) ||
+        error is CacheSuperseded) {
+      return;
+    }
+    if (forbidden?.call(error) == true) {
+      _entries.remove(key);
+      unawaited(disk.removeWhere((k, _) => k == key));
+      emit(CacheEvent(key, 'removed', error: error));
+    } else {
+      emit(CacheEvent(key, 'failed', error: error));
+    }
   }
 
   /// Fence reads at mutation start; preserve visible data until its outcome.

@@ -1,5 +1,9 @@
 /// 后端端点目录。App 的导航路径不使用本类，避免两种路由误耦合。
 abstract final class Endpoints {
+  // 这些路由的写操作不广播普通内容变更：鉴权另走会话钩子，文件和浏览计数不驱逐阅读缓存。
+  static const authPrefix = '/auth/';
+  static const filesPrefix = '/files';
+  static const viewSuffix = '/view';
   static const adjacentSuffix = '/adjacent';
   static const articles = '/articles';
   static const login = '/auth/login';

@@ -27,7 +27,7 @@ class ReaderRepository {
     api.onMutation = _mutation;
     api.onSessionChanged = resetPrivate;
     this.cache.events.listen((e) {
-      if (e.kind == 'removed' && e.key.contains('/reader/article/')) {
+      if (e.kind == 'removed' && e.key.contains(CacheKeys.articlePrefix)) {
         articleReader.aliases.clear();
         this.cache.invalidate({'articleLists'});
       }

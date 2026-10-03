@@ -1,0 +1,38 @@
+00:00 +0: loading /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart
+00:00 +0: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/review_contract_test.dart: typed keys preserve v1 disk identity and reject corrupt metadata
+00:00 +1: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/review_contract_test.dart: resource rules keep object exceptions, private tags and mutation links
+00:00 +2: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/review_contract_test.dart: overview counts remain named and likes count spans multiple pages
+00:00 +3: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/review_contract_test.dart: overview counts remain named and likes count spans multiple pages
+00:00 +4: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/review_contract_test.dart: overview counts remain named and likes count spans multiple pages
+00:00 +5: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/review_contract_test.dart: overview counts remain named and likes count spans multiple pages
+00:00 +6: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/review_contract_test.dart: overview counts remain named and likes count spans multiple pages
+00:00 +7: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/review_contract_test.dart: overview counts remain named and likes count spans multiple pages
+00:00 +8: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/review_contract_test.dart: overview counts remain named and likes count spans multiple pages
+00:00 +9: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_test.dart: late forbidden failure cannot evict a newer mutation value
+00:00 +10: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/review_contract_test.dart: search budget follows semantic resource tags rather than URL strings
+00:00 +11: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/review_contract_test.dart: search budget follows semantic resource tags rather than URL strings
+00:00 +12: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +13: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +14: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +15: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +16: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +17: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +18: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +19: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +20: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +21: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +22: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +23: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +24: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +25: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +26: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +27: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/cache_widgets_test.dart: refresh retains rendered data and 404 evicts without request loops
+00:00 +28: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/article_details_test.dart: optimistic reactions, authoritative count, rollback, reply layout and focus
+00:01 +29: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/article_details_test.dart: optimistic reactions, authoritative count, rollback, reply layout and focus
+00:01 +30: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/article_details_test.dart: optimistic reactions, authoritative count, rollback, reply layout and focus
+00:01 +31: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/article_details_test.dart: optimistic reactions, authoritative count, rollback, reply layout and focus
+00:01 +32: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/article_details_test.dart: optimistic reactions, authoritative count, rollback, reply layout and focus
+00:01 +33: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/widget_test.dart: home, search empty state, theme switch and auth validation render at mobile width
+00:01 +34: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/widget_test.dart: home, search empty state, theme switch and auth validation render at mobile width
+00:01 +35: /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/flutter-app/test/widget_test.dart: home, search empty state, theme switch and auth validation render at mobile width
+00:02 +36: All tests passed!

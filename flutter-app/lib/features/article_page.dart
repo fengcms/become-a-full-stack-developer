@@ -1,3 +1,5 @@
+import '../core/cache/cache_key.dart';
+
 import 'package:fullstack_reader/core/network/endpoints.dart';
 
 import '../app/theme/app_theme.dart';
@@ -112,7 +114,8 @@ class _ArticlePageState extends ConsumerState<ArticlePage>
       return;
     }
     if (e.kind == 'failed') {
-      if (e.key.contains('/reader/article/') && !repo.cache.usable(e.key)) {
+      if (e.key.contains(CacheKeys.articlePrefix) &&
+          !repo.cache.usable(e.key)) {
         setState(() {
           article = null;
           error = e.error;
@@ -342,16 +345,7 @@ class _ArticlePageState extends ConsumerState<ArticlePage>
   final commentKey = GlobalKey();
   _ArticleNavigation get navigation =>
       _ArticleNavigation(context, article, toc, keys);
-  void openComment() {
-    final target = commentKey.currentContext;
-    if (target != null) {
-      Scrollable.ensureVisible(
-        target,
-        duration: const Duration(milliseconds: 250),
-        alignment: 1,
-      );
-    }
-  }
+  void openComment() => navigation.openComment(commentKey);
 
   Widget reactionPanel() => _ArticleReactions(
     likes: likes,

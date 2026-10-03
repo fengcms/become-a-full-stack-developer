@@ -162,9 +162,9 @@ class ApiClient {
   }) async {
     final mutation =
         method != 'GET' &&
-        !path.startsWith('/auth/') &&
-        !path.startsWith('/files') &&
-        !path.endsWith('/view');
+        !path.startsWith(Endpoints.authPrefix) &&
+        !path.startsWith(Endpoints.filesPrefix) &&
+        !path.endsWith(Endpoints.viewSuffix);
     if (mutation) onMutation?.call(path, method, data, true, null, null);
     try {
       final result = await _request(

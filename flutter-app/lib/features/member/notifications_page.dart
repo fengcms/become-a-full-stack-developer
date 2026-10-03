@@ -20,6 +20,10 @@ import 'package:fullstack_reader/shared/widgets/reader_context.dart';
 import 'package:fullstack_reader/shared/widgets/state_message.dart';
 import 'package:fullstack_reader/features/data/reader_models.dart';
 
+part 'notification_text.dart';
+part 'notification_card.dart';
+part 'notification_status.dart';
+
 /// 通知首屏更新时不直接拼接旧分页；已读状态先在当前列表反馈。
 class NotificationsPage extends ConsumerStatefulWidget {
   const NotificationsPage({super.key});
@@ -174,95 +178,14 @@ class _NotificationsPageState extends ConsumerState<NotificationsPage>
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          for (final n in items)
-            InkWell(
-              onTap: () => mark(n),
-              child: Container(
-                padding: AppInsets.page,
-                decoration: BoxDecoration(
-                  color: n.isRead == true
-                      ? context.colors.surface
-                      : context.colors.brandSubtle,
-                  border: Border(
-                    bottom: BorderSide(color: context.colors.line),
-                  ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: context.colors.surface,
-                        border: Border.all(color: context.colors.line),
-                        borderRadius: AppRadius.rMd,
-                      ),
-                      child: Center(
-                        child: PrototypeIcon(
-                          'bell',
-                          size: 16,
-                          color: context.colors.brand,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  n.title ?? '通知',
-                                  style: const TextStyle(
-                                    fontSize: AppType.label,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              if (n.isRead != true)
-                                Container(
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    color: context.colors.danger,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            n.body ?? '',
-                            style: TextStyle(
-                              fontSize: AppType.caption,
-                              height: 1.7,
-                              color: context.colors.textMuted,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            n.createdAt?.split('T').first ?? '',
-                            style: context.text.labelSmall,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          if (error != null) StateMessage(error: error, onRetry: load),
-          if (busy) const Center(child: CircularProgressIndicator()),
-          if (!busy && more)
-            TextButton(onPressed: load, child: const Text('加载更多')),
-          if (!busy && items.isEmpty && error == null)
-            const StateMessage(
-              title: '没有新通知',
-              description: '文章发布、评论通过时，会在这里通知你。',
-            ),
+          for (final n in items) _NotificationCard(n: n, onTap: () => mark(n)),
+          _NotificationStatus(
+            error: error,
+            busy: busy,
+            more: more,
+            empty: items.isEmpty,
+            load: load,
+          ),
         ],
       ),
     ),

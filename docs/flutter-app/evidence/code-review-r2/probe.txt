@@ -1,0 +1,128 @@
+====================================================================================
+M4 Flutter APP · 第二轮独立探针（评审侧，口径严于 v1）
+====================================================================================
+文件 110 个 / 10734 行（业务 9847 行）
+函数识别 317 个，其中箭头体 155 个
+------------------------------------------------------------------------------------
+[1] 最长函数 Top 12
+      79 行  深度4  editor.dart:save
+      78 行  深度0  home_page.dart:build  ()=>
+      77 行  深度1  comment_thread.dart:build
+      77 行  深度0  editor_form.dart:build  ()=>
+      75 行  深度0  member_page.dart:build  ()=>
+      70 行  深度1  draft_tile.dart:build
+      66 行  深度0  search_page.dart:build  ()=>
+      65 行  深度1  comments.dart:build
+      63 行  深度0  markdown_toolbar.dart:build  ()=>
+      62 行  深度4  reader_markdown.dart:build
+      62 行  深度1  comment_reply.dart:build
+      62 行  深度0  article_tile_content.dart:build  ()=>
+    >80 行函数：0 个
+------------------------------------------------------------------------------------
+[2] 最长文件 Top 12
+     400 行  lib/features/editor.dart
+     394 行  lib/features/article_page.dart
+     390 行  lib/core/cache/data_cache.dart
+     316 行  lib/core/network/api_client.dart
+     309 行  lib/shared/widgets/article_feed.dart
+     297 行  lib/features/comments.dart
+     294 行  lib/features/repository.dart
+     269 行  lib/app/theme/app_colors.dart
+     255 行  lib/app/router.dart
+     235 行  lib/app/theme/theme_builder.dart
+     228 行  lib/core/markdown/reader_markdown.dart
+     223 行  lib/core/cache/blob_store.dart
+------------------------------------------------------------------------------------
+[3] 注释
+    业务代码中文注释 197 处 / 覆盖 100 个文件
+    全库中文注释 285 处；业务代码 /// 行 134
+------------------------------------------------------------------------------------
+[4] 令牌与魔法值（业务代码，排除 app/theme/）
+    裸 fontSize 0 处 / 裸 EdgeInsets 5 处
+    circular(8) 0 / circular(99) 0 / 硬编码色值 0
+------------------------------------------------------------------------------------
+[5] 公开类 76 个；含 >1 类的文件 28 个
+    10 类  lib/core/generated/models.dart  ['ApiArticle', 'ApiArticleSummary', 'ApiUser', 'ApiComment', 'ApiCategoryNode', 'ApiTag', 'ApiTocItem', 'ApiNotification', 'ApiPagination', 'ApiAuthResult']
+    6 类  lib/core/cache/data_cache.dart  ['CachePolicy', 'CacheReply', 'CacheEvent', 'CacheSuperseded', 'CacheEntry', 'DataCache']
+    6 类  lib/core/markdown/reader_markdown.dart  ['ServerHeadingSyntax', '_HeadingBuilder', '_CodeBuilder', 'ReaderMarkdown', '_ReaderMarkdownState', '_MarkdownContent']
+    4 类  lib/core/network/api_client.dart  ['SecureTokenVault', 'ApiFailure', 'SessionChanged', 'ApiClient']
+    3 类  lib/features/data/reader_models.dart  ['Article', 'PageResult', 'FeedSnapshot']
+    2 类  lib/main.dart  ['ReaderApp', '_ReaderAppState']
+    2 类  lib/core/markdown/code_block.dart  ['_CodeBlock', '_CodeHeader']
+    2 类  lib/app/theme/status_views.dart  ['ArticleStatusView', 'ApiErrorView']
+    2 类  lib/features/article_page.dart  ['ArticlePage', '_ArticlePageState']
+    2 类  lib/features/auth_page.dart  ['AuthPage', '_AuthPageState']
+    2 类  lib/features/comments.dart  ['Comments', '_CommentsState']
+    2 类  lib/features/editor.dart  ['EditorPage', '_EditorPageState']
+    2 类  lib/features/web_page.dart  ['WebPage', '_WebPageState']
+    2 类  lib/features/member/draft_tile.dart  ['DraftTile', '_DraftTileState']
+    2 类  lib/features/member/member_articles_page.dart  ['MemberArticlesPage', '_MemberArticlesPageState']
+    2 类  lib/features/member/member_list_page.dart  ['MemberListPage', '_MemberListPageState']
+    2 类  lib/features/member/member_page.dart  ['MemberPage', '_MemberContent']
+    2 类  lib/features/member/notifications_page.dart  ['NotificationsPage', '_NotificationsPageState']
+    2 类  lib/features/member/profile_page.dart  ['ProfilePage', '_ProfilePageState']
+    2 类  lib/features/discovery/focus_stories.dart  ['FocusStories', '_FocusStoriesState']
+    2 类  lib/features/discovery/search_page.dart  ['SearchPage', '_SearchPageState']
+    2 类  lib/features/discovery/tags_page.dart  ['TagsPage', '_TagsPageState']
+    2 类  lib/features/data/cache_policy_table.dart  ['_ReadRule', 'CachePolicyTable']
+    2 类  lib/shared/prototype_icons.dart  ['PrototypeIcon', 'ReaderIcon']
+    2 类  lib/shared/widgets/article_feed.dart  ['ArticleFeed', '_ArticleFeedState']
+    2 类  lib/shared/widgets/async_pane.dart  ['AsyncPane', '_AsyncPaneState']
+    2 类  lib/shared/widgets/reader_image.dart  ['ReaderImage', '_ReaderImageState']
+    2 类  lib/shared/widgets/unread_icon.dart  ['UnreadIcon', '_UnreadIconState']
+------------------------------------------------------------------------------------
+[6] part 文件：84 条 part 声明
+    lib/core/markdown/code_block.dart  ->  ['reader_markdown.dart']
+    lib/core/markdown/reader_markdown.dart  ->  ['code_block.dart']
+    lib/features/article/adjacent_article.dart  ->  ['article_page.dart']
+    lib/features/article/article_action.dart  ->  ['article_page.dart']
+    lib/features/article/article_breadcrumb.dart  ->  ['article_page.dart']
+    lib/features/article/article_category.dart  ->  ['article_page.dart']
+    lib/features/article/article_comment_bar.dart  ->  ['article_page.dart']
+    lib/features/article/article_content.dart  ->  ['article_page.dart']
+    lib/features/article/article_navigation.dart  ->  ['article_page.dart']
+    lib/features/article/article_reactions.dart  ->  ['article_page.dart']
+    lib/features/article/article_summary.dart  ->  ['article_page.dart']
+    lib/features/article/article_tags.dart  ->  ['article_page.dart']
+    lib/features/article/article_title.dart  ->  ['article_page.dart']
+    lib/features/article/author_bar.dart  ->  ['article_page.dart']
+    lib/features/article_page.dart  ->  ['article_comment_bar.dart', 'article_breadcrumb.dart', 'article_category.dart', 'article_title.dart', 'author_bar.dart', 'article_summary.dart', 'article_tags.dart', 'adjacent_article.dart', 'article_action.dart', 'article_navigation.dart', 'article_reactions.dart', 'article_content.dart']
+    lib/features/auth/auth_actions.dart  ->  ['auth_page.dart']
+    lib/features/auth/auth_fields.dart  ->  ['auth_page.dart']
+    lib/features/auth/auth_intro.dart  ->  ['auth_page.dart']
+    lib/features/auth_page.dart  ->  ['auth_intro.dart', 'auth_fields.dart', 'auth_actions.dart']
+    lib/features/comment_widgets/comment_footer.dart  ->  ['comments.dart']
+    lib/features/comment_widgets/comment_reply.dart  ->  ['comments.dart']
+    lib/features/comment_widgets/comment_thread.dart  ->  ['comments.dart']
+    lib/features/comments.dart  ->  ['comment_footer.dart', 'comment_reply.dart', 'comment_thread.dart']
+    lib/features/editor.dart  ->  ['editor_modes.dart', 'editor_preview.dart', 'markdown_toolbar.dart', 'editor_form.dart', 'editor_save_bar.dart', 'editor_body.dart', 'editor_metadata.dart', 'editor_payload.dart', 'recover_draft.dart', 'editor_scaffold.dart']
+    lib/features/editor/editor_body.dart  ->  ['editor.dart']
+    lib/features/editor/editor_form.dart  ->  ['editor.dart']
+    lib/features/editor/editor_metadata.dart  ->  ['editor.dart']
+    lib/features/editor/editor_modes.dart  ->  ['editor.dart']
+    lib/features/editor/editor_payload.dart  ->  ['editor.dart']
+    lib/features/editor/editor_preview.dart  ->  ['editor.dart']
+    lib/features/editor/editor_save_bar.dart  ->  ['editor.dart']
+    lib/features/editor/editor_scaffold.dart  ->  ['editor.dart']
+    lib/features/editor/markdown_toolbar.dart  ->  ['editor.dart']
+    lib/features/editor/recover_draft.dart  ->  ['editor.dart']
+    lib/features/member/account_info_cells.dart  ->  ['profile_page.dart']
+    lib/features/member/account_options.dart  ->  ['settings_page.dart']
+    lib/features/member/appearance_options.dart  ->  ['settings_page.dart']
+    lib/features/member/avatar_card.dart  ->  ['profile_page.dart']
+    lib/features/member/draft_actions.dart  ->  ['draft_tile.dart']
+    lib/features/member/draft_tile.dart  ->  ['draft_actions.dart']
+    lib/features/member/member_header.dart  ->  ['member_page.dart']
+    lib/features/member/member_page.dart  ->  ['member_header.dart', 'member_statistics.dart']
+    lib/features/member/member_statistics.dart  ->  ['member_page.dart']
+    lib/features/member/notification_card.dart  ->  ['notifications_page.dart']
+    lib/features/member/notification_status.dart  ->  ['notifications_page.dart']
+    lib/features/member/notification_text.dart  ->  ['notifications_page.dart']
+    lib/features/member/notifications_page.dart  ->  ['notification_text.dart', 'notification_card.dart', 'notification_status.dart']
+    lib/features/member/password_fields.dart  ->  ['profile_page.dart']
+    lib/features/member/profile_fields.dart  ->  ['profile_page.dart']
+    lib/features/member/profile_page.dart  ->  ['avatar_card.dart', 'password_fields.dart', 'profile_fields.dart', 'account_info_cells.dart']
+    lib/features/member/settings_page.dart  ->  ['appearance_options.dart', 'account_options.dart']
+    lib/shared/widgets/article_tile.dart  ->  ['article_tile_content.dart']
+    lib/shared/widgets/article_tile_content.dart  ->  ['article_tile.dart']
+------------------------------------------------------------------------------------
