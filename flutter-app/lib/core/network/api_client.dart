@@ -212,12 +212,7 @@ class ApiClient {
         onSendProgress: onSendProgress,
       );
       if (start != epoch) throw SessionChanged();
-      var body = response.data;
-      if (response.statusCode == 401 &&
-          refreshAllowed &&
-          !anonymous &&
-          body is Map &&
-          body['code'] == 1002) {
+      if (refreshAllowed && !anonymous && _shouldRefresh(response)) {
         if (originalToken == accessToken) await refresh();
         if (start != epoch) throw SessionChanged();
         return await _request(
@@ -231,69 +226,19 @@ class ApiClient {
           onHeaders: onHeaders,
         );
       }
-      // Only read requests may retry a short server-declared cooldown, once.
-      final seconds = int.tryParse(response.headers.value('retry-after') ?? '');
-      // 只对 GET 做一次有界等待；写请求绝不自动重放。
-      if (response.statusCode == 429 &&
-          method == 'GET' &&
-          seconds != null &&
-          seconds >= 0 &&
-          seconds <= 3) {
-        await Future<void>.delayed(Duration(seconds: seconds));
-        if (start != epoch) throw SessionChanged();
-        response = await dio.request(
-          path,
-          queryParameters: query,
-          options: Options(
-            method: method,
-            headers: {
-              if (!anonymous && accessToken != null)
-                'Authorization': 'Bearer $accessToken',
-            },
-          ),
-        );
-        if (start != epoch) throw SessionChanged();
-        body = response.data;
-      }
-      if (body is! Map) throw const ApiFailure('服务器返回了无法识别的数据', status: 500);
-      final code = (body['code'] as num?)?.toInt() ?? 5000;
-      if (code != 0) {
-        if ([1003, 1005].contains(code) && start == epoch) {
-          await clear();
-          onExpired?.call();
-        }
-        final fields = <String, String>{};
-        if (body['data'] is Map) {
-          for (final e in ((body['data'] as Map)['errors'] as List? ?? [])) {
-            if (e is Map) fields['${e['field']}'] = '${e['message']}';
-          }
-        }
-        const messages = {
-          1001: '用户名或密码不正确',
-          1002: '登录已过期，请重新登录',
-          1003: '会话已失效，请重新登录',
-          1004: '请登录后继续',
-          1005: '账号已停用',
-          2001: '你没有操作此内容的权限',
-          3001: '内容不存在或暂不可见',
-          3002: '内容存在冲突，请检查后重试',
-          3003: '稿件状态已变化，请刷新后重试',
-          4001: '请检查填写的内容',
-          5000: '服务暂时不可用，请稍后重试',
-          5001: '请求较多，请稍后重试',
-        };
-        throw ApiFailure(
-          fields.isNotEmpty
-              ? fields.values.join('\n')
-              : messages[code] ?? '请求未能完成',
-          code: code,
-          status: response.statusCode ?? 0,
-          retryAfter: int.tryParse(response.headers.value('retry-after') ?? ''),
-          fields: fields,
-        );
-      }
+      response = await _retryAfter(
+        response,
+        path,
+        method,
+        query,
+        anonymous,
+        start,
+      );
+      if (start != epoch) throw SessionChanged();
+      final result = await _decode(response, start);
+      if (start != epoch) throw SessionChanged();
       onHeaders?.call(response.headers);
-      return body['data'];
+      return result;
     } on DioException catch (e) {
       if (start != epoch) throw SessionChanged();
       throw ApiFailure(switch (e.type) {
@@ -304,6 +249,90 @@ class ApiClient {
       });
     }
   }
+
+  // 刷新只处理 access token 过期；禁用账号等错误交给解码处理。
+  bool _shouldRefresh(Response<dynamic> response) =>
+      response.statusCode == 401 &&
+      response.data is Map &&
+      response.data['code'] == 1002;
+
+  Future<Response<dynamic>> _retryAfter(
+    Response<dynamic> response,
+    String path,
+    String method,
+    Map<String, dynamic>? query,
+    bool anonymous,
+    int start,
+  ) async {
+    final seconds = int.tryParse(response.headers.value('retry-after') ?? '');
+    // 只对 GET 做一次有界等待；写请求绝不自动重放。
+    if (response.statusCode == 429 &&
+        method == 'GET' &&
+        seconds != null &&
+        seconds >= 0 &&
+        seconds <= 3) {
+      await Future<void>.delayed(Duration(seconds: seconds));
+      if (start != epoch) throw SessionChanged();
+      response = await dio.request(
+        path,
+        queryParameters: query,
+        options: Options(
+          method: method,
+          headers: {
+            if (!anonymous && accessToken != null)
+              'Authorization': 'Bearer $accessToken',
+          },
+        ),
+      );
+      if (start != epoch) throw SessionChanged();
+    }
+    return response;
+  }
+
+  // 信封解码统一字段错误和会话失效，成功后的响应头由调用方派发。
+  Future<dynamic> _decode(Response<dynamic> response, int start) async {
+    final body = response.data;
+    if (body is! Map) throw const ApiFailure('服务器返回了无法识别的数据', status: 500);
+    final code = (body['code'] as num?)?.toInt() ?? 5000;
+    if (code != 0) {
+      if ([1003, 1005].contains(code) && start == epoch) {
+        await clear();
+        onExpired?.call();
+      }
+      final fields = <String, String>{};
+      if (body['data'] is Map) {
+        for (final e in ((body['data'] as Map)['errors'] as List? ?? [])) {
+          if (e is Map) fields['${e['field']}'] = '${e['message']}';
+        }
+      }
+      throw ApiFailure(
+        fields.isNotEmpty
+            ? fields.values.join('\n')
+            : _messages[code] ?? '请求未能完成',
+        code: code,
+        status: response.statusCode ?? 0,
+        retryAfter: int.tryParse(response.headers.value('retry-after') ?? ''),
+        fields: fields,
+      );
+    }
+
+    return body['data'];
+  }
+
+  static const _messages = {
+    1001: '用户名或密码不正确',
+    1002: '登录已过期，请重新登录',
+    1003: '会话已失效，请重新登录',
+    1004: '请登录后继续',
+    1005: '账号已停用',
+    2001: '你没有操作此内容的权限',
+    3001: '内容不存在或暂不可见',
+    3002: '内容存在冲突，请检查后重试',
+    3003: '稿件状态已变化，请刷新后重试',
+    4001: '请检查填写的内容',
+    5000: '服务暂时不可用，请稍后重试',
+    5001: '请求较多，请稍后重试',
+  };
 
   // 服务端相对地址基于 API 环境解析，只允许可展示的 HTTP/HTTPS 资源。
   String fileUrl(String value) {

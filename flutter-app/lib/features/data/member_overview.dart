@@ -3,6 +3,7 @@ import 'package:fullstack_reader/core/network/endpoints.dart';
 import 'dart:async';
 
 import '../../core/cache/data_cache.dart';
+import '../../core/cache/cache_key.dart';
 
 import 'package:fullstack_reader/features/data/reader_models.dart';
 
@@ -22,7 +23,7 @@ class MemberOverview {
   final bool Function(Object) forbidden;
   // 概览只驻留内存，键包含账号与会话代际。
   Future<Map<String, dynamic>> load({bool forced = false}) async {
-    final k = key('/reader/overview', const {}, private: true);
+    final k = key(CacheKeys.overview, const {}, private: true);
     trackKey(k);
     return jsonMap(
       await cache.get(

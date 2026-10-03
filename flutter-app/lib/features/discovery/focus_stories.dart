@@ -7,6 +7,10 @@ import 'package:go_router/go_router.dart';
 import 'package:fullstack_reader/shared/widgets/reader_context.dart';
 import 'package:fullstack_reader/features/data/reader_models.dart';
 
+part 'story_card.dart';
+part 'story_carousel.dart';
+part 'page_dots.dart';
+
 /// 焦点图使用原型图标和渐变；切换索引仅影响当前轮播组件。
 class FocusStories extends StatefulWidget {
   const FocusStories(this.items, {super.key});
@@ -32,90 +36,10 @@ class _FocusStoriesState extends State<FocusStories> {
   @override
   Widget build(BuildContext context) => Column(
     children: [
-      SizedBox(
-        height: 190 + (MediaQuery.textScalerOf(context).scale(1) - 1) * 160,
-        child: PageView.builder(
-          controller: controller,
-          itemCount: widget.items.length,
-          onPageChanged: (i) => setState(() => current = i),
-          itemBuilder: (c, i) {
-            final a = widget.items[i];
-            return Padding(
-              padding: AppInsets.pageTop,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => context.push('/articles/${a.route}'),
-                  borderRadius: AppRadius.rMd,
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      gradient: context.colors.heroWash,
-                      borderRadius: AppRadius.rMd,
-                    ),
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          right: 14,
-                          top: -6,
-                          child: Text(
-                            '{ API }',
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: AppType.heroWatermark,
-                              fontWeight: FontWeight.w600,
-                              color: context.colors.textTitle.withValues(
-                                alpha: .08,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: AppInsets.page,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '焦点阅读',
-                                style: TextStyle(
-                                  fontSize: AppType.micro,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.colors.brandOnSubtle,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                a.title,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: AppType.avatarLetter,
-                                  height: 1.32,
-                                  fontWeight: FontWeight.w700,
-                                  color: context.colors.textTitle,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                a.data.summary ?? '',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: AppType.caption,
-                                  height: 1.62,
-                                  color: context.colors.textMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
+      _StoryCarousel(
+        items: widget.items,
+        controller: controller,
+        onChanged: (i) => setState(() => current = i),
       ),
       Padding(
         padding: AppInsets.tagLabel,
@@ -123,27 +47,7 @@ class _FocusStoriesState extends State<FocusStories> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _control('上一条焦点', 'back', () => step(-1)),
-            Row(
-              children: [
-                for (var i = 0; i < widget.items.length; i++)
-                  Container(
-                    margin: AppInsets.metadataRight,
-                    width: 20,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: context.colors.brand.withValues(
-                        alpha: i == current ? 1 : .28,
-                      ),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                const SizedBox(width: 6),
-                Text(
-                  '${current + 1} / ${widget.items.length}',
-                  style: context.text.labelSmall,
-                ),
-              ],
-            ),
+            _PageDots(count: widget.items.length, current: current),
             _control('下一条焦点', 'chevr', () => step(1)),
           ],
         ),

@@ -1,0 +1,6373 @@
+{
+  "scope": "constructors, methods, named functions and closures; full declaration incl metadata; generated excluded",
+  "files": 121,
+  "functions": 908,
+  "violations": [],
+  "themeExemptions": [
+    {
+      "file": "lib/app/theme/app_colors.dart",
+      "name": "copyWith",
+      "start": 134,
+      "end": 219,
+      "lines": 86
+    }
+  ],
+  "functionsByLength": [
+    {
+      "file": "lib/app/theme/app_colors.dart",
+      "name": "copyWith",
+      "start": 134,
+      "end": 219,
+      "lines": 86
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "save",
+      "start": 253,
+      "end": 331,
+      "lines": 79
+    },
+    {
+      "file": "lib/features/comment_widgets/comment_thread.dart",
+      "name": "build",
+      "start": 23,
+      "end": 100,
+      "lines": 78
+    },
+    {
+      "file": "lib/features/editor/editor_form.dart",
+      "name": "build",
+      "start": 21,
+      "end": 96,
+      "lines": 76
+    },
+    {
+      "file": "lib/features/member/member_page.dart",
+      "name": "build",
+      "start": 64,
+      "end": 137,
+      "lines": 74
+    },
+    {
+      "file": "lib/features/discovery/story_card.dart",
+      "name": "build",
+      "start": 7,
+      "end": 79,
+      "lines": 73
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "get",
+      "start": 130,
+      "end": 202,
+      "lines": 73
+    },
+    {
+      "file": "lib/features/editor/editor_metadata.dart",
+      "name": "build",
+      "start": 21,
+      "end": 92,
+      "lines": 72
+    },
+    {
+      "file": "lib/features/member/draft_tile.dart",
+      "name": "build",
+      "start": 63,
+      "end": 133,
+      "lines": 71
+    },
+    {
+      "file": "lib/core/cache/image_store.dart",
+      "name": "load",
+      "start": 31,
+      "end": 100,
+      "lines": 70
+    },
+    {
+      "file": "lib/features/editor/editor_metadata.dart",
+      "name": "<closure>",
+      "start": 23,
+      "end": 91,
+      "lines": 69
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "_standaloneRoutes",
+      "start": 137,
+      "end": 202,
+      "lines": 66
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "build",
+      "start": 230,
+      "end": 295,
+      "lines": 66
+    },
+    {
+      "file": "lib/features/discovery/author_page.dart",
+      "name": "build",
+      "start": 19,
+      "end": 83,
+      "lines": 65
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "_request",
+      "start": 188,
+      "end": 251,
+      "lines": 64
+    },
+    {
+      "file": "lib/features/comment_widgets/comment_reply.dart",
+      "name": "build",
+      "start": 17,
+      "end": 79,
+      "lines": 63
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "build",
+      "start": 164,
+      "end": 226,
+      "lines": 63
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "build",
+      "start": 244,
+      "end": 305,
+      "lines": 62
+    },
+    {
+      "file": "lib/features/editor/markdown_toolbar.dart",
+      "name": "build",
+      "start": 8,
+      "end": 69,
+      "lines": 62
+    },
+    {
+      "file": "lib/shared/widgets/article_tile_content.dart",
+      "name": "build",
+      "start": 8,
+      "end": 68,
+      "lines": 61
+    },
+    {
+      "file": "lib/features/member/member_list_page.dart",
+      "name": "build",
+      "start": 24,
+      "end": 83,
+      "lines": 60
+    },
+    {
+      "file": "lib/features/data/reaction_store.dart",
+      "name": "set",
+      "start": 26,
+      "end": 84,
+      "lines": 59
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "build",
+      "start": 161,
+      "end": 219,
+      "lines": 59
+    },
+    {
+      "file": "lib/features/discovery/author_page.dart",
+      "name": "<closure>",
+      "start": 24,
+      "end": 81,
+      "lines": 58
+    },
+    {
+      "file": "lib/features/member/member_header.dart",
+      "name": "build",
+      "start": 7,
+      "end": 63,
+      "lines": 57
+    },
+    {
+      "file": "lib/app/app_bottom_bar.dart",
+      "name": "build",
+      "start": 14,
+      "end": 69,
+      "lines": 56
+    },
+    {
+      "file": "lib/features/auth/auth_fields.dart",
+      "name": "build",
+      "start": 23,
+      "end": 77,
+      "lines": 55
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "write",
+      "start": 140,
+      "end": 194,
+      "lines": 55
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "load",
+      "start": 160,
+      "end": 213,
+      "lines": 54
+    },
+    {
+      "file": "lib/features/member/member_articles_page.dart",
+      "name": "build",
+      "start": 33,
+      "end": 85,
+      "lines": 53
+    },
+    {
+      "file": "lib/features/discovery/search_suggestions.dart",
+      "name": "build",
+      "start": 13,
+      "end": 65,
+      "lines": 53
+    },
+    {
+      "file": "lib/core/markdown/code_block.dart",
+      "name": "build",
+      "start": 13,
+      "end": 64,
+      "lines": 52
+    },
+    {
+      "file": "lib/core/cache/image_store.dart",
+      "name": "<closure>",
+      "start": 46,
+      "end": 97,
+      "lines": 52
+    },
+    {
+      "file": "lib/features/member/settings_page.dart",
+      "name": "build",
+      "start": 23,
+      "end": 72,
+      "lines": 50
+    },
+    {
+      "file": "lib/features/discovery/tags_page.dart",
+      "name": "build",
+      "start": 27,
+      "end": 76,
+      "lines": 50
+    },
+    {
+      "file": "lib/features/data/member_overview.dart",
+      "name": "load",
+      "start": 25,
+      "end": 73,
+      "lines": 49
+    },
+    {
+      "file": "lib/features/article/article_content.dart",
+      "name": "build",
+      "start": 27,
+      "end": 75,
+      "lines": 49
+    },
+    {
+      "file": "lib/features/article/article_comment_bar.dart",
+      "name": "build",
+      "start": 7,
+      "end": 53,
+      "lines": 47
+    },
+    {
+      "file": "lib/app/theme/app_colors.dart",
+      "name": "lerp",
+      "start": 221,
+      "end": 267,
+      "lines": 47
+    },
+    {
+      "file": "lib/features/article/article_navigation.dart",
+      "name": "directory",
+      "start": 10,
+      "end": 56,
+      "lines": 47
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<closure>",
+      "start": 147,
+      "end": 193,
+      "lines": 47
+    },
+    {
+      "file": "lib/shared/widgets/article_skeleton.dart",
+      "name": "build",
+      "start": 10,
+      "end": 55,
+      "lines": 46
+    },
+    {
+      "file": "lib/features/auth/auth_intro.dart",
+      "name": "build",
+      "start": 7,
+      "end": 52,
+      "lines": 46
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "_mutation",
+      "start": 216,
+      "end": 260,
+      "lines": 45
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "buildAppTheme",
+      "start": 6,
+      "end": 50,
+      "lines": 45
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "send",
+      "start": 171,
+      "end": 215,
+      "lines": 45
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "readArticle",
+      "start": 202,
+      "end": 246,
+      "lines": 45
+    },
+    {
+      "file": "lib/shared/widgets/menu_cell.dart",
+      "name": "build",
+      "start": 24,
+      "end": 67,
+      "lines": 44
+    },
+    {
+      "file": "lib/features/member/notification_text.dart",
+      "name": "build",
+      "start": 7,
+      "end": 50,
+      "lines": 44
+    },
+    {
+      "file": "lib/shared/widgets/status_badge.dart",
+      "name": "build",
+      "start": 12,
+      "end": 54,
+      "lines": 43
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "navigationDelegate",
+      "start": 65,
+      "end": 107,
+      "lines": 43
+    },
+    {
+      "file": "lib/features/article/article_reactions.dart",
+      "name": "build",
+      "start": 27,
+      "end": 69,
+      "lines": 43
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "mark",
+      "start": 123,
+      "end": 165,
+      "lines": 43
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "_fetch",
+      "start": 205,
+      "end": 246,
+      "lines": 42
+    },
+    {
+      "file": "lib/app/theme/app_colors.dart",
+      "name": "<constructor>",
+      "start": 7,
+      "end": 48,
+      "lines": 42
+    },
+    {
+      "file": "lib/features/discovery/popular_article.dart",
+      "name": "build",
+      "start": 8,
+      "end": 49,
+      "lines": 42
+    },
+    {
+      "file": "lib/features/article/author_bar.dart",
+      "name": "build",
+      "start": 8,
+      "end": 48,
+      "lines": 41
+    },
+    {
+      "file": "lib/shared/widgets/section_title.dart",
+      "name": "build",
+      "start": 14,
+      "end": 54,
+      "lines": 41
+    },
+    {
+      "file": "lib/features/discovery/categories_page.dart",
+      "name": "build",
+      "start": 53,
+      "end": 93,
+      "lines": 41
+    },
+    {
+      "file": "lib/features/member/avatar_card.dart",
+      "name": "build",
+      "start": 17,
+      "end": 56,
+      "lines": 40
+    },
+    {
+      "file": "lib/features/article/article_navigation.dart",
+      "name": "<closure>",
+      "start": 15,
+      "end": 54,
+      "lines": 40
+    },
+    {
+      "file": "lib/shared/widgets/article_tile.dart",
+      "name": "build",
+      "start": 28,
+      "end": 66,
+      "lines": 39
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "upload",
+      "start": 214,
+      "end": 251,
+      "lines": 38
+    },
+    {
+      "file": "lib/features/member/notification_card.dart",
+      "name": "build",
+      "start": 8,
+      "end": 45,
+      "lines": 38
+    },
+    {
+      "file": "lib/features/discovery/search_header.dart",
+      "name": "build",
+      "start": 8,
+      "end": 45,
+      "lines": 38
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "save",
+      "start": 78,
+      "end": 115,
+      "lines": 38
+    },
+    {
+      "file": "lib/features/data/member_overview.dart",
+      "name": "<closure>",
+      "start": 32,
+      "end": 67,
+      "lines": 36
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "onCacheEvent",
+      "start": 97,
+      "end": 132,
+      "lines": 36
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "load",
+      "start": 86,
+      "end": 121,
+      "lines": 36
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "_textTheme",
+      "start": 199,
+      "end": 234,
+      "lines": 36
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "toggleLike",
+      "start": 283,
+      "end": 317,
+      "lines": 35
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "_applyControlHeaders",
+      "start": 249,
+      "end": 283,
+      "lines": 35
+    },
+    {
+      "file": "lib/features/auth_page.dart",
+      "name": "build",
+      "start": 75,
+      "end": 109,
+      "lines": 35
+    },
+    {
+      "file": "lib/features/member/account_options.dart",
+      "name": "build",
+      "start": 7,
+      "end": 41,
+      "lines": 35
+    },
+    {
+      "file": "lib/app/theme/status_views.dart",
+      "name": "of",
+      "start": 29,
+      "end": 63,
+      "lines": 35
+    },
+    {
+      "file": "lib/features/member/theme_chooser.dart",
+      "name": "chooseTheme",
+      "start": 11,
+      "end": 45,
+      "lines": 35
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "profileForm",
+      "start": 131,
+      "end": 164,
+      "lines": 34
+    },
+    {
+      "file": "lib/core/storage/upload.dart",
+      "name": "uploadImage",
+      "start": 7,
+      "end": 40,
+      "lines": 34
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "request",
+      "start": 153,
+      "end": 186,
+      "lines": 34
+    },
+    {
+      "file": "lib/shared/widgets/state_message.dart",
+      "name": "build",
+      "start": 21,
+      "end": 54,
+      "lines": 34
+    },
+    {
+      "file": "lib/features/member/member_statistics.dart",
+      "name": "build",
+      "start": 13,
+      "end": 46,
+      "lines": 34
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "load",
+      "start": 65,
+      "end": 98,
+      "lines": 34
+    },
+    {
+      "file": "lib/features/data/article_reader.dart",
+      "name": "read",
+      "start": 30,
+      "end": 62,
+      "lines": 33
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "refresh",
+      "start": 118,
+      "end": 150,
+      "lines": 33
+    },
+    {
+      "file": "lib/core/markdown/code_block.dart",
+      "name": "build",
+      "start": 72,
+      "end": 104,
+      "lines": 33
+    },
+    {
+      "file": "lib/features/discovery/categories_page.dart",
+      "name": "node",
+      "start": 20,
+      "end": 52,
+      "lines": 33
+    },
+    {
+      "file": "lib/features/editor/editor_save_bar.dart",
+      "name": "build",
+      "start": 13,
+      "end": 45,
+      "lines": 33
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "load",
+      "start": 130,
+      "end": 162,
+      "lines": 33
+    },
+    {
+      "file": "lib/features/editor/editor_body.dart",
+      "name": "build",
+      "start": 25,
+      "end": 57,
+      "lines": 33
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "_shellBranches",
+      "start": 102,
+      "end": 134,
+      "lines": 33
+    },
+    {
+      "file": "lib/features/article/article_action.dart",
+      "name": "build",
+      "start": 9,
+      "end": 40,
+      "lines": 32
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "_retryAfter",
+      "start": 259,
+      "end": 290,
+      "lines": 32
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "initState",
+      "start": 61,
+      "end": 92,
+      "lines": 32
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "onCacheEvent",
+      "start": 99,
+      "end": 130,
+      "lines": 32
+    },
+    {
+      "file": "lib/features/discovery/brand_title.dart",
+      "name": "build",
+      "start": 7,
+      "end": 37,
+      "lines": 31
+    },
+    {
+      "file": "lib/features/auth_page.dart",
+      "name": "submit",
+      "start": 44,
+      "end": 73,
+      "lines": 30
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "build",
+      "start": 363,
+      "end": 392,
+      "lines": 30
+    },
+    {
+      "file": "lib/features/member/theme_chooser.dart",
+      "name": "<closure>",
+      "start": 15,
+      "end": 44,
+      "lines": 30
+    },
+    {
+      "file": "lib/features/member/account_info_cells.dart",
+      "name": "build",
+      "start": 13,
+      "end": 42,
+      "lines": 30
+    },
+    {
+      "file": "lib/shared/widgets/reader_image.dart",
+      "name": "build",
+      "start": 31,
+      "end": 60,
+      "lines": 30
+    },
+    {
+      "file": "lib/features/discovery/tag_card.dart",
+      "name": "build",
+      "start": 7,
+      "end": 36,
+      "lines": 30
+    },
+    {
+      "file": "lib/features/data/article_reader.dart",
+      "name": "fetchBundle",
+      "start": 74,
+      "end": 103,
+      "lines": 30
+    },
+    {
+      "file": "lib/features/member/member_page.dart",
+      "name": "build",
+      "start": 28,
+      "end": 56,
+      "lines": 29
+    },
+    {
+      "file": "lib/features/member/appearance_options.dart",
+      "name": "build",
+      "start": 7,
+      "end": 35,
+      "lines": 29
+    },
+    {
+      "file": "lib/features/member/member_list_page.dart",
+      "name": "<closure>",
+      "start": 52,
+      "end": 80,
+      "lines": 29
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "read",
+      "start": 126,
+      "end": 154,
+      "lines": 29
+    },
+    {
+      "file": "lib/features/data/cache_policy_table.dart",
+      "name": "family",
+      "start": 91,
+      "end": 119,
+      "lines": 29
+    },
+    {
+      "file": "lib/features/member/draft_actions.dart",
+      "name": "build",
+      "start": 15,
+      "end": 43,
+      "lines": 29
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "onCacheEvent",
+      "start": 83,
+      "end": 110,
+      "lines": 28
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "editorBody",
+      "start": 354,
+      "end": 381,
+      "lines": 28
+    },
+    {
+      "file": "lib/features/member/theme_chooser.dart",
+      "name": "<closure>",
+      "start": 16,
+      "end": 43,
+      "lines": 28
+    },
+    {
+      "file": "lib/features/article/article_navigation.dart",
+      "name": "moreActions",
+      "start": 74,
+      "end": 101,
+      "lines": 28
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "_decode",
+      "start": 293,
+      "end": 320,
+      "lines": 28
+    },
+    {
+      "file": "lib/features/editor/editor_preview.dart",
+      "name": "build",
+      "start": 15,
+      "end": 42,
+      "lines": 28
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "load",
+      "start": 119,
+      "end": 145,
+      "lines": 27
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "dispose",
+      "start": 132,
+      "end": 158,
+      "lines": 27
+    },
+    {
+      "file": "lib/shared/widgets/page_intro.dart",
+      "name": "build",
+      "start": 10,
+      "end": 36,
+      "lines": 27
+    },
+    {
+      "file": "lib/features/auth/auth_actions.dart",
+      "name": "build",
+      "start": 17,
+      "end": 43,
+      "lines": 27
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "trackProgress",
+      "start": 143,
+      "end": 169,
+      "lines": 27
+    },
+    {
+      "file": "lib/features/member/draft_tile.dart",
+      "name": "mutate",
+      "start": 35,
+      "end": 61,
+      "lines": 27
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "build",
+      "start": 167,
+      "end": 192,
+      "lines": 26
+    },
+    {
+      "file": "lib/features/editor/editor_payload.dart",
+      "name": "editorPayload",
+      "start": 3,
+      "end": 28,
+      "lines": 26
+    },
+    {
+      "file": "lib/features/discovery/tags_page.dart",
+      "name": "<closure>",
+      "start": 46,
+      "end": 71,
+      "lines": 26
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "visitElementAfterWithContext",
+      "start": 53,
+      "end": 78,
+      "lines": 26
+    },
+    {
+      "file": "lib/core/markdown/code_cache.dart",
+      "name": "parse",
+      "start": 8,
+      "end": 33,
+      "lines": 26
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "<closure>",
+      "start": 218,
+      "end": 243,
+      "lines": 26
+    },
+    {
+      "file": "lib/shared/widgets/reader_image.dart",
+      "name": "placeholder",
+      "start": 62,
+      "end": 87,
+      "lines": 26
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "loadInteractions",
+      "start": 248,
+      "end": 272,
+      "lines": 25
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "load",
+      "start": 171,
+      "end": 195,
+      "lines": 25
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "toggleFavorite",
+      "start": 319,
+      "end": 343,
+      "lines": 25
+    },
+    {
+      "file": "lib/features/article/adjacent_article.dart",
+      "name": "build",
+      "start": 7,
+      "end": 31,
+      "lines": 25
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "_inputDecorationTheme",
+      "start": 135,
+      "end": 159,
+      "lines": 25
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "articles",
+      "start": 169,
+      "end": 193,
+      "lines": 25
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "<closure>",
+      "start": 121,
+      "end": 145,
+      "lines": 25
+    },
+    {
+      "file": "lib/features/member/member_list_page.dart",
+      "name": "<closure>",
+      "start": 55,
+      "end": 79,
+      "lines": 25
+    },
+    {
+      "file": "lib/features/comment_widgets/comment_footer.dart",
+      "name": "build",
+      "start": 15,
+      "end": 39,
+      "lines": 25
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "onCacheEvent",
+      "start": 44,
+      "end": 67,
+      "lines": 24
+    },
+    {
+      "file": "lib/features/data/favorite_index.dart",
+      "name": "contains",
+      "start": 29,
+      "end": 52,
+      "lines": 24
+    },
+    {
+      "file": "lib/main.dart",
+      "name": "main",
+      "start": 14,
+      "end": 37,
+      "lines": 24
+    },
+    {
+      "file": "lib/features/article/article_navigation.dart",
+      "name": "<closure>",
+      "start": 77,
+      "end": 100,
+      "lines": 24
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<closure>",
+      "start": 30,
+      "end": 52,
+      "lines": 23
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "leave",
+      "start": 178,
+      "end": 200,
+      "lines": 23
+    },
+    {
+      "file": "lib/features/data/cache_policy_table.dart",
+      "name": "mutationTags",
+      "start": 136,
+      "end": 158,
+      "lines": 23
+    },
+    {
+      "file": "lib/features/member/password_fields.dart",
+      "name": "build",
+      "start": 8,
+      "end": 30,
+      "lines": 23
+    },
+    {
+      "file": "lib/features/editor/recover_draft.dart",
+      "name": "recoverDraft",
+      "start": 3,
+      "end": 25,
+      "lines": 23
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "applyPage",
+      "start": 147,
+      "end": 169,
+      "lines": 23
+    },
+    {
+      "file": "lib/features/article/article_navigation.dart",
+      "name": "toolbarActions",
+      "start": 102,
+      "end": 124,
+      "lines": 23
+    },
+    {
+      "file": "lib/features/editor/editor_scaffold.dart",
+      "name": "build",
+      "start": 21,
+      "end": 43,
+      "lines": 23
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "open",
+      "start": 30,
+      "end": 52,
+      "lines": 23
+    },
+    {
+      "file": "lib/features/member/profile_fields.dart",
+      "name": "build",
+      "start": 8,
+      "end": 30,
+      "lines": 23
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "_applyPage",
+      "start": 221,
+      "end": 242,
+      "lines": 22
+    },
+    {
+      "file": "lib/features/discovery/home_page.dart",
+      "name": "build",
+      "start": 27,
+      "end": 48,
+      "lines": 22
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "onCacheEvent",
+      "start": 100,
+      "end": 121,
+      "lines": 22
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "build",
+      "start": 137,
+      "end": 158,
+      "lines": 22
+    },
+    {
+      "file": "lib/shared/widgets/page_frame.dart",
+      "name": "build",
+      "start": 18,
+      "end": 39,
+      "lines": 22
+    },
+    {
+      "file": "lib/app/session.dart",
+      "name": "authenticate",
+      "start": 60,
+      "end": 81,
+      "lines": 22
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "<closure>",
+      "start": 204,
+      "end": 224,
+      "lines": 21
+    },
+    {
+      "file": "lib/features/discovery/focus_stories.dart",
+      "name": "build",
+      "start": 36,
+      "end": 56,
+      "lines": 21
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "initialize",
+      "start": 44,
+      "end": 63,
+      "lines": 20
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "_handleFailure",
+      "start": 308,
+      "end": 327,
+      "lines": 20
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "metadata",
+      "start": 333,
+      "end": 352,
+      "lines": 20
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "createRouter",
+      "start": 54,
+      "end": 73,
+      "lines": 20
+    },
+    {
+      "file": "lib/features/article/article_summary.dart",
+      "name": "build",
+      "start": 7,
+      "end": 26,
+      "lines": 20
+    },
+    {
+      "file": "lib/features/data/fetch_cache_reply.dart",
+      "name": "fetchCacheReply",
+      "start": 4,
+      "end": 23,
+      "lines": 20
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "_persistEntry",
+      "start": 286,
+      "end": 305,
+      "lines": 20
+    },
+    {
+      "file": "lib/shared/widgets/confirm.dart",
+      "name": "confirm",
+      "start": 5,
+      "end": 23,
+      "lines": 19
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 150,
+      "end": 168,
+      "lines": 19
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "_put",
+      "start": 93,
+      "end": 111,
+      "lines": 19
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "_readIndex",
+      "start": 54,
+      "end": 72,
+      "lines": 19
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "visitElementAfterWithContext",
+      "start": 86,
+      "end": 104,
+      "lines": 19
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "groupComments",
+      "start": 30,
+      "end": 48,
+      "lines": 19
+    },
+    {
+      "file": "lib/features/discovery/page_dots.dart",
+      "name": "build",
+      "start": 8,
+      "end": 26,
+      "lines": 19
+    },
+    {
+      "file": "lib/features/discovery/categories_page.dart",
+      "name": "<closure>",
+      "start": 73,
+      "end": 91,
+      "lines": 19
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "load",
+      "start": 51,
+      "end": 68,
+      "lines": 18
+    },
+    {
+      "file": "lib/shared/widgets/cell_group.dart",
+      "name": "build",
+      "start": 10,
+      "end": 27,
+      "lines": 18
+    },
+    {
+      "file": "lib/shared/widgets/submit_button.dart",
+      "name": "build",
+      "start": 14,
+      "end": 31,
+      "lines": 18
+    },
+    {
+      "file": "lib/app/session.dart",
+      "name": "restore",
+      "start": 41,
+      "end": 58,
+      "lines": 18
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "read",
+      "start": 75,
+      "end": 92,
+      "lines": 18
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "findKey",
+      "start": 95,
+      "end": 112,
+      "lines": 18
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "parse",
+      "start": 28,
+      "end": 45,
+      "lines": 18
+    },
+    {
+      "file": "lib/features/article/article_category.dart",
+      "name": "build",
+      "start": 7,
+      "end": 24,
+      "lines": 18
+    },
+    {
+      "file": "lib/features/discovery/home_popular.dart",
+      "name": "build",
+      "start": 7,
+      "end": 24,
+      "lines": 18
+    },
+    {
+      "file": "lib/features/editor/editor_modes.dart",
+      "name": "build",
+      "start": 13,
+      "end": 30,
+      "lines": 18
+    },
+    {
+      "file": "lib/features/discovery/home_latest.dart",
+      "name": "build",
+      "start": 7,
+      "end": 23,
+      "lines": 17
+    },
+    {
+      "file": "lib/features/data/cache_policy_table.dart",
+      "name": "validate",
+      "start": 160,
+      "end": 176,
+      "lines": 17
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "initState",
+      "start": 79,
+      "end": 95,
+      "lines": 17
+    },
+    {
+      "file": "lib/core/cache/cache_key.dart",
+      "name": "tryParse",
+      "start": 20,
+      "end": 35,
+      "lines": 16
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "build",
+      "start": 383,
+      "end": 398,
+      "lines": 16
+    },
+    {
+      "file": "lib/features/member/notification_status.dart",
+      "name": "build",
+      "start": 17,
+      "end": 32,
+      "lines": 16
+    },
+    {
+      "file": "lib/features/discovery/search_page.dart",
+      "name": "search",
+      "start": 58,
+      "end": 73,
+      "lines": 16
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "<constructor>",
+      "start": 54,
+      "end": 69,
+      "lines": 16
+    },
+    {
+      "file": "lib/shared/widgets/reader_image.dart",
+      "name": "<closure>",
+      "start": 43,
+      "end": 58,
+      "lines": 16
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "_colorScheme",
+      "start": 61,
+      "end": 76,
+      "lines": 16
+    },
+    {
+      "file": "lib/app/theme/app_theme.dart",
+      "name": "palette",
+      "start": 104,
+      "end": 119,
+      "lines": 16
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "_redirect",
+      "start": 76,
+      "end": 90,
+      "lines": 15
+    },
+    {
+      "file": "lib/features/discovery/search_page.dart",
+      "name": "build",
+      "start": 80,
+      "end": 94,
+      "lines": 15
+    },
+    {
+      "file": "lib/features/discovery/search_results.dart",
+      "name": "build",
+      "start": 15,
+      "end": 29,
+      "lines": 15
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 337,
+      "end": 351,
+      "lines": 15
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "updateTitle",
+      "start": 109,
+      "end": 123,
+      "lines": 15
+    },
+    {
+      "file": "lib/features/discovery/focus_stories.dart",
+      "name": "_control",
+      "start": 57,
+      "end": 71,
+      "lines": 15
+    },
+    {
+      "file": "lib/features/article/article_navigation.dart",
+      "name": "shareArticle",
+      "start": 58,
+      "end": 72,
+      "lines": 15
+    },
+    {
+      "file": "lib/features/data/reaction_store.dart",
+      "name": "patch",
+      "start": 64,
+      "end": 78,
+      "lines": 15
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "retry",
+      "start": 139,
+      "end": 153,
+      "lines": 15
+    },
+    {
+      "file": "lib/features/data/favorite_index.dart",
+      "name": "_scanFavoritePage",
+      "start": 55,
+      "end": 68,
+      "lines": 14
+    },
+    {
+      "file": "lib/features/discovery/search_suggestions.dart",
+      "name": "<closure>",
+      "start": 49,
+      "end": 62,
+      "lines": 14
+    },
+    {
+      "file": "lib/shared/widgets/confirm.dart",
+      "name": "<closure>",
+      "start": 8,
+      "end": 21,
+      "lines": 14
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "_serial",
+      "start": 118,
+      "end": 131,
+      "lines": 14
+    },
+    {
+      "file": "lib/features/article/article_breadcrumb.dart",
+      "name": "build",
+      "start": 7,
+      "end": 20,
+      "lines": 14
+    },
+    {
+      "file": "lib/features/data/reader_models.dart",
+      "name": "fromJson",
+      "start": 28,
+      "end": 40,
+      "lines": 13
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "photo",
+      "start": 117,
+      "end": 129,
+      "lines": 13
+    },
+    {
+      "file": "lib/main.dart",
+      "name": "build",
+      "start": 74,
+      "end": 86,
+      "lines": 13
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "dispose",
+      "start": 164,
+      "end": 176,
+      "lines": 13
+    },
+    {
+      "file": "lib/features/article/article_navigation.dart",
+      "name": "<closure>",
+      "start": 34,
+      "end": 46,
+      "lines": 13
+    },
+    {
+      "file": "lib/features/member/settings_page.dart",
+      "name": "<closure>",
+      "start": 39,
+      "end": 51,
+      "lines": 13
+    },
+    {
+      "file": "lib/features/discovery/story_carousel.dart",
+      "name": "build",
+      "start": 13,
+      "end": 25,
+      "lines": 13
+    },
+    {
+      "file": "lib/features/article/article_tags.dart",
+      "name": "build",
+      "start": 7,
+      "end": 19,
+      "lines": 13
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "openInBrowser",
+      "start": 125,
+      "end": 137,
+      "lines": 13
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "setReaction",
+      "start": 79,
+      "end": 91,
+      "lines": 13
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "<constructor>",
+      "start": 60,
+      "end": 72,
+      "lines": 13
+    },
+    {
+      "file": "lib/shared/widgets/unread_icon.dart",
+      "name": "initState",
+      "start": 25,
+      "end": 37,
+      "lines": 13
+    },
+    {
+      "file": "lib/features/article/article_title.dart",
+      "name": "build",
+      "start": 7,
+      "end": 19,
+      "lines": 13
+    },
+    {
+      "file": "lib/features/editor/editor_payload.dart",
+      "name": "wrapSelection",
+      "start": 34,
+      "end": 45,
+      "lines": 12
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "apply",
+      "start": 117,
+      "end": 128,
+      "lines": 12
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "initState",
+      "start": 76,
+      "end": 87,
+      "lines": 12
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<constructor>",
+      "start": 23,
+      "end": 34,
+      "lines": 12
+    },
+    {
+      "file": "lib/app/session.dart",
+      "name": "<constructor>",
+      "start": 21,
+      "end": 32,
+      "lines": 12
+    },
+    {
+      "file": "lib/features/member/member_list_page.dart",
+      "name": "<closure>",
+      "start": 34,
+      "end": 45,
+      "lines": 12
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "remove",
+      "start": 217,
+      "end": 228,
+      "lines": 12
+    },
+    {
+      "file": "lib/shared/prototype_icons.dart",
+      "name": "build",
+      "start": 53,
+      "end": 64,
+      "lines": 12
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "reactionPanel",
+      "start": 350,
+      "end": 361,
+      "lines": 12
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 220,
+      "end": 231,
+      "lines": 12
+    },
+    {
+      "file": "lib/features/article/article_reactions.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 16,
+      "lines": 12
+    },
+    {
+      "file": "lib/features/article/article_content.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 16,
+      "lines": 12
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "comments",
+      "start": 202,
+      "end": 213,
+      "lines": 12
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "invalidate",
+      "start": 340,
+      "end": 351,
+      "lines": 12
+    },
+    {
+      "file": "lib/shared/cache_visibility.dart",
+      "name": "didChangeDependencies",
+      "start": 22,
+      "end": 32,
+      "lines": 11
+    },
+    {
+      "file": "lib/features/editor/editor_body.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 15,
+      "lines": 11
+    },
+    {
+      "file": "lib/features/member/account_options.dart",
+      "name": "<closure>",
+      "start": 28,
+      "end": 38,
+      "lines": 11
+    },
+    {
+      "file": "lib/app/session.dart",
+      "name": "<closure>",
+      "start": 115,
+      "end": 125,
+      "lines": 11
+    },
+    {
+      "file": "lib/shared/widgets/notice.dart",
+      "name": "notice",
+      "start": 6,
+      "end": 16,
+      "lines": 11
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "install",
+      "start": 97,
+      "end": 107,
+      "lines": 11
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "<constructor>",
+      "start": 25,
+      "end": 35,
+      "lines": 11
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "_outlinedButtonTheme",
+      "start": 172,
+      "end": 182,
+      "lines": 11
+    },
+    {
+      "file": "lib/features/comment_widgets/comment_thread.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 14,
+      "lines": 10
+    },
+    {
+      "file": "lib/features/article/article_navigation.dart",
+      "name": "openComment",
+      "start": 126,
+      "end": 135,
+      "lines": 10
+    },
+    {
+      "file": "lib/features/auth/auth_fields.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 14,
+      "lines": 10
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "_bottomNavigationBarTheme",
+      "start": 99,
+      "end": 108,
+      "lines": 10
+    },
+    {
+      "file": "lib/features/data/cache_policy_table.dart",
+      "name": "resourceTags",
+      "start": 125,
+      "end": 134,
+      "lines": 10
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "_chipTheme",
+      "start": 118,
+      "end": 127,
+      "lines": 10
+    },
+    {
+      "file": "lib/shared/cache_visibility.dart",
+      "name": "didChangeAppLifecycleState",
+      "start": 34,
+      "end": 43,
+      "lines": 10
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 251,
+      "end": 260,
+      "lines": 10
+    },
+    {
+      "file": "lib/app/session.dart",
+      "name": "logout",
+      "start": 83,
+      "end": 92,
+      "lines": 10
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "changed",
+      "start": 106,
+      "end": 115,
+      "lines": 10
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "<closure>",
+      "start": 147,
+      "end": 156,
+      "lines": 10
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "resetPrivate",
+      "start": 271,
+      "end": 280,
+      "lines": 10
+    },
+    {
+      "file": "lib/core/cache/image_store.dart",
+      "name": "resetPrivate",
+      "start": 120,
+      "end": 129,
+      "lines": 10
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 67,
+      "end": 76,
+      "lines": 10
+    },
+    {
+      "file": "lib/core/cache/image_store.dart",
+      "name": "_put",
+      "start": 103,
+      "end": 112,
+      "lines": 10
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "clear",
+      "start": 368,
+      "end": 377,
+      "lines": 10
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "_appBarTheme",
+      "start": 88,
+      "end": 97,
+      "lines": 10
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<closure>",
+      "start": 119,
+      "end": 128,
+      "lines": 10
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "removeWhere",
+      "start": 203,
+      "end": 212,
+      "lines": 10
+    },
+    {
+      "file": "lib/core/cache/cache_key.dart",
+      "name": "encode",
+      "start": 9,
+      "end": 18,
+      "lines": 10
+    },
+    {
+      "file": "lib/features/discovery/categories_page.dart",
+      "name": "<closure>",
+      "start": 63,
+      "end": 72,
+      "lines": 10
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "_filledButtonTheme",
+      "start": 161,
+      "end": 170,
+      "lines": 10
+    },
+    {
+      "file": "lib/shared/widgets/unread_icon.dart",
+      "name": "<closure>",
+      "start": 28,
+      "end": 36,
+      "lines": 9
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "clear",
+      "start": 284,
+      "end": 292,
+      "lines": 9
+    },
+    {
+      "file": "lib/features/discovery/search_page.dart",
+      "name": "initState",
+      "start": 33,
+      "end": 41,
+      "lines": 9
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "build",
+      "start": 166,
+      "end": 174,
+      "lines": 9
+    },
+    {
+      "file": "lib/shared/widgets/page_frame.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 13,
+      "lines": 9
+    },
+    {
+      "file": "lib/shared/widgets/reader_image.dart",
+      "name": "<closure>",
+      "start": 71,
+      "end": 79,
+      "lines": 9
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "didUpdateWidget",
+      "start": 134,
+      "end": 142,
+      "lines": 9
+    },
+    {
+      "file": "lib/shared/widgets/unread_icon.dart",
+      "name": "build",
+      "start": 50,
+      "end": 58,
+      "lines": 9
+    },
+    {
+      "file": "lib/shared/widgets/reader_image.dart",
+      "name": "<closure>",
+      "start": 71,
+      "end": 79,
+      "lines": 9
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 84,
+      "end": 92,
+      "lines": 9
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "initState",
+      "start": 34,
+      "end": 42,
+      "lines": 9
+    },
+    {
+      "file": "lib/features/editor/editor_form.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 13,
+      "lines": 9
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 255,
+      "end": 263,
+      "lines": 9
+    },
+    {
+      "file": "lib/features/editor/editor_metadata.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 13,
+      "lines": 9
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 77,
+      "end": 85,
+      "lines": 9
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 191,
+      "end": 199,
+      "lines": 9
+    },
+    {
+      "file": "lib/shared/widgets/menu_cell.dart",
+      "name": "<constructor>",
+      "start": 10,
+      "end": 18,
+      "lines": 9
+    },
+    {
+      "file": "lib/features/editor/editor_scaffold.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 13,
+      "lines": 9
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "fence",
+      "start": 329,
+      "end": 337,
+      "lines": 9
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "draft",
+      "start": 89,
+      "end": 97,
+      "lines": 9
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "_cardTheme",
+      "start": 78,
+      "end": 86,
+      "lines": 9
+    },
+    {
+      "file": "lib/features/data/cache_policy_table.dart",
+      "name": "forQuery",
+      "start": 178,
+      "end": 185,
+      "lines": 8
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "requireMember",
+      "start": 274,
+      "end": 281,
+      "lines": 8
+    },
+    {
+      "file": "lib/core/markdown/code_block.dart",
+      "name": "<closure>",
+      "start": 93,
+      "end": 100,
+      "lines": 8
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 201,
+      "end": 208,
+      "lines": 8
+    },
+    {
+      "file": "lib/features/data/article_reader.dart",
+      "name": "<constructor>",
+      "start": 14,
+      "end": 21,
+      "lines": 8
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "key",
+      "start": 103,
+      "end": 110,
+      "lines": 8
+    },
+    {
+      "file": "lib/features/data/favorite_index.dart",
+      "name": "resetFavoriteIndex",
+      "start": 18,
+      "end": 25,
+      "lines": 8
+    },
+    {
+      "file": "lib/app/theme/app_colors.dart",
+      "name": "statusColor",
+      "start": 117,
+      "end": 124,
+      "lines": 8
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "_errorBuilder",
+      "start": 92,
+      "end": 99,
+      "lines": 8
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "dispose",
+      "start": 134,
+      "end": 141,
+      "lines": 8
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 99,
+      "end": 106,
+      "lines": 8
+    },
+    {
+      "file": "lib/main.dart",
+      "name": "didHaveMemoryPressure",
+      "start": 65,
+      "end": 72,
+      "lines": 8
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "didUpdateWidget",
+      "start": 55,
+      "end": 62,
+      "lines": 8
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "build",
+      "start": 44,
+      "end": 51,
+      "lines": 8
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "pick",
+      "start": 205,
+      "end": 212,
+      "lines": 8
+    },
+    {
+      "file": "lib/features/discovery/search_page.dart",
+      "name": "didUpdateWidget",
+      "start": 43,
+      "end": 50,
+      "lines": 8
+    },
+    {
+      "file": "lib/features/data/reader_models.dart",
+      "name": "<constructor>",
+      "start": 45,
+      "end": 52,
+      "lines": 8
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "_textStyle",
+      "start": 52,
+      "end": 59,
+      "lines": 8
+    },
+    {
+      "file": "lib/features/member/settings_page.dart",
+      "name": "<closure>",
+      "start": 44,
+      "end": 50,
+      "lines": 7
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "fromJson",
+      "start": 49,
+      "end": 55,
+      "lines": 7
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 108,
+      "end": 114,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 179,
+      "end": 185,
+      "lines": 7
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<constructor>",
+      "start": 11,
+      "end": 17,
+      "lines": 7
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "<constructor>",
+      "start": 109,
+      "end": 115,
+      "lines": 7
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "_textButtonTheme",
+      "start": 184,
+      "end": 190,
+      "lines": 7
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "didChangeDependencies",
+      "start": 126,
+      "end": 132,
+      "lines": 7
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "build",
+      "start": 144,
+      "end": 150,
+      "lines": 7
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "<constructor>",
+      "start": 34,
+      "end": 40,
+      "lines": 7
+    },
+    {
+      "file": "lib/shared/widgets/article_tile.dart",
+      "name": "<constructor>",
+      "start": 17,
+      "end": 23,
+      "lines": 7
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "_persist",
+      "start": 89,
+      "end": 95,
+      "lines": 7
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "_bottomSheetTheme",
+      "start": 110,
+      "end": 116,
+      "lines": 7
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 82,
+      "end": 88,
+      "lines": 7
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "clear",
+      "start": 110,
+      "end": 116,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "dispose",
+      "start": 70,
+      "end": 76,
+      "lines": 7
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "<closure>",
+      "start": 106,
+      "end": 112,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/article/article_reactions.dart",
+      "name": "<closure>",
+      "start": 58,
+      "end": 64,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "<closure>",
+      "start": 128,
+      "end": 134,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "saveSnapshot",
+      "start": 262,
+      "end": 268,
+      "lines": 7
+    },
+    {
+      "file": "lib/app/theme/status_views.dart",
+      "name": "of",
+      "start": 9,
+      "end": 15,
+      "lines": 7
+    },
+    {
+      "file": "lib/app/theme/design_tokens.dart",
+      "name": "scaledSpace",
+      "start": 62,
+      "end": 68,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "<closure>",
+      "start": 54,
+      "end": 60,
+      "lines": 7
+    },
+    {
+      "file": "lib/app/theme/design_tokens.dart",
+      "name": "clampTextScale",
+      "start": 54,
+      "end": 60,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/auth/auth_actions.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 11,
+      "lines": 7
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "toJson",
+      "start": 42,
+      "end": 48,
+      "lines": 7
+    },
+    {
+      "file": "lib/app/theme/app_colors.dart",
+      "name": "statusColorBg",
+      "start": 126,
+      "end": 132,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/auth_page.dart",
+      "name": "dispose",
+      "start": 36,
+      "end": 42,
+      "lines": 7
+    },
+    {
+      "file": "lib/shared/widgets/reader_image.dart",
+      "name": "<constructor>",
+      "start": 14,
+      "end": 20,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/comment_widgets/comment_reply.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 11,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 93,
+      "end": 99,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/data/article_reader.dart",
+      "name": "matchesAlias",
+      "start": 65,
+      "end": 71,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/data/member_overview.dart",
+      "name": "<constructor>",
+      "start": 12,
+      "end": 18,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/data/reaction_store.dart",
+      "name": "<constructor>",
+      "start": 11,
+      "end": 17,
+      "lines": 7
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 141,
+      "end": 147,
+      "lines": 7
+    },
+    {
+      "file": "lib/shared/widgets/state_message.dart",
+      "name": "<constructor>",
+      "start": 11,
+      "end": 17,
+      "lines": 7
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 112,
+      "end": 118,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/member/avatar_card.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 11,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "persist",
+      "start": 98,
+      "end": 104,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/member/notification_status.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 11,
+      "lines": 7
+    },
+    {
+      "file": "lib/features/member/draft_actions.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 10,
+      "lines": 6
+    },
+    {
+      "file": "lib/main.dart",
+      "name": "initState",
+      "start": 51,
+      "end": 56,
+      "lines": 6
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "initState",
+      "start": 76,
+      "end": 81,
+      "lines": 6
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "patch",
+      "start": 360,
+      "end": 365,
+      "lines": 6
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "dispose",
+      "start": 112,
+      "end": 117,
+      "lines": 6
+    },
+    {
+      "file": "lib/shared/widgets/submit_button.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 10,
+      "lines": 6
+    },
+    {
+      "file": "lib/features/comment_widgets/comment_footer.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 10,
+      "lines": 6
+    },
+    {
+      "file": "lib/core/cache/image_store.dart",
+      "name": "clear",
+      "start": 131,
+      "end": 136,
+      "lines": 6
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "_snackBarTheme",
+      "start": 192,
+      "end": 197,
+      "lines": 6
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "showLoadError",
+      "start": 124,
+      "end": 129,
+      "lines": 6
+    },
+    {
+      "file": "lib/features/discovery/home_popular.dart",
+      "name": "<closure>",
+      "start": 15,
+      "end": 20,
+      "lines": 6
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "<constructor>",
+      "start": 154,
+      "end": 159,
+      "lines": 6
+    },
+    {
+      "file": "lib/app/session.dart",
+      "name": "expire",
+      "start": 94,
+      "end": 99,
+      "lines": 6
+    },
+    {
+      "file": "lib/features/discovery/search_results.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 10,
+      "lines": 6
+    },
+    {
+      "file": "lib/app/session.dart",
+      "name": "reloadUser",
+      "start": 101,
+      "end": 106,
+      "lines": 6
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "initState",
+      "start": 43,
+      "end": 48,
+      "lines": 6
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "<constructor>",
+      "start": 22,
+      "end": 27,
+      "lines": 6
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "fresh",
+      "start": 122,
+      "end": 127,
+      "lines": 6
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 187,
+      "end": 192,
+      "lines": 6
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "fileUrl",
+      "start": 338,
+      "end": 343,
+      "lines": 6
+    },
+    {
+      "file": "lib/features/editor/editor_preview.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 10,
+      "lines": 6
+    },
+    {
+      "file": "lib/shared/prototype_icons.dart",
+      "name": "build",
+      "start": 73,
+      "end": 78,
+      "lines": 6
+    },
+    {
+      "file": "lib/features/member/draft_tile.dart",
+      "name": "<constructor>",
+      "start": 21,
+      "end": 26,
+      "lines": 6
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "initState",
+      "start": 79,
+      "end": 84,
+      "lines": 6
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "<closure>",
+      "start": 107,
+      "end": 112,
+      "lines": 6
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "<closure>",
+      "start": 29,
+      "end": 34,
+      "lines": 6
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "article",
+      "start": 157,
+      "end": 162,
+      "lines": 6
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 79,
+      "end": 84,
+      "lines": 6
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 86,
+      "end": 91,
+      "lines": 6
+    },
+    {
+      "file": "lib/main.dart",
+      "name": "dispose",
+      "start": 58,
+      "end": 63,
+      "lines": 6
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 288,
+      "end": 292,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 215,
+      "end": 219,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/discovery/focus_stories.dart",
+      "name": "dispose",
+      "start": 25,
+      "end": 29,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/discovery/focus_stories.dart",
+      "name": "step",
+      "start": 31,
+      "end": 35,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 201,
+      "end": 205,
+      "lines": 5
+    },
+    {
+      "file": "lib/core/cache/image_store.dart",
+      "name": "canPersist",
+      "start": 25,
+      "end": 29,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 248,
+      "end": 252,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/discovery/search_page.dart",
+      "name": "dispose",
+      "start": 52,
+      "end": 56,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/discovery/search_suggestions.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 9,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/discovery/story_carousel.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 9,
+      "lines": 5
+    },
+    {
+      "file": "lib/shared/cache_visibility.dart",
+      "name": "dispose",
+      "start": 45,
+      "end": 49,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 110,
+      "end": 114,
+      "lines": 5
+    },
+    {
+      "file": "lib/app/session.dart",
+      "name": "setTheme",
+      "start": 108,
+      "end": 112,
+      "lines": 5
+    },
+    {
+      "file": "lib/core/markdown/code_block.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 9,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "dispose",
+      "start": 155,
+      "end": 159,
+      "lines": 5
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "_saveIndex",
+      "start": 133,
+      "end": 137,
+      "lines": 5
+    },
+    {
+      "file": "lib/core/markdown/code_block.dart",
+      "name": "span",
+      "start": 19,
+      "end": 23,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/editor/editor_modes.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 9,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/editor/editor_save_bar.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 9,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/member/account_info_cells.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 9,
+      "lines": 5
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "_listTileTheme",
+      "start": 129,
+      "end": 133,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/member/draft_actions.dart",
+      "name": "<closure>",
+      "start": 25,
+      "end": 29,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/member/member_articles_page.dart",
+      "name": "<closure>",
+      "start": 76,
+      "end": 80,
+      "lines": 5
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "_delete",
+      "start": 196,
+      "end": 200,
+      "lines": 5
+    },
+    {
+      "file": "lib/app/theme/app_colors.dart",
+      "name": "heroWash",
+      "start": 111,
+      "end": 115,
+      "lines": 5
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<closure>",
+      "start": 207,
+      "end": 211,
+      "lines": 5
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "<closure>",
+      "start": 78,
+      "end": 82,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "dispose",
+      "start": 69,
+      "end": 73,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "<closure>",
+      "start": 98,
+      "end": 102,
+      "lines": 5
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<constructor>",
+      "start": 37,
+      "end": 41,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "initState",
+      "start": 45,
+      "end": 49,
+      "lines": 5
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "dispose",
+      "start": 131,
+      "end": 135,
+      "lines": 5
+    },
+    {
+      "file": "lib/shared/cache_visibility.dart",
+      "name": "initState",
+      "start": 16,
+      "end": 20,
+      "lines": 5
+    },
+    {
+      "file": "lib/shared/widgets/unread_icon.dart",
+      "name": "dispose",
+      "start": 44,
+      "end": 48,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 87,
+      "end": 91,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "fetch",
+      "start": 119,
+      "end": 123,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "<closure>",
+      "start": 142,
+      "end": 146,
+      "lines": 5
+    },
+    {
+      "file": "lib/app/session.dart",
+      "name": "<closure>",
+      "start": 27,
+      "end": 31,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/discovery/browse_page.dart",
+      "name": "build",
+      "start": 11,
+      "end": 15,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 130,
+      "end": 134,
+      "lines": 5
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "size",
+      "start": 217,
+      "end": 221,
+      "lines": 5
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 342,
+      "end": 345,
+      "lines": 4
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "onCacheVisible",
+      "start": 50,
+      "end": 53,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/editor/editor_payload.dart",
+      "name": "flattenCategories",
+      "start": 30,
+      "end": 33,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/data/fetch_cache_reply.dart",
+      "name": "<closure>",
+      "start": 17,
+      "end": 20,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "onCacheVisible",
+      "start": 63,
+      "end": 66,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/auth_page.dart",
+      "name": "<closure>",
+      "start": 46,
+      "end": 49,
+      "lines": 4
+    },
+    {
+      "file": "lib/core/cache/image_store.dart",
+      "name": "trim",
+      "start": 114,
+      "end": 117,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 308,
+      "end": 311,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/discovery/tags_page.dart",
+      "name": "<closure>",
+      "start": 66,
+      "end": 69,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/data/member_overview.dart",
+      "name": "<closure>",
+      "start": 40,
+      "end": 43,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/member/member_articles_page.dart",
+      "name": "edit",
+      "start": 28,
+      "end": 31,
+      "lines": 4
+    },
+    {
+      "file": "lib/app/app_bottom_bar.dart",
+      "name": "<closure>",
+      "start": 32,
+      "end": 35,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/discovery/search_page.dart",
+      "name": "<closure>",
+      "start": 68,
+      "end": 71,
+      "lines": 4
+    },
+    {
+      "file": "lib/shared/widgets/unread_icon.dart",
+      "name": "onCacheVisible",
+      "start": 39,
+      "end": 42,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/discovery/search_page.dart",
+      "name": "clearHistory",
+      "start": 75,
+      "end": 78,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/member/member_page.dart",
+      "name": "<closure>",
+      "start": 50,
+      "end": 53,
+      "lines": 4
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 246,
+      "end": 249,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/article/article_navigation.dart",
+      "name": "<closure>",
+      "start": 85,
+      "end": 88,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "onCacheVisible",
+      "start": 39,
+      "end": 42,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/article/article_navigation.dart",
+      "name": "<closure>",
+      "start": 93,
+      "end": 96,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 121,
+      "end": 124,
+      "lines": 4
+    },
+    {
+      "file": "lib/core/markdown/code_cache.dart",
+      "name": "clear",
+      "start": 35,
+      "end": 38,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "<closure>",
+      "start": 88,
+      "end": 91,
+      "lines": 4
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 160,
+      "end": 163,
+      "lines": 4
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "<closure>",
+      "start": 200,
+      "end": 203,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 186,
+      "end": 189,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/member/profile_fields.dart",
+      "name": "<closure>",
+      "start": 23,
+      "end": 26,
+      "lines": 4
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 178,
+      "end": 181,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "<closure>",
+      "start": 61,
+      "end": 64,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 302,
+      "end": 305,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "onCacheVisible",
+      "start": 61,
+      "end": 64,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/member/theme_chooser.dart",
+      "name": "<closure>",
+      "start": 36,
+      "end": 39,
+      "lines": 4
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 65,
+      "end": 68,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 237,
+      "end": 240,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 245,
+      "end": 248,
+      "lines": 4
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "_shouldRefresh",
+      "start": 254,
+      "end": 257,
+      "lines": 4
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "onCacheVisible",
+      "start": 94,
+      "end": 97,
+      "lines": 4
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "seed",
+      "start": 354,
+      "end": 357,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 346,
+      "end": 349,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 110,
+      "end": 113,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/auth/auth_fields.dart",
+      "name": "<closure>",
+      "start": 46,
+      "end": 49,
+      "lines": 4
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 118,
+      "end": 121,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "toc",
+      "start": 163,
+      "end": 166,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 119,
+      "end": 122,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "<closure>",
+      "start": 188,
+      "end": 191,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "categories",
+      "start": 195,
+      "end": 198,
+      "lines": 4
+    },
+    {
+      "file": "lib/shared/cache_visibility.dart",
+      "name": "cacheVisible",
+      "start": 11,
+      "end": 14,
+      "lines": 4
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "peek",
+      "start": 114,
+      "end": 117,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "showLoadError",
+      "start": 197,
+      "end": 200,
+      "lines": 4
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "write",
+      "start": 26,
+      "end": 29,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 324,
+      "end": 327,
+      "lines": 4
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "close",
+      "start": 385,
+      "end": 388,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 95,
+      "end": 98,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 101,
+      "end": 104,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 207,
+      "end": 210,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/editor/editor_metadata.dart",
+      "name": "<closure>",
+      "start": 69,
+      "end": 72,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 140,
+      "end": 143,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/editor/editor_metadata.dart",
+      "name": "<closure>",
+      "start": 79,
+      "end": 82,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/discovery/story_carousel.dart",
+      "name": "<closure>",
+      "start": 20,
+      "end": 23,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "forbidden",
+      "start": 115,
+      "end": 118,
+      "lines": 4
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 92,
+      "end": 94,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 165,
+      "end": 167,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "tags",
+      "start": 199,
+      "end": 201,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "<closure>",
+      "start": 38,
+      "end": 40,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 111,
+      "end": 113,
+      "lines": 3
+    },
+    {
+      "file": "lib/shared/cache_visibility.dart",
+      "name": "<closure>",
+      "start": 27,
+      "end": 29,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/article/article_tags.dart",
+      "name": "<closure>",
+      "start": 14,
+      "end": 16,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "<closure>",
+      "start": 130,
+      "end": 132,
+      "lines": 3
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<closure>",
+      "start": 171,
+      "end": 173,
+      "lines": 3
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<closure>",
+      "start": 165,
+      "end": 167,
+      "lines": 3
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 65,
+      "end": 67,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/editor/editor_metadata.dart",
+      "name": "<closure>",
+      "start": 47,
+      "end": 49,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 386,
+      "end": 388,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 224,
+      "end": 226,
+      "lines": 3
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "<closure>",
+      "start": 147,
+      "end": 149,
+      "lines": 3
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "_samePrefix",
+      "start": 216,
+      "end": 218,
+      "lines": 3
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "expiresAt",
+      "start": 114,
+      "end": 116,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 168,
+      "end": 170,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 100,
+      "end": 102,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/auth/auth_actions.dart",
+      "name": "<closure>",
+      "start": 36,
+      "end": 38,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/discovery/tags_page.dart",
+      "name": "<closure>",
+      "start": 49,
+      "end": 51,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/discovery/tag_card.dart",
+      "name": "<closure>",
+      "start": 9,
+      "end": 11,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/discovery/home_popular.dart",
+      "name": "<closure>",
+      "start": 12,
+      "end": 14,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/discovery/home_latest.dart",
+      "name": "<closure>",
+      "start": 11,
+      "end": 13,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/discovery/categories_page.dart",
+      "name": "<closure>",
+      "start": 42,
+      "end": 44,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/discovery/categories_page.dart",
+      "name": "<closure>",
+      "start": 32,
+      "end": 34,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/data/reader_models.dart",
+      "name": "fromJson",
+      "start": 8,
+      "end": 10,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/data/cache_policy_table.dart",
+      "name": "policy",
+      "start": 121,
+      "end": 123,
+      "lines": 3
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 180,
+      "end": 182,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 249,
+      "end": 251,
+      "lines": 3
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "trim",
+      "start": 380,
+      "end": 382,
+      "lines": 3
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "emit",
+      "start": 88,
+      "end": 90,
+      "lines": 3
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "overview",
+      "start": 50,
+      "end": 51,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "createState",
+      "start": 30,
+      "end": 31,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "insert",
+      "start": 202,
+      "end": 203,
+      "lines": 2
+    },
+    {
+      "file": "lib/core/cache/image_store.dart",
+      "name": "<constructor>",
+      "start": 13,
+      "end": 14,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/data/reader_models.dart",
+      "name": "jsonMap",
+      "start": 3,
+      "end": 4,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/data/reader_models.dart",
+      "name": "route",
+      "start": 16,
+      "end": 17,
+      "lines": 2
+    },
+    {
+      "file": "lib/core/network/endpoints.dart",
+      "name": "collectionItem",
+      "start": 49,
+      "end": 50,
+      "lines": 2
+    },
+    {
+      "file": "lib/core/network/endpoints.dart",
+      "name": "articleId",
+      "start": 51,
+      "end": 52,
+      "lines": 2
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "isBlockElement",
+      "start": 51,
+      "end": 52,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/article/adjacent_article.dart",
+      "name": "<closure>",
+      "start": 28,
+      "end": 29,
+      "lines": 2
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 175,
+      "end": 176,
+      "lines": 2
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<closure>",
+      "start": 180,
+      "end": 181,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/member/draft_tile.dart",
+      "name": "createState",
+      "start": 29,
+      "end": 30,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/member/member_articles_page.dart",
+      "name": "createState",
+      "start": 21,
+      "end": 22,
+      "lines": 2
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "isBlockElement",
+      "start": 84,
+      "end": 85,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/discovery/focus_stories.dart",
+      "name": "createState",
+      "start": 18,
+      "end": 19,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/member/member_list_page.dart",
+      "name": "createState",
+      "start": 17,
+      "end": 18,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "createState",
+      "start": 48,
+      "end": 49,
+      "lines": 2
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 61,
+      "end": 62,
+      "lines": 2
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 126,
+      "end": 127,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "createState",
+      "start": 32,
+      "end": 33,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "createState",
+      "start": 51,
+      "end": 52,
+      "lines": 2
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "createState",
+      "start": 120,
+      "end": 121,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/discovery/home_latest.dart",
+      "name": "<closure>",
+      "start": 14,
+      "end": 15,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "_trackKey",
+      "start": 66,
+      "end": 67,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "bundle",
+      "start": 68,
+      "end": 69,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "force",
+      "start": 95,
+      "end": 96,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "track",
+      "start": 98,
+      "end": 99,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "feedTag",
+      "start": 112,
+      "end": 113,
+      "lines": 2
+    },
+    {
+      "file": "lib/core/cache/image_store.dart",
+      "name": "key",
+      "start": 22,
+      "end": 23,
+      "lines": 2
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "count",
+      "start": 86,
+      "end": 87,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "cacheBytes",
+      "start": 282,
+      "end": 283,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "isWebAddress",
+      "start": 13,
+      "end": 14,
+      "lines": 2
+    },
+    {
+      "file": "lib/shared/widgets/unread_icon.dart",
+      "name": "createState",
+      "start": 18,
+      "end": 19,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "draftKey",
+      "start": 74,
+      "end": 75,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/discovery/search_page.dart",
+      "name": "createState",
+      "start": 25,
+      "end": 26,
+      "lines": 2
+    },
+    {
+      "file": "lib/main.dart",
+      "name": "createState",
+      "start": 42,
+      "end": 43,
+      "lines": 2
+    },
+    {
+      "file": "lib/shared/cache_visibility.dart",
+      "name": "didChangeAppLifecycleState",
+      "start": 55,
+      "end": 56,
+      "lines": 2
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "createState",
+      "start": 42,
+      "end": 43,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "navigation",
+      "start": 346,
+      "end": 347,
+      "lines": 2
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "read",
+      "start": 24,
+      "end": 25,
+      "lines": 2
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 190,
+      "end": 191,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "createState",
+      "start": 55,
+      "end": 56,
+      "lines": 2
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "createState",
+      "start": 31,
+      "end": 32,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/discovery/tags_page.dart",
+      "name": "createState",
+      "start": 21,
+      "end": 22,
+      "lines": 2
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "toString",
+      "start": 45,
+      "end": 46,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/auth_page.dart",
+      "name": "createState",
+      "start": 24,
+      "end": 25,
+      "lines": 2
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 155,
+      "end": 156,
+      "lines": 2
+    },
+    {
+      "file": "lib/shared/widgets/reader_image.dart",
+      "name": "createState",
+      "start": 24,
+      "end": 25,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "createState",
+      "start": 21,
+      "end": 22,
+      "lines": 2
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 224,
+      "end": 224,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/endpoints.dart",
+      "name": "like",
+      "start": 39,
+      "end": 39,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/endpoints.dart",
+      "name": "likeStatus",
+      "start": 40,
+      "end": 40,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/endpoints.dart",
+      "name": "comments",
+      "start": 41,
+      "end": 41,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 159,
+      "end": 159,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/data/reader_models.dart",
+      "name": "author",
+      "start": 18,
+      "end": 18,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor/editor_metadata.dart",
+      "name": "<closure>",
+      "start": 71,
+      "end": 71,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/data/reader_models.dart",
+      "name": "status",
+      "start": 19,
+      "end": 19,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor/editor_metadata.dart",
+      "name": "<closure>",
+      "start": 81,
+      "end": 81,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/data/reader_models.dart",
+      "name": "<constructor>",
+      "start": 24,
+      "end": 24,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/endpoints.dart",
+      "name": "view",
+      "start": 42,
+      "end": 42,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor/editor_modes.dart",
+      "name": "<closure>",
+      "start": 24,
+      "end": 24,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/endpoints.dart",
+      "name": "favorite",
+      "start": 43,
+      "end": 43,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor/editor_payload.dart",
+      "name": "<closure>",
+      "start": 22,
+      "end": 22,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor/editor_payload.dart",
+      "name": "<closure>",
+      "start": 23,
+      "end": 23,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/data/reader_models.dart",
+      "name": "hasMore",
+      "start": 27,
+      "end": 27,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/endpoints.dart",
+      "name": "comment",
+      "start": 44,
+      "end": 44,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "<constructor>",
+      "start": 49,
+      "end": 49,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/endpoints.dart",
+      "name": "member",
+      "start": 45,
+      "end": 45,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/data/reader_models.dart",
+      "name": "<closure>",
+      "start": 35,
+      "end": 35,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/endpoints.dart",
+      "name": "submit",
+      "start": 46,
+      "end": 46,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor/editor_save_bar.dart",
+      "name": "<closure>",
+      "start": 24,
+      "end": 24,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor/editor_save_bar.dart",
+      "name": "<closure>",
+      "start": 34,
+      "end": 34,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/endpoints.dart",
+      "name": "notification",
+      "start": 47,
+      "end": 47,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/endpoints.dart",
+      "name": "collection",
+      "start": 48,
+      "end": 48,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor/markdown_toolbar.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<closure>",
+      "start": 82,
+      "end": 82,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor/markdown_toolbar.dart",
+      "name": "<closure>",
+      "start": 15,
+      "end": 15,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor/markdown_toolbar.dart",
+      "name": "<closure>",
+      "start": 20,
+      "end": 20,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor/markdown_toolbar.dart",
+      "name": "<closure>",
+      "start": 25,
+      "end": 25,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor/markdown_toolbar.dart",
+      "name": "<closure>",
+      "start": 33,
+      "end": 33,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor/markdown_toolbar.dart",
+      "name": "<closure>",
+      "start": 41,
+      "end": 41,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor/markdown_toolbar.dart",
+      "name": "<closure>",
+      "start": 49,
+      "end": 49,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor/markdown_toolbar.dart",
+      "name": "<closure>",
+      "start": 57,
+      "end": 57,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 108,
+      "end": 108,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 200,
+      "end": 200,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 109,
+      "end": 109,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/account_options.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article/adjacent_article.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/account_options.dart",
+      "name": "<closure>",
+      "start": 14,
+      "end": 14,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/account_options.dart",
+      "name": "<closure>",
+      "start": 20,
+      "end": 20,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/author_page.dart",
+      "name": "<constructor>",
+      "start": 17,
+      "end": 17,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/appearance_options.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 161,
+      "end": 161,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/appearance_options.dart",
+      "name": "<closure>",
+      "start": 19,
+      "end": 19,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article/article_action.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "<closure>",
+      "start": 91,
+      "end": 91,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article/article_breadcrumb.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "<closure>",
+      "start": 92,
+      "end": 92,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/author_page.dart",
+      "name": "<closure>",
+      "start": 23,
+      "end": 23,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/draft_actions.dart",
+      "name": "<closure>",
+      "start": 34,
+      "end": 34,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/draft_actions.dart",
+      "name": "<closure>",
+      "start": 39,
+      "end": 39,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "<constructor>",
+      "start": 82,
+      "end": 82,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 149,
+      "end": 149,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article/article_breadcrumb.dart",
+      "name": "<closure>",
+      "start": 11,
+      "end": 11,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/draft_tile.dart",
+      "name": "<closure>",
+      "start": 44,
+      "end": 44,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/draft_tile.dart",
+      "name": "<closure>",
+      "start": 59,
+      "end": 59,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article/article_category.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_articles_page.dart",
+      "name": "<constructor>",
+      "start": 20,
+      "end": 20,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 153,
+      "end": 153,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/brand_title.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<closure>",
+      "start": 185,
+      "end": 185,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_articles_page.dart",
+      "name": "<closure>",
+      "start": 39,
+      "end": 39,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_articles_page.dart",
+      "name": "<closure>",
+      "start": 61,
+      "end": 61,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_articles_page.dart",
+      "name": "<closure>",
+      "start": 61,
+      "end": 61,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_articles_page.dart",
+      "name": "<closure>",
+      "start": 75,
+      "end": 75,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 160,
+      "end": 160,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_articles_page.dart",
+      "name": "<closure>",
+      "start": 78,
+      "end": 78,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/data/favorite_index.dart",
+      "name": "<closure>",
+      "start": 61,
+      "end": 61,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article/article_comment_bar.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_header.dart",
+      "name": "<closure>",
+      "start": 58,
+      "end": 58,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_list_page.dart",
+      "name": "<constructor>",
+      "start": 15,
+      "end": 15,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/markdown/code_block.dart",
+      "name": "<constructor>",
+      "start": 69,
+      "end": 69,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_list_page.dart",
+      "name": "kind",
+      "start": 22,
+      "end": 22,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/browse_page.dart",
+      "name": "<constructor>",
+      "start": 8,
+      "end": 8,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 224,
+      "end": 224,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_list_page.dart",
+      "name": "<closure>",
+      "start": 41,
+      "end": 41,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/categories_page.dart",
+      "name": "<constructor>",
+      "start": 19,
+      "end": 19,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article/article_navigation.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_page.dart",
+      "name": "<constructor>",
+      "start": 27,
+      "end": 27,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "clear",
+      "start": 215,
+      "end": 215,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_page.dart",
+      "name": "<closure>",
+      "start": 36,
+      "end": 36,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_page.dart",
+      "name": "<closure>",
+      "start": 41,
+      "end": 41,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "<closure>",
+      "start": 60,
+      "end": 60,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_page.dart",
+      "name": "<constructor>",
+      "start": 61,
+      "end": 61,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<closure>",
+      "start": 215,
+      "end": 215,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_page.dart",
+      "name": "<closure>",
+      "start": 72,
+      "end": 72,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_page.dart",
+      "name": "<closure>",
+      "start": 90,
+      "end": 90,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_page.dart",
+      "name": "<closure>",
+      "start": 100,
+      "end": 100,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_page.dart",
+      "name": "<closure>",
+      "start": 106,
+      "end": 106,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_page.dart",
+      "name": "<closure>",
+      "start": 114,
+      "end": 114,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_page.dart",
+      "name": "<closure>",
+      "start": 131,
+      "end": 131,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_statistics.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 171,
+      "end": 171,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/notification_card.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<closure>",
+      "start": 218,
+      "end": 218,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<closure>",
+      "start": 220,
+      "end": 220,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/cache_key.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/notification_text.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 239,
+      "end": 239,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "<constructor>",
+      "start": 29,
+      "end": 29,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<closure>",
+      "start": 98,
+      "end": 98,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "<closure>",
+      "start": 95,
+      "end": 95,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/categories_page.dart",
+      "name": "<closure>",
+      "start": 58,
+      "end": 58,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 190,
+      "end": 190,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "<closure>",
+      "start": 64,
+      "end": 64,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "<closure>",
+      "start": 100,
+      "end": 100,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "<closure>",
+      "start": 101,
+      "end": 101,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/cache_key.dart",
+      "name": "<closure>",
+      "start": 16,
+      "end": 16,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/focus_stories.dart",
+      "name": "<constructor>",
+      "start": 16,
+      "end": 16,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 103,
+      "end": 103,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 137,
+      "end": 137,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "<closure>",
+      "start": 116,
+      "end": 116,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "<closure>",
+      "start": 119,
+      "end": 119,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 165,
+      "end": 165,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/cache_key.dart",
+      "name": "article",
+      "start": 42,
+      "end": 42,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 254,
+      "end": 254,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "<closure>",
+      "start": 159,
+      "end": 159,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "<constructor>",
+      "start": 11,
+      "end": 11,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "<closure>",
+      "start": 172,
+      "end": 172,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "<closure>",
+      "start": 177,
+      "end": 177,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/notifications_page.dart",
+      "name": "<closure>",
+      "start": 181,
+      "end": 181,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/password_fields.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article/article_summary.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/password_fields.dart",
+      "name": "<closure>",
+      "start": 17,
+      "end": 17,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/password_fields.dart",
+      "name": "<closure>",
+      "start": 24,
+      "end": 24,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/profile_fields.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "<constructor>",
+      "start": 18,
+      "end": 18,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/profile_fields.dart",
+      "name": "<closure>",
+      "start": 17,
+      "end": 17,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/session.dart",
+      "name": "epoch",
+      "start": 40,
+      "end": 40,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "<constructor>",
+      "start": 30,
+      "end": 30,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "<closure>",
+      "start": 60,
+      "end": 60,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/focus_stories.dart",
+      "name": "<closure>",
+      "start": 42,
+      "end": 42,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article/article_tags.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "<closure>",
+      "start": 53,
+      "end": 53,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/focus_stories.dart",
+      "name": "<closure>",
+      "start": 42,
+      "end": 42,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "<closure>",
+      "start": 66,
+      "end": 66,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "<constructor>",
+      "start": 26,
+      "end": 26,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/focus_stories.dart",
+      "name": "<closure>",
+      "start": 49,
+      "end": 49,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "<closure>",
+      "start": 80,
+      "end": 80,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "<closure>",
+      "start": 113,
+      "end": 113,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article/article_title.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "<closure>",
+      "start": 121,
+      "end": 121,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "<closure>",
+      "start": 123,
+      "end": 123,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/profile_page.dart",
+      "name": "<closure>",
+      "start": 127,
+      "end": 127,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "<constructor>",
+      "start": 36,
+      "end": 36,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article/author_bar.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/settings_page.dart",
+      "name": "<constructor>",
+      "start": 22,
+      "end": 22,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "bytes",
+      "start": 41,
+      "end": 41,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article/author_bar.dart",
+      "name": "<closure>",
+      "start": 16,
+      "end": 16,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<constructor>",
+      "start": 48,
+      "end": 48,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 108,
+      "end": 108,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/focus_stories.dart",
+      "name": "<closure>",
+      "start": 51,
+      "end": 51,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 132,
+      "end": 132,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 166,
+      "end": 166,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/home_latest.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 97,
+      "end": 97,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "<closure>",
+      "start": 37,
+      "end": 37,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 254,
+      "end": 254,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "favorite",
+      "start": 42,
+      "end": 42,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "<closure>",
+      "start": 46,
+      "end": 46,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/session.dart",
+      "name": "<closure>",
+      "start": 13,
+      "end": 13,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "policy",
+      "start": 53,
+      "end": 53,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "resourceTags",
+      "start": 54,
+      "end": 54,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "<closure>",
+      "start": 61,
+      "end": 61,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "<closure>",
+      "start": 62,
+      "end": 62,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/session.dart",
+      "name": "<closure>",
+      "start": 16,
+      "end": 16,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 45,
+      "end": 45,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "reactions",
+      "start": 77,
+      "end": 77,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "reactionEvents",
+      "start": 78,
+      "end": 78,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/home_latest.dart",
+      "name": "<closure>",
+      "start": 20,
+      "end": 20,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 230,
+      "end": 230,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "<closure>",
+      "start": 67,
+      "end": 67,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "forced",
+      "start": 100,
+      "end": 100,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/theme/app_colors.dart",
+      "name": "mix",
+      "start": 224,
+      "end": 224,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 182,
+      "end": 182,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/home_page.dart",
+      "name": "<constructor>",
+      "start": 26,
+      "end": 26,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<closure>",
+      "start": 119,
+      "end": 119,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/home_page.dart",
+      "name": "<closure>",
+      "start": 34,
+      "end": 34,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/home_page.dart",
+      "name": "<closure>",
+      "start": 39,
+      "end": 39,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/home_popular.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "_file",
+      "start": 27,
+      "end": 27,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "<closure>",
+      "start": 165,
+      "end": 165,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/home_popular.dart",
+      "name": "<closure>",
+      "start": 10,
+      "end": 10,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "<closure>",
+      "start": 182,
+      "end": 182,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 269,
+      "end": 269,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 269,
+      "end": 269,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "<closure>",
+      "start": 197,
+      "end": 197,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/page_dots.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "<closure>",
+      "start": 200,
+      "end": 200,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 129,
+      "end": 129,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "_version",
+      "start": 79,
+      "end": 79,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "<closure>",
+      "start": 234,
+      "end": 234,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "events",
+      "start": 83,
+      "end": 83,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 262,
+      "end": 262,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/repository.dart",
+      "name": "<closure>",
+      "start": 277,
+      "end": 277,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 317,
+      "end": 317,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 56,
+      "end": 56,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 329,
+      "end": 329,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<constructor>",
+      "start": 18,
+      "end": 18,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/session.dart",
+      "name": "<closure>",
+      "start": 117,
+      "end": 117,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "<closure>",
+      "start": 87,
+      "end": 87,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 175,
+      "end": 175,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 51,
+      "end": 51,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 57,
+      "end": 57,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 61,
+      "end": 61,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 180,
+      "end": 180,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 186,
+      "end": 186,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/popular_article.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 276,
+      "end": 276,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/popular_article.dart",
+      "name": "<closure>",
+      "start": 10,
+      "end": 10,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 89,
+      "end": 89,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/search_header.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 93,
+      "end": 93,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 104,
+      "end": 104,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "<constructor>",
+      "start": 24,
+      "end": 24,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "<closure>",
+      "start": 87,
+      "end": 87,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/search_header.dart",
+      "name": "<closure>",
+      "start": 17,
+      "end": 17,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/search_page.dart",
+      "name": "<constructor>",
+      "start": 23,
+      "end": 23,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 116,
+      "end": 116,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 217,
+      "end": 217,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 341,
+      "end": 341,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 140,
+      "end": 140,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 151,
+      "end": 151,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 186,
+      "end": 186,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 233,
+      "end": 233,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 168,
+      "end": 168,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 138,
+      "end": 138,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/data/article_reader.dart",
+      "name": "<closure>",
+      "start": 34,
+      "end": 34,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "<closure>",
+      "start": 101,
+      "end": 101,
+      "lines": 1
+    },
+    {
+      "file": "lib/main.dart",
+      "name": "<closure>",
+      "start": 32,
+      "end": 32,
+      "lines": 1
+    },
+    {
+      "file": "lib/main.dart",
+      "name": "<constructor>",
+      "start": 41,
+      "end": 41,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<constructor>",
+      "start": 52,
+      "end": 52,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/markdown/reader_markdown.dart",
+      "name": "<closure>",
+      "start": 213,
+      "end": 213,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/search_page.dart",
+      "name": "<closure>",
+      "start": 62,
+      "end": 62,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "<closure>",
+      "start": 107,
+      "end": 107,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/data/article_reader.dart",
+      "name": "<closure>",
+      "start": 51,
+      "end": 51,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/image_store.dart",
+      "name": "<closure>",
+      "start": 62,
+      "end": 62,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/cache_visibility.dart",
+      "name": "onCacheVisible",
+      "start": 15,
+      "end": 15,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/search_page.dart",
+      "name": "<closure>",
+      "start": 76,
+      "end": 76,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "read",
+      "start": 14,
+      "end": 14,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/image_store.dart",
+      "name": "<closure>",
+      "start": 91,
+      "end": 91,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "write",
+      "start": 15,
+      "end": 15,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/data/cache_policy_table.dart",
+      "name": "<constructor>",
+      "start": 29,
+      "end": 29,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/cache_visibility.dart",
+      "name": "<constructor>",
+      "start": 53,
+      "end": 53,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 100,
+      "end": 100,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/prototype_icons.dart",
+      "name": "<constructor>",
+      "start": 49,
+      "end": 49,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "<constructor>",
+      "start": 20,
+      "end": 20,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/prototype_icons.dart",
+      "name": "<constructor>",
+      "start": 69,
+      "end": 69,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/search_suggestions.dart",
+      "name": "<closure>",
+      "start": 42,
+      "end": 42,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/app_bottom_bar.dart",
+      "name": "<constructor>",
+      "start": 12,
+      "end": 12,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 347,
+      "end": 347,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "resourceTags",
+      "start": 55,
+      "end": 55,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "savedAt",
+      "start": 119,
+      "end": 119,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/search_suggestions.dart",
+      "name": "<closure>",
+      "start": 46,
+      "end": 46,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/api_client.dart",
+      "name": "key",
+      "start": 22,
+      "end": 22,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 225,
+      "end": 225,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 337,
+      "end": 337,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 103,
+      "end": 103,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 341,
+      "end": 341,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/search_suggestions.dart",
+      "name": "<closure>",
+      "start": 58,
+      "end": 58,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 350,
+      "end": 350,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 151,
+      "end": 151,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "openComment",
+      "start": 348,
+      "end": 348,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/story_card.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 213,
+      "end": 213,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 195,
+      "end": 195,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "usable",
+      "start": 120,
+      "end": 120,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 204,
+      "end": 204,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 211,
+      "end": 211,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/story_card.dart",
+      "name": "<closure>",
+      "start": 13,
+      "end": 13,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 217,
+      "end": 217,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 218,
+      "end": 218,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 358,
+      "end": 358,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 237,
+      "end": 237,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 238,
+      "end": 238,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 373,
+      "end": 373,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 143,
+      "end": 143,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 358,
+      "end": 358,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 268,
+      "end": 268,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 274,
+      "end": 274,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 280,
+      "end": 280,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 284,
+      "end": 284,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_feed.dart",
+      "name": "<closure>",
+      "start": 291,
+      "end": 291,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_skeleton.dart",
+      "name": "<constructor>",
+      "start": 8,
+      "end": 8,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "<closure>",
+      "start": 171,
+      "end": 171,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/tag_card.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "<closure>",
+      "start": 193,
+      "end": 193,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_tile.dart",
+      "name": "<closure>",
+      "start": 33,
+      "end": 33,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/article_tile_content.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 151,
+      "end": 151,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 195,
+      "end": 195,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 363,
+      "end": 363,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/image_store.dart",
+      "name": "<closure>",
+      "start": 125,
+      "end": 125,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/tags_page.dart",
+      "name": "<constructor>",
+      "start": 20,
+      "end": 20,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/auth/auth_fields.dart",
+      "name": "<closure>",
+      "start": 33,
+      "end": 33,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<closure>",
+      "start": 378,
+      "end": 378,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "<closure>",
+      "start": 69,
+      "end": 69,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "<closure>",
+      "start": 75,
+      "end": 75,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/session.dart",
+      "name": "<closure>",
+      "start": 128,
+      "end": 128,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "<closure>",
+      "start": 90,
+      "end": 90,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "<closure>",
+      "start": 94,
+      "end": 94,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/auth/auth_fields.dart",
+      "name": "<closure>",
+      "start": 72,
+      "end": 72,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/auth/auth_fields.dart",
+      "name": "<closure>",
+      "start": 73,
+      "end": 73,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "<closure>",
+      "start": 116,
+      "end": 116,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/tags_page.dart",
+      "name": "<closure>",
+      "start": 40,
+      "end": 40,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "<closure>",
+      "start": 126,
+      "end": 126,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/discovery/tags_page.dart",
+      "name": "<closure>",
+      "start": 40,
+      "end": 40,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/auth/auth_intro.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "<closure>",
+      "start": 141,
+      "end": 141,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/async_pane.dart",
+      "name": "<closure>",
+      "start": 144,
+      "end": 144,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/theme/status_views.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/cell_group.dart",
+      "name": "<constructor>",
+      "start": 8,
+      "end": 8,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/auth_page.dart",
+      "name": "<constructor>",
+      "start": 21,
+      "end": 21,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/data/reader_models.dart",
+      "name": "id",
+      "start": 14,
+      "end": 14,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "<closure>",
+      "start": 231,
+      "end": 231,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/confirm.dart",
+      "name": "<closure>",
+      "start": 13,
+      "end": 13,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/confirm.dart",
+      "name": "<closure>",
+      "start": 17,
+      "end": 17,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/data/reader_models.dart",
+      "name": "title",
+      "start": 15,
+      "end": 15,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/blob_store.dart",
+      "name": "<closure>",
+      "start": 76,
+      "end": 76,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/auth_page.dart",
+      "name": "<closure>",
+      "start": 69,
+      "end": 69,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/auth_page.dart",
+      "name": "<closure>",
+      "start": 71,
+      "end": 71,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/theme/status_views.dart",
+      "name": "<constructor>",
+      "start": 24,
+      "end": 24,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/page_intro.dart",
+      "name": "<constructor>",
+      "start": 8,
+      "end": 8,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/auth_page.dart",
+      "name": "<closure>",
+      "start": 94,
+      "end": 94,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/reader_context.dart",
+      "name": "colors",
+      "start": 7,
+      "end": 7,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/reader_context.dart",
+      "name": "text",
+      "start": 8,
+      "end": 8,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/auth_page.dart",
+      "name": "<closure>",
+      "start": 94,
+      "end": 94,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/endpoints.dart",
+      "name": "article",
+      "start": 36,
+      "end": 36,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comments.dart",
+      "name": "<closure>",
+      "start": 158,
+      "end": 158,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/reader_image.dart",
+      "name": "<closure>",
+      "start": 33,
+      "end": 33,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/data/favorite_index.dart",
+      "name": "<constructor>",
+      "start": 9,
+      "end": 9,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/reader_image.dart",
+      "name": "<closure>",
+      "start": 54,
+      "end": 54,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comment_widgets/comment_footer.dart",
+      "name": "<closure>",
+      "start": 32,
+      "end": 32,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comment_widgets/comment_footer.dart",
+      "name": "<closure>",
+      "start": 36,
+      "end": 36,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "<closure>",
+      "start": 322,
+      "end": 322,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/section_title.dart",
+      "name": "<constructor>",
+      "start": 10,
+      "end": 10,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/router.dart",
+      "name": "<closure>",
+      "start": 167,
+      "end": 167,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comment_widgets/comment_reply.dart",
+      "name": "<closure>",
+      "start": 19,
+      "end": 19,
+      "lines": 1
+    },
+    {
+      "file": "lib/app/theme/theme_builder.dart",
+      "name": "<closure>",
+      "start": 31,
+      "end": 31,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/status_badge.dart",
+      "name": "<constructor>",
+      "start": 10,
+      "end": 10,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/cache/data_cache.dart",
+      "name": "<closure>",
+      "start": 349,
+      "end": 349,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/editor.dart",
+      "name": "<constructor>",
+      "start": 46,
+      "end": 46,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comment_widgets/comment_thread.dart",
+      "name": "<closure>",
+      "start": 25,
+      "end": 25,
+      "lines": 1
+    },
+    {
+      "file": "lib/shared/widgets/unread_icon.dart",
+      "name": "<constructor>",
+      "start": 16,
+      "end": 16,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/endpoints.dart",
+      "name": "toc",
+      "start": 37,
+      "end": 37,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/comment_widgets/comment_thread.dart",
+      "name": "<closure>",
+      "start": 26,
+      "end": 26,
+      "lines": 1
+    },
+    {
+      "file": "lib/core/network/endpoints.dart",
+      "name": "adjacent",
+      "start": 38,
+      "end": 38,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/web_page.dart",
+      "name": "<closure>",
+      "start": 96,
+      "end": 96,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/member/member_header.dart",
+      "name": "<constructor>",
+      "start": 5,
+      "end": 5,
+      "lines": 1
+    },
+    {
+      "file": "lib/features/article_page.dart",
+      "name": "<closure>",
+      "start": 315,
+      "end": 315,
+      "lines": 1
+    }
+  ]
+}

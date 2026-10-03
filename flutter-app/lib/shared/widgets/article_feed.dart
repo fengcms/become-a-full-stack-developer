@@ -192,38 +192,7 @@ class _ArticleFeedState extends ConsumerState<ArticleFeed>
         ),
       );
       if (!mounted || ticket != serial) return;
-      setState(() {
-        if (check && widget.path.startsWith(Endpoints.privatePrefix)) {
-          final differs =
-              p.items.map((a) => a.data.json.toString()).join() !=
-              items
-                  .take(p.items.length)
-                  .map((a) => a.data.json.toString())
-                  .join();
-          if (differs) {
-            items = List.of(p.items);
-            page = p.page;
-            more = p.hasMore;
-          }
-          pendingUpdate = false;
-        } else if (check) {
-          pendingUpdate =
-              p.items.map((a) => a.data.json.toString()).join() !=
-              items
-                  .take(p.items.length)
-                  .map((a) => a.data.json.toString())
-                  .join();
-        } else {
-          if (reset) {
-            items = [];
-            pendingUpdate = false;
-          }
-          final ids = items.map((e) => e.id).toSet();
-          items.addAll(p.items.where((a) => ids.add(a.id)));
-          page = p.page;
-          more = p.hasMore;
-        }
-      });
+      setState(() => _applyPage(p, check, reset));
     } catch (e) {
       if (mounted &&
           ticket == serial &&
@@ -240,6 +209,35 @@ class _ArticleFeedState extends ConsumerState<ArticleFeed>
       }
     } finally {
       if (mounted && ticket == serial) setState(() => busy = false);
+    }
+  }
+
+  // 与已展示前缀比较完整摘要，既检测排序也检测内容变化。
+  bool _samePrefix(List<Article> next) =>
+      next.map((a) => a.data.json.toString()).join() ==
+      items.take(next.length).map((a) => a.data.json.toString()).join();
+
+  // 私有列表立即同步，公共列表提示更新；追加页按 ID 去重。
+  void _applyPage(PageResult<Article> p, bool check, bool reset) {
+    if (check && widget.path.startsWith(Endpoints.privatePrefix)) {
+      final differs = !_samePrefix(p.items);
+      if (differs) {
+        items = List.of(p.items);
+        page = p.page;
+        more = p.hasMore;
+      }
+      pendingUpdate = false;
+    } else if (check) {
+      pendingUpdate = !_samePrefix(p.items);
+    } else {
+      if (reset) {
+        items = [];
+        pendingUpdate = false;
+      }
+      final ids = items.map((e) => e.id).toSet();
+      items.addAll(p.items.where((a) => ids.add(a.id)));
+      page = p.page;
+      more = p.hasMore;
     }
   }
 

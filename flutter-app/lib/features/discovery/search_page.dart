@@ -14,6 +14,10 @@ import 'package:fullstack_reader/shared/widgets/page_frame.dart';
 import 'package:fullstack_reader/shared/widgets/reader_context.dart';
 import 'package:fullstack_reader/shared/widgets/section_title.dart';
 
+part 'search_header.dart';
+part 'search_suggestions.dart';
+part 'search_results.dart';
+
 /// 搜索词进入路由以支持返回恢复，历史记录保存在设备偏好设置中。
 class SearchPage extends ConsumerStatefulWidget {
   const SearchPage({super.key, this.initial = ''});
@@ -68,124 +72,22 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     context.go(q.isEmpty ? '/search' : '/search?q=${Uri.encodeComponent(q)}');
   }
 
+  void clearHistory() {
+    setState(() => history = []);
+    ref.read(sessionProvider).preferences.remove('search.history');
+  }
+
   @override
   Widget build(BuildContext context) => PageFrame(
     title: '搜索',
     child: Column(
       children: [
-        Padding(
-          padding: AppInsets.page,
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: input,
-                  textInputAction: TextInputAction.search,
-                  onSubmitted: (_) => search(),
-                  style: const TextStyle(fontSize: AppType.body),
-                  decoration: InputDecoration(
-                    hintText: '搜索文章、标签',
-                    contentPadding: AppInsets.control,
-                    prefixIconConstraints: const BoxConstraints(
-                      minWidth: 40,
-                      minHeight: 40,
-                    ),
-                    isDense: true,
-                    prefixIcon: const Padding(
-                      padding: AppInsets.compact,
-                      child: PrototypeIcon('search', size: 16),
-                    ),
-                    filled: true,
-                    fillColor: context.colors.bgSubtle,
-                    border: OutlineInputBorder(borderRadius: AppRadius.rFull),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: AppRadius.rFull,
-                      borderSide: BorderSide(color: context.colors.fieldBorder),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              FilledButton(onPressed: search, child: const Text('搜索')),
-            ],
-          ),
-        ),
-        Expanded(
-          child: query.isEmpty
-              ? ListView(
-                  children: [
-                    Padding(
-                      padding: AppInsets.pageTop,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              '搜索历史',
-                              style: TextStyle(
-                                fontSize: AppType.caption,
-                                fontWeight: FontWeight.w600,
-                                color: context.colors.textMuted,
-                              ),
-                            ),
-                          ),
-                          if (history.isNotEmpty)
-                            TextButton(
-                              onPressed: () {
-                                setState(() => history = []);
-                                ref
-                                    .read(sessionProvider)
-                                    .preferences
-                                    .remove('search.history');
-                              },
-                              child: const Text('清空'),
-                            ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: AppInsets.page,
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final term in history)
-                            ActionChip(
-                              label: Text(term),
-                              onPressed: () => search(term),
-                            ),
-                        ],
-                      ),
-                    ),
-                    SectionTitle(
-                      '热门标签',
-                      action: '全部',
-                      onTap: () => context.push('/tags'),
-                    ),
-                    AsyncPane<List<ApiTag>>(
-                      load: ref.read(repositoryProvider).tags,
-                      builder: (tags, reload) => Padding(
-                        padding: AppInsets.page,
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            for (final t in tags.take(8))
-                              ActionChip(
-                                label: Text(t.name ?? ''),
-                                onPressed: () => search(t.name),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : ArticleFeed(
-                  key: ValueKey(query),
-                  path: Endpoints.search,
-                  header: const SectionTitle('搜索结果'),
-                  query: {'q': query, 'type': 'article'},
-                ),
+        _SearchHeader(input: input, search: search),
+        _SearchResults(
+          query: query,
+          history: history,
+          search: search,
+          clearHistory: clearHistory,
         ),
       ],
     ),

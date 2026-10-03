@@ -1,0 +1,1 @@
+AST selftest PASS: named parameters, record return, arrow lambda

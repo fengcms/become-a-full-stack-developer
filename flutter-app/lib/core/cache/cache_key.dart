@@ -37,6 +37,7 @@ class CacheKey {
 
 /// 客户端虚拟资源命名空间，不发往后端；修改前缀需考虑已有磁盘键兼容。
 abstract final class CacheKeys {
+  static const overview = '/reader/overview';
   static const articlePrefix = '/reader/article/';
   static String article(Object id) => '$articlePrefix$id';
 }

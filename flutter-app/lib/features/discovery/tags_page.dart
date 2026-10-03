@@ -13,6 +13,8 @@ import 'package:fullstack_reader/shared/widgets/page_intro.dart';
 import 'package:fullstack_reader/shared/widgets/reader_context.dart';
 import 'package:fullstack_reader/shared/widgets/state_message.dart';
 
+part 'tag_card.dart';
+
 /// 标签筛选在本地执行，点击标签后进入带筛选条件的文章列表。
 class TagsPage extends ConsumerStatefulWidget {
   const TagsPage({super.key});
@@ -63,38 +65,7 @@ class _TagsPageState extends ConsumerState<TagsPage> {
                       itemCount: list.length,
                       itemBuilder: (c, i) {
                         final t = list[i];
-                        return InkWell(
-                          onTap: () => context.push(
-                            '/browse?tag=${Uri.encodeComponent(t.name ?? '')}&title=${Uri.encodeComponent(t.name ?? '标签')}',
-                          ),
-                          child: Container(
-                            padding: AppInsets.page,
-                            decoration: BoxDecoration(
-                              border: Border.all(color: context.colors.line),
-                              borderRadius: AppRadius.rMd,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  '# ${t.name}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: AppType.body,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  '${t.articleCount ?? 0} 篇文章',
-                                  style: context.text.labelSmall,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
+                        return _TagCard(t: t);
                       },
                     );
             },
