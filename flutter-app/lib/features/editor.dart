@@ -1,3 +1,9 @@
+import 'data/reader_models.dart';
+import '../shared/widgets/confirm.dart';
+
+import 'package:fullstack_reader/core/network/endpoints.dart';
+import 'package:fullstack_reader/app/theme/app_theme.dart';
+
 import '../shared/prototype_icons.dart';
 
 import 'dart:async';
@@ -15,9 +21,27 @@ import '../core/generated/models.dart';
 import '../core/markdown/reader_markdown.dart';
 import '../core/network/api_client.dart';
 import '../core/storage/upload.dart';
-import '../shared/widgets.dart';
-import 'repository.dart';
 
+import 'package:fullstack_reader/shared/widgets/notice.dart';
+import 'package:fullstack_reader/shared/widgets/reader_context.dart';
+import 'package:fullstack_reader/shared/widgets/reader_image.dart';
+import 'package:fullstack_reader/shared/widgets/state_message.dart';
+import 'package:fullstack_reader/shared/widgets/status_badge.dart';
+import 'package:fullstack_reader/shared/widgets/submit_button.dart';
+
+part 'editor/editor_modes.dart';
+part 'editor/editor_preview.dart';
+part 'editor/markdown_toolbar.dart';
+part 'editor/editor_form.dart';
+part 'editor/editor_save_bar.dart';
+part 'editor/editor_body.dart';
+part 'editor/editor_metadata.dart';
+part 'editor/editor_payload.dart';
+part 'editor/recover_draft.dart';
+
+part 'editor/editor_scaffold.dart';
+
+/// 投稿表单拥有控制器和串行草稿写入队列，网络失败不丢弃本机内容。
 class EditorPage extends ConsumerStatefulWidget {
   const EditorPage({super.key, this.id});
   final String? id;
@@ -123,21 +147,10 @@ class _EditorPageState extends ConsumerState<EditorPage> {
       }
       if (!mounted) return;
       setState(() => loaded = true);
-      final cached = prefs.getString(draftKey);
-      if (cached != null && mounted) {
-        Map<String, dynamic>? recovery;
-        try {
-          recovery = jsonMap(jsonDecode(cached));
-        } catch (_) {
-          await prefs.remove(draftKey);
-        }
-        if (recovery != null &&
-            mounted &&
-            await confirm(context, '恢复本机草稿', '发现上次未保存的内容，是否恢复？服务器稿件不会立即被修改。') &&
-            mounted) {
-          apply(recovery);
-          setState(() => dirty = true);
-        }
+      final recovery = await recoverDraft(prefs, draftKey, context);
+      if (recovery != null && mounted) {
+        apply(recovery);
+        setState(() => dirty = true);
       }
       final lost = await ImagePicker().retrieveLostData();
       if (!lost.isEmpty && lost.files?.isNotEmpty == true && mounted) {
@@ -186,21 +199,8 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     });
   }
 
-  List<ApiCategoryNode> flatten(List<ApiCategoryNode> nodes) => [
-    for (final n in nodes) ...[n, ...flatten(n.children)],
-  ];
-  void insert(String before, String after) {
-    final s = content.selection;
-    final start = s.isValid ? s.start : content.text.length,
-        end = s.isValid ? s.end : content.text.length;
-    final selected = content.text.substring(start, end);
-    content.value = TextEditingValue(
-      text: content.text.replaceRange(start, end, '$before$selected$after'),
-      selection: TextSelection.collapsed(
-        offset: start + before.length + selected.length,
-      ),
-    );
-  }
+  void insert(String before, String after) =>
+      wrapSelection(content, before, after);
 
   Future<void> pick(bool isCover) async {
     try {
@@ -272,26 +272,22 @@ class _EditorPageState extends ConsumerState<EditorPage> {
           return;
         }
       }
-      final payload = <String, dynamic>{
-        'title': title.text.trim(),
-        'summary': summary.text.trim(),
-        'content': content.text,
-        'categoryId': category,
-        'coverImage': cover.isEmpty ? null : cover,
-        'tags': tags.text
-            .split(RegExp('[,，]'))
-            .map((s) => s.trim())
-            .where((s) => s.isNotEmpty)
-            .toSet()
-            .toList(),
-        if (id == null) 'status': submit ? 'pending' : 'draft',
-      };
+      final payload = editorPayload(
+        title: title.text,
+        summary: summary.text,
+        content: content.text,
+        category: category,
+        cover: cover,
+        tags: tags.text,
+        isNew: id == null,
+        submit: submit,
+      );
       final oldKey = draftKey;
       final wasNew = id == null;
       var a = Article.fromJson(
         jsonMap(
           await repo.api.request(
-            id == null ? '/articles' : '/articles/$id',
+            id == null ? Endpoints.articles : Endpoints.article(id!),
             method: id == null ? 'POST' : 'PUT',
             data: payload,
           ),
@@ -309,7 +305,7 @@ class _EditorPageState extends ConsumerState<EditorPage> {
         throw const ApiFailure('服务器返回的稿件状态与操作不一致，请在我的文章中核对');
       }
       if (submit && status == 'draft') {
-        await repo.api.request('/articles/$id/submit', method: 'POST');
+        await repo.api.request(Endpoints.submit(id!), method: 'POST');
         a = await repo.article(id.toString(), private: true);
         status = a.status;
         updatedAt = a.data.updatedAt ?? '';
@@ -338,76 +334,50 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (c) => StatefulBuilder(
-      builder: (c, refresh) => SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            0,
-            16,
-            16 + MediaQuery.viewInsetsOf(c).bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('发布信息', style: context.text.titleMedium),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<int>(
-                initialValue: category,
-                decoration: const InputDecoration(labelText: '分类'),
-                items: [
-                  const DropdownMenuItem<int>(value: null, child: Text('未分类')),
-                  for (final n in flatten(categories))
-                    DropdownMenuItem(value: n.id, child: Text(n.name ?? '')),
-                ],
-                onChanged: (v) {
-                  category = v;
-                  changed();
-                },
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: tags,
-                decoration: const InputDecoration(
-                  labelText: '标签',
-                  hintText: '用逗号分隔',
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (cover.isNotEmpty)
-                Stack(
-                  children: [
-                    ReaderImage(cover, height: 140, width: double.infinity),
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      child: IconButton(
-                        tooltip: '移除封面',
-                        onPressed: () {
-                          setState(() => cover = '');
-                          refresh(() {});
-                          changed();
-                        },
-                        icon: const ReaderIcon(Icons.close),
-                      ),
-                    ),
-                  ],
-                ),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  await pick(true);
-                  refresh(() {});
-                },
-                icon: const ReaderIcon(Icons.image_outlined),
-                label: Text(cover.isEmpty ? '上传封面' : '更换封面'),
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        ),
-      ),
+    builder: (_) => _EditorMetadata(
+      category: category,
+      categories: flattenCategories(categories),
+      tags: tags,
+      getCover: () => cover,
+      onCategory: (value) {
+        category = value;
+        changed();
+      },
+      removeCover: () {
+        setState(() => cover = '');
+        changed();
+      },
+      pickCover: () => pick(true),
     ),
+  );
+
+  Widget editorBody() => _EditorBody(
+    modes: _EditorModes(
+      preview: preview,
+      length: content.text.length,
+      onMode: (mode) => setState(() => preview = mode),
+    ),
+    progress: progress,
+    uploadFailed: failedUpload != null,
+    busy: busy,
+    retryUpload: () => upload(failedUpload!, failedCover),
+    preview: preview,
+    previewBody: _EditorPreview(
+      title: title.text,
+      summary: summary.text,
+      content: content.text,
+      nickname: ref.read(sessionProvider).user?.nickname ?? "会员",
+    ),
+    form: _EditorForm(
+      status: status,
+      dirty: dirty,
+      id: id,
+      title: title,
+      summary: summary,
+      content: content,
+      toolbar: _MarkdownToolbar(insert: insert, pickImage: () => pick(false)),
+    ),
+    saveBar: _EditorSaveBar(status: status, busy: busy, save: save),
   );
 
   @override
@@ -416,328 +386,14 @@ class _EditorPageState extends ConsumerState<EditorPage> {
     onPopInvokedWithResult: (didPop, result) {
       if (!didPop) leave();
     },
-    child: Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          tooltip: '返回',
-          onPressed: leave,
-          icon: const ReaderIcon(Icons.arrow_back),
-        ),
-        title: Text(id == null ? '写文章' : '编辑稿件'),
-        actions: [
-          IconButton(
-            tooltip: '发布信息',
-            onPressed: metadata,
-            icon: const PrototypeIcon('more'),
-          ),
-        ],
-      ),
-      body: !loaded
-          ? (error == null
-                ? const Center(child: CircularProgressIndicator())
-                : StateMessage(error: error, onRetry: load))
-          : SafeArea(
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: context.colors.line),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        for (final mode in [false, true])
-                          OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor: preview == mode
-                                  ? context.colors.brandSubtle
-                                  : context.colors.surface,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                            ),
-                            onPressed: () => setState(() => preview = mode),
-                            child: Text(mode ? '预览' : '编辑'),
-                          ),
-                        const Spacer(),
-                        Text(
-                          '${content.text.length} / 65535',
-                          style: context.text.labelSmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (progress != null)
-                    LinearProgressIndicator(value: progress),
-                  if (failedUpload != null)
-                    ListTile(
-                      title: const Text('图片上传失败，正文已保留'),
-                      trailing: TextButton(
-                        onPressed: busy
-                            ? null
-                            : () => upload(failedUpload!, failedCover),
-                        child: const Text('重试'),
-                      ),
-                    ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: AbsorbPointer(
-                        absorbing: busy,
-                        child: preview
-                            ? Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Text(
-                                    title.text,
-                                    style: context.text.headlineSmall,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Row(
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 16,
-                                        backgroundColor:
-                                            context.colors.brandSubtle,
-                                        foregroundColor:
-                                            context.colors.brandOnSubtle,
-                                        child: const PrototypeIcon(
-                                          'user',
-                                          size: 18,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(
-                                        '${ref.read(sessionProvider).user?.nickname ?? "会员"} · 预览 · 尚未发布',
-                                        style: context.text.bodySmall,
-                                      ),
-                                    ],
-                                  ),
-                                  if (summary.text.isNotEmpty)
-                                    Container(
-                                      margin: const EdgeInsets.symmetric(
-                                        vertical: 16,
-                                      ),
-                                      padding: const EdgeInsets.all(16),
-                                      color: context.colors.surfaceSunken,
-                                      child: Text(
-                                        summary.text,
-                                        style: context.text.bodySmall,
-                                      ),
-                                    ),
-                                  ReaderMarkdown(
-                                    content.text,
-                                    publicImages: false,
-                                  ),
-                                ],
-                              )
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Row(
-                                    children: [
-                                      StatusBadge(status),
-                                      const SizedBox(width: 12),
-                                      Text(
-                                        dirty
-                                            ? '有未保存的修改'
-                                            : id == null
-                                            ? '尚未保存'
-                                            : '已与服务器同步',
-                                        style: context.text.bodySmall,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  const Text(
-                                    '标题 *',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 7),
-                                  TextField(
-                                    key: const ValueKey('editor-title'),
-                                    controller: title,
-                                    maxLength: 200,
-                                    decoration: const InputDecoration(
-                                      hintText: '不超过 200 字',
-                                    ),
-                                  ),
-                                  const Text(
-                                    '摘要',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 7),
-                                  TextField(
-                                    controller: summary,
-                                    maxLength: 500,
-                                    minLines: 2,
-                                    maxLines: 4,
-                                    decoration: const InputDecoration(
-                                      hintText: '一到两句话说清这篇文章解决什么问题',
-                                    ),
-                                  ),
-                                  const Text(
-                                    '正文（Markdown）',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 7),
-                                  TextField(
-                                    key: const ValueKey('editor-content'),
-                                    controller: content,
-                                    minLines: 14,
-                                    maxLines: null,
-                                    maxLength: 65535,
-                                    maxLengthEnforcement:
-                                        MaxLengthEnforcement.enforced,
-                                    style: const TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 13,
-                                      height: 1.85,
-                                    ),
-                                    decoration: const InputDecoration(
-                                      hintText: '开始写作…',
-                                      alignLabelWithHint: true,
-                                    ),
-                                  ),
-                                  Wrap(
-                                    spacing: 4,
-                                    runSpacing: 4,
-                                    children: [
-                                      IconButton(
-                                        tooltip: '表格',
-                                        onPressed: () => insert(
-                                          '\n| 标题 | 内容 |\n| --- | --- |\n| ',
-                                          ' |  |\n',
-                                        ),
-                                        icon: const Text('▦'),
-                                      ),
-                                      IconButton(
-                                        tooltip: '列表',
-                                        onPressed: () => insert('\n- ', ''),
-                                        icon: const Text('≣'),
-                                      ),
-                                      IconButton(
-                                        tooltip: '标题格式',
-                                        onPressed: () => insert('\n## ', ''),
-                                        icon: const Text(
-                                          'H2',
-                                          style: TextStyle(
-                                            fontFamily: 'monospace',
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                      IconButton(
-                                        tooltip: '加粗',
-                                        onPressed: () => insert('**', '**'),
-                                        icon: const Text(
-                                          'B',
-                                          style: TextStyle(
-                                            fontFamily: 'monospace',
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                      IconButton(
-                                        tooltip: '代码块',
-                                        onPressed: () =>
-                                            insert('\n```\n', '\n```\n'),
-                                        icon: const Text(
-                                          '</>',
-                                          style: TextStyle(
-                                            fontFamily: 'monospace',
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                      IconButton(
-                                        tooltip: '引用',
-                                        onPressed: () => insert('\n> ', ''),
-                                        icon: const Text(
-                                          '❞',
-                                          style: TextStyle(
-                                            fontFamily: 'monospace',
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                      IconButton(
-                                        tooltip: '链接',
-                                        onPressed: () =>
-                                            insert('[', '](https://)'),
-                                        icon: const Text(
-                                          '↗',
-                                          style: TextStyle(
-                                            fontFamily: 'monospace',
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                      IconButton(
-                                        tooltip: '插入图片',
-                                        onPressed: () => pick(false),
-                                        icon: const ReaderIcon(
-                                          Icons.add_photo_alternate_outlined,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: context.colors.surface,
-                      border: Border(
-                        top: BorderSide(color: context.colors.line),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: busy ? null : () => save(false),
-                            child: Text(status == 'draft' ? '保存草稿' : '保存修改'),
-                          ),
-                        ),
-                        if (status == 'draft') ...[
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: SubmitButton(
-                              label: '提交审核',
-                              busy: busy,
-                              onPressed: () => save(true),
-                            ),
-                          ),
-                        ],
-                        if (status != 'draft' && busy)
-                          const Padding(
-                            padding: EdgeInsets.all(8),
-                            child: CircularProgressIndicator(),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    child: _EditorScaffold(
+      id: id,
+      leave: leave,
+      metadata: metadata,
+      loaded: loaded,
+      error: error,
+      load: load,
+      body: editorBody(),
     ),
   );
 }

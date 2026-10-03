@@ -1,3 +1,4 @@
+import 'package:fullstack_reader/core/cache/cache_limits.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -12,7 +13,8 @@ import 'core/network/api_client.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  PaintingBinding.instance.imageCache.maximumSizeBytes = 64 * 1024 * 1024;
+  PaintingBinding.instance.imageCache.maximumSizeBytes =
+      CacheLimits.decodedImageBytes;
   const configured = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: 'https://api-befull.kao9.com/api/v1',
@@ -34,6 +36,7 @@ Future<void> main() async {
   await session.restore();
 }
 
+/// 应用入口持有路由与两套主题，会话通知仅切换当前模式。
 class ReaderApp extends ConsumerStatefulWidget {
   const ReaderApp({super.key});
   @override
@@ -43,6 +46,8 @@ class ReaderApp extends ConsumerStatefulWidget {
 class _ReaderAppState extends ConsumerState<ReaderApp>
     with WidgetsBindingObserver {
   late final GoRouter router;
+  late final lightTheme = buildAppTheme(Brightness.light);
+  late final darkTheme = buildAppTheme(Brightness.dark);
   @override
   void initState() {
     super.initState();
@@ -73,8 +78,8 @@ class _ReaderAppState extends ConsumerState<ReaderApp>
     supportedLocales: const [Locale('zh', 'CN'), Locale('en')],
     localizationsDelegates: GlobalMaterialLocalizations.delegates,
     debugShowCheckedModeBanner: false,
-    theme: buildAppTheme(Brightness.light),
-    darkTheme: buildAppTheme(Brightness.dark),
+    theme: lightTheme,
+    darkTheme: darkTheme,
     themeMode: ref.watch(sessionProvider).mode,
     routerConfig: router,
     builder: AppLayout.clampTextScale,

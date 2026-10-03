@@ -1,15 +1,19 @@
+import 'cache_limits.dart';
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'blob_store.dart';
 
+/// fresh 决定何时后台更新，maxAge 决定弱网下能否继续展示；disk 必须显式允许。
 class CachePolicy {
   const CachePolicy(this.fresh, this.maxAge, {this.disk = false});
   final Duration fresh, maxAge;
   final bool disk;
 }
 
+/// 响应体与缓存控制头成组传递，服务端更严格的缓存限制优先。
 class CacheReply {
   CacheReply(this.value, {this.control = '', this.age = Duration.zero});
   final dynamic value;
@@ -17,14 +21,17 @@ class CacheReply {
   final Duration age;
 }
 
+/// 缓存按键发布更新、移除或失败事件，让可见页面决定如何刷新。
 class CacheEvent {
   const CacheEvent(this.key, this.kind, {this.error});
   final String key, kind;
   final Object? error;
 }
 
+/// 旧请求已被刷新、写操作或清理取代；调用方不能把其结果安装到页面。
 class CacheSuperseded implements Exception {}
 
+/// 数据与保存时间一起存储；恢复磁盘条目不会延长原来的有效期。
 class CacheEntry {
   CacheEntry(this.value, this.saved, this.fresh, this.maxAge, this.tags);
   dynamic value;
@@ -48,16 +55,20 @@ class CacheEntry {
   );
 }
 
-/// Explicit repository policies only; raw network calls are never cached.
+/// 仅缓存仓库显式授权的读取；新鲜命中、过期回源和写后失效共享版本栅栏。
 class DataCache {
   DataCache({
     BlobStore? disk,
     DateTime Function()? clock,
-    this.maxEntries = 300,
-    this.maxBytes = 20 * 1024 * 1024,
+    this.maxEntries = CacheLimits.memoryEntries,
+    this.maxBytes = CacheLimits.memoryBytes,
   }) : disk =
            disk ??
-           BlobStore('data', maxBytes: 30 * 1024 * 1024, maxEntries: 300),
+           BlobStore(
+             'data',
+             maxBytes: CacheLimits.dataDiskBytes,
+             maxEntries: CacheLimits.dataDiskEntries,
+           ),
        now = clock ?? DateTime.now;
   final BlobStore disk;
   final DateTime Function() now;
@@ -78,10 +89,14 @@ class DataCache {
     if (!_events.isClosed) _events.add(e);
   }
 
+  // 先重排为最近使用条目，再按资源分类与总字节预算淘汰。
   void _put(String key, CacheEntry entry) {
     _entries.remove(key);
     _entries[key] = entry;
-    for (final rule in {'articleBodies': 100, '/search': 20}.entries) {
+    for (final rule in {
+      CacheTags.articleBodies: CacheLimits.articleBodies,
+      CacheTags.searchResults: CacheLimits.searches,
+    }.entries) {
       final keys = _entries.keys
           .where((k) => _entries[k]!.tags.contains(rule.key))
           .toList();
@@ -95,6 +110,7 @@ class DataCache {
     }
   }
 
+  // 只返回仍在最大存活期内的数据；过期对象留在 Map 中也不能当作可用。
   dynamic peek(String key) {
     final e = _entries[key];
     return e != null && now().difference(e.saved) < e.maxAge ? e.value : null;
@@ -102,6 +118,7 @@ class DataCache {
 
   DateTime? savedAt(String key) => _entries[key]?.saved;
   bool usable(String key) => peek(key) != null;
+  // 系统时间回拨时不把未来保存时间误判为新鲜。
   bool fresh(String key) {
     final e = _entries[key];
     return e != null &&
@@ -109,6 +126,7 @@ class DataCache {
         now().difference(e.saved) < e.fresh;
   }
 
+  // 强制刷新优先于后台请求；同一轮强制刷新仍合并，避免重复发网。
   Future<dynamic> get(
     String key,
     CachePolicy policy,
@@ -118,9 +136,9 @@ class DataCache {
     bool Function(Object)? forbidden,
   }) async {
     _keyTags[key] = tags;
-    if (_keyTags.length > 1000) {
+    if (_keyTags.length > CacheLimits.trackedKeys) {
       for (final old in _keyTags.keys.toList()) {
-        if (_keyTags.length <= 1000) break;
+        if (_keyTags.length <= CacheLimits.trackedKeys) break;
         if (old != key &&
             !_entries.containsKey(old) &&
             !_flights.containsKey(old)) {
@@ -134,6 +152,7 @@ class DataCache {
       _flights.remove(key);
     }
     if (force) _forced.add(key);
+    // 磁盘读取也必须检查代际，否则清理完成后旧磁盘读会重新填回内存。
     final startEpoch = _epoch, version = _version(key);
     var entry = _entries[key];
     if (!force && entry == null && policy.disk) {
@@ -162,6 +181,7 @@ class DataCache {
         count('freshHit');
         return entry.value;
       }
+      // 返回可用旧值并启动后台更新；后台失败通过事件通知页面。
       count('staleHit');
       unawaited(
         _fetch(
@@ -181,6 +201,7 @@ class DataCache {
     return _fetch(key, policy, fetch, tags, forbidden);
   }
 
+  // 同键只保留一个在途 Future，完成时只清除属于自身的登记。
   Future<dynamic> _fetch(
     String key,
     CachePolicy policy,
@@ -202,6 +223,7 @@ class DataCache {
           throw CacheSuperseded();
         }
         final control = response.control.toLowerCase();
+        // 本地策略只能缩短服务端约束；no-store、no-cache 和 private 各有不同含义。
         final noStore = control.contains('no-store');
         var fresh = policy.fresh;
         var max = policy.maxAge;
@@ -222,17 +244,19 @@ class DataCache {
         }
         if (control.contains('must-revalidate') && fresh < max) max = fresh;
         final entry = CacheEntry(
+          // 保存时间扣除服务端 Age，重启或代理缓存命中不会额外延长 TTL。
           response.value,
           now().subtract(response.age),
           fresh,
           max,
           tags,
         );
+        // 只有允许保存的响应才产生缓存更新事件，避免不可缓存响应触发重载循环。
         if (!noStore && max > Duration.zero) {
           _put(key, entry);
           if (policy.disk &&
               !control.contains('private') &&
-              entry.bytes <= 2 * 1024 * 1024) {
+              entry.bytes <= CacheLimits.diskEntryBytes) {
             unawaited(
               disk.write(
                 key,
@@ -292,6 +316,7 @@ class DataCache {
     }
   }
 
+  // 依赖标签同时清理内存和磁盘；旧网络响应已被 fence 隔断。
   void invalidate(Set<String> tags) {
     fence(tags);
     for (final key in _keyTags.keys.toList()) {
@@ -305,11 +330,13 @@ class DataCache {
     );
   }
 
+  // 乐观状态只种入内存；只有明确的本地操作才能开启新的短期状态窗口。
   void seed(String key, dynamic value, CachePolicy policy, Set<String> tags) {
     _keyTags[key] = tags;
     _put(key, CacheEntry(value, now(), policy.fresh, policy.maxAge, tags));
   }
 
+  // 更新摘要中的显示字段不会刷新保存时间，也不会延长原条目的有效期。
   void patch(dynamic Function(dynamic) transform) {
     for (final key in _entries.keys.toList()) {
       _entries[key]!.value = transform(_entries[key]!.value);
@@ -317,6 +344,7 @@ class DataCache {
     }
   }
 
+  // 先提升全局代际再清理，阻止清理期间完成的请求回填旧数据。
   Future<void> clear() async {
     _epoch++;
     _entries.clear();
@@ -328,10 +356,12 @@ class DataCache {
     await disk.clear();
   }
 
+  // 内存压力仅释放可重建的值，不清除凭据或磁盘缓存。
   void trim() {
     _entries.clear();
   }
 
+  // 关闭事件流后仍提高代际，确保未完成请求不能继续发布旧状态。
   void close() {
     _epoch++;
     _events.close();

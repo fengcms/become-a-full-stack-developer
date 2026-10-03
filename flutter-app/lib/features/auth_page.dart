@@ -1,3 +1,5 @@
+import 'package:fullstack_reader/app/theme/app_theme.dart';
+
 import '../shared/prototype_icons.dart';
 
 import 'package:flutter/material.dart';
@@ -5,8 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app/session.dart';
-import '../shared/widgets.dart';
 
+import 'package:fullstack_reader/shared/widgets/page_frame.dart';
+import 'package:fullstack_reader/shared/widgets/reader_context.dart';
+import 'package:fullstack_reader/shared/widgets/submit_button.dart';
+
+/// 登录与注册共用校验和返回目标，成功后由会话边界重建会员页面。
 class AuthPage extends ConsumerStatefulWidget {
   const AuthPage({super.key, this.register = false, this.from = '/member'});
   final bool register;
@@ -66,7 +72,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
   Widget build(BuildContext context) => PageFrame(
     title: '',
     child: SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+      padding: AppInsets.welcome,
       child: AutofillGroup(
         child: Form(
           key: form,
@@ -76,19 +82,16 @@ class _AuthPageState extends ConsumerState<AuthPage> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 3,
-                  ),
+                  padding: AppInsets.tinyBadge,
                   decoration: BoxDecoration(
                     color: context.colors.brandSubtle,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: AppRadius.rXs,
                   ),
                   child: Text(
                     '{ }',
                     style: TextStyle(
                       fontFamily: 'monospace',
-                      fontSize: 15,
+                      fontSize: AppType.body,
                       fontWeight: FontWeight.w700,
                       color: context.colors.brandOnSubtle,
                     ),
@@ -99,7 +102,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
               Text(
                 widget.register ? '注册' : '登录',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: AppType.h1,
                   fontWeight: FontWeight.w700,
                   color: context.colors.textTitle,
                 ),
@@ -108,7 +111,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
               Text(
                 widget.register ? '注册后默认为普通会员，可以投稿。' : '登录后可以收藏、评论和投稿。',
                 style: TextStyle(
-                  fontSize: 12.5,
+                  fontSize: AppType.listSummary,
                   height: 1.65,
                   color: context.colors.textMuted,
                 ),
@@ -165,7 +168,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
               ),
               if (error != null)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: AppInsets.sectionVertical,
                   child: Text(
                     error!,
                     style: TextStyle(color: context.colors.danger),

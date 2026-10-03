@@ -1,3 +1,4 @@
+import 'package:fullstack_reader/core/network/endpoints.dart';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -30,7 +31,7 @@ Future<String> uploadImage(
     ),
   });
   final result = await api.request(
-    '/upload',
+    Endpoints.upload,
     method: 'POST',
     data: form,
     onSendProgress: onProgress,

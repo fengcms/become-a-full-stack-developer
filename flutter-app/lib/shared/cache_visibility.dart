@@ -7,6 +7,7 @@ mixin CacheVisibility<T extends StatefulWidget> on State<T> {
   );
   bool _visible = false;
   DateTime? _resumed;
+  // 底部 Tab 隐藏或被新路由遮挡时，不触发后台页面刷新。
   bool get cacheVisible =>
       mounted &&
       TickerMode.valuesOf(context).enabled &&

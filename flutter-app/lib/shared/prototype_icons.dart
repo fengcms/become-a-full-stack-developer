@@ -44,6 +44,7 @@ const prototypeIcons = <String, String>{
   'signal': '<path d="M4 20V10M9.3 20V5M14.7 20v-7M20 20V8"/>',
 };
 
+/// 直接绘制已确认原型的 SVG 图标，颜色和尺寸由所在组件传入。
 class PrototypeIcon extends StatelessWidget {
   const PrototypeIcon(this.name, {super.key, this.size = 20, this.color});
   final String name;
@@ -63,6 +64,7 @@ class PrototypeIcon extends StatelessWidget {
   );
 }
 
+/// 兼容常用 Material 图标名称并映射为原型图标，保持已有调用语义。
 class ReaderIcon extends StatelessWidget {
   const ReaderIcon(this.icon, {super.key, this.size, this.color});
   final IconData? icon;

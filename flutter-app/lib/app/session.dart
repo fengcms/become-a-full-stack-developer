@@ -1,3 +1,4 @@
+import 'package:fullstack_reader/core/network/endpoints.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
@@ -15,6 +16,7 @@ final repositoryProvider = Provider(
   (ref) => ref.read(sessionProvider).repository,
 );
 
+/// 会话是账号边界：切换账号提升 epoch 并清除私有缓存，草稿仍按账号隔离。
 class AppSession extends ChangeNotifier {
   AppSession(this.api, this.preferences, {DataCache? cache}) {
     repository = ReaderRepository(
@@ -41,7 +43,7 @@ class AppSession extends ChangeNotifier {
       if (await api.vault.read() != null) {
         await api.refresh();
         user = ApiUser.fromJson(
-          Map<String, dynamic>.from(await api.request('/auth/me') as Map),
+          Map<String, dynamic>.from(await api.request(Endpoints.authMe) as Map),
         );
         api.userId = user?.id;
       }
@@ -66,7 +68,7 @@ class AppSession extends ChangeNotifier {
     final start = epoch;
     final result = Map<String, dynamic>.from(
       await api.request(
-        register ? '/auth/register' : '/auth/login',
+        register ? Endpoints.register : Endpoints.login,
         method: 'POST',
         data: data,
         refreshAllowed: false,
@@ -80,7 +82,7 @@ class AppSession extends ChangeNotifier {
 
   Future<void> logout() async {
     try {
-      await api.request('/auth/logout', method: 'POST');
+      await api.request(Endpoints.logout, method: 'POST');
     } finally {
       await api.clear();
       user = null;
@@ -98,7 +100,7 @@ class AppSession extends ChangeNotifier {
 
   Future<void> reloadUser() async {
     user = ApiUser.fromJson(
-      Map<String, dynamic>.from(await api.request('/me/profile') as Map),
+      Map<String, dynamic>.from(await api.request(Endpoints.profile) as Map),
     );
     notifyListeners();
   }
@@ -118,7 +120,7 @@ final unreadCountProvider = FutureProvider<int>((ref) async {
   final data = await ref
       .read(sessionProvider)
       .repository
-      .read('/me/notifications/unread-count');
+      .read(Endpoints.unreadCount);
   return (data['count'] as num?)?.toInt() ?? 0;
 });
 

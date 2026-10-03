@@ -6,7 +6,7 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// Rebuildable files only. User drafts and credentials never enter this store.
+/// 只保存可重建文件，清理范围不包含用户草稿或登录凭据。
 class BlobStore {
   BlobStore(
     this.name, {
@@ -26,6 +26,7 @@ class BlobStore {
   int _generation = 0;
   String _file(String key) => sha256.convert(utf8.encode(key)).toString();
 
+  // 首次打开合并为一个任务；缓存目录不可用时降级到无磁盘缓存。
   Future<void> open() => _opening ??= () async {
     if (!enabled) return;
     try {
@@ -35,23 +36,7 @@ class BlobStore {
             '${(await getApplicationCacheDirectory()).path}/reader-v1/$name',
           );
       await _root!.create(recursive: true);
-      final index = File('${_root!.path}/index.json');
-      if (await index.exists()) {
-        try {
-          final data = jsonDecode(await index.readAsString()) as Map;
-          for (final e in data.entries) {
-            final meta = Map<String, dynamic>.from(e.value as Map);
-            if (meta['used'] is int &&
-                meta['size'] is int &&
-                meta['expires'] is int) {
-              _index[e.key as String] = meta;
-            }
-          }
-        } catch (_) {
-          _index.clear();
-          await index.delete();
-        }
-      }
+      await _readIndex();
       // Interrupted atomic writes and orphan blobs are safe to remove.
       final known = _index.keys.map(_file).toSet();
       await for (final entry in _root!.list()) {
@@ -66,6 +51,27 @@ class BlobStore {
     }
   }();
 
+  /// 单独恢复索引：损坏时丢弃可重建元数据，再清除无主文件。
+  Future<void> _readIndex() async {
+    final index = File('${_root!.path}/index.json');
+    if (!await index.exists()) return;
+    try {
+      final data = jsonDecode(await index.readAsString()) as Map;
+      for (final e in data.entries) {
+        final meta = Map<String, dynamic>.from(e.value as Map);
+        if (meta['used'] is int &&
+            meta['size'] is int &&
+            meta['expires'] is int) {
+          _index[e.key as String] = meta;
+        }
+      }
+    } catch (_) {
+      _index.clear();
+      await index.delete();
+    }
+  }
+
+  // 先等待排队写入；不存在、过期或损坏文件统一按未命中处理。
   Future<Uint8List?> read(String key) async {
     await _queue.catchError((Object _) {});
     await open();
@@ -85,6 +91,7 @@ class BlobStore {
     }
   }
 
+  // 别名查找只遍历未过期索引；无效元数据不能中断整个恢复流程。
   Future<String?> findKey(
     bool Function(String, Map<String, dynamic>) predicate,
   ) async {
@@ -129,6 +136,7 @@ class BlobStore {
     await temp.rename('${_root!.path}/index.json');
   }
 
+  // 写入排队且检查清理代际，避免删除完成后旧写任务重新创建文件。
   Future<void> write(
     String key,
     Uint8List bytes,
@@ -191,6 +199,7 @@ class BlobStore {
     if (await file.exists()) await file.delete();
   }
 
+  // 按元数据筛选失效文件，不需要解码所有缓存正文。
   Future<void> removeWhere(
     bool Function(String, Map<String, dynamic>) predicate,
   ) {
@@ -202,7 +211,9 @@ class BlobStore {
     });
   }
 
+  // 清理只作用于当前命名空间，数据与图片存储可分别管理。
   Future<void> clear() => removeWhere((_, _) => true);
+  // 容量取索引元数据，设置页不需要读取所有文件内容。
   Future<int> size() async {
     await _queue.catchError((Object _) {});
     await open();

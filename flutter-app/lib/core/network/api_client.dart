@@ -1,3 +1,5 @@
+import 'package:fullstack_reader/core/network/endpoints.dart';
+
 import 'dart:async';
 import 'dart:io';
 
@@ -7,11 +9,13 @@ import 'package:dio/io.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+/// 令牌存储接口允许测试替换为内存实现，业务代码不接触存储细节。
 abstract interface class TokenVault {
   Future<String?> read();
   Future<void> write(String? token);
 }
 
+/// 按接口环境隔离安全存储中的刷新令牌，避免开发与线上会话互相覆盖。
 class SecureTokenVault implements TokenVault {
   SecureTokenVault({this.namespace = "local"});
   final String namespace;
@@ -25,6 +29,7 @@ class SecureTokenVault implements TokenVault {
       : storage.write(key: key, value: token);
 }
 
+/// 保留 HTTP 状态、业务码和字段错误，界面可以区分权限、冲突与网络失败。
 class ApiFailure implements Exception {
   const ApiFailure(
     this.message, {
@@ -41,8 +46,10 @@ class ApiFailure implements Exception {
   String toString() => message;
 }
 
+/// 请求期间账号发生变化的控制信号；页面应忽略旧响应而非提示网络错误。
 class SessionChanged implements Exception {}
 
+/// 统一鉴权、单次刷新与 GET 限流重试；不承担页面缓存策略。
 class ApiClient {
   ApiClient({required this.baseUrl, required this.vault, Dio? transport})
     : dio = transport ?? Dio() {
@@ -99,6 +106,7 @@ class ApiClient {
     if (auth['user'] is Map) userId = (auth['user']['id'] as num?)?.toInt();
   }
 
+  // 清除会话先提升代际，使刷新和旧请求不能重新写入已退出的令牌。
   Future<void> clear() async {
     epoch++;
     accessToken = null;
@@ -118,7 +126,7 @@ class ApiClient {
           throw const ApiFailure('请登录后继续', code: 1004, status: 401);
         }
         final data = await request(
-          '/auth/refresh',
+          Endpoints.refresh,
           method: 'POST',
           data: {'refreshToken': token},
           refreshAllowed: false,
@@ -141,6 +149,7 @@ class ApiClient {
     });
   }
 
+  // 写操作的开始与完成事件成对发送，仓库由此维护缓存栅栏。
   Future<dynamic> request(
     String path, {
     String method = 'GET',
@@ -224,6 +233,7 @@ class ApiClient {
       }
       // Only read requests may retry a short server-declared cooldown, once.
       final seconds = int.tryParse(response.headers.value('retry-after') ?? '');
+      // 只对 GET 做一次有界等待；写请求绝不自动重放。
       if (response.statusCode == 429 &&
           method == 'GET' &&
           seconds != null &&
@@ -235,6 +245,7 @@ class ApiClient {
           path,
           queryParameters: query,
           options: Options(
+            method: method,
             headers: {
               if (!anonymous && accessToken != null)
                 'Authorization': 'Bearer $accessToken',
@@ -294,6 +305,7 @@ class ApiClient {
     }
   }
 
+  // 服务端相对地址基于 API 环境解析，只允许可展示的 HTTP/HTTPS 资源。
   String fileUrl(String value) {
     final u = Uri.tryParse(value);
     if (u == null) return '';

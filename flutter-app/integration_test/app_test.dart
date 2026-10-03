@@ -42,7 +42,18 @@ void main() {
     'real API: reading, auth, contribution, favorite, comment and dark mode',
     (tester) async {
       final prefs = await SharedPreferences.getInstance();
-      for (final key in prefs.getKeys().where((k) => k.startsWith('draft.'))) {
+      // 只暂存隔离后端的草稿，不能清理线上账号的本机写作内容。
+      final prefix = 'draft.${Uri.parse(api).authority}.';
+      final drafts = {
+        for (final key in prefs.getKeys().where((k) => k.startsWith(prefix)))
+          key: prefs.getString(key)!,
+      };
+      addTearDown(() async {
+        for (final entry in drafts.entries) {
+          await prefs.setString(entry.key, entry.value);
+        }
+      });
+      for (final key in drafts.keys) {
         await prefs.remove(key);
       }
       await prefs.setInt('themeMode', ThemeMode.light.index);

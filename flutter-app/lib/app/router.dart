@@ -1,3 +1,5 @@
+import 'package:fullstack_reader/app/theme/app_theme.dart';
+
 import '../shared/prototype_icons.dart';
 
 import 'package:flutter/material.dart';
@@ -6,12 +8,29 @@ import 'package:go_router/go_router.dart';
 
 import '../features/article_page.dart';
 import '../features/auth_page.dart';
-import '../features/discovery.dart';
+
+import 'package:fullstack_reader/features/discovery/author_page.dart';
+import 'package:fullstack_reader/features/discovery/browse_page.dart';
+import 'package:fullstack_reader/features/discovery/categories_page.dart';
+import 'package:fullstack_reader/features/discovery/home_page.dart';
+import 'package:fullstack_reader/features/discovery/search_page.dart';
+import 'package:fullstack_reader/features/discovery/tags_page.dart';
+
 import '../features/editor.dart';
-import '../features/member.dart';
-import '../shared/widgets.dart';
+
+import 'package:fullstack_reader/features/member/member_articles_page.dart';
+import 'package:fullstack_reader/features/member/member_list_page.dart';
+import 'package:fullstack_reader/features/member/member_page.dart';
+import 'package:fullstack_reader/features/member/notifications_page.dart';
+import 'package:fullstack_reader/features/member/profile_page.dart';
+import 'package:fullstack_reader/features/member/settings_page.dart';
+import 'package:fullstack_reader/shared/widgets/page_frame.dart';
+import 'package:fullstack_reader/shared/widgets/reader_context.dart';
+import 'package:fullstack_reader/shared/widgets/state_message.dart';
+
 import 'session.dart';
 
+/// 以会话代际重建受保护页面，防止旧账号的页面状态跨账号复用。
 class AccountBoundary extends ConsumerWidget {
   const AccountBoundary({
     super.key,
@@ -29,6 +48,13 @@ class AccountBoundary extends ConsumerWidget {
           child: child,
         );
 }
+
+const navigationItems = [
+  (icon: 'home', label: '首页'),
+  (icon: 'layers', label: '分类'),
+  (icon: 'search', label: '搜索'),
+  (icon: 'user', label: '我的'),
+];
 
 GoRouter createRouter(AppSession session) => GoRouter(
   refreshListenable: session,
@@ -75,7 +101,7 @@ GoRouter createRouter(AppSession session) => GoRouter(
               height: 56,
               child: Row(
                 children: [
-                  for (var i = 0; i < 4; i++)
+                  for (final (i, item) in navigationItems.indexed)
                     Expanded(
                       child: Semantics(
                         selected: shell.currentIndex == i,
@@ -89,7 +115,7 @@ GoRouter createRouter(AppSession session) => GoRouter(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               PrototypeIcon(
-                                ['home', 'layers', 'search', 'user'][i],
+                                item.icon,
                                 size: 22,
                                 color: shell.currentIndex == i
                                     ? c.colors.brand
@@ -97,9 +123,9 @@ GoRouter createRouter(AppSession session) => GoRouter(
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                ['首页', '分类', '搜索', '我的'][i],
+                                item.label,
                                 style: TextStyle(
-                                  fontSize: 10,
+                                  fontSize: AppType.navigation,
                                   height: 1.3,
                                   fontWeight: shell.currentIndex == i
                                       ? FontWeight.w600

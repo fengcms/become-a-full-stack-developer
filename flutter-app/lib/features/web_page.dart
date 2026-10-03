@@ -5,12 +5,15 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../shared/prototype_icons.dart';
-import '../shared/widgets.dart';
+
+import 'package:fullstack_reader/shared/widgets/notice.dart';
+import 'package:fullstack_reader/shared/widgets/reader_context.dart';
+import 'package:fullstack_reader/shared/widgets/state_message.dart';
 
 bool isWebAddress(Uri uri) =>
     (uri.scheme == 'https' || uri.scheme == 'http') && uri.host.isNotEmpty;
 
-/// A single app route: web navigation never adds entries to the app back stack.
+/// 网页浏览只占一个 App 路由，返回按钮始终退出网页回到来源页面。
 class WebPage extends StatefulWidget {
   const WebPage({super.key, required this.url});
   final Uri url;
@@ -43,50 +46,7 @@ class _WebPageState extends State<WebPage> {
       final web = WebViewController();
       controller = web;
       await web.setJavaScriptMode(JavaScriptMode.unrestricted);
-      await web.setNavigationDelegate(
-        NavigationDelegate(
-          onNavigationRequest: (request) {
-            final uri = Uri.tryParse(request.url);
-            if (uri != null && isWebAddress(uri)) {
-              return NavigationDecision.navigate;
-            }
-            if (request.isMainFrame && mounted) {
-              notice(context, '此链接暂不支持在网页中打开');
-            }
-            return NavigationDecision.prevent;
-          },
-          onPageStarted: (url) {
-            if (!mounted) return;
-            setState(() {
-              currentUrl = Uri.tryParse(url) ?? currentUrl;
-              title = null;
-              error = null;
-              progress = 0;
-            });
-          },
-          onUrlChange: (change) {
-            final uri = Uri.tryParse(change.url ?? '');
-            if (!mounted || uri == null || !isWebAddress(uri)) return;
-            setState(() => currentUrl = uri);
-            updateTitle();
-          },
-          onProgress: (value) {
-            if (mounted) setState(() => progress = value);
-          },
-          onPageFinished: (_) {
-            if (mounted) setState(() => progress = 100);
-            updateTitle();
-          },
-          onWebResourceError: (failure) {
-            if (mounted && failure.isForMainFrame == true) {
-              setState(() {
-                error = '网页加载失败，请重试';
-                progress = 100;
-              });
-            }
-          },
-        ),
-      );
+      await web.setNavigationDelegate(navigationDelegate());
       if (!mounted) return;
       setState(() {});
       await web.loadRequest(widget.url);
@@ -101,6 +61,50 @@ class _WebPageState extends State<WebPage> {
       if (mounted) setState(() => error = '网页加载失败，请重试');
     }
   }
+
+  /// 所有网页导航只更新 WebView；不向 App 导航栈追加路由。
+  NavigationDelegate navigationDelegate() => NavigationDelegate(
+    onNavigationRequest: (request) {
+      final uri = Uri.tryParse(request.url);
+      if (uri != null && isWebAddress(uri)) {
+        return NavigationDecision.navigate;
+      }
+      if (request.isMainFrame && mounted) {
+        notice(context, '此链接暂不支持在网页中打开');
+      }
+      return NavigationDecision.prevent;
+    },
+    onPageStarted: (url) {
+      if (!mounted) return;
+      setState(() {
+        currentUrl = Uri.tryParse(url) ?? currentUrl;
+        title = null;
+        error = null;
+        progress = 0;
+      });
+    },
+    onUrlChange: (change) {
+      final uri = Uri.tryParse(change.url ?? '');
+      if (!mounted || uri == null || !isWebAddress(uri)) return;
+      setState(() => currentUrl = uri);
+      updateTitle();
+    },
+    onProgress: (value) {
+      if (mounted) setState(() => progress = value);
+    },
+    onPageFinished: (_) {
+      if (mounted) setState(() => progress = 100);
+      updateTitle();
+    },
+    onWebResourceError: (failure) {
+      if (mounted && failure.isForMainFrame == true) {
+        setState(() {
+          error = '网页加载失败，请重试';
+          progress = 100;
+        });
+      }
+    },
+  );
 
   Future<void> updateTitle() async {
     if (readingTitle || controller == null || !mounted) return;

@@ -1,0 +1,37 @@
+{
+  "files": 101,
+  "maxFile": [
+    399,
+    "lib/features/editor.dart"
+  ],
+  "repositoryLines": 293,
+  "maxFunction": {
+    "name": "save",
+    "start": 253,
+    "len": 79,
+    "depth": 4,
+    "file": "lib/features/editor.dart"
+  },
+  "maxDepth": 4,
+  "commentsScript": 264,
+  "commentsExcludingThemeDirectory": 182,
+  "literalFonts": 0,
+  "edgeInsets": 7,
+  "literalColors": 0,
+  "pageBuilds": [
+    {
+      "name": "build",
+      "start": 370,
+      "len": 29,
+      "depth": 1,
+      "file": "lib/features/article_page.dart"
+    },
+    {
+      "name": "build",
+      "start": 29,
+      "len": 28,
+      "depth": 1,
+      "file": "lib/features/member/member_page.dart"
+    }
+  ]
+}

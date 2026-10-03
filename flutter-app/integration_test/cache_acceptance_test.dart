@@ -120,6 +120,11 @@ void main() {
         for (int i = 0; i < 150 && f.evaluate().isEmpty; i++) {
           await tester.pump(const Duration(milliseconds: 200));
         }
+        if (f.evaluate().isEmpty) {
+          debugPrint(
+            'Cache acceptance visible labels: ${find.byType(Text).evaluate().map((e) => (e.widget as Text).data).whereType<String>().join(" | ")}',
+          );
+        }
         expect(f, findsWidgets);
       }
 

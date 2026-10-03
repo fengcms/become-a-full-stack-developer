@@ -1,6 +1,7 @@
+import 'package:fullstack_reader/core/cache/cache_limits.dart';
 import 'package:highlight/highlight.dart' as hl;
 
-/// Public code only. Keep grammar tokens, never theme colors or widget keys.
+/// 仅共享公开正文的词法节点，不缓存主题颜色、组件或目录定位键。
 class CodeCache {
   static final _nodes = <String, List<hl.Node>>{};
   static int _characters = 0;
@@ -18,10 +19,11 @@ class CodeCache {
     final nodes =
         hl.highlight.parse(source, language: language.toLowerCase()).nodes ??
         [];
-    if (public && key.length <= 100000) {
+    if (public && key.length <= CacheLimits.highlightEntryCharacters) {
       _nodes[key] = nodes;
       _characters += key.length;
-      while (_nodes.length > 64 || _characters > 500000) {
+      while (_nodes.length > CacheLimits.highlightEntries ||
+          _characters > CacheLimits.highlightCharacters) {
         final first = _nodes.keys.first;
         _characters -= first.length;
         _nodes.remove(first);

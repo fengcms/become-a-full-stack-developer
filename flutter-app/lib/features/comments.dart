@@ -1,3 +1,6 @@
+import 'package:fullstack_reader/core/network/endpoints.dart';
+import 'package:fullstack_reader/app/theme/app_theme.dart';
+
 import 'dart:async';
 
 import '../core/cache/data_cache.dart';
@@ -11,8 +14,18 @@ import 'package:go_router/go_router.dart';
 import '../app/session.dart';
 import '../core/generated/models.dart';
 import '../core/network/api_client.dart';
-import '../shared/widgets.dart';
-import 'repository.dart';
+
+import 'package:fullstack_reader/shared/widgets/confirm.dart';
+import 'package:fullstack_reader/shared/widgets/notice.dart';
+import 'package:fullstack_reader/shared/widgets/reader_context.dart';
+import 'package:fullstack_reader/shared/widgets/section_title.dart';
+import 'package:fullstack_reader/shared/widgets/state_message.dart';
+import 'package:fullstack_reader/shared/widgets/submit_button.dart';
+import 'package:fullstack_reader/features/data/reader_models.dart';
+
+part 'comment_widgets/comment_footer.dart';
+part 'comment_widgets/comment_reply.dart';
+part 'comment_widgets/comment_thread.dart';
 
 Map<int, List<ApiComment>> groupComments(List<ApiComment> comments) {
   final byId = {for (final c in comments) c.id!: c};
@@ -34,6 +47,7 @@ Map<int, List<ApiComment>> groupComments(List<ApiComment> comments) {
   return groups;
 }
 
+/// 评论分页与输入草稿各自保留；刷新楼层数据不会清空正在输入的文字。
 class Comments extends ConsumerStatefulWidget {
   const Comments(this.articleId, {super.key, this.composerKey});
   final GlobalKey? composerKey;
@@ -62,34 +76,37 @@ class _CommentsState extends ConsumerState<Comments>
   @override
   void initState() {
     super.initState();
-    changes = ref.read(repositoryProvider).cache.events.listen((e) {
-      if (!mounted ||
-          !cacheVisible ||
-          busy ||
-          sending ||
-          (!dependencies.contains(e.key) && e.key != '*')) {
-        return;
-      }
-      if (e.kind == 'failed' || e.kind == 'removed') {
-        setState(() {
-          error = e.error;
-          if (e.kind == 'removed' ||
-              !ref.read(repositoryProvider).cache.usable(e.key)) {
-            items = [];
-          }
-        });
-        return;
-      }
-      if (e.kind == 'cleared') {
-        setState(() => items = []);
-      }
-      if (e.kind == 'updated') {
-        load(check: true);
-      } else if (e.kind != 'patched') {
-        load(reset: e.kind == 'invalidated');
-      }
-    });
+    changes = ref.read(repositoryProvider).cache.events.listen(onCacheEvent);
     load();
+  }
+
+  /// 仅可见页面响应缓存事件；失效和请求失败分别处理，避免重复重载。
+  void onCacheEvent(CacheEvent e) {
+    if (!mounted ||
+        !cacheVisible ||
+        busy ||
+        sending ||
+        (!dependencies.contains(e.key) && e.key != '*')) {
+      return;
+    }
+    if (e.kind == 'failed' || e.kind == 'removed') {
+      setState(() {
+        error = e.error;
+        if (e.kind == 'removed' ||
+            !ref.read(repositoryProvider).cache.usable(e.key)) {
+          items = [];
+        }
+      });
+      return;
+    }
+    if (e.kind == 'cleared') {
+      setState(() => items = []);
+    }
+    if (e.kind == 'updated') {
+      load(check: true);
+    } else if (e.kind != 'patched') {
+      load(reset: e.kind == 'invalidated');
+    }
   }
 
   @override
@@ -117,25 +134,7 @@ class _CommentsState extends ConsumerState<Comments>
         ),
       );
       if (!mounted) return;
-      setState(() {
-        if (reset) {
-          items = [];
-          pendingUpdate = false;
-        }
-        if (check && page > 1) {
-          pendingUpdate =
-              p.items.map((c) => c.json.toString()).join() !=
-              items.take(p.items.length).map((c) => c.json.toString()).join();
-          final byId = {for (final c in p.items) c.id: c};
-          items = items.map((c) => byId[c.id] ?? c).toList();
-          return;
-        }
-        if (check) items = [];
-        final ids = items.map((e) => e.id).toSet();
-        items.addAll(p.items.where((c) => ids.add(c.id)));
-        page = p.page;
-        more = p.hasMore;
-      });
+      setState(() => applyPage(p, reset: reset, check: check));
     } catch (e) {
       if (mounted && e is! SessionChanged && e is! CacheSuperseded) {
         setState(() => error = e);
@@ -143,6 +142,30 @@ class _CommentsState extends ConsumerState<Comments>
     } finally {
       if (mounted) setState(() => busy = false);
     }
+  }
+
+  void applyPage(
+    PageResult<ApiComment> p, {
+    required bool reset,
+    required bool check,
+  }) {
+    if (reset) {
+      items = [];
+      pendingUpdate = false;
+    }
+    if (check && page > 1) {
+      pendingUpdate =
+          p.items.map((c) => c.json.toString()).join() !=
+          items.take(p.items.length).map((c) => c.json.toString()).join();
+      final byId = {for (final c in p.items) c.id: c};
+      items = items.map((c) => byId[c.id] ?? c).toList();
+      return;
+    }
+    if (check) items = [];
+    final ids = items.map((e) => e.id).toSet();
+    items.addAll(p.items.where((c) => ids.add(c.id)));
+    page = p.page;
+    more = p.hasMore;
   }
 
   Future<void> send() async {
@@ -164,7 +187,7 @@ class _CommentsState extends ConsumerState<Comments>
               .read(sessionProvider)
               .api
               .request(
-                '/articles/${widget.articleId}/comments',
+                Endpoints.comments(widget.articleId),
                 method: 'POST',
                 data: {
                   'content': input.text.trim(),
@@ -197,161 +220,11 @@ class _CommentsState extends ConsumerState<Comments>
       await ref
           .read(sessionProvider)
           .api
-          .request('/comments/${c.id}', method: 'DELETE');
+          .request(Endpoints.comment(c.id!), method: 'DELETE');
       if (mounted) setState(() => items.removeWhere((e) => e.id == c.id));
     } catch (e) {
       if (mounted) notice(context, e);
     }
-  }
-
-  Widget footer(ApiComment c) => Wrap(
-    spacing: 20,
-    crossAxisAlignment: WrapCrossAlignment.center,
-    children: [
-      Text(c.createdAt?.split('T').first ?? '', style: context.text.labelSmall),
-      TextButton(
-        style: TextButton.styleFrom(
-          minimumSize: const Size(0, 28),
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          foregroundColor: context.colors.textMuted,
-          textStyle: const TextStyle(fontSize: 11),
-        ),
-        onPressed: () => setState(() => reply = c),
-        child: const Text('回复'),
-      ),
-      if (c.userId == ref.read(sessionProvider).user?.id)
-        TextButton(onPressed: () => remove(c), child: const Text('删除')),
-    ],
-  );
-
-  Widget replyBlock(ApiComment c) {
-    final parent = items.where((p) => p.id == c.parentId).firstOrNull;
-    return Container(
-      key: ValueKey('reply-${c.id}'),
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: context.colors.surfaceSunken,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            '回复 ${parent?.userName ?? '原评论暂不可见'}',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: context.colors.brand,
-            ),
-          ),
-          if (parent != null)
-            Container(
-              margin: const EdgeInsets.only(top: 5),
-              padding: const EdgeInsets.only(left: 9),
-              decoration: BoxDecoration(
-                border: Border(
-                  left: BorderSide(color: context.colors.lineStrong, width: 2),
-                ),
-              ),
-              child: Text(
-                parent.content ?? '',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  height: 1.7,
-                  color: context.colors.textMuted,
-                ),
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: SelectableText(
-              c.content ?? '',
-              style: TextStyle(
-                fontSize: 13.5,
-                height: 1.75,
-                color: context.colors.textBody,
-              ),
-            ),
-          ),
-          footer(c),
-        ],
-      ),
-    );
-  }
-
-  Widget thread(int id, List<ApiComment> comments) {
-    final root = comments.where((c) => c.id == id).firstOrNull;
-    final replies = comments.where((c) => c.id != id).toList();
-    final shown = expanded.contains(id) ? replies : replies.take(3);
-    return Container(
-      key: ValueKey('comment-thread-$id'),
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: context.colors.line)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 14,
-            backgroundColor: context.colors.brandSubtle,
-            foregroundColor: context.colors.brandOnSubtle,
-            child: Text(
-              (root?.userName?.isNotEmpty == true ? root!.userName! : '会员')
-                  .characters
-                  .first,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  root == null ? '原评论暂不可见' : root.userName ?? '会员',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: context.colors.textBody,
-                  ),
-                ),
-                if (root != null) ...[
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6, bottom: 8),
-                    child: SelectableText(
-                      root.content ?? '',
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        height: 1.75,
-                        color: context.colors.textBody,
-                      ),
-                    ),
-                  ),
-                  footer(root),
-                ],
-                for (final c in shown) replyBlock(c),
-                if (replies.length > 3)
-                  TextButton(
-                    onPressed: () => setState(
-                      () => expanded.contains(id)
-                          ? expanded.remove(id)
-                          : expanded.add(id),
-                    ),
-                    child: Text(
-                      expanded.contains(id)
-                          ? '收起回复'
-                          : '展开 ${replies.length - 3} 条回复',
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -366,16 +239,27 @@ class _CommentsState extends ConsumerState<Comments>
             onPressed: () => load(reset: true),
             child: const Text('评论有更新，点击刷新'),
           ),
-        for (final e in groups.entries) thread(e.key, e.value),
+        for (final e in groups.entries)
+          _CommentThread(
+            id: e.key,
+            comments: e.value,
+            items: items,
+            expanded: expanded.contains(e.key),
+            onExpand: () => setState(
+              () => expanded.contains(e.key)
+                  ? expanded.remove(e.key)
+                  : expanded.add(e.key),
+            ),
+            userId: ref.read(sessionProvider).user?.id,
+            onReply: (c) => setState(() => reply = c),
+            onRemove: remove,
+          ),
         if (error != null) StateMessage(error: error, onRetry: load),
         if (busy) const Center(child: CircularProgressIndicator()),
         if (!busy && more && !pendingUpdate)
           TextButton(onPressed: load, child: const Text('加载更多评论')),
         if (!busy && items.isEmpty && error == null)
-          const Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('还没有评论，分享你的想法吧。'),
-          ),
+          const Padding(padding: AppInsets.page, child: Text('还没有评论，分享你的想法吧。')),
         const SizedBox(height: 24),
         if (reply != null)
           ListTile(

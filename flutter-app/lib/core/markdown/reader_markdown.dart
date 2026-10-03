@@ -1,3 +1,4 @@
+import 'package:fullstack_reader/app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
@@ -9,11 +10,16 @@ import 'code_cache.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/generated/models.dart';
-import '../../shared/widgets.dart';
+
+import 'package:fullstack_reader/shared/widgets/notice.dart';
+import 'package:fullstack_reader/shared/widgets/reader_context.dart';
+import 'package:fullstack_reader/shared/widgets/reader_image.dart';
+
 import '../../features/web_page.dart';
 
-/// ATX syntax is the only place where a server TOC item can acquire a render key.
-/// Setext and fenced-code content never consume an item. No client slug algorithm.
+part 'code_block.dart';
+
+/// 仅 ATX 标题消耗服务端目录项；代码围栏和 Setext 标题不冒充目录锚点。
 class ServerHeadingSyntax extends md.HeaderSyntax {
   ServerHeadingSyntax(this.toc);
   final List<ApiTocItem> toc;
@@ -55,7 +61,10 @@ class _HeadingBuilder extends MarkdownElementBuilder {
     final h2 = element.tag == 'h2';
     return Container(
       key: anchor == null ? null : keys[anchor],
-      margin: EdgeInsets.only(top: h2 ? 32 : 24, bottom: 12),
+      margin: EdgeInsets.only(
+        top: h2 ? AppSpacing.s8 : AppSpacing.s6,
+        bottom: AppSpacing.s3,
+      ),
       padding: EdgeInsets.only(left: h2 ? 10 : 0),
       decoration: h2
           ? BoxDecoration(
@@ -91,96 +100,11 @@ class _CodeBuilder extends MarkdownElementBuilder {
         .where((c) => c.startsWith('language-'))
         .map((c) => c.substring(9))
         .firstOrNull;
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final palette = <String, Color>{
-      'keyword': Color(dark ? 0xffc4a0f5 : 0xff8b5cf6),
-      'built_in': Color(dark ? 0xffc4a0f5 : 0xff8b5cf6),
-      'string': Color(dark ? 0xff6fcfb4 : 0xff0f766e),
-      'comment': context.colors.textMuted,
-      'number': Color(dark ? 0xffedbd83 : 0xffa65f19),
-      'literal': Color(dark ? 0xffedbd83 : 0xffa65f19),
-      'title': context.colors.brand,
-      'attr': context.colors.brand,
-    };
-    TextSpan span(hl.Node n) => TextSpan(
-      text: n.value,
-      style: TextStyle(color: palette[n.className]),
-      children: n.children?.map(span).toList(),
-    );
-    List<TextSpan> tokens = [TextSpan(text: source)];
-    if (language != null && language.isNotEmpty) {
-      try {
-        tokens = CodeCache.parse(
-          source,
-          language,
-          public: public,
-        ).map(span).toList();
-      } catch (_) {
-        /* Unknown fences remain readable and copyable as plain text. */
-      }
-    }
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: context.colors.codeBg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: context.colors.line),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            padding: const EdgeInsets.only(left: 12),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: context.colors.line)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    language?.isNotEmpty == true ? language! : '纯文本',
-                    style: TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 11,
-                      color: context.colors.textMuted,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: '复制代码',
-                  icon: const Text('复制', style: TextStyle(fontSize: 11)),
-                  onPressed: () async {
-                    try {
-                      await Clipboard.setData(ClipboardData(text: source));
-                      if (context.mounted) notice(context, '代码已复制');
-                    } catch (e) {
-                      if (context.mounted) notice(context, '复制失败，请手动选择');
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.all(12),
-            child: SelectableText.rich(
-              TextSpan(children: tokens),
-              style: TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 14,
-                height: 1.7,
-                color: context.colors.codeFg,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return _CodeBlock(source: source, language: language, public: public);
   }
 }
 
+/// 正文渲染依赖内容、目录定位键与主题，私有预览禁用公开图片和词法缓存。
 class ReaderMarkdown extends StatefulWidget {
   const ReaderMarkdown(
     this.content, {
@@ -265,10 +189,10 @@ class _MarkdownContent extends StatelessWidget {
           color: c.surfaceSunken,
           border: Border(left: BorderSide(color: c.brand, width: 3)),
         ),
-        blockquotePadding: const EdgeInsets.all(16),
+        blockquotePadding: AppInsets.page,
         tableColumnWidth: const IntrinsicColumnWidth(),
         tableBorder: TableBorder.all(color: c.line),
-        tableCellsPadding: const EdgeInsets.all(10),
+        tableCellsPadding: AppInsets.codeInline,
         horizontalRuleDecoration: BoxDecoration(
           border: Border(top: BorderSide(color: c.line)),
         ),
