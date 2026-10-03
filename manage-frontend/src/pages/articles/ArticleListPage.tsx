@@ -20,6 +20,7 @@ import { UnsavedChanges } from '@/components/feedback/UnsavedChanges'
 import { FILTER_ALL, FilterSelect } from '@/components/form/FilterSelect'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { useAdminArticles, useApproveArticle, useDeleteArticle } from '@/hooks/useArticles'
 import { useBatchSelection } from '@/hooks/useBatchSelection'
 import { useCategoryTree } from '@/hooks/useCategories'
@@ -97,12 +98,12 @@ const ArticleListPage = () => {
 
       <UnsavedChanges dirty={false} busy={batchBusy} />
       <fieldset disabled={batchBusy} className="mb-4 flex flex-wrap items-center gap-2">
-        <input
+        <Input
           value={kw}
           onChange={(e) => setKw(e.target.value)}
           aria-label="搜索"
           placeholder="搜索标题 / 关键词"
-          className="h-9 rounded-md border border-input bg-white px-3 text-sm dark:bg-background"
+          className="w-56"
         />
         <FilterSelect
           ariaLabel="按状态筛选"

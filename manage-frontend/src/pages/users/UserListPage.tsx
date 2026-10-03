@@ -17,6 +17,7 @@ import { TablePagination } from '@/components/data/TablePagination'
 import { FILTER_ALL, FilterSelect } from '@/components/form/FilterSelect'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { ROLE_LABELS } from '@/config/roles'
 import { useKeywordFilter } from '@/hooks/useKeywordFilter'
 import { useTableQuery } from '@/hooks/useTableQuery'
@@ -144,12 +145,12 @@ const UserListPage = () => {
             { value: 'disabled', label: '禁用' },
           ]}
         />
-        <input
+        <Input
           value={kw}
           onChange={(e) => setKw(e.target.value)}
           aria-label="搜索"
           placeholder="搜索用户名 / 昵称 / 邮箱"
-          className="h-9 w-64 rounded-md border border-input bg-white px-2 text-sm dark:bg-background"
+          className="w-64"
         />
         {(role || status || keyword) && (
           <Button variant="ghost" onClick={clearFilters}>

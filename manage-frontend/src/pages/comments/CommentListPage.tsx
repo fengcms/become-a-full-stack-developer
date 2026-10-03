@@ -23,6 +23,7 @@ import { UnsavedChanges } from '@/components/feedback/UnsavedChanges'
 import { FILTER_ALL, FilterSelect } from '@/components/form/FilterSelect'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { useBatchSelection } from '@/hooks/useBatchSelection'
 import {
   useAdminComments,
@@ -104,14 +105,14 @@ const CommentListPage = () => {
             { value: 'reviewing', label: STATUS_LABEL.reviewing },
           ]}
         />
-        <input
+        <Input
           aria-label="按文章编号筛选"
           placeholder="文章编号"
           type="number"
           min="1"
           value={articleId ?? ''}
           onChange={(e) => setFilters({ articleId: e.target.value || undefined })}
-          className="h-9 w-36 rounded-md border bg-background px-3 text-sm"
+          className="w-36"
         />
         {(status || articleId) && (
           <Button variant="ghost" onClick={clearFilters}>

@@ -57,8 +57,10 @@ export const TagsField = ({
 
   return (
     <FormField label={label} htmlFor="tags" description={description}>
-      {/* 与 Input / Textarea / Select 一致：浅色模式纯白底，暗色跟随主题底 */}
-      <div className="flex min-h-9 flex-wrap gap-2 rounded-lg border border-input bg-white p-2 dark:bg-background">
+      {/* 与 Input / Textarea / Select 一致：浅色纯白底、暗色跟随主题底。
+          复合控件没有单个可聚焦元素，激活态走 focus-within（内部 input 已 outline-none），
+          表现与 Input 的 focus-visible:ring-1 一致。 */}
+      <div className="flex min-h-9 flex-wrap gap-2 rounded-lg border border-input bg-white p-2 transition-shadow focus-within:ring-1 focus-within:ring-ring dark:bg-background">
         {value.map((t) => (
           <span
             key={t}
