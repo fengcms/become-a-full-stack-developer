@@ -70,6 +70,22 @@ GoRoute(
 
 验收要从几个入口进入相同文章：Tab 内卡片、通知跳转、外部分享链接；再逐条检查系统返回、Tab 切换和登录回跳。页面能显示只是第一步，返回栈符合用户预期才是路由闭环。
 
+## 登录回跳需要保留完整 URI
+
+项目路由守卫把原始 URI 编码进 `/login?from=...`，会话恢复期间先进入 restoring 页面，恢复完成后再去目标或会员首页。这处理了“启动时 token 仍在安全存储但用户还没加载完”的短暂状态。若把“未知身份”当成匿名，深链用户会先被送去登录；若恢复后不继续原 URI，又会丢失外部链接意图。
+
+```text
+private URI + session.restoring → /restoring?from=URI
+restore success → from
+restore failure / no user → /login?from=URI
+```
+
+真实代码用 `state.uri.toString()` 和 `Uri.encodeComponent` 保存完整路径和 query。目标只允许 App 内路径，避免开放重定向；文章路由也不应误设为私有，否则匿名阅读链接会强制登录。
+
+## StatefulShell 的范围并不等于所有页面都在 Tab 内
+
+当前四个主分支使用 indexed stack，文章详情、作者和认证/投稿操作作为 standalone routes，返回后保留原分支。路由设计需和页面导航关系保持一致；单纯把所有路由塞进 Shell 可能导致详情切 Tab 时出现错误底栏。
+
 ## 小结
 
 四 Tab 导航、路由栈、深链接和登录回跳共同定义了 App 的空间结构。先决定每个分支是否保留状态，再建立可恢复的 URL，最后让身份守卫保留安全的内部目标。路由正确不等于后端授权正确，生产深链也需要平台级验证。

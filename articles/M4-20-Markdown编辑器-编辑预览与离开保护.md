@@ -41,9 +41,9 @@ Editor state
 
 项目将编辑页拆成 `editor_metadata.dart`、`editor_body.dart`、`editor_preview.dart`、工具栏和保存动作组件；控制器、提交、校验与页面生命周期仍由宿主编辑页拥有。私有展示组件不接收整个 State，而是接收明确字段、控制器和回调。
 
-## Dirty 状态应相对服务端基线计算
+## Dirty 状态相对基线是更好的后续改进
 
-编辑器加载初始内容后保存一份基线。dirty 不是“Controller 非空”，而是用户可提交字段与基线不同；服务器保存成功后用确认结果更新基线。
+当前编辑器在加载完成后，任一输入监听器触发就设置 `dirty = true`，保存成功后复位；用户把字段改回原值，仍会被提示未保存。这是简单而保守的离开保护。更精确的方案是编辑器加载时保存一份规范化基线，dirty 表示可提交字段与基线不同；服务器保存成功后再用确认结果更新基线。
 
 ```text
 baseline = normalize(serverArticle)
@@ -51,7 +51,30 @@ current = normalize(editorFields)
 isDirty = current != baseline || pendingUploads.isNotEmpty
 ```
 
-规范化可处理标签空格、可选摘要等非语义差异，但不能把用户输入静默改写。离开拦截只在 `isDirty` 为真时提示；上传中也需告知仍有待完成操作。测试应覆盖系统 back、路由 pop、保存失败、保存成功后返回和编辑器切换预览。
+规范化可处理标签空格、可选摘要等非语义差异，但不能把用户输入静默改写。离开拦截只在 `isDirty` 为真时提示；上传中也需告知仍有待完成操作。测试应覆盖系统 back、路由 pop、保存失败、保存成功后返回和编辑器切换预览。若引入基线比较，要保证自动恢复本机副本后 dirty 为真，即使它与服务器原稿接近也不能误删恢复数据。
+
+## 编辑器是一个小型事务流程
+
+一次“提交审核”可拆为校验、等待上传完成、构造载荷、写服务端、接收权威状态、更新基线并清除恢复副本。任一步失败都要知道哪些动作已经发生。例如图片上传已成功但文章保存失败，附件 URL 可以保留在编辑态；不能因此清掉正文或本机副本。
+
+```text
+validate fields → await uploads → save/create draft
+→ install server response → update baseline → clear recovery copy
+```
+
+若用户在网络响应前离开，离开保护应区分“正在提交”和“未保存”。重复点按钮要禁用或共用同一个提交任务，避免重复创建；页面被销毁后仍应由服务层完成必要状态处理，UI 回写则先检查 mounted/epoch。
+
+## 本机自动保存是节流写入，不是服务端保存
+
+控制器变化后页面设置 500ms Timer，再将标题、摘要、正文、标签、分类、封面和服务端基线时间写入 SharedPreferences。连续输入会取消前一个 Timer；写队列 `draftWrite` 串行执行，避免较早的异步落盘晚于较新内容。
+
+```text
+keystroke → dirty=true → cancel prior timer
+500ms quiet → JSON snapshot → serialized preferences write
+server save success → await pending write → remove recovery key
+```
+
+本机自动保存失败会提示用户尽快保存服务端；页面销毁时仍尝试持久化 dirty 内容，但没有 UI 可展示错误。因此它降低意外丢稿概率，不是绝对持久化保证，设备存储损坏或卸载仍可能丢失。
 
 ## 小结
 

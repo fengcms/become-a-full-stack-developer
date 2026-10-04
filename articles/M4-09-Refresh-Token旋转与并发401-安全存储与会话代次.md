@@ -68,6 +68,18 @@ refresh token 缺失、过期、重放或被撤销时，清除安全存储和私
 
 刷新失败清理凭据时，存储删除若异步执行，应先让内存会话失效并递增 epoch，再等待持久化清理；这样 UI 和迟到响应立即进入匿名边界。日志只保留错误类别和安全 request id。
 
+## 这段实现有三道竞态栅栏
+
+ApiClient 在刷新开始记录 `epoch`；清会话会先递增 epoch 再清 access/user；安全存储写入经 `_storageQueue` 串行化。请求发送前保存原 access token，收到 401 仅当 token 未被其他请求更新时才进入刷新；之后检查 epoch，再以新 token 重试一次。
+
+```text
+captured epoch ─────┐
+refresh / install ──┼→ epoch unchanged? → continue
+logout increments ─┘              no → SessionChanged
+```
+
+这避免退出后刷新 Future 又把旧凭据安装回来。重试的原请求仍受 refreshAllowed=false 限制，不会形成无限 401 循环。测试使用可控 Completer 暂停刷新，让 8 条请求并发到达，断言 refresh 调用数为 1，并测试退出时迟到响应被丢弃。
+
 ## 小结
 
 令牌轮换要求刷新单飞和新值持久化有序；会话 epoch 则让退出、账号切换成为明确的响应隔离边界。access token 不落盘，refresh token 放安全存储，私有数据按身份隔离。认证正确性需要竞态测试，不能只看登录成功截图。

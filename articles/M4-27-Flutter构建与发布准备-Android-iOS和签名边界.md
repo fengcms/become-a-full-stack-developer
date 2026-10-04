@@ -54,6 +54,18 @@ source revision + Flutter/Dart version + environment defines
 
 即使 release APK 安装成功，也还需要检查网络安全配置、深链域名、应用升级签名一致、崩溃日志和后端兼容性。iOS 还涉及 provisioning profile、Bundle ID、entitlements 和系统权限描述；这些在本机没有完整 Xcode 的情况下尚未验证。
 
+## 版本发布还要验证升级路径
+
+安装全新 debug 包只验证首次启动；发行前还需从旧版本升级，确认数据库/偏好迁移、refresh token 兼容、缓存目录版本和应用包签名一致。缓存可重建但用户稿件不可随意丢失，因此更改应用存储 schema 时要单独迁移恢复数据。
+
+正式域名关联还涉及 Android intent filter/asset links 与 iOS Associated Domains；仓库当前自定义 scheme 开发路径不能代替验证 HTTPS App Links/Universal Links。审核资料、隐私说明和权限原因也应与实际行为一致，不请求未使用的权限。
+
+## release 配置的安全断言应自动化
+
+main.dart 在 Release 模式启动时拒绝非 HTTPS 的 API_BASE_URL；Android 明文 HTTP 例外只在 debug manifest。这个 guard 不能取代证书、域名与后端配置检查，却能防止最明显的 release 指向 `http://`。打包流水线还可扫描 apk/ipa strings，检查是否残留 localhost、测试代理和隔离环境 API 地址。
+
+签名私钥应放 CI secret 或开发者本机安全目录，流程记录 key alias/证书指纹而不打印秘密。升级必须沿用同一签名身份；签名丢失可能使用户无法安装覆盖升级，回滚也不能简单重签旧版本。
+
 ## 小结
 
 Flutter build 只生成指定配置的产物。Android 已有模拟器功能验收，iOS 尚无 Xcode/真机证据；正式签名、正式域名与商店发布仍是独立工作。把每个里程碑和证据分开，才能对用户准确承诺。

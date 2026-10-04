@@ -86,6 +86,17 @@ ApiException {
 
 上面是概念模型。Repository 可把“资源不可见”转为特定页面状态，但不应把所有 `403` 都映射成文章不存在；权限错误、业务错误和网络错误要保留区分，以便 UI 给出正确恢复入口。
 
+## 请求路径的审查清单
+
+评审一个新端点时，逐项检查它经过统一 ApiClient、是否可匿名、是否允许 token refresh、响应 data 是对象/分页/列表哪一种、是否进入显式缓存白名单、写入影响哪些资源。未列入缓存策略的 endpoint 默认联网，避免登录、上传或稿件正文因“GET”而意外落盘。
+
+```text
+endpoint → auth mode → response shape → repository mapping
+         → cache policy → mutation invalidation → tests
+```
+
+这里最容易漏掉的是子资源路由匹配顺序：`/articles/{id}/comments` 要先识别为评论，不能因前缀 `/articles` 被归为文章正文。项目 `CachePolicyTable.family()` 对更具体子资源优先判断，读策略和 mutation tag 共用资源分类。
+
 ## 小结
 
 Dio 处理传输横切规则，Repository 处理资源读取与模型适配，Widget 管呈现和用户动作。生成类型、契约检查、解析测试与真实联调共同降低漂移；“统一 API”不等于“响应细节完全同构”，更不等于可以丢弃服务器约束。

@@ -79,6 +79,30 @@ Provider 作用域可用于在会话变化后重建只属于当前用户的数�
 
 测试可用 ProviderContainer 覆盖 Session 或 Repository，再验证切换身份后拿到新实例、旧请求结果被丢弃。依赖注入不是测试的唯一理由，关键是让生命周期和数据归属清晰可读。
 
+## 项目中的 Provider 数量少，但边界明确
+
+项目并未把每个页面都建成 Provider。`sessionProvider` 是 ChangeNotifierProvider，因为 `AppSession` 持有认证恢复、主题与用户状态；`repositoryProvider` 从会话取 Repository；未读数用 `FutureProvider` 并监听 `(userId, epoch)`；互动变更则通过 `StreamProvider` 暴露 revision。编辑输入仍由页面 State 和 controller 持有。
+
+```dart
+final unreadCountProvider = FutureProvider<int>((ref) async {
+  final identity = ref.watch(
+    sessionProvider.select((s) => (s.user?.id, s.epoch)),
+  );
+  if (identity.$1 == null) return 0;
+  final data = await ref
+      .read(sessionProvider)
+      .repository
+      .read(Endpoints.unreadCount);
+  return (data['count'] as num?)?.toInt() ?? 0;
+});
+```
+
+这段与项目 `session.dart` 的 Provider 声明一致。`select` 观察用户 ID 和会话 epoch，可避免主题变化等无关通知触发未读请求。Provider 生命周期应与数据更新频率匹配，不是把整个应用状态塞进一个 notifier。
+
+## 异步依赖组合不应放在 build
+
+项目审阅曾发现会员首页在 `build` 内启动新统计 Future，导致无关重建重复请求。修正方式是由可观察的 Provider/Repository 持有请求，或将一次性 Future 缓存在 State 初始化阶段；先确定刷新触发点，再写异步加载代码。
+
 ## 小结
 
 先按所有权、持久性和身份范围分类状态，再选择 Provider 作用域。应用级依赖统一装配，服务器资源走 Repository，临时编辑值留在页面，本机恢复副本单独隔离；会话 epoch 则把账号切换变成可验证的清理边界。

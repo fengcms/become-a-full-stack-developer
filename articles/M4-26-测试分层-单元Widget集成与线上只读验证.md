@@ -65,6 +65,35 @@ Assert:  检查 UI 状态 + 请求次数 + 数据副作用
 
 只断言“页面出现成功”可能漏掉重复 POST、旧账号数据回填和无边界重试。对于生产只读脚本，应显式拒绝非 GET 方法，并在启动前核对 base URL，形成可审计的防护。
 
+## 测试替身应逼近竞态，而非堆满实现细节
+
+项目使用 Dio `HttpClientAdapter` 构造可控响应，Completer 让测试暂停网络、再按指定顺序放行，从而验证并发刷新和迟到响应。缓存测试注入可控时钟与 BlobStore，检查 fresh/stale/maxAge 变化，而不是 sleep 几分钟等 TTL。
+
+```dart
+final gate = Completer<CacheReply>();
+var requests = 0;
+Future<CacheReply> fetch() {
+  requests++;
+  return gate.future;
+}
+final reads = List.generate(
+  10,
+  (_) => cache.get('one', policy, fetch),
+);
+gate.complete(CacheReply({'id': 1}));
+await Future.wait(reads);
+expect(requests, 1);
+expect(cache.metrics['joined'], 9);
+```
+
+这是项目 `test/cache_test.dart` 的并发请求合并用例核心：十个调用共享一个 Future，网络只请求一次，其余九个加入已有任务。测试初始化时使用禁用磁盘的 BlobStore 和可控时钟，tearDown 关闭 DataCache。避免 mock 复制所有生产分支，优先让一个测试针对一条重要不变量并验证副作用次数。
+
+## 集成测试依赖被隔离的真实服务，而不是生产模拟
+
+项目集成命令指向 Android emulator 的 `10.0.2.2:11002` 本地后端，数据库和上传文件落到被忽略的 `.local/`；测试会员与线上账号不同。测试中创建投稿、评论和上传图片是真实 HTTP 副作用，只是目标为可重置隔离库。
+
+生产 profile 测试只做匿名公开读取，并将结果写入证据文件；代理仅用于模拟器网络连通，不关闭 TLS 校验，也不修改 release 网络策略。任何测试在启动前都应打印/断言目标 host 和 HTTP method allowlist，避免环境变量被误设后直写生产。
+
 ## 小结
 
 测试证据必须写清环境、对象和边界。单测证明规则、Widget 测试证明界面状态、隔离集成测试证明端到端流程，线上只读只证明公开访问样本。将生产写入与本地测试库隔离，既保护真实数据，也能让测试可重复。

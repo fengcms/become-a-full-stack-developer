@@ -103,6 +103,22 @@ HTTP JSON → OpenAPI DTO / 响应解析 → Repository 映射 → Widget 展示
 
 Dart 的 `late` 也只是把初始化检查推迟到运行期；它适用于生命周期可证明的延迟初始化，不适合作为绕过 nullable 处理的通用写法。优先使用构造时必需参数和不可变字段，让编译器尽早帮助检查。
 
+## 异步返回后先确认页面仍然存在
+
+Flutter 页面执行 `await` 后，用户可能已经按返回离开。此时不能无条件 `setState` 或使用已销毁的 `BuildContext`。项目的编辑恢复流程在 await 弹窗后检查 `context.mounted`，避免异步回调访问失效页面：
+
+```dart
+final accepted = await confirm(context, title, message);
+if (!accepted || !context.mounted) return;
+apply(recovery);
+```
+
+`mounted` 解决生命周期安全，不解决请求是否过时。搜索词变化、账号切换等还需要请求代次或 session epoch。也不要在 `catch` 中把任意异常都吞成 `[]`，否则错误状态会伪装成“没有结果”。
+
+## FutureBuilder、Provider 与缓存的选择
+
+一次性的静态局部异步值可以用 FutureBuilder；跨页面共享、需要账号依赖或主动失效的状态适合通过应用现有 Provider/Repository 管理。不要在 build 中新建 Future，否则每次重建都可能重复请求。无论选哪个 Widget，缓存、错误分类与请求去重应由稳定的数据层提供。
+
 ## 小结
 
 Dart 空安全促使代码明确“值可能不存在”，Future 让异步成功/失败成为类型边界；异常应在有恢复能力的层处理。生成类型、JSON 解析、Repository 映射和页面状态共同构成可靠数据链路，不能把 `!`、空列表或 catch-all 当作省事捷径。

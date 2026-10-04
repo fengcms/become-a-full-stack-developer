@@ -60,6 +60,26 @@ privatePreview none      no     account+epoch  always fetch
 
 这是设计表的示例，具体 TTL 和上限应以 `CachePolicyTable`、`CacheLimits` 与验收文档为准。API 响应的 `private`/`no-store` 必须压低客户端复用级别，客户端不能因自己的策略想缓存就覆盖服务端约束。
 
+## 读取缓存时服务端响应头可以收紧策略
+
+客户端策略表决定允许缓存哪些资源；服务端 Cache-Control/Age 再限制数据的复用。`no-store` 不落盘也不保留为复用项；`private` 不进入公共磁盘；更短 `max-age` 覆盖更长客户端 fresh 窗口。响应头处理在数据入口集中完成，避免每个页面忘记尊重服务器策略。
+
+当前实测中某一个生产分类响应没有观察到 ETag、Last-Modified 或 Cache-Control，所以工程不宣称实现 ETag/304 条件请求。没有观察到一个端点的 header，不能推断所有路径永远都没有；因此缓存仍有自己的 TTL 和写后失效保护。
+
+## 请求合并和磁盘恢复要遵循同一代次
+
+DataCache 对同 key 的并发网络读取共享 `_flights` Future；命中 stale 数据时立即返回旧值并启动后台更新。若中途强刷、写后 fence、清理缓存或切换会话，资源 version/全局 epoch 更新；磁盘读取完成后也必须再次核对，否则清理后旧文件可能重新进内存。
+
+```text
+cache key + current version
+→ disk/memory lookup
+→ fetch future shared by key
+→ before install compare epoch and version
+→ stale result throws CacheSuperseded
+```
+
+这是并发正确性机制，不单是速度优化。`CacheSuperseded` 对页面不应当作网络错误提示；它表示另一个更新已获胜，页面可等待新状态或忽略该响应。
+
 ## 小结
 
 Flutter 缓存需要明确定义新鲜度、失效行为、身份范围和容量预算。公开内容可以有限落盘，私有数据按会话内存隔离，编辑数据走实时请求；陈旧显示是产品承诺，完整离线同步则是另一类功能，当前并未实现。

@@ -82,6 +82,30 @@ React 中你可能会把“组件函数再次执行”与“真实 DOM 更新”
 
 因此判断成本要观察帧时间和 profile，而不是在日志里看到 build 次数就给每个子节点加 `const`。不可变常量当然有价值，但它不是替代测量的性能策略。布局异常也先回到约束链：定位哪个父节点给出无限高度，再决定唯一滚动容器或有限尺寸。
 
+## 从约束报错定位布局，而不是猜尺寸
+
+遇到 `RenderFlex children have non-zero flex but incoming height constraints are unbounded` 时，先沿父子链确认哪个滚动视口提供了无限主轴约束。典型错误是纵向 `SingleChildScrollView` 中再放一个纵向 `ListView`，同时让两个节点都要求根据内容无限增长。若内容整体很长，通常保留一个滚动容器；若列表有明确有限区域，则在 `Column` 中给 `Expanded`，让列表取得有限剩余空间。
+
+```dart
+Column(
+  children: [
+    const Header(),
+    Expanded(
+      child: ListView.builder(
+        itemCount: items.length,
+        itemBuilder: (_, i) => ArticleTile(items[i]),
+      ),
+    ),
+  ],
+)
+```
+
+以上布局成立的前提是 `Column` 自身拿到有限高度，例如页面 Scaffold 的 body；若外层同样无界，`Expanded` 也无法解决。`shrinkWrap: true` 会让列表测量内容高度，适合短小嵌套列表但可能放弃视口惰性布局优势。选择前要问谁是唯一滚动所有者。
+
+## Widget 树优化先测再做
+
+开发模式下的重建日志不能直接代表 Release 帧耗时。用 Flutter DevTools 的 Performance/Widget rebuild 工具在真实长文章、滚动列表和主题切换时观察帧；若成本来自高亮解析，就缓存词法结果；若来自图片解码，限制解码尺寸；若只是轻量 Widget 配置重建，增加复杂缓存反而会让状态更难维护。
+
 ## 小结
 
 React 和 Flutter 共享“由状态描述 UI”的思想，但 Flutter 的 Widget 是配置，Element 承载位置状态，RenderObject 执行布局绘制；布局采用显式约束传递。迁移时先重建对树和生命周期的理解，再选择状态管理工具，才能避免把 React 习惯机械翻译成 Dart。

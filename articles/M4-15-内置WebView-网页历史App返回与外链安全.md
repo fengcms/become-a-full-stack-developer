@@ -1,6 +1,6 @@
 # 成为全栈·Flutter App 篇·内置 WebView：网页历史、App 返回与外链安全
 
-> WebView 看上去只是 App 里的一块网页，但它同时拥有浏览器历史和 Flutter 路由历史。若不定义返回顺序，用户按一次返回可能退出页面，却没法回到刚才的网页。
+> WebView 看上去只是 App 里的一块网页，却同时拥有网页内部 URL 历史和 Flutter 路由历史。产品要先决定返回键服务哪种习惯；当前 APP 选择离开内置页回到来源文章，而不是模拟浏览器逐页后退。
 
 {{IMG:M4-15-封面}}
 
@@ -12,18 +12,18 @@
 
 了解 Flutter 路由和移动 WebView。当前实现位于 `lib/features/web_page.dart`；集成测试见 `integration_test/web_page_test.dart`。
 
-## 两套导航历史需要有优先级
+## 当前产品选择了“返回来源页”，不是网页后退
 
-用户从文章链接打开帮助网页后，WebView 可能已从页面 A 导航到 B。按系统返回键通常期望先回到 A，只有 WebView 历史为空时才 pop Flutter 路由。
+这里要区分浏览器的习惯和本 App 的实现。`WebPage` 将普通网页内导航留在同一个 WebView 路由中，顶部返回按钮始终 pop Flutter 路由回到来源文章；菜单提供“关闭网页”和“在系统浏览器打开”。当前页面没有把系统返回键改成 `controller.goBack()`，所以用户离开内置网页时不会逐页遍历它的 WebView 历史。
 
 ```text
 Flutter 栈：Article → WebPage
-Web 历史：   A → B
-返回第 1 次：B → A
-返回第 2 次：WebPage → Article
+WebView 内部：URL A → URL B（留在当前 WebPage）
+App 返回：WebPage → Article
+菜单选择系统浏览器：打开当前 URL
 ```
 
-如果只 pop 外层路由，Web 历史就被丢掉；如果每次都交给 WebView，历史为空时返回可能无响应。页面需明确检查 WebView 是否可后退，再选择动作。
+这是适合“从文章临时查看链接，然后返回继续阅读”的产品取舍。若未来改成浏览器式 WebView，就要在 PopScope 中先检查 `canGoBack()`，并处理 Android 系统返回手势和 iOS 边缘返回；不能只改变顶部按钮而漏掉平台返回路径。
 
 {{IMG:M4-15-返回模型}}
 
@@ -39,29 +39,29 @@ Web 历史：   A → B
 
 网页 DNS 失败、TLS 问题和 HTTP 错误要显示网页加载失败状态；可重试当前地址。重试需保留 URL，不应退回到 App 首页。敏感认证页面不应被当作无差别外部网页缓存。
 
-## 返回动作是一个优先级判断
+## 如果产品改成浏览器语义，先写清返回规则
 
-App 返回处理可以写成一条明确优先级：先让当前 WebView 消费 back；没有网页历史时才 pop Flutter route；若路由已到根，再由平台处理退出或主导航行为。
-
-```dart
-Future<void> handleBack() async {
-  if (await controller.canGoBack()) {
-    await controller.goBack();
-    return;
-  }
-  if (context.mounted && context.canPop()) {
-    context.pop();
-  }
-}
-```
-
-示例表达控制流，WebView 插件和 go_router 的实际 API 以锁定版本为准。实现还要覆盖页面切换期间 controller 尚未就绪、网页加载失败和重复按键等情况。
+浏览器式返回可以采用“有网页历史先回退，没有网页历史再 pop App 路由”。这属于可选增强，不是当前实现。改动时需要处理 controller 尚未初始化、同一 URL 的 SPA history、页面加载中重复按键、WebView 销毁等竞态，并增加 Android back 与 iOS 手势测试。当前自动化验收覆盖 Android 网页导航和返回来源页；没有完整 iOS 验收。
 
 外链校验也应解析 URI，而不是简单 `startsWith('https')`：scheme 只允许 `https`/必要的 `http`，主机和跳转目标按策略判断，异常 URI 交给错误状态。即便打开可信网页，也不能把应用 Authorization header 附加到 WebView 请求。
 
+## WebView 与本机内容共享信任边界要谨慎
+
+项目把 Markdown 文章中的网页链接通过 URL launcher/内置网页页面处理，但 API token 不注入 WebView。这样即使网页跳到第三方域名，原生认证头也不会自动泄露。外部浏览器跳转仍需检查 URI scheme；不能把用户提供的任意文本直接当作可执行导航地址。
+
+当前测试应验证网页导航 A→B 后点击 App 返回仍回到来源文章，菜单“在系统浏览器打开”使用当前 URL。若将来更改为浏览器式返回，平台返回手势与 Android back 按钮可能走不同回调；届时需增加首次回退网页、第二次关闭 WebView 的测试，并检查 controller 生命周期。
+
+## 页面还负责进度、标题和失败重试
+
+`NavigationDelegate` 将 WebView 主框架进度写入线性进度条；页面开始时清除旧标题和错误，完成后读取 `document.title`。单页应用可能在 load finished 后再次改标题，所以实现定时采集 title，并用当前 URL 核对异步返回，防止旧页面标题覆盖新页面。
+
+JavaScript 当前设为 unrestricted，适合打开动态站点，但也扩大网页脚本可执行能力。内容站的 Markdown 渲染与 WebView 是两条不同信任边界：不要把不可信 HTML 拼到 WebView；加载网页时不注入应用 token；如产品未来只允许特定站点，应增加 host allowlist，而当前实现只限制 HTTP/HTTPS scheme。
+
+网络错误覆盖主框架时显示全页重试，子资源图片失败不会把整页替换成错误。重试使用当前 URL，不回初始链接；在外部浏览器打开也读取 WebView 当前 URL，而不是最初文章中的 href。
+
 ## 小结
 
-WebView 与 Flutter Router 是两套栈，返回键需先消费网页历史；协议与 host 需有限校验，认证令牌不能跨边界注入。当前有 Android 模拟器证据，iOS 必须作为独立发布验收项目。
+WebView 内部 URL 历史与 Flutter Router 历史需要分别设计；当前 App 返回主动关闭内置页回来源文章，协议与 host 需有限校验，认证令牌不能跨边界注入。当前有 Android 模拟器证据，iOS 必须作为独立发布验收项目。
 
 ## 延伸阅读
 
@@ -89,7 +89,7 @@ WebView 与 Flutter Router 是两套栈，返回键需先消费网页历史；�
 
 ### 文章简介（250 字以内）
 
-内置 WebView 同时包含网页历史和 Flutter 路由历史，系统返回键必须先回退网页，再退出 WebView 页面。本文结合实现说明内外链策略、协议校验、认证 token 隔离和加载失败恢复，并明确 Android 本机验证不等于 iOS 已验收。
+内置 WebView 同时包含网页 URL 历史和 Flutter 路由历史，而当前 App 选择按返回直接回到来源文章。本文结合实现说明内外链策略、协议校验、认证 token 隔离和加载失败恢复，并明确 Android 本机验证不等于 iOS 已验收。
 
 ### 建议发布分类
 
@@ -97,16 +97,16 @@ WebView 与 Flutter Router 是两套栈，返回键需先消费网页历史；�
 
 ### 封面短标题
 
-WebView 有两套返回栈
+WebView 与 App 的返回边界
 
 ### 配图 AI 提示词
 
-1. `M4-15-封面`：16:9 中文移动架构封面，Flutter Router 页面栈包裹 WebView 浏览历史栈，返回键先退网页再退 App 页面，蓝色两层路线图。
-2. `M4-15-返回模型`：16:9 双栈交互时序图，Article→WebPage 外层路由，Web URL A→B 内层历史，分别展示两次返回键的行为。
+1. `M4-15-封面`：16:9 中文移动架构封面，Flutter Article→WebPage 路由，WebView 内部从 URL A 导航到 B；App 返回直接回到来源文章，菜单可在系统浏览器打开当前 URL，蓝色两层历史示意。
+2. `M4-15-返回模型`：16:9 导航图，Article→WebPage 外层 Flutter 路由，Web URL A→B 留在同一 WebPage，点击 App 返回 pop 到 Article；区分当前实现和未来可选浏览器式 back。
 
 ### 发布前核对
 
 - [ ] 替换 2 处配图占位符
 - [ ] M4-05、M4-13、M3-12 发布后回填站内链接
-- [ ] 查看 Android 与 iOS 当前 WebView 验收边界
+- [ ] 确认返回行为与 web_page.dart 当前实现一致
 - [ ] 已删除本辅助区
