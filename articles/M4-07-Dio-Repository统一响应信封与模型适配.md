@@ -1,0 +1,139 @@
+# 成为全栈·Flutter App 篇·Dio + Repository：统一响应信封与模型适配
+
+> API 契约统一不代表所有接口响应外形完全相同。网络层负责传输规则，Repository 吸收业务数据差异，页面应消费稳定模型，而不是一边展示一边拆 JSON。
+
+{{IMG:M4-07-封面}}
+
+## 本文目标
+
+追踪 Flutter APP 从 Dio 请求到 Widget 展示的数据流，解释统一响应信封、业务错误分类、生成 DTO 和 Repository 适配的职责，以及哪些真实接口差异需要测试。
+
+## 前置知识
+
+了解 HTTP、OpenAPI 和 Dart 类型。代码主要位于 `core/network/api_client.dart`、`core/network/endpoints.dart`、`features/repository.dart` 与 `features/data/reader_models.dart`。
+
+## 传输层统一横切规则
+
+Dio client 集中设置 base URL、超时、认证头和响应处理。API Client 负责把 HTTP 与业务 envelope 解码、将状态码映射为可识别错误、按规则处理 401 刷新和 429 限流。它不应知道首页页面的卡片如何排列。
+
+```text
+GET /articles
+ → Dio 建立请求
+ → Authorization / 超时等通用规则
+ → HTTP 与业务信封分类
+ → 返回 payload 或 ApiException
+```
+
+端点路径集中在 `Endpoints`，环境通过 `API_BASE_URL` 配置；不要在每个 Widget 里拼 `/api/v1`，也不要将生产域名散落源码。
+
+{{IMG:M4-07-数据流}}
+
+## 统一 envelope，但不要假设数据字段永远同形
+
+后端常见响应是 `{code, message, data}`。成功时业务值在 `data`；失败既可能是 HTTP 非 2xx，也可能 HTTP 成功但 `code` 表示业务错误。只判断 `response.statusCode == 200` 会把业务错误当成功。
+
+但数据字段内部仍受 operation 约束。项目验收记录了：搜索列表位于 `articles`，收藏记录可能为裸数组，阅读历史 item 包含嵌套 article。统一 envelope 不等于“每个 data 都是 `List<Article>`”。
+
+```dart
+final payload = unwrapEnvelope(response.data);
+final articles = parseSearchArticles(payload['articles']);
+```
+
+这里是展示分层的伪接口；生产代码应引用项目解析器，文章示例不要复制成新手写的第二个解码器。
+
+## Repository 让 UI 模型稳定
+
+Repository 组合 API 调用、响应解析、生成 DTO 到领域模型的转换和缓存策略。比如 UI 需要稳定文章标题、摘要、封面和分类展示，不应该依赖服务端是 `article` 嵌套还是 `data.articles`。
+
+```dart
+final result = await repository.search(query);
+// 页面拿到稳定的 ReaderArticle 列表和分页信息
+```
+
+映射层也不能擅自补业务含义。缺少 `total` 时不伪造总数；接口没有收藏单篇状态时不能只查前几页就回答“不收藏”；点赞记录没有分页时不能声称后端已分页。
+
+## 错误模型要保留恢复线索
+
+超时、断网、401、403、404、字段校验失败和 429 的用户动作不同。ApiClient 把它们映射成类型化异常，页面决定是登录、显示不可见、保留缓存内容还是提供重试。吞成 `Exception('error')` 会丢掉 Retry-After、业务码和可恢复性。
+
+写请求尤其不能因为“网络错误”就自动再发。客户端不知道上次请求是否已在服务端完成。创建稿件在第一次响应拿到 ID 后，后续失败应复用这个 ID；非幂等操作要由业务流程决定重试，而不是拦截器盲目重放。
+
+## 测试契约与真实行为
+
+三类检查互补：生成脚本检查 OpenAPI 到 Dart 类型；单元测试检查解析器与错误映射；隔离后端集成测试验证真实请求、认证和写流程。线上只读验证能证明指定公开接口在当时可访问，不能验证生产写操作安全，更不能覆盖所有接口。
+
+```bash
+node tool/generate_contract.mjs
+flutter analyze
+flutter test
+node tool/verify_backend.mjs
+```
+
+实际验收命令须从 `flutter-app/README.md` 核对；集成测试写入的是隔离本地 11002 后端。
+
+## 业务错误映射不应丢掉原始诊断
+
+给用户看的 message 要简洁，但日志和测试需要保留可诊断字段：HTTP status、业务 code、endpoint、trace/request ID、是否可重试。任何日志都必须剔除 Authorization、refresh token、密码、验证码和投稿正文。
+
+```text
+ApiException {
+  kind: rateLimited
+  businessCode: 5001
+  retryAfter: 12
+  requestId: <safe identifier>
+}
+```
+
+上面是概念模型。Repository 可把“资源不可见”转为特定页面状态，但不应把所有 `403` 都映射成文章不存在；权限错误、业务错误和网络错误要保留区分，以便 UI 给出正确恢复入口。
+
+## 小结
+
+Dio 处理传输横切规则，Repository 处理资源读取与模型适配，Widget 管呈现和用户动作。生成类型、契约检查、解析测试与真实联调共同降低漂移；“统一 API”不等于“响应细节完全同构”，更不等于可以丢弃服务器约束。
+
+## 延伸阅读
+
+- [Flutter 工程骨架与 OpenAPI 代码生成]({{LINK:M4-03}})
+- [移动端错误与限流：429、重试和写请求边界]({{LINK:M4-08}})
+- [统一响应结构：HTTP 状态码与业务码如何分工]({{LINK:M1-08}})
+
+---
+
+如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
+
+🔗 专栏地址：[https://blog.csdn.net/fungleo/category_13204651.html](https://blog.csdn.net/fungleo/category_13204651.html)
+
+📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
+
+![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
+
+<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
+
+## 发布辅助信息
+
+### 文章 Tag（6 个）
+
+`Flutter`、`Dio`、`Repository`、`OpenAPI`、`API封装`、`全栈开发`
+
+### 文章简介（250 字以内）
+
+本文以 Flutter 项目为例拆解 Dio、API Client、Repository 和 UI 的职责：网络层统一处理信封、认证、错误与限流，Repository 适配真实响应形状并输出稳定模型，页面只消费业务数据。代码生成、单测、隔离后端联调各自证明不同范围。
+
+### 建议发布分类
+
+全栈开发 / Flutter
+
+### 封面短标题
+
+统一接口，响应仍有差异
+
+### 配图 AI 提示词
+
+1. `M4-07-封面`：16:9 中文技术封面，Dio → ApiClient → Repository → Flutter UI 四层数据流，侧边显示统一 envelope 内仍有 articles、裸数组、嵌套 article 等响应形状，深蓝青绿色。
+2. `M4-07-数据流`：16:9 分层图，标注端点配置、Bearer、信封解析、错误分类、DTO映射、领域模型与可重试 UI，准确中文。
+
+### 发布前核对
+
+- [ ] 替换 2 处配图占位符
+- [ ] M4-03、M4-08、M1-08 发布后回填站内链接
+- [ ] 与 ApiClient / Repository 当前实现核对示例
+- [ ] 已删除本辅助区

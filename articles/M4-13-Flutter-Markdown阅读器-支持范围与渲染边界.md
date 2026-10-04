@@ -1,0 +1,115 @@
+# 成为全栈·Flutter App 篇·Flutter Markdown 阅读器：支持范围与渲染边界
+
+> Markdown 阅读器不是把源码交给一个 Widget 就结束。代码、表格、图片、链接和主题各有交互要求；更棘手的是目录锚点必须与服务端定义保持一致。
+
+{{IMG:M4-13-封面}}
+
+## 本文目标
+
+介绍 APP 的 Markdown 渲染能力与自定义组件边界，说明代码块、表格、图片和外链的移动体验，并为下一篇服务端 TOC 锚点匹配铺垫。
+
+## 前置知识
+
+了解 GFM 和 Flutter Widget。实现位于 `lib/core/markdown/reader_markdown.dart`、`code_block.dart` 和文章内容组件。
+
+## 同一份 Markdown 不代表同一种渲染环境
+
+Web 浏览器拥有 DOM、CSS 和成熟的滚动锚点；Flutter 将 Markdown 节点转换为 Widget，没有完整 HTML 浏览器语义。项目使用 `flutter_markdown_plus` 的 GFM 能力，再针对代码块、图片和表格提供自定义样式。
+
+正文主线优先：标题、段落、引用、列表、行内代码、围栏代码、表格和图片都需在浅/深色主题可读。原始 HTML 不应被无条件执行或信任；服务端内容仍是外部输入。
+
+{{IMG:M4-13-渲染组件}}
+
+## 代码块需要适合窄屏
+
+桌面代码块常横向铺满，手机屏幕宽度有限。Flutter 阅读器保留代码可横向滚动并提供复制操作；语法高亮 token 缓存有界，颜色由当前主题生成。私有编辑正文不进入公开 token 缓存，避免将草稿文本留在全局缓存中。
+
+```text
+长代码行 → 横向滚动
+复制操作 → Clipboard
+颜色切换 → 根据主题重新映射 token
+```
+
+代码块不应参与 Markdown 标题解析；更不能把围栏中的 `# 标题` 消耗成文章目录项。
+
+## 表格和图片要尊重移动视口
+
+表格可能超过设备宽度，外层需要横向滚动而非裁切整篇正文。图片按显示宽度解码，提供占位和失败状态；公开图片按容量策略缓存，带签名/查询参数及私有图片采取更保守策略。Markdown 里的图片 URL 也不能默认安全或永久公开。
+
+外链在 APP 内打开时进入 WebView 页面，外部地址可经系统浏览器打开；认证 token 不注入网页。WebView 的浏览历史与 Flutter 路由返回栈必须分别理解。
+
+## 主题和长内容验收
+
+深色模式需要覆盖正文、引用、代码、表格边线、链接和图片占位。用短文章截图不能覆盖真实长文；应选含重复标题、代码、表格、Setext 标题和多张图片的文章检查滚动与断行。
+
+## 把 Markdown 渲染当作一组可测试规则
+
+文章来源可以含有代码围栏、标题、链接和图片。渲染器扩展时需要同时约束外部输入、布局和缓存：
+
+```dart
+MarkdownBody(
+  data: source,
+  selectable: true,
+  builders: {
+    'code': CodeBlockBuilder(theme: theme),
+    'table': HorizontalTableBuilder(),
+  },
+  imageBuilder: buildReaderImage,
+)
+```
+
+此段是结构示意，真实包的 builder 接口必须以锁定版本文档和 `reader_markdown.dart` 为准。更重要的是为真实文章构造测试样本：围栏中的 `#` 不成为目录项、窄屏表格能横向滚动、长代码可复制、暗色链接仍有对比度、加载图片失败后正文其余内容继续显示。
+
+Markdown 原文可能很长，语法高亮也会消耗 CPU。项目对公开 token 结果采用有界缓存并以主题生成颜色；编辑中的私有文本不进入全局缓存，避免在用户切换或退出后继续留下私有内容。
+
+## 小结
+
+跨平台 Markdown 渲染需要按移动设备设计代码、表格、图片和链接交互；主题与缓存同样影响正文。目录与标题绑定属于独立可靠性问题，不能靠自行 slug 化假设解决，下一篇专门解释这条服务端契约。
+
+## 延伸阅读
+
+- [服务端目录与文章辅助阅读]({{LINK:M4-14}})
+- [内置 WebView：网页历史、App 返回与外链安全]({{LINK:M4-15}})
+- [文章详情：Markdown 代码高亮与目录必须共享解析结果]({{LINK:M3-08}})
+
+---
+
+如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
+
+🔗 专栏地址：[https://blog.csdn.net/fungleo/category_13204651.html](https://blog.csdn.net/fungleo/category_13204651.html)
+
+📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
+
+![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
+
+<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
+
+## 发布辅助信息
+
+### 文章 Tag（6 个）
+
+`Flutter`、`Markdown`、`GFM`、`代码高亮`、`移动阅读`、`全栈开发`
+
+### 文章简介（250 字以内）
+
+Flutter Markdown 阅读器需要针对窄屏重新设计代码块、表格、图片、外链与明暗主题。本文结合实际组件说明支持边界、代码 token 缓存和私有内容隔离，并指出正文标题目录必须以服务端 TOC 锚点为事实源，不能靠客户端自行 slug 化。
+
+### 建议发布分类
+
+全栈开发 / Flutter
+
+### 封面短标题
+
+Markdown 在手机上如何阅读
+
+### 配图 AI 提示词
+
+1. `M4-13-封面`：16:9 中文技术封面，一篇 Markdown 文章在手机上呈现代码横滑、表格横向滚动、图片和深色主题，阅读体验优先，蓝白配色。
+2. `M4-13-渲染组件`：16:9 组件分解图，Markdown 文本解析为段落、代码块、表格、图片与链接 Widget，突出安全与移动视口约束。
+
+### 发布前核对
+
+- [ ] 替换 2 处配图占位符
+- [ ] M4-14、M4-15、M3-08 发布后回填站内链接
+- [ ] 核实 GFM 渲染器当前依赖版本与支持语法
+- [ ] 已删除本辅助区
