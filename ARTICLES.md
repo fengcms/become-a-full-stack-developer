@@ -100,8 +100,8 @@
 | 成为全栈·Next.js 网站前台篇·C 端认证：内存令牌、HttpOnly Cookie 与会话代次 | — | `articles/M3-11-C端认证-内存令牌HttpOnly-Cookie与会话代次.md` | https://blog.csdn.net/fungleo/article/details/166945972 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·同源 BFF 代理：API、附件、Cookie 与跨站写入保护 | — | `articles/M3-12-同源BFF代理-API附件Cookie与跨站写入保护.md` | https://blog.csdn.net/fungleo/article/details/166991347 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·会员中心：资料、密码与个人数据为什么不能进公共缓存 | — | `articles/M3-13-会员中心-资料密码与个人数据为什么不能进公共缓存.md` | https://blog.csdn.net/fungleo/article/details/166991388 | 🟢 已发布 |
-| 成为全栈·Next.js 网站前台篇·点赞、收藏与阅读历史：三种互动状态的所有权不同 | — | `articles/M3-14-点赞收藏与阅读历史-三种互动状态的所有权不同.md` | — | 🟡 草稿中 |
-| 成为全栈·Next.js 网站前台篇·评论系统：叠楼、回复、删除与内容审核如何落到前台 | — | `articles/M3-15-评论系统-叠楼回复删除与内容审核如何落到前台.md` | — | 🟡 草稿中 |
+| 成为全栈·Next.js 网站前台篇·点赞、收藏与阅读历史：三种互动状态的所有权不同 | — | `articles/M3-14-点赞收藏与阅读历史-三种互动状态的所有权不同.md` | https://blog.csdn.net/fungleo/article/details/167033186 | 🟢 已发布 |
+| 成为全栈·Next.js 网站前台篇·评论系统：叠楼、回复、删除与内容审核如何落到前台 | — | `articles/M3-15-评论系统-叠楼回复删除与内容审核如何落到前台.md` | https://blog.csdn.net/fungleo/article/details/167033673 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·会员投稿工作流：草稿、预览、投稿、撤回与重新送审 | — | `articles/M3-16-会员投稿工作流-草稿预览投稿撤回与重新送审.md` | — | 🟡 草稿中 |
 | 成为全栈·Next.js 网站前台篇·搜索页：实时查询、URL 状态与“没有结果”不是“请求失败” | — | `articles/M3-17-搜索页-实时查询URL状态与没有结果不是请求失败.md` | — | 🟡 草稿中 |
 | 成为全栈·Next.js 网站前台篇·会员公开主页与通知中心：公开身份和私有消息如何分界 | — | `articles/M3-18-会员公开主页与通知中心-公开身份和私有消息如何分界.md` | — | 🟡 草稿中 |

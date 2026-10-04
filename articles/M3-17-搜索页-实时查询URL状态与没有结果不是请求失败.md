@@ -2,7 +2,7 @@
 
 > 空关键词、零条结果、接口失败和不存在页面是四种不同事实。搜索页只有把关键词、类型和页码写进 URL，并为每种状态提供对应动作，才真正可分享、可恢复。
 
-{{IMG:M3-17-封面}}
+![成为全栈·Next.js 网站前台篇·搜索页：实时查询、URL 状态与“没有结果”不是“请求失败”](https://i-blog.csdnimg.cn/direct/e5ef2d2910fe4f55b4f80a08c3f2c1a5.png)
 
 ## 前言
 
@@ -31,7 +31,7 @@ const page = pageNumber(params.page)
 
 非法类型回退文章，非法页码收敛到第一页。页面刷新、浏览器返回和复制链接都能恢复同一搜索上下文。
 
-{{IMG:M3-17-搜索状态}}
+![搜索状态](https://i-blog.csdnimg.cn/direct/441a88957e6d4c5e96ed4dc4314c24d6.png)
 
 ## 空关键词不发请求
 
@@ -181,7 +181,7 @@ export const metadata = {
 | 切换类型 | 保留 q，回到第一页 |
 | 非法 page | 收敛到第一页 |
 
-{{IMG:M3-17-四种状态}}
+![四种状态](https://i-blog.csdnimg.cn/direct/433d275976a34232bfd99e06fce8cbc9.png)
 
 实际浏览器验收应观察服务故障恢复，而不只是给 Empty 组件截图。只有错误发生、服务恢复、点击按钮又出现真实结果，恢复链路才算完成。
 
