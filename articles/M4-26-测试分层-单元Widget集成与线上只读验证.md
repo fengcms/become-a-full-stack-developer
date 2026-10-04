@@ -1,16 +1,10 @@
 # 成为全栈·Flutter App 篇·测试分层：单元、Widget、集成与线上只读验证
 
-> 一条绿色测试命令只能证明它实际覆盖的部分。Flutter APP 同时包含纯业务逻辑、Widget、原生平台和真实 API；测试应分层，也必须限制生产环境的写入风险。
+`flutter test` 全绿给人安全感，但它没法自动证明 iOS 真机可运行，也不能说明线上写接口没有被误调。Flutter APP 的请求层、Widget、平台插件和真实服务需要不同的证据。
+
+这篇挑项目里并发刷新、缓存合并、评论循环和隔离后端投稿等测试，说明每一层验证的事实，以及如何把生产环境限制为匿名只读。
 
 {{IMG:M4-26-封面}}
-
-## 本文目标
-
-梳理 Flutter 工程的单元、Widget、集成和线上只读验证边界，说明各类证据回答什么问题，以及如何隔离生产写入。
-
-## 前置知识
-
-熟悉 Flutter test、integration_test 和 API 环境配置。项目测试在 `flutter-app/test/`、`integration_test/` 与 `tool/verify_backend.mjs`。
 
 ## 测试金字塔不是测试数量竞赛
 
@@ -93,6 +87,86 @@ expect(cache.metrics['joined'], 9);
 项目集成命令指向 Android emulator 的 `10.0.2.2:11002` 本地后端，数据库和上传文件落到被忽略的 `.local/`；测试会员与线上账号不同。测试中创建投稿、评论和上传图片是真实 HTTP 副作用，只是目标为可重置隔离库。
 
 生产 profile 测试只做匿名公开读取，并将结果写入证据文件；代理仅用于模拟器网络连通，不关闭 TLS 校验，也不修改 release 网络策略。任何测试在启动前都应打印/断言目标 host 和 HTTP method allowlist，避免环境变量被误设后直写生产。
+
+
+## 贴着工程代码读实现
+
+下面这段节选自 `flutter-app/test/review_contract_test.dart 第 42–97 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：用 fake vault、fake adapter 和可控 Completer 重放边界时序。我会继续追踪它的返回值和副作用，直到页面状态稳定下来。
+
+```dart
+  test(
+    'resource rules keep object exceptions, private tags and mutation links',
+    () {
+      final table = CachePolicyTable();
+      expect(
+        () => table.validate(Endpoints.siteSettings, {'copyright': 'site'}),
+        returnsNormally,
+      );
+      expect(
+        () => table.validate(Endpoints.unreadCount, {'count': 3}),
+        returnsNormally,
+      );
+      expect(
+        () => table.validate(Endpoints.categoriesTree, {}),
+        throwsFormatException,
+      );
+      expect(
+        () => table.validate(Endpoints.meNotifications, {}),
+        throwsFormatException,
+      );
+      expect(table.policy(Endpoints.login), isNull);
+      expect(table.policy(Endpoints.article(1)), isNull);
+      expect(table.policy(Endpoints.like(1)), isNull);
+      expect(table.policy(Endpoints.likeStatus(1))?.disk, isFalse);
+      expect(
+        table.resourceTags(Endpoints.likeStatus(1)),
+        containsAll(['private', 'reactions:1']),
+      );
+      expect(
+        table.mutationTags(Endpoints.like(1), null),
+        contains('reactions:1'),
+      );
+      expect(
+        table.mutationTags(Endpoints.comments(1), null),
+        contains('comments:1'),
+      );
+      expect(
+        table.mutationTags(Endpoints.favorite(1), null),
+        contains(Endpoints.meFavorites),
+      );
+      expect(
+        table.mutationTags(Endpoints.submit(1), null),
+        containsAll(['articleBodies', 'articleLists', Endpoints.meArticles]),
+      );
+      expect(
+        table.forQuery(Endpoints.articles, {
+          'page': 4,
+        }, table.policy(Endpoints.articles)!).disk,
+        isFalse,
+      );
+      expect(
+        Endpoints.article('含 空格/slug'),
+        '/articles/%E5%90%AB%20%E7%A9%BA%E6%A0%BC%2Fslug',
+      );
+    },
+  );
+```
+
+## 把容易出错的路径走一遍
+
+我会用这个场景做一次可复现排查：**只测 happy path 导致过期会话和缓存竞态没有回归保护**。先用 fake vault、fake adapter 和可控 Completer 重放边界时序；如果把问题定位在“只手工点测”，修正方向是“单元测规则、Widget 测交互、集成测组合路径，各层共享固定证据”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+
+| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+|---|---|---|
+| 本文核心选择 | 只手工点测 | 分层自动验证 |
+| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
+| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+
+| 排错步骤 | 要观察什么 | 通过条件 |
+|---|---|---|
+| 复现 | 只测 happy path 导致过期会话和缓存竞态没有回归保护 | 可以稳定触发或明确构造该输入 |
+| 定位 | 用 fake vault、fake adapter 和可控 Completer 重放边界时序 | 找到责任层和状态归属 |
+| 修正 | 单元测规则、Widget 测交互、集成测组合路径，各层共享固定证据 | 失败不污染后续页面或账号 |
 
 ## 小结
 

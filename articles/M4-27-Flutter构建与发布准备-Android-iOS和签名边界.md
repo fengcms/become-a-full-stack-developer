@@ -1,16 +1,10 @@
 # 成为全栈·Flutter App 篇·Flutter 构建与发布准备：Android、iOS 和签名边界
 
-> 能生成 APK，不代表 App 已可上架；仓库里有 iOS 工程，也不代表它通过了 Xcode 构建。构建、安装验收、签名和商店发布是不同里程碑。
+在模拟器安装 APK 的那一刻，很容易把“能运行”说成“已经可以发布”。但当前 release 仍需要真实签名，iOS 工程也还没有在完整 Xcode 环境验证。
+
+这篇结合 `main.dart` 的 release HTTPS 断言和实际构建命令，拆分构建、真机验收、签名与商店发布四件事，给出可以照着执行的发行前清单。
 
 {{IMG:M4-27-封面}}
-
-## 本文目标
-
-解释 Flutter 环境配置、Android 构建和 iOS 发布准备的边界，列出当前项目已验证与待完成事项，不将本机调试包描述为正式发行版本。
-
-## 前置知识
-
-了解 Flutter build、Android signing 和 iOS Xcode。工程说明见 `flutter-app/README.md` 与 `docs/flutter-app/09-开发交付与本机验收.md`。
 
 ## 构建产物分层理解
 
@@ -65,6 +59,104 @@ source revision + Flutter/Dart version + environment defines
 main.dart 在 Release 模式启动时拒绝非 HTTPS 的 API_BASE_URL；Android 明文 HTTP 例外只在 debug manifest。这个 guard 不能取代证书、域名与后端配置检查，却能防止最明显的 release 指向 `http://`。打包流水线还可扫描 apk/ipa strings，检查是否残留 localhost、测试代理和隔离环境 API 地址。
 
 签名私钥应放 CI secret 或开发者本机安全目录，流程记录 key alias/证书指纹而不打印秘密。升级必须沿用同一签名身份；签名丢失可能使用户无法安装覆盖升级，回滚也不能简单重签旧版本。
+
+
+## 贴着工程代码读实现
+
+下面这段节选自 `flutter-app/lib/main.dart 第 14–87 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：分别检查构建模式、API base URL 和签名配置缺失时的行为。这里关注的是它如何改变数据流，而不只是记住一个 API 名称。
+
+```dart
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  PaintingBinding.instance.imageCache.maximumSizeBytes =
+      CacheLimits.decodedImageBytes;
+  const configured = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'https://api-befull.kao9.com/api/v1',
+  );
+  if (kReleaseMode && !configured.startsWith('https://')) {
+    throw StateError('Release requires an HTTPS API_BASE_URL');
+  }
+  final api = ApiClient(
+    baseUrl: configured,
+    vault: SecureTokenVault(namespace: Uri.parse(configured).authority),
+  );
+  final session = AppSession(api, await SharedPreferences.getInstance());
+  runApp(
+    ProviderScope(
+      overrides: [sessionProvider.overrideWith((ref) => session)],
+      child: const ReaderApp(),
+    ),
+  );
+  await session.restore();
+}
+
+/// 应用入口持有路由与两套主题，会话通知仅切换当前模式。
+class ReaderApp extends ConsumerStatefulWidget {
+  const ReaderApp({super.key});
+  @override
+  ConsumerState<ReaderApp> createState() => _ReaderAppState();
+}
+
+class _ReaderAppState extends ConsumerState<ReaderApp>
+    with WidgetsBindingObserver {
+  late final GoRouter router;
+  late final lightTheme = buildAppTheme(Brightness.light);
+  late final darkTheme = buildAppTheme(Brightness.dark);
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    router = createRouter(ref.read(sessionProvider));
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    router.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didHaveMemoryPressure() {
+    final repo = ref.read(repositoryProvider);
+    repo.cache.trim();
+    repo.images.trim();
+    repo.snapshots.clear();
+    PaintingBinding.instance.imageCache.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) => MaterialApp.router(
+    title: '成为全栈',
+    locale: const Locale('zh', 'CN'),
+    supportedLocales: const [Locale('zh', 'CN'), Locale('en')],
+    localizationsDelegates: GlobalMaterialLocalizations.delegates,
+    debugShowCheckedModeBanner: false,
+    theme: lightTheme,
+    darkTheme: darkTheme,
+    themeMode: ref.watch(sessionProvider).mode,
+    routerConfig: router,
+    builder: AppLayout.clampTextScale,
+  );
+}
+```
+
+## 把容易出错的路径走一遍
+
+我会用这个场景做一次可复现排查：**Debug 能连本机接口却把明文 HTTP 带进 Release 包**。先分别检查构建模式、API base URL 和签名配置缺失时的行为；如果把问题定位在“只验证 Debug”，修正方向是“启动时验证 Release 必须 HTTPS；签名密钥由环境配置注入”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+
+| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+|---|---|---|
+| 本文核心选择 | 只验证 Debug | 分环境构建门禁 |
+| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
+| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+
+| 排错步骤 | 要观察什么 | 通过条件 |
+|---|---|---|
+| 复现 | Debug 能连本机接口却把明文 HTTP 带进 Release 包 | 可以稳定触发或明确构造该输入 |
+| 定位 | 分别检查构建模式、API base URL 和签名配置缺失时的行为 | 找到责任层和状态归属 |
+| 修正 | 启动时验证 Release 必须 HTTPS；签名密钥由环境配置注入 | 失败不污染后续页面或账号 |
 
 ## 小结
 

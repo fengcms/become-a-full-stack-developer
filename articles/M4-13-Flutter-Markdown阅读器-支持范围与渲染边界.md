@@ -1,16 +1,10 @@
 # 成为全栈·Flutter App 篇·Flutter Markdown 阅读器：支持范围与渲染边界
 
-> Markdown 阅读器不是把源码交给一个 Widget 就结束。代码、表格、图片、链接和主题各有交互要求；更棘手的是目录锚点必须与服务端定义保持一致。
+Markdown 页面在电脑上看正常，放进手机后才会暴露横向表格、长代码、超大图片和深色主题的问题。更麻烦的是，阅读器还有目录跳转，不能只关注文本能不能渲染出来。
+
+这篇先把正文中的代码块、图片和表格组件拆开，给出 `flutter_markdown_plus` 在项目里的真实扩展代码；目录与服务端 anchor 的绑定留到下一篇深入讨论。
 
 {{IMG:M4-13-封面}}
-
-## 本文目标
-
-介绍 APP 的 Markdown 渲染能力与自定义组件边界，说明代码块、表格、图片和外链的移动体验，并为下一篇服务端 TOC 锚点匹配铺垫。
-
-## 前置知识
-
-了解 GFM 和 Flutter Widget。实现位于 `lib/core/markdown/reader_markdown.dart`、`code_block.dart` 和文章内容组件。
 
 ## 同一份 Markdown 不代表同一种渲染环境
 
@@ -73,6 +67,87 @@ Markdown 原文可能很长，语法高亮也会消耗 CPU。项目对公开 tok
 项目的 `ReaderMarkdown` 根据正文、heading key、公开图片策略和主题构造 body；`didChangeDependencies` 观察 Theme 与 textScaler，`didUpdateWidget` 在内容或定位 key 改变时让 body 失效。它缓存的是当前组件范围内的构建结果，不代表任意文章内容都永久驻留。
 
 代码 token 缓存则单独限制 entry 数量和总字符数，只缓存公开正文的语法树，不缓存主题颜色、Widget 或目录 key。切换账号时清空 token cache，私有投稿预览关闭公开图片缓存和词法缓存。这些分层说明“缓存 Markdown”不是一种单一操作，必须区分解析产物、绘制组件和网络图片。
+
+
+## 贴着工程代码读实现
+
+下面这段节选自 `flutter-app/lib/core/markdown/reader_markdown.dart 第 23–79 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：使用重复标题、不同级别标题和缺失目录项检查 id 映射。把这几步连起来，才看得到数据如何从服务边界走到界面。
+
+```dart
+class ServerHeadingSyntax extends md.HeaderSyntax {
+  ServerHeadingSyntax(this.toc);
+  final List<ApiTocItem> toc;
+  int cursor = 0;
+  Object? document;
+  @override
+  md.Node parse(md.BlockParser parser) {
+    if (!identical(document, parser.document)) {
+      cursor = 0;
+      document = parser.document;
+    }
+    final raw = parser.current.content;
+    final node = super.parse(parser) as md.Element;
+    final match = RegExp(r'^(#{1,6})\s+(.+?)\s*#*\s*$').firstMatch(raw);
+    if (match != null && cursor < toc.length) {
+      final item = toc[cursor];
+      if (item.level == match[1]!.length && item.text == match[2]!.trim()) {
+        node.attributes['reader-anchor'] = item.anchor!;
+        cursor++;
+      }
+    }
+    return node;
+  }
+}
+
+class _HeadingBuilder extends MarkdownElementBuilder {
+  _HeadingBuilder(this.keys);
+  final Map<String, GlobalKey> keys;
+  @override
+  bool isBlockElement() => true;
+  @override
+  Widget? visitElementAfterWithContext(
+    BuildContext context,
+    md.Element element,
+    TextStyle? preferredStyle,
+    TextStyle? parentStyle,
+  ) {
+    final anchor = element.attributes['reader-anchor'];
+    final h2 = element.tag == 'h2';
+    return Container(
+      key: anchor == null ? null : keys[anchor],
+      margin: EdgeInsets.only(
+        top: h2 ? AppSpacing.s8 : AppSpacing.s6,
+        bottom: AppSpacing.s3,
+      ),
+      padding: EdgeInsets.only(left: h2 ? 10 : 0),
+      decoration: h2
+          ? BoxDecoration(
+              border: Border(
+                left: BorderSide(color: context.colors.brand, width: 3),
+              ),
+            )
+          : null,
+      child: Text(element.textContent, style: preferredStyle),
+    );
+  }
+}
+```
+
+## 把容易出错的路径走一遍
+
+我会用这个场景做一次可复现排查：**正文标题和服务端目录匹配失准导致锚点跳到错误段落**。先使用重复标题、不同级别标题和缺失目录项检查 id 映射；如果把问题定位在“仅按标题文本”，修正方向是“结合级别与文本匹配目录项，缺失项保留可读正文而非伪造跳转”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+
+| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+|---|---|---|
+| 本文核心选择 | 仅按标题文本 | 级别与文本匹配 |
+| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
+| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+
+| 排错步骤 | 要观察什么 | 通过条件 |
+|---|---|---|
+| 复现 | 正文标题和服务端目录匹配失准导致锚点跳到错误段落 | 可以稳定触发或明确构造该输入 |
+| 定位 | 使用重复标题、不同级别标题和缺失目录项检查 id 映射 | 找到责任层和状态归属 |
+| 修正 | 结合级别与文本匹配目录项，缺失项保留可读正文而非伪造跳转 | 失败不污染后续页面或账号 |
 
 ## 小结
 

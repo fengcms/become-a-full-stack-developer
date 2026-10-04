@@ -1,16 +1,10 @@
 # 成为全栈·Flutter App 篇·Riverpod 状态边界：会话、服务端数据和表单草稿
 
-> Riverpod 能管理状态，却不会替团队决定状态属于谁。会话、可重新获取的文章和未提交文本有完全不同的生命周期，混在一个 Provider 里只会让失效变得不可预测。
+登录状态、文章列表和编辑器正文都叫“状态”，但把它们放进同一个全局容器会带来完全不同的问题：退出时可能误清公开内容，切换账号时又可能残留私有数据，编辑时还可能让整页跟着每个按键重建。
+
+这篇用当前 Riverpod Provider 与 Repository 的实际分工来画所有权边界，再讨论页面表单和稿件恢复为什么不属于同一类数据。读者了解 Provider、Future 和 Flutter Widget 生命周期即可。
 
 {{IMG:M4-06-封面}}
-
-## 本文目标
-
-基于 Flutter 工程的 Riverpod 使用方式，划分应用依赖、会话、服务端内容、页面临时值与本机稿件恢复状态，找到每类状态的所有者与清理时机。
-
-## 前置知识
-
-熟悉 Dart Future、Provider 基础和前文路由。项目入口在 `lib/main.dart`，会话封装在 `lib/app/session.dart`，Repository 在 `lib/features/repository.dart`。
 
 ## 先问所有权，而不是先问用哪个 Provider
 
@@ -102,6 +96,124 @@ final unreadCountProvider = FutureProvider<int>((ref) async {
 ## 异步依赖组合不应放在 build
 
 项目审阅曾发现会员首页在 `build` 内启动新统计 Future，导致无关重建重复请求。修正方式是由可观察的 Provider/Repository 持有请求，或将一次性 Future 缓存在 State 初始化阶段；先确定刷新触发点，再写异步加载代码。
+
+
+## 贴着工程代码读实现
+
+下面这段节选自 `flutter-app/lib/app/session.dart 第 20–113 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：观察 provider 依赖范围以及页面销毁后控制器是否释放。我会继续追踪它的返回值和副作用，直到页面状态稳定下来。
+
+```dart
+class AppSession extends ChangeNotifier {
+  AppSession(this.api, this.preferences, {DataCache? cache}) {
+    repository = ReaderRepository(
+      api,
+      cache: cache,
+    ); // Install mutation and identity hooks before the first request.
+    mode = ThemeMode.values[preferences.getInt('themeMode')?.clamp(0, 2) ?? 0];
+    api.onExpired = () {
+      user = null;
+      PaintingBinding.instance.imageCache.clear();
+      notifyListeners();
+    };
+  }
+  final ApiClient api;
+  late final ReaderRepository repository;
+  final SharedPreferences preferences;
+  ApiUser? user;
+  bool restoring = true;
+  String? restoreError;
+  ThemeMode mode = ThemeMode.system;
+  int get epoch => api.epoch;
+  Future<void> restore() async {
+    try {
+      if (await api.vault.read() != null) {
+        await api.refresh();
+        user = ApiUser.fromJson(
+          Map<String, dynamic>.from(await api.request(Endpoints.authMe) as Map),
+        );
+        api.userId = user?.id;
+      }
+    } on ApiFailure catch (e) {
+      restoreError = e.message;
+    } on SessionChanged {
+      // A newer login or logout superseded this restoration.
+    } finally {
+      restoring = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> authenticate(
+    Map<String, dynamic> data, {
+    bool register = false,
+  }) async {
+    await api.clear();
+    user = null;
+    PaintingBinding.instance.imageCache.clear();
+    notifyListeners();
+    final start = epoch;
+    final result = Map<String, dynamic>.from(
+      await api.request(
+        register ? Endpoints.register : Endpoints.login,
+        method: 'POST',
+        data: data,
+        refreshAllowed: false,
+      ) as Map,
+    );
+    await api.install(result, expectedEpoch: start);
+    user = ApiUser.fromJson(Map<String, dynamic>.from(result['user'] as Map));
+    restoreError = null;
+    notifyListeners();
+  }
+
+  Future<void> logout() async {
+    try {
+      await api.request(Endpoints.logout, method: 'POST');
+    } finally {
+      await api.clear();
+      user = null;
+      PaintingBinding.instance.imageCache.clear();
+      notifyListeners();
+    }
+  }
+
+  Future<void> expire() async {
+    await api.clear();
+    user = null;
+    PaintingBinding.instance.imageCache.clear();
+    notifyListeners();
+  }
+
+  Future<void> reloadUser() async {
+    user = ApiUser.fromJson(
+      Map<String, dynamic>.from(await api.request(Endpoints.profile) as Map),
+    );
+    notifyListeners();
+  }
+
+  Future<void> setTheme(ThemeMode value) async {
+    mode = value;
+    notifyListeners();
+    await preferences.setInt('themeMode', value.index);
+  }
+}
+```
+
+## 把容易出错的路径走一遍
+
+我会用这个场景做一次可复现排查：**把页面临时状态也放进全局 Provider 导致无关页面刷新**。先观察 provider 依赖范围以及页面销毁后控制器是否释放；如果把问题定位在“一个大状态对象”，修正方向是“按生命周期拆分会话、服务端数据和页面表单状态”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+
+| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+|---|---|---|
+| 本文核心选择 | 一个大状态对象 | 按所有权拆分 |
+| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
+| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+
+| 排错步骤 | 要观察什么 | 通过条件 |
+|---|---|---|
+| 复现 | 把页面临时状态也放进全局 Provider 导致无关页面刷新 | 可以稳定触发或明确构造该输入 |
+| 定位 | 观察 provider 依赖范围以及页面销毁后控制器是否释放 | 找到责任层和状态归属 |
+| 修正 | 按生命周期拆分会话、服务端数据和页面表单状态 | 失败不污染后续页面或账号 |
 
 ## 小结
 

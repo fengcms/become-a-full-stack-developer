@@ -1,16 +1,10 @@
 # 成为全栈·Flutter App 篇·Markdown 编辑器：编辑、预览与离开保护
 
-> 编辑器最大的风险不是少几个格式按钮，而是用户写了很久的正文因为误触返回、请求失败或状态切换而丢失。先守住内容，再谈工具栏体验。
+写作几分钟后按返回，用户不关心我们的控制器拆得多漂亮，只关心正文还在不在。移动设备上，系统手势、应用切换、上传失败和服务端冲突都可能让编辑页离开正常流程。
+
+这篇沿着 `EditorPage` 的 controller、500ms 本机保存队列、预览切换和 `PopScope`，还原一个稿件从编辑到保存的生命周期。
 
 {{IMG:M4-20-封面}}
-
-## 本文目标
-
-梳理 Flutter 投稿编辑器的状态、元信息、预览、离开保护与本机恢复副本，并解释它如何与服务端投稿状态协调。
-
-## 前置知识
-
-熟悉 Markdown、TextEditingController、投稿状态机。页面及拆分组件位于 `lib/features/editor.dart` 与 `features/editor/`。
 
 ## 编辑态和预览态共享同一份内容
 
@@ -75,6 +69,124 @@ server save success → await pending write → remove recovery key
 ```
 
 本机自动保存失败会提示用户尽快保存服务端；页面销毁时仍尝试持久化 dirty 内容，但没有 UI 可展示错误。因此它降低意外丢稿概率，不是绝对持久化保证，设备存储损坏或卸载仍可能丢失。
+
+
+## 贴着工程代码读实现
+
+下面这段节选自 `flutter-app/lib/features/editor/editor_form.dart 第 4–97 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：修改字段、保存成功、再返回，观察 dirty 状态是否重置。沿着调用链读下去，才能看清这个选择如何影响实际页面。
+
+```dart
+class _EditorForm extends StatelessWidget {
+  const _EditorForm({
+    required this.status,
+    required this.dirty,
+    required this.id,
+    required this.title,
+    required this.summary,
+    required this.content,
+    required this.toolbar,
+  });
+  final String status;
+  final bool dirty;
+  final int? id;
+  final TextEditingController title;
+  final TextEditingController summary;
+  final TextEditingController content;
+  final Widget toolbar;
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Row(
+        children: [
+          StatusBadge(status),
+          const SizedBox(width: 12),
+          Text(
+            dirty
+                ? '有未保存的修改'
+                : id == null
+                ? '尚未保存'
+                : '已与服务器同步',
+            style: context.text.bodySmall,
+          ),
+        ],
+      ),
+      const SizedBox(height: 16),
+      const Text(
+        '标题 *',
+        style: TextStyle(
+          fontSize: AppType.caption,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      const SizedBox(height: 7),
+      TextField(
+        key: const ValueKey('editor-title'),
+        controller: title,
+        maxLength: 200,
+        decoration: const InputDecoration(hintText: '不超过 200 字'),
+      ),
+      const Text(
+        '摘要',
+        style: TextStyle(
+          fontSize: AppType.caption,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      const SizedBox(height: 7),
+      TextField(
+        controller: summary,
+        maxLength: 500,
+        minLines: 2,
+        maxLines: 4,
+        decoration: const InputDecoration(hintText: '一到两句话说清这篇文章解决什么问题'),
+      ),
+      const Text(
+        '正文（Markdown）',
+        style: TextStyle(
+          fontSize: AppType.caption,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      const SizedBox(height: 7),
+      TextField(
+        key: const ValueKey('editor-content'),
+        controller: content,
+        minLines: 14,
+        maxLines: null,
+        maxLength: 65535,
+        maxLengthEnforcement: MaxLengthEnforcement.enforced,
+        style: const TextStyle(
+          fontFamily: 'monospace',
+          fontSize: AppType.caption,
+          height: 1.85,
+        ),
+        decoration: const InputDecoration(
+          hintText: '开始写作…',
+          alignLabelWithHint: true,
+        ),
+      ),
+      toolbar,
+    ],
+  );
+}
+```
+
+## 把容易出错的路径走一遍
+
+我会用这个场景做一次可复现排查：**离开保护只看字段是否曾变化，保存后仍持续弹窗**。先修改字段、保存成功、再返回，观察 dirty 状态是否重置；如果把问题定位在“永久 dirty bool”，修正方向是“将初始快照与当前 payload 比较，并在成功保存后更新基线”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+
+| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+|---|---|---|
+| 本文核心选择 | 永久 dirty bool | 内容快照比较 |
+| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
+| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+
+| 排错步骤 | 要观察什么 | 通过条件 |
+|---|---|---|
+| 复现 | 离开保护只看字段是否曾变化，保存后仍持续弹窗 | 可以稳定触发或明确构造该输入 |
+| 定位 | 修改字段、保存成功、再返回，观察 dirty 状态是否重置 | 找到责任层和状态归属 |
+| 修正 | 将初始快照与当前 payload 比较，并在成功保存后更新基线 | 失败不污染后续页面或账号 |
 
 ## 小结
 

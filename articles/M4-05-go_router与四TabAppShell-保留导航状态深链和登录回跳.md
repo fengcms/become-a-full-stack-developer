@@ -1,16 +1,10 @@
 # 成为全栈·Flutter App 篇·go_router 与四 Tab App Shell：保留导航状态、深链和登录回跳
 
-> 移动应用的路由不只是“页面 A 跳页面 B”。底部 Tab 有各自的返回栈，文章链接可从外部打开，私有页面还要在登录后回到原目的地。
+四个底部 Tab 看起来只是一排按钮，实际决定了用户在首页、分类、搜索和会员页之间切换时，哪些滚动位置和子页面要留下来。文章详情还要能从分享链接进入，未登录的投稿入口则需要记住用户原来想去哪里。
+
+我会结合 `router.dart` 说明 StatefulShell、独立路由和会话恢复如何配合，并逐步验证匿名深链、登录回跳和系统返回这几条路径。
 
 {{IMG:M4-05-封面}}
-
-## 本文目标
-
-拆解 Flutter 项目的四 Tab 导航、go_router 路由、深链接和认证重定向，解释为什么 App Shell 与页面栈需要一起设计。
-
-## 前置知识
-
-理解 Navigator、路由地址和登录态。项目路由位于 `flutter-app/lib/app/router.dart`，底部栏在 `app_bottom_bar.dart`，会话由 `app/session.dart` 提供。
 
 ## 四个 Tab 不是一条线性的页面栈
 
@@ -85,6 +79,85 @@ restore failure / no user → /login?from=URI
 ## StatefulShell 的范围并不等于所有页面都在 Tab 内
 
 当前四个主分支使用 indexed stack，文章详情、作者和认证/投稿操作作为 standalone routes，返回后保留原分支。路由设计需和页面导航关系保持一致；单纯把所有路由塞进 Shell 可能导致详情切 Tab 时出现错误底栏。
+
+
+## 贴着工程代码读实现
+
+下面这段节选自 `flutter-app/lib/app/router.dart 第 36–90 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：分别测试四个分支的栈、深链直达和 from 回跳参数。把这几步连起来，才看得到数据如何从服务边界走到界面。
+
+```dart
+class AccountBoundary extends ConsumerWidget {
+  const AccountBoundary({
+    super.key,
+    required this.child,
+    this.authenticated = true,
+  });
+  final Widget child;
+  final bool authenticated;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) =>
+      authenticated && ref.watch(sessionProvider).user == null
+      ? const SizedBox.shrink()
+      : KeyedSubtree(
+          key: ValueKey(ref.watch(sessionProvider).epoch),
+          child: child,
+        );
+}
+
+GoRouter createRouter(AppSession session) => GoRouter(
+  refreshListenable: session,
+  redirect: (context, state) => _redirect(session, state),
+  errorBuilder: _errorBuilder,
+  routes: [
+    GoRoute(
+      path: '/restoring',
+      builder: (c, s) =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+    ),
+    StatefulShellRoute.indexedStack(
+      builder: (c, s, shell) => Scaffold(
+        body: shell,
+        bottomNavigationBar: _AppBottomBar(shell: shell),
+      ),
+      branches: _shellBranches(),
+    ),
+    ..._standaloneRoutes(),
+  ],
+);
+
+// 受保护入口等待会话恢复，原始位置作为登录后的回跳目标。
+String? _redirect(AppSession session, GoRouterState state) {
+  final private =
+      state.uri.path.startsWith('/member/') &&
+      state.uri.path != '/member/settings';
+  if (private && session.user == null) {
+    if (session.restoring) {
+      return '/restoring?from=${Uri.encodeComponent(state.uri.toString())}';
+    }
+    return '/login?from=${Uri.encodeComponent(state.uri.toString())}';
+  }
+  if (state.uri.path == '/restoring' && !session.restoring) {
+    return state.uri.queryParameters['from'] ?? '/member';
+  }
+  return null;
+}
+```
+
+## 把容易出错的路径走一遍
+
+我会用这个场景做一次可复现排查：**切换 Tab 后导航栈被重建或登录后丢失原目标**。先分别测试四个分支的栈、深链直达和 from 回跳参数；如果把问题定位在“单 Navigator”，修正方向是“用 StatefulShellRoute 保存分支状态，登录成功后校验回跳目标”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+
+| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+|---|---|---|
+| 本文核心选择 | 单 Navigator | 分支 Navigator |
+| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
+| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+
+| 排错步骤 | 要观察什么 | 通过条件 |
+|---|---|---|
+| 复现 | 切换 Tab 后导航栈被重建或登录后丢失原目标 | 可以稳定触发或明确构造该输入 |
+| 定位 | 分别测试四个分支的栈、深链直达和 from 回跳参数 | 找到责任层和状态归属 |
+| 修正 | 用 StatefulShellRoute 保存分支状态，登录成功后校验回跳目标 | 失败不污染后续页面或账号 |
 
 ## 小结
 

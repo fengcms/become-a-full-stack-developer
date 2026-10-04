@@ -1,16 +1,10 @@
 # 成为全栈·Flutter App 篇·从 React 到 Flutter：声明式 UI 相似，状态与布局模型哪里不同
 
-> 两者都用状态描述界面，但 React 的组件最终交给 DOM/CSS，Flutter 的 Widget 则参与一套约束驱动的布局与绘制系统。迁移时只背语法，最容易把熟悉的概念用错。
+React 开发里，写一个 `Row` 和 `Column` 往往很顺手；换到 Flutter 后，我更常先问父节点给了什么约束。第一次遇到无界高度异常时，问题并不在某个 Widget 名字，而在我把 CSS 的布局直觉带进了另一套渲染管线。
+
+这篇从一个前端工程师最熟悉的声明式组件开始，拆出 Widget、Element 和 RenderObject 各自负责的事，再用列表布局说明哪些经验可以沿用、哪些要重新建立。
 
 {{IMG:M4-01-封面}}
-
-## 本文目标
-
-用 React 工程师熟悉的声明式 UI 作起点，理解 Flutter 重建、布局约束和状态生命周期的差异，并以本项目首页/列表代码为例，建立可迁移的心智模型。
-
-## 前置知识
-
-假设你会 React 函数组件、props、state 和 CSS Flexbox。本文代码来自仓库 `flutter-app/lib`；Flutter APP 与 Next.js 共用后端 API 契约，但不是共享 UI 代码。
 
 ## 声明式相似，渲染对象不同
 
@@ -105,6 +99,84 @@ Column(
 ## Widget 树优化先测再做
 
 开发模式下的重建日志不能直接代表 Release 帧耗时。用 Flutter DevTools 的 Performance/Widget rebuild 工具在真实长文章、滚动列表和主题切换时观察帧；若成本来自高亮解析，就缓存词法结果；若来自图片解码，限制解码尺寸；若只是轻量 Widget 配置重建，增加复杂缓存反而会让状态更难维护。
+
+
+## 贴着工程代码读实现
+
+下面这段节选自 `flutter-app/lib/shared/widgets/article_feed.dart 第 160–213 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：沿父节点向上检查约束来源，并确认是否出现两个纵向滚动所有者。把这几步连起来，才看得到数据如何从服务边界走到界面。
+
+```dart
+  Future<void> load({
+    bool reset = false,
+    bool check = false,
+    bool verify = false,
+  }) async {
+    if (busy && !reset) return;
+    if (pendingUpdate && !reset && !check) return;
+    final firstKey = repository.key(widget.path, {
+      'page': 1,
+      'pageSize': 12,
+      ...widget.query,
+    }, private: widget.path.startsWith(Endpoints.privatePrefix));
+    // 翻下一页前先检查首屏是否变化，阻止旧页混入新的排序结果。
+    if (page > 0 && !reset && !check && !repository.cache.fresh(firstKey)) {
+      await load(check: true, verify: true);
+      if (!mounted || pendingUpdate || error != null) return;
+    }
+    final ticket = ++serial;
+    setState(() {
+      busy = true;
+      error = null;
+    });
+    final repo = ref.read(repositoryProvider);
+    if (reset) repo.cache.invalidate({repo.feedTag(widget.path, widget.query)});
+    try {
+      final p = await repo.track(
+        dependencies,
+        () => repo.articles(
+          page: reset || check ? 1 : page + 1,
+          path: widget.path,
+          query: widget.query,
+          force: reset || verify,
+        ),
+      );
+      if (!mounted || ticket != serial) return;
+      setState(() => _applyPage(p, check, reset));
+    } catch (e) {
+      if (mounted &&
+          ticket == serial &&
+          e is! SessionChanged &&
+          e is! CacheSuperseded) {
+        setState(() {
+          error = e;
+          if (repo.forbidden(e) ||
+              dependencies.any((k) => !repo.cache.usable(k))) {
+            items = [];
+            page = 0;
+          }
+        });
+      }
+    } finally {
+      if (mounted && ticket == serial) setState(() => busy = false);
+    }
+  }
+```
+
+## 把容易出错的路径走一遍
+
+我会用这个场景做一次可复现排查：**嵌套纵向滚动让视口拿到无界高度**。先沿父节点向上检查约束来源，并确认是否出现两个纵向滚动所有者；如果把问题定位在“组件树”，修正方向是“把列表放进有限高度的 Expanded，或保留一个主滚动容器”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+
+| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+|---|---|---|
+| 本文核心选择 | 组件树 | RenderObject 布局 |
+| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
+| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+
+| 排错步骤 | 要观察什么 | 通过条件 |
+|---|---|---|
+| 复现 | 嵌套纵向滚动让视口拿到无界高度 | 可以稳定触发或明确构造该输入 |
+| 定位 | 沿父节点向上检查约束来源，并确认是否出现两个纵向滚动所有者 | 找到责任层和状态归属 |
+| 修正 | 把列表放进有限高度的 Expanded，或保留一个主滚动容器 | 失败不污染后续页面或账号 |
 
 ## 小结
 

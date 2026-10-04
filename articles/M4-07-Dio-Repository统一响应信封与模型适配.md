@@ -1,16 +1,10 @@
 # 成为全栈·Flutter App 篇·Dio + Repository：统一响应信封与模型适配
 
-> API 契约统一不代表所有接口响应外形完全相同。网络层负责传输规则，Repository 吸收业务数据差异，页面应消费稳定模型，而不是一边展示一边拆 JSON。
+把所有接口都包成 `getList<T>()`，代码看上去统一了，真实数据却未必如此：搜索结果在 `articles` 字段里，互动端点可能返回裸数组，阅读历史又会包一层文章对象。
+
+这篇沿着 Dio、ApiClient、Repository 到 Widget 的一次完整请求，给出每层该处理的规则，并把代码生成、接口联调和响应适配串成可以复现的工作流。
 
 {{IMG:M4-07-封面}}
-
-## 本文目标
-
-追踪 Flutter APP 从 Dio 请求到 Widget 展示的数据流，解释统一响应信封、业务错误分类、生成 DTO 和 Repository 适配的职责，以及哪些真实接口差异需要测试。
-
-## 前置知识
-
-了解 HTTP、OpenAPI 和 Dart 类型。代码主要位于 `core/network/api_client.dart`、`core/network/endpoints.dart`、`features/repository.dart` 与 `features/data/reader_models.dart`。
 
 ## 传输层统一横切规则
 
@@ -96,6 +90,105 @@ endpoint → auth mode → response shape → repository mapping
 ```
 
 这里最容易漏掉的是子资源路由匹配顺序：`/articles/{id}/comments` 要先识别为评论，不能因前缀 `/articles` 被归为文章正文。项目 `CachePolicyTable.family()` 对更具体子资源优先判断，读策略和 mutation tag 共用资源分类。
+
+
+## 贴着工程代码读实现
+
+下面这段节选自 `flutter-app/lib/features/repository.dart 第 119–193 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：用一份成功响应和一份错误响应追踪 ApiClient 到模型转换。这里关注的是它如何改变数据流，而不只是记住一个 API 名称。
+
+```dart
+  Future<CacheReply> fetch(
+    String path, {
+    Map<String, dynamic> query = const {},
+    bool anonymous = false,
+  }) => fetchCacheReply(api, path, query: query, anonymous: anonymous);
+
+  // 先查显式白名单；未列入策略的端点保留原始联网行为。
+  Future<dynamic> read(
+    String path, {
+    Map<String, dynamic> query = const {},
+    bool force = false,
+  }) {
+    var p = policy(path);
+    if (p == null) return api.request(path, query: query);
+    p = policies.forQuery(path, query, p);
+    final private =
+        path.startsWith(Endpoints.privatePrefix) ||
+        path.endsWith(Endpoints.likeStatusSuffix);
+    final k = key(path, query, private: private);
+    (Zone.current[_tracking] as Set<String>?)?.add(k);
+    return cache.get(
+      k,
+      p,
+      () async {
+        final result = await fetch(path, query: query, anonymous: !private);
+        policies.validate(path, result.value);
+        return result;
+      },
+      force: force || forced,
+      tags: {
+        ...resourceTags(path),
+        if (query.containsKey('page')) feedTag(path, query),
+      },
+      forbidden: forbidden,
+    );
+  }
+
+  // 本人预览走鉴权请求并绕过公开正文缓存。
+  Future<Article> article(String id, {bool private = false}) async =>
+      Article.fromJson(
+        private
+            ? jsonMap(await api.request(Endpoints.article(id)))
+            : jsonMap((await bundle(id))['article']),
+      );
+  Future<List<ApiTocItem>> toc(int id) async =>
+      ((await bundle('$id'))['toc'] as List)
+          .map((j) => ApiTocItem.fromJson(jsonMap(j)))
+          .toList();
+
+  // 兼容分页对象和点赞裸数组两种协议，历史条目额外携带阅读进度。
+  Future<PageResult<Article>> articles({
+    int page = 1,
+    String path = Endpoints.articles,
+    Map<String, dynamic> query = const {},
+    bool force = false,
+  }) async {
+    var data = await read(
+      path,
+      query: {'page': page, 'pageSize': 12, ...query},
+      force: force,
+    );
+    if (path == Endpoints.search) data = data['articles'];
+    if (data is List) {
+      final list = data.map((j) => Article.fromJson(jsonMap(j))).toList();
+      final size = query['pageSize'] as int? ?? 12;
+      return PageResult(list, page, list.length == size ? page + 1 : page, 0);
+    }
+    return PageResult.fromJson(
+      data,
+      (j) => Article.fromJson(
+        j['article'] is Map ? jsonMap(j['article']) : j,
+        progress: j['progress'] as num?,
+      ),
+    );
+  }
+```
+
+## 把容易出错的路径走一遍
+
+我会用这个场景做一次可复现排查：**页面直接解析响应信封导致接口形状变化散落全站**。先用一份成功响应和一份错误响应追踪 ApiClient 到模型转换；如果把问题定位在“页面直连 Dio”，修正方向是“在 Repository 统一 envelope、分页与模型适配，页面消费领域对象”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+
+| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+|---|---|---|
+| 本文核心选择 | 页面直连 Dio | Repository 边界 |
+| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
+| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+
+| 排错步骤 | 要观察什么 | 通过条件 |
+|---|---|---|
+| 复现 | 页面直接解析响应信封导致接口形状变化散落全站 | 可以稳定触发或明确构造该输入 |
+| 定位 | 用一份成功响应和一份错误响应追踪 ApiClient 到模型转换 | 找到责任层和状态归属 |
+| 修正 | 在 Repository 统一 envelope、分页与模型适配，页面消费领域对象 | 失败不污染后续页面或账号 |
 
 ## 小结
 

@@ -1,16 +1,10 @@
 # 成为全栈·Flutter App 篇·Flutter 工程骨架与 OpenAPI 代码生成
 
-> 代码生成能减少重复声明，却不会自动给你一个正确的应用架构。生成模型、HTTP 传输、业务适配和页面状态仍然需要清晰边界。
+刚开始做多端时，最诱人的想法是“有 OpenAPI 就让生成器把客户端全写完”。但 Flutter 端还需要处理轮换令牌、业务错误、429 和不同接口的响应包装；生成的类型只能覆盖其中一部分。
+
+这篇沿着 `openapi.v1.yaml` 到 Dart 页面展示的链路，说明哪些代码适合生成、哪些边界仍应手写，以及一次契约变化如何安全落到应用里。
 
 {{IMG:M4-03-封面}}
-
-## 本文目标
-
-沿着 Flutter 项目的真实目录和契约生成工具，理解跨端应用如何复用 OpenAPI、哪些代码适合生成、哪些必须由工程师适配，以及如何避免生成文件成为新的手写孤岛。
-
-## 前置知识
-
-了解 REST API、JSON 和 Flutter/Dart 基础。仓库根目录中的 `docs/api/openapi.v1.yaml` 是共享契约；实现位于 `flutter-app/`，不是已废弃的 `app-frontend/`。
 
 ## 工程结构服务于依赖方向
 
@@ -95,6 +89,90 @@ OpenAPI 生成客户端可以省去更多样板，但项目实际选取的是模
 ## 代码评审的可重复检查
 
 契约变更 PR 至少包含 YAML diff、生成结果 diff、对应 Repository 映射或调用变化、测试。生成文件若出现大面积无关重排，先检查生成器版本锁定和排序是否稳定，避免噪声掩盖真正 schema 差异。
+
+
+## 贴着工程代码读实现
+
+下面这段节选自 `flutter-app/lib/core/generated/models.dart 第 3–62 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：从 OpenAPI 生成模型与实际 JSON 样本核对 nullable 字段。这里关注的是它如何改变数据流，而不只是记住一个 API 名称。
+
+```dart
+class ApiArticle {
+  ApiArticle.fromJson(Map<String, dynamic> value)
+    : json = Map.unmodifiable(value);
+  final Map<String, dynamic> json;
+  int? get id => (json['id'] as num?)?.toInt();
+  String? get title => json['title'] as String?;
+  String? get slug => json['slug'] as String?;
+  String? get summary => json['summary'] as String?;
+  String? get content => json['content'] as String?;
+  String? get coverImage => json['coverImage'] as String?;
+  int? get authorId => (json['authorId'] as num?)?.toInt();
+  String? get authorName => json['authorName'] as String?;
+  int? get categoryId => (json['categoryId'] as num?)?.toInt();
+  String? get categoryName => json['categoryName'] as String?;
+  List<String> get tags =>
+      (json['tags'] as List? ?? []).map((e) => e.toString()).toList();
+  String? get status => json['status'] as String?;
+  int? get viewCount => (json['viewCount'] as num?)?.toInt();
+  int? get likeCount => (json['likeCount'] as num?)?.toInt();
+  String? get publishedAt => json['publishedAt'] as String?;
+  String? get createdAt => json['createdAt'] as String?;
+  String? get updatedAt => json['updatedAt'] as String?;
+}
+
+class ApiArticleSummary {
+  ApiArticleSummary.fromJson(Map<String, dynamic> value)
+    : json = Map.unmodifiable(value);
+  final Map<String, dynamic> json;
+  int? get id => (json['id'] as num?)?.toInt();
+  String? get title => json['title'] as String?;
+  String? get slug => json['slug'] as String?;
+  String? get summary => json['summary'] as String?;
+  String? get coverImage => json['coverImage'] as String?;
+  int? get authorId => (json['authorId'] as num?)?.toInt();
+  String? get authorName => json['authorName'] as String?;
+  int? get categoryId => (json['categoryId'] as num?)?.toInt();
+  String? get categoryName => json['categoryName'] as String?;
+  List<String> get tags =>
+      (json['tags'] as List? ?? []).map((e) => e.toString()).toList();
+  String? get status => json['status'] as String?;
+  int? get viewCount => (json['viewCount'] as num?)?.toInt();
+  int? get likeCount => (json['likeCount'] as num?)?.toInt();
+  String? get publishedAt => json['publishedAt'] as String?;
+  String? get createdAt => json['createdAt'] as String?;
+  String? get updatedAt => json['updatedAt'] as String?;
+}
+
+class ApiUser {
+  ApiUser.fromJson(Map<String, dynamic> value) : json = Map.unmodifiable(value);
+  final Map<String, dynamic> json;
+  int? get id => (json['id'] as num?)?.toInt();
+  String? get username => json['username'] as String?;
+  String? get email => json['email'] as String?;
+  String? get nickname => json['nickname'] as String?;
+  String? get avatar => json['avatar'] as String?;
+  String? get role => json['role'] as String?;
+  String? get status => json['status'] as String?;
+  int? get level => (json['level'] as num?)?.toInt();
+  String? get createdAt => json['createdAt'] as String?;
+}
+```
+
+## 把容易出错的路径走一遍
+
+我会用这个场景做一次可复现排查：**接口字段缺失后在 UI 强制解包导致运行时崩溃**。先从 OpenAPI 生成模型与实际 JSON 样本核对 nullable 字段；如果把问题定位在“手写重复 DTO”，修正方向是“在模型适配边界表达可空性，再由展示层给出合理回退”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+
+| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+|---|---|---|
+| 本文核心选择 | 手写重复 DTO | 契约生成模型 |
+| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
+| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+
+| 排错步骤 | 要观察什么 | 通过条件 |
+|---|---|---|
+| 复现 | 接口字段缺失后在 UI 强制解包导致运行时崩溃 | 可以稳定触发或明确构造该输入 |
+| 定位 | 从 OpenAPI 生成模型与实际 JSON 样本核对 nullable 字段 | 找到责任层和状态归属 |
+| 修正 | 在模型适配边界表达可空性，再由展示层给出合理回退 | 失败不污染后续页面或账号 |
 
 ## 小结
 

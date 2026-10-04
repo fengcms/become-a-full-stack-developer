@@ -1,16 +1,10 @@
 # 成为全栈·Flutter App 篇·Flutter 缓存：fresh、stale、expired 与账号边界
 
-> 缓存不是“有数据就返回”。同一份旧数据可能仍能帮助用户阅读，也可能已经不能展示；公开文章与会员信息更不能共享一套持久化策略。
+用户在地铁里打开一篇之前读过的文章，网络刚好断了。缓存能让这次阅读继续，但不能因此承诺整本专栏都可离线，也不能把会员草稿当作公开内容落盘。
+
+这篇直接读 `DataCache.get()` 和 `CachePolicyTable`，解释 fresh、stale、maxAge、磁盘策略及请求代次，并说明当前缓存真正能覆盖的场景。
 
 {{IMG:M4-23-封面}}
-
-## 本文目标
-
-讲解 APP 的内存/磁盘缓存层级、新鲜与过期语义、公开/私有资源边界，并说明有限离线复用和完整离线阅读的区别。
-
-## 前置知识
-
-熟悉 Repository、HTTP Cache-Control 与 Flutter 生命周期。实现位于 `core/cache/data_cache.dart`、`blob_store.dart`、`features/data/cache_policy_table.dart` 和 `repository.dart`。
 
 ## 新鲜、陈旧、过期不是三个颜色
 
@@ -79,6 +73,103 @@ cache key + current version
 ```
 
 这是并发正确性机制，不单是速度优化。`CacheSuperseded` 对页面不应当作网络错误提示；它表示另一个更新已获胜，页面可等待新状态或忽略该响应。
+
+
+## 贴着工程代码读实现
+
+下面这段节选自 `flutter-app/lib/core/cache/data_cache.dart 第 130–202 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：将时间推进到 fresh、stale、expired 三段，观察前台响应和后台刷新。这里关注的是它如何改变数据流，而不只是记住一个 API 名称。
+
+```dart
+  Future<dynamic> get(
+    String key,
+    CachePolicy policy,
+    Future<CacheReply> Function() fetch, {
+    bool force = false,
+    Set<String> tags = const {},
+    bool Function(Object)? forbidden,
+  }) async {
+    _keyTags[key] = tags;
+    if (_keyTags.length > CacheLimits.trackedKeys) {
+      for (final old in _keyTags.keys.toList()) {
+        if (_keyTags.length <= CacheLimits.trackedKeys) break;
+        if (old != key &&
+            !_entries.containsKey(old) &&
+            !_flights.containsKey(old)) {
+          _keyTags.remove(old);
+          _versions.remove(old);
+        }
+      }
+    }
+    if (force && _flights.containsKey(key) && !_forced.contains(key)) {
+      _versions[key] = Object();
+      _flights.remove(key);
+    }
+    if (force) _forced.add(key);
+    // 磁盘读取也必须检查代际，否则清理完成后旧磁盘读会重新填回内存。
+    final startEpoch = _epoch, version = _version(key);
+    var entry = _entries[key];
+    if (!force && entry == null && policy.disk) {
+      final bytes = await disk.read(key);
+      if (_epoch != startEpoch || (_version(key)) != version) {
+        throw CacheSuperseded();
+      }
+      if (bytes != null) {
+        try {
+          entry = CacheEntry.fromJson(
+            Map<String, dynamic>.from(jsonDecode(utf8.decode(bytes)) as Map),
+          );
+          _put(key, entry);
+          count('diskHit');
+        } catch (_) {
+          unawaited(disk.removeWhere((k, _) => k == key));
+        }
+      }
+    }
+    entry = _entries[key] ?? entry;
+    if (!force &&
+        entry != null &&
+        now().difference(entry.saved) < entry.maxAge) {
+      _put(key, entry);
+      if (now().difference(entry.saved) < entry.fresh) {
+        count('freshHit');
+        return entry.value;
+      }
+      // 返回可用旧值并启动后台更新；后台失败通过事件通知页面。
+      count('staleHit');
+      unawaited(
+        _fetch(
+          key,
+          policy,
+          fetch,
+          tags,
+          forbidden,
+        ).catchError((Object _) => null),
+      );
+      return entry.value;
+    }
+    if (entry != null && now().difference(entry.saved) >= entry.maxAge) {
+      _entries.remove(key);
+    }
+    count('miss');
+    return _fetch(key, policy, fetch, tags, forbidden);
+  }
+```
+
+## 把容易出错的路径走一遍
+
+我会用这个场景做一次可复现排查：**把 stale 数据当作 fresh 返回，用户长期看不到服务端更新**。先将时间推进到 fresh、stale、expired 三段，观察前台响应和后台刷新；如果把问题定位在“单一 TTL”，修正方向是“按策略区分立即返回、后台 revalidate 与必须联网读取”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+
+| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+|---|---|---|
+| 本文核心选择 | 单一 TTL | 三级新鲜度 |
+| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
+| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+
+| 排错步骤 | 要观察什么 | 通过条件 |
+|---|---|---|
+| 复现 | 把 stale 数据当作 fresh 返回，用户长期看不到服务端更新 | 可以稳定触发或明确构造该输入 |
+| 定位 | 将时间推进到 fresh、stale、expired 三段，观察前台响应和后台刷新 | 找到责任层和状态归属 |
+| 修正 | 按策略区分立即返回、后台 revalidate 与必须联网读取 | 失败不污染后续页面或账号 |
 
 ## 小结
 

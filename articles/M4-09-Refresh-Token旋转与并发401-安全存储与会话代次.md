@@ -1,16 +1,10 @@
 # 成为全栈·Flutter App 篇·Refresh Token 旋转与并发 401：安全存储与会话代次
 
-> 同一时刻多个请求收到 401，如果每个请求都各自刷新一次，旋转令牌系统可能把整个令牌族作废。正确实现还必须防止退出后的旧请求重新写回前一账号的数据。
+首页、通知和收藏页可以在同一瞬间过期，服务器于是同时回了多个 401。如果每个请求都各自拿旧 refresh token 刷新，轮换机制会把并发变成会话失效问题。
+
+这篇用项目的 `_refresh` Future、串行存储队列和 epoch 检查逐段还原认证过程，再用并发测试说明登录成功截图覆盖不到哪些竞态。
 
 {{IMG:M4-09-封面}}
-
-## 本文目标
-
-结合 Flutter 原生客户端的认证契约，拆解 access/refresh token 存储、并发 401 单飞刷新、refresh token 轮换持久化和会话代次校验。
-
-## 前置知识
-
-了解 JWT/Bearer、Dio interceptor 和 Future。项目认证位于 `core/network/api_client.dart` 与 `app/session.dart`，测试覆盖刷新与迟到响应。
 
 ## Flutter 原生客户端不依赖浏览器 Cookie
 
@@ -79,6 +73,84 @@ logout increments ─┘              no → SessionChanged
 ```
 
 这避免退出后刷新 Future 又把旧凭据安装回来。重试的原请求仍受 refreshAllowed=false 限制，不会形成无限 401 循环。测试使用可控 Completer 暂停刷新，让 8 条请求并发到达，断言 refresh 调用数为 1，并测试退出时迟到响应被丢弃。
+
+
+## 贴着工程代码读实现
+
+下面这段节选自 `flutter-app/lib/core/network/api_client.dart 第 97–150 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：并发发起两个受保护请求，同时切换账号观察 session epoch。把这几步连起来，才看得到数据如何从服务边界走到界面。
+
+```dart
+  Future<void> install(Map<String, dynamic> auth, {int? expectedEpoch}) async {
+    if (expectedEpoch != null && expectedEpoch != epoch) throw SessionChanged();
+    final token = auth['refreshToken'] as String?;
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('服务未返回刷新令牌，请重新登录');
+    }
+    await _persist(token);
+    if (expectedEpoch != null && expectedEpoch != epoch) throw SessionChanged();
+    accessToken = auth['accessToken'] as String;
+    if (auth['user'] is Map) userId = (auth['user']['id'] as num?)?.toInt();
+  }
+
+  // 清除会话先提升代际，使刷新和旧请求不能重新写入已退出的令牌。
+  Future<void> clear() async {
+    epoch++;
+    accessToken = null;
+    userId = null;
+    onSessionChanged?.call();
+    await _persist(null);
+  }
+
+  Future<void> refresh() {
+    if (_refresh != null) return _refresh!;
+    final start = epoch;
+    final task = () async {
+      try {
+        final token = await vault.read();
+        if (start != epoch) throw SessionChanged();
+        if (token == null) {
+          throw const ApiFailure('请登录后继续', code: 1004, status: 401);
+        }
+        final data = await request(
+          Endpoints.refresh,
+          method: 'POST',
+          data: {'refreshToken': token},
+          refreshAllowed: false,
+        );
+        await install(
+          Map<String, dynamic>.from(data as Map),
+          expectedEpoch: start,
+        );
+      } on ApiFailure catch (e) {
+        if ([1002, 1003, 1004, 1005].contains(e.code) && start == epoch) {
+          await clear();
+          onExpired?.call();
+        }
+        rethrow;
+      }
+    }();
+    _refresh = task;
+    return task.whenComplete(() {
+      if (identical(_refresh, task)) _refresh = null;
+    });
+  }
+```
+
+## 把容易出错的路径走一遍
+
+我会用这个场景做一次可复现排查：**并发 401 各自刷新令牌，后完成的旧响应覆盖新会话**。先并发发起两个受保护请求，同时切换账号观察 session epoch；如果把问题定位在“每个请求单独 refresh”，修正方向是“Refresh single-flight，并在写回和重放前验证 epoch 未变化”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+
+| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+|---|---|---|
+| 本文核心选择 | 每个请求单独 refresh | 共享刷新与代次校验 |
+| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
+| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+
+| 排错步骤 | 要观察什么 | 通过条件 |
+|---|---|---|
+| 复现 | 并发 401 各自刷新令牌，后完成的旧响应覆盖新会话 | 可以稳定触发或明确构造该输入 |
+| 定位 | 并发发起两个受保护请求，同时切换账号观察 session epoch | 找到责任层和状态归属 |
+| 修正 | Refresh single-flight，并在写回和重放前验证 epoch 未变化 | 失败不污染后续页面或账号 |
 
 ## 小结
 

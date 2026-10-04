@@ -1,16 +1,10 @@
 # 成为全栈·Flutter App 篇·内置 WebView：网页历史、App 返回与外链安全
 
-> WebView 看上去只是 App 里的一块网页，却同时拥有网页内部 URL 历史和 Flutter 路由历史。产品要先决定返回键服务哪种习惯；当前 APP 选择离开内置页回到来源文章，而不是模拟浏览器逐页后退。
+读文章时点开一条外链，用户只是想看完网页再回来继续读。WebView 如果完全照搬浏览器的返回习惯，返回键可能留在网页历史里；如果直接关闭页面，又要让这个行为成为清楚的产品决定。
+
+这篇对照当前 `WebPage` 的 `NavigationDelegate`、页面标题和返回按钮实现，解释 APP 为什么选择返回来源文章，并补上安全校验与网页失败重试。
 
 {{IMG:M4-15-封面}}
-
-## 本文目标
-
-介绍 Flutter APP 中的内置网页浏览、App 返回键行为、外部链接处理和认证边界，明确 Android 已验收与 iOS 尚未验收的范围。
-
-## 前置知识
-
-了解 Flutter 路由和移动 WebView。当前实现位于 `lib/features/web_page.dart`；集成测试见 `integration_test/web_page_test.dart`。
 
 ## 当前产品选择了“返回来源页”，不是网页后退
 
@@ -58,6 +52,104 @@ App 返回：WebPage → Article
 JavaScript 当前设为 unrestricted，适合打开动态站点，但也扩大网页脚本可执行能力。内容站的 Markdown 渲染与 WebView 是两条不同信任边界：不要把不可信 HTML 拼到 WebView；加载网页时不注入应用 token；如产品未来只允许特定站点，应增加 host allowlist，而当前实现只限制 HTTP/HTTPS scheme。
 
 网络错误覆盖主框架时显示全页重试，子资源图片失败不会把整页替换成错误。重试使用当前 URL，不回初始链接；在外部浏览器打开也读取 WebView 当前 URL，而不是最初文章中的 href。
+
+
+## 贴着工程代码读实现
+
+下面这段节选自 `flutter-app/lib/features/web_page.dart 第 34–107 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：尝试 javascript/mailto 深链，并检查 WebView 请求头是否含 Authorization。这里关注的是它如何改变数据流，而不只是记住一个 API 名称。
+
+```dart
+  @override
+  void initState() {
+    super.initState();
+    if (!isWebAddress(widget.url)) {
+      error = '此链接不是有效的网页地址';
+      return;
+    }
+    initialize();
+  }
+
+  Future<void> initialize() async {
+    try {
+      final web = WebViewController();
+      controller = web;
+      await web.setJavaScriptMode(JavaScriptMode.unrestricted);
+      await web.setNavigationDelegate(navigationDelegate());
+      if (!mounted) return;
+      setState(() {});
+      await web.loadRequest(widget.url);
+      // Also follow document.title changes made by single-page websites.
+      if (mounted) {
+        titleTimer = Timer.periodic(
+          const Duration(seconds: 1),
+          (_) => updateTitle(),
+        );
+      }
+    } catch (_) {
+      if (mounted) setState(() => error = '网页加载失败，请重试');
+    }
+  }
+
+  /// 所有网页导航只更新 WebView；不向 App 导航栈追加路由。
+  NavigationDelegate navigationDelegate() => NavigationDelegate(
+    onNavigationRequest: (request) {
+      final uri = Uri.tryParse(request.url);
+      if (uri != null && isWebAddress(uri)) {
+        return NavigationDecision.navigate;
+      }
+      if (request.isMainFrame && mounted) {
+        notice(context, '此链接暂不支持在网页中打开');
+      }
+      return NavigationDecision.prevent;
+    },
+    onPageStarted: (url) {
+      if (!mounted) return;
+      setState(() {
+        currentUrl = Uri.tryParse(url) ?? currentUrl;
+        title = null;
+        error = null;
+        progress = 0;
+      });
+    },
+    onUrlChange: (change) {
+      final uri = Uri.tryParse(change.url ?? '');
+      if (!mounted || uri == null || !isWebAddress(uri)) return;
+      setState(() => currentUrl = uri);
+      updateTitle();
+    },
+    onProgress: (value) {
+      if (mounted) setState(() => progress = value);
+    },
+    onPageFinished: (_) {
+      if (mounted) setState(() => progress = 100);
+      updateTitle();
+    },
+    onWebResourceError: (failure) {
+      if (mounted && failure.isForMainFrame == true) {
+        setState(() {
+          error = '网页加载失败，请重试';
+          progress = 100;
+        });
+      }
+    },
+  );
+```
+
+## 把容易出错的路径走一遍
+
+我会用这个场景做一次可复现排查：**WebView 接受非 HTTP scheme 或把 App token 带进网页**。先尝试 javascript/mailto 深链，并检查 WebView 请求头是否含 Authorization；如果把问题定位在“任意 URI 导航”，修正方向是“校验 scheme 与 host，拒绝不支持协议，原生令牌不跨到网页”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+
+| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+|---|---|---|
+| 本文核心选择 | 任意 URI 导航 | HTTP(S) allow rule |
+| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
+| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+
+| 排错步骤 | 要观察什么 | 通过条件 |
+|---|---|---|
+| 复现 | WebView 接受非 HTTP scheme 或把 App token 带进网页 | 可以稳定触发或明确构造该输入 |
+| 定位 | 尝试 javascript/mailto 深链，并检查 WebView 请求头是否含 Authorization | 找到责任层和状态归属 |
+| 修正 | 校验 scheme 与 host，拒绝不支持协议，原生令牌不跨到网页 | 失败不污染后续页面或账号 |
 
 ## 小结
 

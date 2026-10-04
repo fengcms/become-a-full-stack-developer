@@ -1,16 +1,10 @@
 # 成为全栈·Flutter App 篇·给 TypeScript 开发者的 Dart：空安全、Future 与异步错误
 
-> Dart 看起来像带静态类型的 JavaScript，但它的空安全和异步类型会在编译期暴露许多前端运行时才发现的问题。真正的迁移不是换括号，而是把“不确定”表达清楚。
+从 TypeScript 转到 Dart，最容易忽略的不是语法，而是我们过去靠运行时兜底的那些假设：接口字段可能为空、JSON 结构可能变、异步失败可能晚于页面退出。Flutter 项目把这些问题推到了类型和生命周期边界上。
+
+我会用项目的数据读取链路解释空安全、Future 和异常传播，并说明生成类型之后为什么仍要做适配与验证。读者只需要会 TypeScript 的 Promise 和严格空值检查。
 
 {{IMG:M4-02-封面}}
-
-## 本文目标
-
-从 TypeScript 开发者的熟悉经验出发，掌握 Dart 非空类型、可空值、Future 和异常传播，并理解它们在 Flutter API 调用中的意义。
-
-## 前置知识
-
-读者熟悉 TypeScript 的 `Promise`、`null`/`undefined` 与 async/await。本文示例对应 `flutter-app/lib` 中的 Flutter 客户端；项目使用 Dart 3.13.1，类型生成代码来自冻结 OpenAPI。
 
 ## 空安全把“可能没有”写进类型
 
@@ -118,6 +112,82 @@ apply(recovery);
 ## FutureBuilder、Provider 与缓存的选择
 
 一次性的静态局部异步值可以用 FutureBuilder；跨页面共享、需要账号依赖或主动失效的状态适合通过应用现有 Provider/Repository 管理。不要在 build 中新建 Future，否则每次重建都可能重复请求。无论选哪个 Widget，缓存、错误分类与请求去重应由稳定的数据层提供。
+
+
+## 贴着工程代码读实现
+
+下面这段节选自 `flutter-app/lib/app/session.dart 第 41–92 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：分别观察 Secure Storage 读取、用户恢复请求和 restoring 标记。我会继续追踪它的返回值和副作用，直到页面状态稳定下来。
+
+```dart
+  Future<void> restore() async {
+    try {
+      if (await api.vault.read() != null) {
+        await api.refresh();
+        user = ApiUser.fromJson(
+          Map<String, dynamic>.from(await api.request(Endpoints.authMe) as Map),
+        );
+        api.userId = user?.id;
+      }
+    } on ApiFailure catch (e) {
+      restoreError = e.message;
+    } on SessionChanged {
+      // A newer login or logout superseded this restoration.
+    } finally {
+      restoring = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> authenticate(
+    Map<String, dynamic> data, {
+    bool register = false,
+  }) async {
+    await api.clear();
+    user = null;
+    PaintingBinding.instance.imageCache.clear();
+    notifyListeners();
+    final start = epoch;
+    final result = Map<String, dynamic>.from(
+      await api.request(
+        register ? Endpoints.register : Endpoints.login,
+        method: 'POST',
+        data: data,
+        refreshAllowed: false,
+      ) as Map,
+    );
+    await api.install(result, expectedEpoch: start);
+    user = ApiUser.fromJson(Map<String, dynamic>.from(result['user'] as Map));
+    restoreError = null;
+    notifyListeners();
+  }
+
+  Future<void> logout() async {
+    try {
+      await api.request(Endpoints.logout, method: 'POST');
+    } finally {
+      await api.clear();
+      user = null;
+      PaintingBinding.instance.imageCache.clear();
+      notifyListeners();
+    }
+  }
+```
+
+## 把容易出错的路径走一遍
+
+我会用这个场景做一次可复现排查：**恢复会话时把异步异常当成空登录态**。先分别观察 Secure Storage 读取、用户恢复请求和 restoring 标记；如果把问题定位在“Future 错误”，修正方向是“让错误状态可见并保证 finally 收尾；不要静默伪装成游客”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+
+| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+|---|---|---|
+| 本文核心选择 | Future 错误 | 显式结果 |
+| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
+| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+
+| 排错步骤 | 要观察什么 | 通过条件 |
+|---|---|---|
+| 复现 | 恢复会话时把异步异常当成空登录态 | 可以稳定触发或明确构造该输入 |
+| 定位 | 分别观察 Secure Storage 读取、用户恢复请求和 restoring 标记 | 找到责任层和状态归属 |
+| 修正 | 让错误状态可见并保证 finally 收尾；不要静默伪装成游客 | 失败不污染后续页面或账号 |
 
 ## 小结
 

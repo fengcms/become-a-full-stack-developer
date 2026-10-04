@@ -1,16 +1,10 @@
 # 成为全栈·Flutter App 篇·把高保真原型落成 Design Token 与 Flutter 组件
 
-> 原型不是一张截图，而是一组可重复的视觉规则。还原工作真正困难的地方，是把色彩、尺寸、状态和交互规则变成代码中可验证的事实源。
+我拿到高保真原型时，页面看起来已经很完整；真正开始实现后，颜色、间距、字体和按钮状态却很快分叉。逐页复制像素会让第一屏接近，之后每次调整都越来越难。
+
+这篇从项目已有原型和主题令牌出发，展示如何把视觉决策变成可复用语义，再通过组件和多状态验收收敛差异。读者需要熟悉 Flutter ThemeData 与基础布局。
 
 {{IMG:M4-04-封面}}
-
-## 本文目标
-
-说明 Flutter APP 如何从已确认的高保真 HTML 原型提取 Design Token，构建浅色/深色主题与共享组件，并用实际页面和截图检查还原质量。
-
-## 前置知识
-
-熟悉 Flutter ThemeData、Widget 和基础布局。视觉基线见 `docs/flutter-app/06-UI设计规范与设计令牌.md`、`07-UI组件标准.md` 与原型 `prototype/02-高保真可交互原型.html`。
 
 ## 从截图找规则，而不是逐页抄像素
 
@@ -81,6 +75,99 @@ Container(color: colors.surfaceElevated);
 ## 组件设计考虑状态组合
 
 按钮不是一个颜色和圆角，而是默认、按下、禁用、提交中状态；卡片也需覆盖图片缺失、摘要很长和深色主题。把状态在共享组件里统一呈现，页面只传动作和数据，能减少视觉漂移，但不应抽象各页面仅有一次的特殊交互。
+
+
+## 贴着工程代码读实现
+
+下面这段节选自 `flutter-app/lib/app/theme/design_tokens.dart 第 1–69 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：切换 Brightness 后逐个检查语义色、间距和字号的调用来源。沿着调用链读下去，才能看清这个选择如何影响实际页面。
+
+```dart
+import 'package:flutter/material.dart';
+
+/// 4 基准间距刻度。移动端页面左右边距统一 [s4]（16dp）。
+abstract final class AppSpacing {
+  static const double s1 = 4;
+  static const double s2 = 8;
+  static const double s3 = 12;
+  static const double s4 = 16;
+  static const double s5 = 20;
+  static const double s6 = 24;
+  static const double s8 = 32;
+  static const double s10 = 40;
+
+  /// 页面左右边距
+  static const double page = s4;
+
+  /// 触控目标下限（docs/flutter-app/02 §1 硬要求）
+  static const double minTapTarget = 44;
+}
+
+abstract final class AppRadius {
+  static const double xs = 4; // 徽章、标签、小缩略图
+  static const double sm = 6; // 输入框、次级按钮
+  static const double md = 8; // 卡片、图片、按钮（默认）
+  static const double lg = 12; // 底部面板、抽屉顶部
+  static const double full = 999; // 头像、胶囊标签
+
+  static const BorderRadius rXs = BorderRadius.all(Radius.circular(xs));
+  static const BorderRadius rSm = BorderRadius.all(Radius.circular(sm));
+  static const BorderRadius rMd = BorderRadius.all(Radius.circular(md));
+  static const BorderRadius rLg = BorderRadius.all(Radius.circular(lg));
+  static const BorderRadius rFull = BorderRadius.all(Radius.circular(full));
+}
+
+abstract final class AppDuration {
+  static const Duration fast = Duration(milliseconds: 120); // 按下态
+  static const Duration base = Duration(milliseconds: 200); // 淡入、展开
+  static const Duration page = Duration(milliseconds: 250); // 页面转场
+  static const Curve curve = Curves.easeOutCubic;
+}
+
+// ---------------------------------------------------------------------------
+// 布局与系统字体缩放
+// ---------------------------------------------------------------------------
+
+/// 06 §3：字号单位是 sp，Flutter 侧的缩放由 `MediaQuery.textScaler` 承担。
+/// 放大到 1.3 倍时正文（`AppType.reading`）不得横向溢出——
+/// 这里夹紧上限，配合文本组件的 `maxLines` / `TextOverflow.ellipsis` 兜底；
+/// 正文若被截断，应改为整体放大字号而非省略号截断。
+abstract final class AppLayout {
+  /// 允许的最大系统文本缩放倍数（06 §3 验收值）。
+  static const double maxTextScale = 1.3;
+
+  /// 挂在 `MaterialApp.builder` 上：
+  /// `MaterialApp(builder: AppLayout.clampTextScale, ...)`
+  static Widget clampTextScale(BuildContext context, Widget? child) =>
+      MediaQuery.withClampedTextScaling(
+        maxScaleFactor: maxTextScale,
+        child: child ?? const SizedBox.shrink(),
+      );
+
+  /// 需要按缩放自适应间距时使用（缩放越大，留白同步放宽）。
+  static double scaledSpace(BuildContext context, double space) {
+    final s = MediaQuery.textScalerOf(context)
+        .scale(1.0)
+        .clamp(1.0, maxTextScale);
+    return space * s;
+  }
+}
+```
+
+## 把容易出错的路径走一遍
+
+我会用这个场景做一次可复现排查：**同一语义颜色在页面里各写一个导致深色主题漂移**。先切换 Brightness 后逐个检查语义色、间距和字号的调用来源；如果把问题定位在“散落魔法数”，修正方向是“由语义 token 和 ThemeExtension 集中定义，再做对比度验证”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+
+| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+|---|---|---|
+| 本文核心选择 | 散落魔法数 | 语义令牌 |
+| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
+| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+
+| 排错步骤 | 要观察什么 | 通过条件 |
+|---|---|---|
+| 复现 | 同一语义颜色在页面里各写一个导致深色主题漂移 | 可以稳定触发或明确构造该输入 |
+| 定位 | 切换 Brightness 后逐个检查语义色、间距和字号的调用来源 | 找到责任层和状态归属 |
+| 修正 | 由语义 token 和 ThemeExtension 集中定义，再做对比度验证 | 失败不污染后续页面或账号 |
 
 ## 小结
 

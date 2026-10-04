@@ -1,16 +1,10 @@
 # 成为全栈·Flutter App 篇·用真实 API 构建首页：焦点、最新与热门内容
 
-> 首页常把焦点图、最新文章和热门列表拼在一起。真正的工程问题不是把三个接口同时请求，而是一个模块失败时，页面是否还能诚实、完整地工作。
+首页原型里的焦点图、热门数字和最新列表很容易用静态数据拼出来；接上线上 API 后，真正的问题变成了某块接口失败时，其他内容是否还要等，以及“热门”这个词是否符合后端实际排序。
+
+这篇沿着 Flutter 首页的焦点、最新和热门模块，展示如何拆分请求与状态、保留有用的旧数据，并用真实接口语义替换演示素材。
 
 {{IMG:M4-10-封面}}
-
-## 本文目标
-
-分析 Flutter 首页如何从真实 API 组织多个内容模块，如何处理独立异步状态、降级与空态，并避免用原型演示数据伪装线上内容。
-
-## 前置知识
-
-熟悉 Flutter Widget、Future 和 Repository。首页由 `features/discovery/home_page.dart` 组合，焦点、最新、热门模块分别位于对应子文件。
 
 ## 原型数据只说明视觉，不说明业务事实
 
@@ -70,6 +64,114 @@ HomePopular(...),
 骨架适合表达布局正在加载，但不能长期覆盖错误或空结果。加载期间若已有缓存内容，继续展示内容并用小型刷新状态提示即可；只有第一次没有可读数据才显示整块骨架。封面缺失使用中性占位，不能随机拼一张不相关图片，否则视觉上像真实文章封面，会误导点击预期。
 
 首页还要检查真实最长标题和摘要。焦点卡标题可能多行，列表卡片要有一致的信息层级；根据接口返回排序，不在客户端再次以浏览量排序而改变后端筛选语义。
+
+
+## 贴着工程代码读实现
+
+下面这段节选自 `flutter-app/lib/features/discovery/home_page.dart 第 25–49 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：触发主题切换和父级更新，观察首页请求次数是否增加。我会继续追踪它的返回值和副作用，直到页面状态稳定下来。
+
+```dart
+class HomePage extends ConsumerWidget {
+  const HomePage({super.key});
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => PageFrame(
+    title: '成为全栈',
+    titleWidget: _BrandTitle(),
+    actions: [
+      IconButton(
+        tooltip: '搜索',
+        onPressed: () => context.go('/search'),
+        icon: const PrototypeIcon('search'),
+      ),
+      IconButton(
+        tooltip: '通知',
+        onPressed: () => context.push('/member/notifications'),
+        icon: const UnreadIcon(Icons.notifications_none),
+      ),
+    ],
+    child: ArticleFeed(
+      query: const {'pageSize': 4},
+      header: _HomeLatest(),
+      interlude: _HomePopular(),
+    ),
+  );
+}
+```
+
+
+
+焦点之外的两个模块也拆成独立组件。下面摘录分别来自 `flutter-app/lib/features/discovery/home_latest.dart` 与 `flutter-app/lib/features/discovery/home_popular.dart`，可以看到它们各自订阅数据并组合标题、列表，而首页只负责放置模块：
+
+```dart
+part of 'home_page.dart';
+
+/// 首页阅读分区通过同一仓库加载，保留缓存与入口顺序。
+class _HomeLatest extends ConsumerWidget {
+  const _HomeLatest();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Column(
+    children: [
+      AsyncPane<PageResult<Article>>(
+        load: () => ref
+            .read(repositoryProvider)
+            .articles(query: {'sort': '-publishedAt', 'pageSize': 3}),
+        builder: (p, _) =>
+            p.items.isEmpty ? const SizedBox() : FocusStories(p.items),
+      ),
+      SectionTitle(
+        '最新文章',
+        action: '全部',
+        onTap: () => context.go('/categories'),
+      ),
+    ],
+  );
+}
+```
+
+```dart
+part of 'home_page.dart';
+
+/// 首页阅读分区通过同一仓库加载，保留缓存与入口顺序。
+class _HomePopular extends ConsumerWidget {
+  const _HomePopular();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => Column(
+    children: [
+      SectionTitle('热门阅读', action: '更多', onTap: () => context.push('/tags')),
+      AsyncPane<PageResult<Article>>(
+        load: () => ref
+            .read(repositoryProvider)
+            .articles(query: {'sort': '-viewCount', 'pageSize': 5}),
+        builder: (p, _) => Column(
+          children: [
+            for (var i = 0; i < p.items.length; i++)
+              _PopularArticle(article: p.items[i], rank: i + 1),
+          ],
+        ),
+      ),
+      const SizedBox(height: 24),
+    ],
+  );
+}
+```
+
+## 把容易出错的路径走一遍
+
+我会用这个场景做一次可复现排查：**在 build 中启动统计 Future 造成重建时重复请求**。先触发主题切换和父级更新，观察首页请求次数是否增加；如果把问题定位在“build 发请求”，修正方向是“把数据读取放到 provider/repository 生命周期中，build 只组合视图”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+
+| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+|---|---|---|
+| 本文核心选择 | build 发请求 | 声明式组合 |
+| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
+| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+
+| 排错步骤 | 要观察什么 | 通过条件 |
+|---|---|---|
+| 复现 | 在 build 中启动统计 Future 造成重建时重复请求 | 可以稳定触发或明确构造该输入 |
+| 定位 | 触发主题切换和父级更新，观察首页请求次数是否增加 | 找到责任层和状态归属 |
+| 修正 | 把数据读取放到 provider/repository 生命周期中，build 只组合视图 | 失败不污染后续页面或账号 |
 
 ## 小结
 
