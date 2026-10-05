@@ -157,7 +157,7 @@ class _HeadingBuilder extends MarkdownElementBuilder {
 
 - [服务端目录与文章辅助阅读]({{LINK:M4-14}})
 - [内置 WebView：网页历史、App 返回与外链安全]({{LINK:M4-15}})
-- [文章详情：Markdown 代码高亮与目录必须共享解析结果]({{LINK:M3-08}})
+- [文章详情：Markdown 代码高亮与目录必须共享解析结果](https://blog.csdn.net/fungleo/article/details/166885283)
 
 ---
 

@@ -186,7 +186,7 @@ React 和 Flutter 共享“由状态描述 UI”的思想，但 Flutter 的 Widg
 
 - [Flutter 工程骨架与 OpenAPI 代码生成]({{LINK:M4-03}})
 - [Riverpod 状态边界]({{LINK:M4-06}})
-- [Next.js App Router 与 CSR 时代的思维差异]({{LINK:M3-01}})
+- [Next.js App Router 与 CSR 时代的思维差异](https://blog.csdn.net/fungleo/article/details/166690841)
 
 ---
 

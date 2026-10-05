@@ -159,7 +159,7 @@ WebView 内部 URL 历史与 Flutter Router 历史需要分别设计；当前 Ap
 
 - [Flutter Markdown 阅读器]({{LINK:M4-13}})
 - [go_router 与四 Tab App Shell]({{LINK:M4-05}})
-- [同源 BFF 代理：API、附件、Cookie 与跨站写入保护]({{LINK:M3-12}})
+- [同源 BFF 代理：API、附件、Cookie 与跨站写入保护](https://blog.csdn.net/fungleo/article/details/166991347)
 
 ---
 

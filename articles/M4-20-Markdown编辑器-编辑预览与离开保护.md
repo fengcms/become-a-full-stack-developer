@@ -196,7 +196,7 @@ class _EditorForm extends StatelessWidget {
 
 - [投稿状态机：草稿、待审核与已发布]({{LINK:M4-19}})
 - [本机稿件恢复：恢复范围与冲突判断]({{LINK:M4-22}})
-- [Markdown 编辑器：预览、暗色主题与图片粘贴]({{LINK:M2-10}})
+- [Markdown 编辑器：预览、暗色主题与图片粘贴](https://blog.csdn.net/fungleo/article/details/166107729)
 
 ---
 

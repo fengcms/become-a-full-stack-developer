@@ -181,7 +181,7 @@ class _HomePopular extends ConsumerWidget {
 
 - [Dio + Repository：统一响应信封与模型适配]({{LINK:M4-07}})
 - [列表分页与下拉刷新]({{LINK:M4-12}})
-- [内容门户首页：焦点、最新文章流与侧栏如何组织]({{LINK:M3-05}})
+- [内容门户首页：焦点、最新文章流与侧栏如何组织](https://blog.csdn.net/fungleo/article/details/166784376)
 
 ---
 

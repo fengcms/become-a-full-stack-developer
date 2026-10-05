@@ -199,7 +199,7 @@ export const metadata = {
 
 ## 延伸阅读
 
-- [会员投稿工作流]({{LINK:M3-16}})
+- [会员投稿工作流](https://blog.csdn.net/fungleo/article/details/167079523)
 - [会员公开主页与通知中心]({{LINK:M3-18}})
 - [响应式、可访问性与错误状态]({{LINK:M3-20}})
 

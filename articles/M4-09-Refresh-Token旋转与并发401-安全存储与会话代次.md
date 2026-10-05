@@ -160,7 +160,7 @@ logout increments ─┘              no → SessionChanged
 
 - [Riverpod 状态边界]({{LINK:M4-06}})
 - [移动端错误与限流：429、重试和写请求边界]({{LINK:M4-08}})
-- [C 端认证：内存令牌、HttpOnly Cookie 与会话代次]({{LINK:M3-11}})
+- [C 端认证：内存令牌、HttpOnly Cookie 与会话代次](https://blog.csdn.net/fungleo/article/details/166945972)
 
 ---
 

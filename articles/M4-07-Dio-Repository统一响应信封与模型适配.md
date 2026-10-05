@@ -198,7 +198,7 @@ Dio 处理传输横切规则，Repository 处理资源读取与模型适配，Wi
 
 - [Flutter 工程骨架与 OpenAPI 代码生成]({{LINK:M4-03}})
 - [移动端错误与限流：429、重试和写请求边界]({{LINK:M4-08}})
-- [统一响应结构：HTTP 状态码与业务码如何分工]({{LINK:M1-08}})
+- [统一响应结构：HTTP 状态码与业务码如何分工](https://blog.csdn.net/fungleo/article/details/164289071)
 
 ---
 

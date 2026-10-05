@@ -223,7 +223,7 @@ class AppSession extends ChangeNotifier {
 
 - [Flutter 工程骨架与 OpenAPI 代码生成]({{LINK:M4-03}})
 - [Refresh Token 旋转与并发 401]({{LINK:M4-09}})
-- [三类状态不要都塞进 Zustand]({{LINK:M2-05}})
+- [三类状态不要都塞进 Zustand](https://blog.csdn.net/fungleo/article/details/165722061)
 
 ---
 

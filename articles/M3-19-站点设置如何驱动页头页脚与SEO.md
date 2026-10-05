@@ -2,7 +2,7 @@
 
 > 站点名称、Logo、描述、关键词和版权不是散落在组件里的常量。它们是一份公开配置，需要同时驱动页面外壳和 metadata，并在接口失败或字段为空时有一致降级。
 
-{{IMG:M3-19-封面}}
+![成为全栈·Next.js 网站前台篇·站点设置如何驱动页头、页脚与 SEO](https://i-blog.csdnimg.cn/direct/715bca3b7b0c4fbb8aac9a8e5756cc44.png)
 
 ## 前言
 
@@ -21,7 +21,7 @@
 | `logoUrl` | 页头图标 | 可扩展分享图 | 无效时使用字母标记 |
 | `copyright` | 页脚 | — | 年份 + siteName |
 
-{{IMG:M3-19-配置消费图}}
+![配置消费图](https://i-blog.csdnimg.cn/direct/dedb55a459e147acbd56e67b283947e2.png)
 
 ## 请求内复用与失败降级集中处理
 
@@ -141,7 +141,7 @@ return fetch(url, {
 7. 停止设置接口，确认正文仍可读且外壳使用默认配置
 ```
 
-{{IMG:M3-19-更新时序}}
+![更新时序](https://i-blog.csdnimg.cn/direct/d87e73f948404497945354d9929c48ed.png)
 
 | 故障 | 合理表现 |
 | --- | --- |
