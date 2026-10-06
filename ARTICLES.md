@@ -104,8 +104,8 @@
 | 成为全栈·Next.js 网站前台篇·评论系统：叠楼、回复、删除与内容审核如何落到前台 | — | `articles/M3-15-评论系统-叠楼回复删除与内容审核如何落到前台.md` | https://blog.csdn.net/fungleo/article/details/167033673 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·会员投稿工作流：草稿、预览、投稿、撤回与重新送审 | — | `articles/M3-16-会员投稿工作流-草稿预览投稿撤回与重新送审.md` | https://blog.csdn.net/fungleo/article/details/167079523 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·搜索页：实时查询、URL 状态与“没有结果”不是“请求失败” | — | `articles/M3-17-搜索页-实时查询URL状态与没有结果不是请求失败.md` | https://blog.csdn.net/fungleo/article/details/167080343 | 🟢 已发布 |
-| 成为全栈·Next.js 网站前台篇·会员公开主页与通知中心：公开身份和私有消息如何分界 | — | `articles/M3-18-会员公开主页与通知中心-公开身份和私有消息如何分界.md` | — | 🟡 草稿中 |
-| 成为全栈·Next.js 网站前台篇·站点设置如何驱动页头、页脚与 SEO | — | `articles/M3-19-站点设置如何驱动页头页脚与SEO.md` | — | 🟡 草稿中 |
+| 成为全栈·Next.js 网站前台篇·会员公开主页与通知中心：公开身份和私有消息如何分界 | — | `articles/M3-18-会员公开主页与通知中心-公开身份和私有消息如何分界.md` | https://blog.csdn.net/fungleo/article/details/167121410 | 🟢 已发布 |
+| 成为全栈·Next.js 网站前台篇·站点设置如何驱动页头、页脚与 SEO | — | `articles/M3-19-站点设置如何驱动页头页脚与SEO.md` | https://blog.csdn.net/fungleo/article/details/167121971 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·响应式、可访问性与错误状态：内容站不能只验桌面首页 | — | `articles/M3-20-响应式可访问性与错误状态-内容站不能只验桌面首页.md` | — | 🟡 草稿中 |
 | 成为全栈·Next.js 网站前台篇·Core Web Vitals 与前台性能：先保护正文，再优化装饰模块 | — | `articles/M3-21-Core-Web-Vitals与前台性能-先保护正文再优化装饰模块.md` | — | 🟡 草稿中 |
 | 成为全栈·Next.js 网站前台篇·质量门禁：契约测试、会话竞态、双运行时与浏览器验收 | — | `articles/M3-22-质量门禁-契约测试会话竞态双运行时与浏览器验收.md` | — | 🟡 草稿中 |

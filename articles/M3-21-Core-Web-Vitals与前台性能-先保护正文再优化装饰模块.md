@@ -2,7 +2,7 @@
 
 > 内容站性能优化的第一目标不是让所有模块同时出现，而是尽快交付稳定、可读的正文。焦点图、侧栏、评论和互动都应该围绕主任务安排加载优先级。
 
-{{IMG:M3-21-封面}}
+![成为全栈·Next.js 网站前台篇·Core Web Vitals 与前台性能：先保护正文，再优化装饰模块](https://i-blog.csdnimg.cn/direct/ada12dc1f994459392366340a9b1b254.png)
 
 ## 前言
 
@@ -18,7 +18,7 @@ Next.js、Server Component 和图片组件不会自动带来优秀的 Core Web V
 | CLS | 页面是否突然移动 | 图片无尺寸、异步横幅、字体替换 |
 | INP | 点击后多久响应 | 大型客户端树、Markdown hydration、重脚本 |
 
-{{IMG:M3-21-指标与页面}}
+![指标与页面](https://i-blog.csdnimg.cn/direct/e8148e904ced41398d51338e19f052eb.png)
 
 ## 服务端先交付正文，减少首屏请求瀑布
 
@@ -130,7 +130,7 @@ await fetch(url, {
 | 点赞评论 | 交互后 | 客户端加载与重试 |
 | 阅读上报 | 最低 | 五秒后后台触发 |
 
-{{IMG:M3-21-加载优先级}}
+![加载优先级](https://i-blog.csdnimg.cn/direct/32854ea78f4d4a9192126e4d1dabc793.png)
 
 ## 如何收集真正的性能证据
 
