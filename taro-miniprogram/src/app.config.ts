@@ -1,5 +1,5 @@
 export default defineAppConfig({
-  pages: ['pages/index/index', 'pages/categories/index', 'pages/search/index', 'pages/member/index', 'pages/browse/index', 'pages/author/index', 'pages/article/index'],
+  pages: ['pages/index/index', 'pages/categories/index', 'pages/search/index', 'pages/member/index', 'pages/browse/index', 'pages/author/index', 'pages/article/index', 'pages/auth/index', 'pages/collection/index', 'pages/notifications/index', 'pages/profile/index', 'pages/settings/index'],
   window: { navigationBarTitleText: '成为全栈', navigationBarBackgroundColor: '#ffffff', navigationBarTextStyle: 'black', backgroundColor: '#f7fafd', backgroundTextStyle: 'light' },
   tabBar: { color: '#607286', selectedColor: '#3277b5', backgroundColor: '#ffffff', list: [
     { pagePath: 'pages/index/index', text: '首页', iconPath: 'assets/icons/home-light.png', selectedIconPath: 'assets/icons/home-active.png' },
