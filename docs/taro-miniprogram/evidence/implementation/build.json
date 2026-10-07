@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-07",
+  "node": "24.19.0",
+  "taro": "4.3.0",
+  "typecheck": "passed",
+  "weappBuild": "passed",
+  "productionApi": "https://api-befull.kao9.com/api/v1",
+  "pages": 14,
+  "tabPages": 4,
+  "artifactBytes": 758869,
+  "localFixtureExcluded": true,
+  "gitDiffCheck": "passed",
+  "note": "构建产物检查不替代界面验收；实际交互与限制见交付记录。"
+}
