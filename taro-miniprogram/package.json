@@ -17,21 +17,24 @@
     "@tarojs/runtime": "4.3.0",
     "@tarojs/shared": "4.3.0",
     "@tarojs/taro": "4.3.0",
+    "highlight.js": "11.11.1",
+    "markdown-it": "14.1.0",
     "react": "18.3.1"
   },
   "devDependencies": {
-    "@tarojs/cli": "4.3.0",
-    "@tarojs/webpack5-runner": "4.3.0",
-    "babel-preset-taro": "4.3.0",
-    "@types/react": "18.3.12",
-    "typescript": "5.7.3",
-    "webpack": "5.98.0",
     "@babel/core": "^7.26.0",
-    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
-    "react-refresh": "^0.14.2",
-    "sass": "^1.83.0",
+    "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.26.0",
     "@babel/preset-typescript": "^7.26.0",
-    "@babel/preset-env": "^7.26.0"
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
+    "@tarojs/cli": "4.3.0",
+    "@tarojs/webpack5-runner": "4.3.0",
+    "@types/markdown-it": "14.1.2",
+    "@types/react": "18.3.12",
+    "babel-preset-taro": "4.3.0",
+    "react-refresh": "^0.14.2",
+    "sass": "^1.83.0",
+    "typescript": "5.7.3",
+    "webpack": "5.98.0"
   }
 }

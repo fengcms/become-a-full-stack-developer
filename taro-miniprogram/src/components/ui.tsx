@@ -3,6 +3,7 @@ import Taro, { useDidShow } from '@tarojs/taro'
 import { Button, Image, Text, View } from '@tarojs/components'
 import { applyTheme, useTheme } from '../core/theme'
 import { dateLabel, openArticle } from '../core/navigation'
+import { useReaction } from '../core/reactions'
 import type { Article } from '../core/models'
 export function Icon({ name, active = false }: { name: string; active?: boolean }) {
   const theme = useTheme()
@@ -22,12 +23,13 @@ export function State({ error, loading, empty, retry }: { error?: string; loadin
   return empty ? <View className='state'><Icon name='empty' /><View>暂时没有内容</View><Text className='muted'>稍后再来看看吧</Text></View> : null
 }
 export function ArticleCard({ article, children }: PropsWithChildren<{ article: Article }>) {
+  const reaction = useReaction(article.id)
   return <View className='story'>
     <View className='row' onClick={() => openArticle(article.id)}>
       <View className='grow'><Text className='eyebrow'>{article.categoryName || '技术分享'}</Text><View className='story-title'>{article.title}</View>{article.summary && <View className='summary'>{article.summary}</View>}</View>
       {article.coverImage && <Image className='story-cover' mode='aspectFill' src={article.coverImage} />}
     </View>
-    <View className='meta'><Text>{article.authorName || '社区作者'}</Text><Text>{dateLabel(article.publishedAt || article.createdAt)}</Text><Text>阅读 {article.viewCount} · 赞 {article.likeCount}</Text></View>
+    <View className='meta'><Text>{article.authorName || '社区作者'}</Text><Text>{dateLabel(article.publishedAt || article.createdAt)}</Text><Text>阅读 {article.viewCount} · 赞 {reaction?.count ?? article.likeCount}</Text></View>
     {children}
   </View>
 }
