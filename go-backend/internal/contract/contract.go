@@ -36,6 +36,11 @@ func Load() (*Catalog, error) {
 	if e = compiler.AddResource("https://befull.local/openapi.json", doc); e != nil {
 		return nil, e
 	}
+	inputCompiler := jsonschema.NewCompiler()
+	inputCompiler.AssertFormat()
+	if e = inputCompiler.AddResource("https://befull.local/openapi.json", doc); e != nil {
+		return nil, e
+	}
 	c := &Catalog{Operations: map[string]Operation{}, Document: doc}
 	paths := doc["paths"].(map[string]any)
 	for path, value := range paths {
@@ -54,7 +59,7 @@ func Load() (*Catalog, error) {
 				op.BodyRequired, _ = b["required"].(bool)
 				if content, ok := b["content"].(map[string]any); ok {
 					if _, ok := content["application/json"]; ok {
-						op.Request, e = compiler.Compile(base + "/requestBody/content/application~1json/schema")
+						op.Request, e = inputCompiler.Compile(base + "/requestBody/content/application~1json/schema")
 						if e != nil {
 							return nil, fmt.Errorf("%s request: %w", op.ID, e)
 						}

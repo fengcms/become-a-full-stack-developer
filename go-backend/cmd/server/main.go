@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/auth"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/config"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/contract"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
@@ -42,7 +43,12 @@ func run() error {
 	if e != nil {
 		return e
 	}
-	app := httpapi.New(catalog, nil, c.Origins)
+	identity := auth.New(db, c.JWTSecret)
+	identity.AppID = c.WechatAppID
+	identity.Wechat = auth.WechatHTTP{AppID: c.WechatAppID, Secret: c.WechatSecret}
+	app := httpapi.New(catalog, identity, c.Origins)
+	app.TrustedProxies = c.TrustedProxies
+	app.BindAuth(identity)
 	server := &http.Server{Addr: c.Address, Handler: app, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second, IdleTimeout: 60 * time.Second}
 	done := make(chan error, 1)
 	go func() {
