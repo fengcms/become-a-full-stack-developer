@@ -1,0 +1,6 @@
+.env
+*.db
+*.db-*
+uploads/
+bin/
+coverage.out

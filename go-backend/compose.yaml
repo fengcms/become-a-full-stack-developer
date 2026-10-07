@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: befull_go
+      POSTGRES_USER: befull
+      POSTGRES_PASSWORD: local-go-only
+    ports: ["127.0.0.1:15432:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U befull -d befull_go"]
+      interval: 2s
+      retries: 30
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: befull_go
+      MYSQL_ROOT_PASSWORD: local-go-only
+    ports: ["127.0.0.1:13306:3306"]
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_bin"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-plocal-go-only"]
+      interval: 3s
+      retries: 40
