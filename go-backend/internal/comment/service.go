@@ -5,6 +5,7 @@ import (
 	"context"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/article"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/notification"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
@@ -159,13 +160,20 @@ func (s *Service) Review(ctx context.Context, id int64, in values.Fields) (any, 
 		if e := database.Lock(tx).First(&c, id).Error; e != nil {
 			return e
 		}
+		previous := c.Status
 		c.Status = in.String("status")
 		if c.Status == "approved" {
 			c.RejectedReason = nil
 		} else if in.Has("reason") {
 			c.RejectedReason = in.Text("reason")
 		}
-		return tx.Model(&c).Updates(map[string]any{"status": c.Status, "rejected_reason": c.RejectedReason}).Error
+		if e := tx.Model(&c).Updates(map[string]any{"status": c.Status, "rejected_reason": c.RejectedReason}).Error; e != nil {
+			return e
+		}
+		if previous != "approved" && c.Status == "approved" {
+			return notification.Approved(tx, c, s.Now().UnixMilli())
+		}
+		return nil
 	})
 	return View(c), e
 }

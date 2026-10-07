@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/notification"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
@@ -211,7 +212,13 @@ func (s *Service) Transition(ctx context.Context, id int64, actor values.Actor, 
 		if e = tx.Model(&model.Article{}).Where("id = ?", id).Updates(map[string]any{"status": status, "published_at": published, "updated_at": now}).Error; e != nil {
 			return e
 		}
-		return tx.First(&a, id).Error
+		if e := tx.First(&a, id).Error; e != nil {
+			return e
+		}
+		if status == "published" {
+			return notification.Published(tx, a, now)
+		}
+		return nil
 	})
 	return Detail(a), e
 }
