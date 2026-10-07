@@ -4,3 +4,5 @@ project.private.config.json
 .env*
 
 .swc/
+
+.test-build/

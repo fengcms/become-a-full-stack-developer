@@ -1,3 +1,5 @@
-import { PropsWithChildren } from 'react'
-import './app.scss'
-export default function App({children}: PropsWithChildren) {return children}
+import { PropsWithChildren } from "react";
+import "./app.scss";
+export default function App({ children }: PropsWithChildren) {
+  return children;
+}

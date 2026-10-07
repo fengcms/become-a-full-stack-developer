@@ -6,7 +6,9 @@
   "scripts": {
     "build:weapp": "taro build --type weapp",
     "dev:weapp": "taro build --type weapp --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/test.mjs",
+    "test:integration": "node scripts/integration.mjs"
   },
   "dependencies": {
     "@tarojs/components": "4.3.0",
@@ -32,6 +34,7 @@
     "@types/markdown-it": "14.1.2",
     "@types/react": "18.3.12",
     "babel-preset-taro": "4.3.0",
+    "esbuild": "0.25.12",
     "react-refresh": "^0.14.2",
     "sass": "^1.83.0",
     "typescript": "5.7.3",
