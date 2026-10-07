@@ -174,7 +174,7 @@ onINP(sendMetric)
 
 - [服务端组件与客户端组件](https://blog.csdn.net/fungleo/article/details/166737733)
 - [响应式、可访问性与错误状态](https://blog.csdn.net/fungleo/article/details/167172856)
-- [质量门禁]({{LINK:M3-22}})
+- [质量门禁](https://blog.csdn.net/fungleo/article/details/167218692)
 
 ---
 

@@ -108,9 +108,9 @@
 | 成为全栈·Next.js 网站前台篇·站点设置如何驱动页头、页脚与 SEO | — | `articles/M3-19-站点设置如何驱动页头页脚与SEO.md` | https://blog.csdn.net/fungleo/article/details/167121971 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·响应式、可访问性与错误状态：内容站不能只验桌面首页 | — | `articles/M3-20-响应式可访问性与错误状态-内容站不能只验桌面首页.md` | [167172856](https://blog.csdn.net/fungleo/article/details/167172856) | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·Core Web Vitals 与前台性能：先保护正文，再优化装饰模块 | — | `articles/M3-21-Core-Web-Vitals与前台性能-先保护正文再优化装饰模块.md` | [167172892](https://blog.csdn.net/fungleo/article/details/167172892) | 🟢 已发布 |
-| 成为全栈·Next.js 网站前台篇·质量门禁：契约测试、会话竞态、双运行时与浏览器验收 | — | `articles/M3-22-质量门禁-契约测试会话竞态双运行时与浏览器验收.md` | — | 🟡 草稿中 |
-| 成为全栈·Next.js 网站前台篇·OpenNext 部署 Cloudflare：构建成功不等于缓存正确 | — | `articles/M3-23-OpenNext部署Cloudflare-构建成功不等于缓存正确.md` | — | 🟡 草稿中 |
-| 成为全栈·Next.js 网站前台篇·总复盘：做一个公开内容站的真实成本 | — | `articles/M3-24-总复盘-做一个公开内容站的真实成本.md` | — | 🟡 草稿中 |
+| 成为全栈·Next.js 网站前台篇·质量门禁：契约测试、会话竞态、双运行时与浏览器验收 | — | `articles/M3-22-质量门禁-契约测试会话竞态双运行时与浏览器验收.md` | [167218692](https://blog.csdn.net/fungleo/article/details/167218692) | 🟢 已发布 |
+| 成为全栈·Next.js 网站前台篇·OpenNext 部署 Cloudflare：构建成功不等于缓存正确 | — | `articles/M3-23-OpenNext部署Cloudflare-构建成功不等于缓存正确.md` | [167218828](https://blog.csdn.net/fungleo/article/details/167218828) | 🟢 已发布 |
+| 成为全栈·Next.js 网站前台篇·总复盘：做一个公开内容站的真实成本 | — | `articles/M3-24-总复盘-做一个公开内容站的真实成本.md` | [167218879](https://blog.csdn.net/fungleo/article/details/167218879) | 🟢 已发布 |
 
 ---
 

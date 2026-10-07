@@ -166,7 +166,7 @@ Flutter build 只生成指定配置的产物。Android 已有模拟器功能验�
 
 - [测试分层：单元、Widget、集成与线上只读验证]({{LINK:M4-26}})
 - [Flutter 工程骨架与 OpenAPI 代码生成]({{LINK:M4-03}})
-- [OpenNext 部署 Cloudflare：构建成功不等于缓存正确]({{LINK:M3-23}})
+- [OpenNext 部署 Cloudflare：构建成功不等于缓存正确](https://blog.csdn.net/fungleo/article/details/167218828)
 
 ---
 
