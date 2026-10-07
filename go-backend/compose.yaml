@@ -6,8 +6,9 @@ services:
       POSTGRES_USER: befull
       POSTGRES_PASSWORD: local-go-only
     ports: ["127.0.0.1:15432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U befull -d befull_go"]
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U befull -d befull_go"]
       interval: 2s
       retries: 30
   mysql:
@@ -16,8 +17,13 @@ services:
       MYSQL_DATABASE: befull_go
       MYSQL_ROOT_PASSWORD: local-go-only
     ports: ["127.0.0.1:13306:3306"]
+    volumes: ["mydata:/var/lib/mysql"]
     command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_bin"]
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-plocal-go-only"]
+      test: ["CMD", "mysql", "--protocol=TCP", "-h127.0.0.1", "-uroot", "-plocal-go-only", "-e", "SELECT 1"]
       interval: 3s
       retries: 40
+
+volumes:
+  pgdata:
+  mydata:

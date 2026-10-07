@@ -13,7 +13,7 @@ func Notification(n model.Notification) map[string]any {
 	return map[string]any{"id": n.ID, "userId": n.UserID, "type": n.Type, "title": n.Title, "body": n.Body, "link": n.Link, "isRead": n.IsRead, "createdAt": values.ISO(n.CreatedAt)}
 }
 func (s *Service) Notifications(ctx context.Context, user int64, q url.Values) (any, error) {
-	p := values.Paging(q)
+	p := values.PagingWith(q, 10, 50)
 	db := s.DB.WithContext(ctx).Model(&model.Notification{}).Where("user_id = ?", user)
 	if v := q.Get("isRead"); v == "true" || v == "false" {
 		db = db.Where("is_read = ?", v == "true")

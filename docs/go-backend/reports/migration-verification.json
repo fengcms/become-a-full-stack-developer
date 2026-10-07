@@ -1,0 +1,23 @@
+{
+  "source": "隔离Node SQLite夹具",
+  "target": "隔离PostgreSQL",
+  "tables": {
+    "article_tags": 0,
+    "articles": 2,
+    "attachments": 0,
+    "categories": 0,
+    "comments": 0,
+    "favorites": 0,
+    "likes": 0,
+    "notifications": 1,
+    "site_settings": 1,
+    "tags": 0,
+    "users": 3,
+    "view_history": 0,
+    "wechat_identities": 1
+  },
+  "canonicalSha256": "dfa81b6e3efb01007b12947d14b7ac5736ba97d8da022ca122be89e25e6f70c1",
+  "equal": true,
+  "dryRunPassed": true,
+  "productionAccessed": false
+}

@@ -99,10 +99,10 @@ func (s *Service) Related(ctx context.Context, id int64, limit int) (any, error)
 func (s *Service) Search(ctx context.Context, q url.Values) (any, error) {
 	term := strings.TrimSpace(q.Get("q"))
 	if term == "" {
-		return nil, fault.New(fault.Validation)
+		return nil, fault.Field("q", "请提供搜索关键词")
 	}
 	db := s.DB.WithContext(ctx)
-	p := values.Paging(q)
+	p := values.PagingWith(q, 10, 50)
 	kw := "%" + term + "%"
 	result := map[string]any{"articles": nil, "members": nil}
 	if q.Get("type") == "member" {

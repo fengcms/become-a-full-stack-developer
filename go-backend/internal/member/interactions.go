@@ -88,6 +88,9 @@ func (s *Service) Articles(ctx context.Context, user int64, q url.Values, likes 
 		table = "likes"
 	}
 	p := values.Paging(q)
+	if likes {
+		p = values.PagingWith(q, 10, 50)
+	}
 	db := s.DB.WithContext(ctx).Model(&model.Article{}).Joins("JOIN "+table+" ON "+table+".article_id=articles.id").Where(table+".user_id = ? AND articles.deleted_at IS NULL", user)
 	if likes {
 		db = db.Where("articles.status = ?", "published")

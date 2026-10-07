@@ -1,12 +1,15 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"net/netip"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -30,6 +33,9 @@ type Config struct {
 }
 
 func Load() (Config, error) {
+	if e := godotenv.Load(".env"); e != nil && !errors.Is(e, os.ErrNotExist) {
+		return Config{}, fmt.Errorf("invalid local .env configuration")
+	}
 	c := Config{
 		Address:               env("HTTP_ADDR", "127.0.0.1:8080"),
 		Driver:                env("DB_DRIVER", "postgres"),

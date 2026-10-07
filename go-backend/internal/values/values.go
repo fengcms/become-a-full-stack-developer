@@ -87,20 +87,23 @@ type Page struct {
 	Pages int64 `json:"totalPages"`
 }
 
-func Paging(q url.Values) Page {
+func Paging(q url.Values) Page { return PagingWith(q, 20, 100) }
+
+// PagingWith preserves endpoint-specific frozen defaults and limits.
+func PagingWith(q url.Values, defaultSize, maxSize int) Page {
 	p, _ := strconv.Atoi(q.Get("page"))
 	s, _ := strconv.Atoi(q.Get("pageSize"))
 	if p < 1 {
 		p = 1
 	}
 	if s == 0 {
-		s = 20
+		s = defaultSize
 	}
 	if s < 1 {
 		s = 1
 	}
-	if s > 100 {
-		s = 100
+	if s > maxSize {
+		s = maxSize
 	}
 	return Page{Page: p, Size: s}
 }

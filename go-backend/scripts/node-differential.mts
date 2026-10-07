@@ -46,10 +46,21 @@ function normalized(value:any):any {
 }
 // Node currently does not generate publication notifications; this is a
 // documented product gap, not permission to ignore arbitrary notification diffs.
+function expectedPaginationGap(step:any,json:any):boolean {
+ if(step.operation!=="search"||new URL(step.path,"http://local").searchParams.has("pageSize"))return false;
+ const go=normalized(step.response.data),node=normalized(json.data);
+ const key=go.articles?"articles":"members";
+ if(go[key].pagination.pageSize!==10||node[key].pagination.pageSize!==20)return false;
+ node[key].pagination.pageSize=10;
+ try{assert.deepEqual(go,node);return true}catch{return false}
+}
 function expectedNotificationGap(step:any,json:any):boolean {
  if (step.operation==='getUnreadNotificationCount')return json.data.count===1&&step.response.data.count===2;
  if (step.operation!=='listMyNotifications')return false;
  const go=normalized(step.response.data),node=normalized(json.data);
+ // This trace omits pageSize: frozen notifications default is 10, Node uses 20.
+ if(go.pagination.pageSize!==10||node.pagination.pageSize!==20)return false;
+ node.pagination.pageSize=10;
  const additions=go.list.filter((n:any)=>n.type==='article_published');
  if(additions.length!==1||additions[0].body!=='会员投稿'||additions[0].title!=='文章已发布'||additions[0].isRead!==false||additions[0].link!=='/articles/2')return false;
  try{assert.deepEqual({...go,list:go.list.filter((n:any)=>n.type!=='article_published'),pagination:{...go.pagination,total:go.pagination.total-1}},node);return true}catch{return false}
@@ -75,6 +86,7 @@ for(const step of trace.requests) {
  if(step.operation==='refreshToken')actors.member=json.data?.accessToken;
  try {assert.equal(res.status,step.status);assert.deepEqual(normalized(json),normalized(step.response));comparisons++;}
  catch(error){if(res.status===200&&json.code===0&&expectedNotificationGap(step,json)){differences.push({operation:step.operation,reason:'Node缺少发布通知生成，Go按产品事件实现',node:normalized(json.data),go:normalized(step.response.data)});}
+ else if(res.status===200&&expectedPaginationGap(step,json)){differences.push({operation:step.operation,reason:"冻结搜索默认pageSize=10，Node通用默认20",node:normalized(json.data),go:normalized(step.response.data)});}
  else{differences.push({operation:step.operation,unexpected:true,nodeStatus:res.status,goStatus:step.status,node:normalized(json),go:normalized(step.response)});}}
 }
 globalThis.fetch=originalFetch;globalThis.Date=RealDate;fs.rmSync(scratch,{recursive:true,force:true});

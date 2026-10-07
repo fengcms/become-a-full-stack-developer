@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import { execFileSync } from 'node:child_process';
 const output=process.argv[2]||'/tmp/befull-m6-performance.json';
-const cases=[{name:'列表',path:'/articles',n:50,c:8},{name:'详情',path:'/articles/1',n:50,c:8},{name:'搜索',path:'/search?q=Go',n:50,c:8},{name:'登录 bcrypt12',path:'/auth/login',n:8,c:2},{name:'点赞与取消',path:'/articles/1/like',n:30,c:4}];
+const cases=[{name:'列表',path:'/articles',n:50,c:8},{name:'详情',path:'/articles/1',n:50,c:8},{name:'搜索',path:'/search?q=Go&pageSize=20',n:50,c:8},{name:'登录 bcrypt12',path:'/auth/login',n:8,c:2},{name:'点赞与取消',path:'/articles/1/like',n:30,c:4}];
 const report:any={machine:execFileSync('uname',['-m']).toString().trim(),fixtureArticles:500,clock:'performance.now',results:[]};
 for(const [name,base,pid] of [['Go','http://127.0.0.1:18081',process.env.GO_BENCH_PID],['Node','http://127.0.0.1:18082',process.env.NODE_BENCH_PID]]){
  const auth=await fetch(base+'/api/v1/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'bench-admin',password:'bench-password'})}).then(r=>r.json());

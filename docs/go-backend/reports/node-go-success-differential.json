@@ -1,8 +1,78 @@
 {
   "requests": 74,
-  "comparisons": 72,
+  "comparisons": 71,
   "operations": 68,
   "expectedDifferences": [
+    {
+      "operation": "search",
+      "reason": "冻结搜索默认pageSize=10，Node通用默认20",
+      "node": {
+        "articles": {
+          "list": [
+            {
+              "id": 1,
+              "title": "Go 工程更新",
+              "slug": null,
+              "summary": null,
+              "coverImage": null,
+              "authorId": 1,
+              "authorName": "admin-015432.678644",
+              "categoryId": 1,
+              "categoryName": "工程实践",
+              "tags": [
+                "Go语言"
+              ],
+              "status": "published",
+              "viewCount": 1,
+              "likeCount": 0,
+              "publishedAt": "<generated>",
+              "createdAt": "<generated>",
+              "updatedAt": "<generated>"
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "pageSize": 20,
+            "total": 1,
+            "totalPages": 1
+          }
+        },
+        "members": null
+      },
+      "go": {
+        "articles": {
+          "list": [
+            {
+              "authorId": 1,
+              "authorName": "admin-015432.678644",
+              "categoryId": 1,
+              "categoryName": "工程实践",
+              "coverImage": null,
+              "createdAt": "<generated>",
+              "id": 1,
+              "likeCount": 0,
+              "publishedAt": "<generated>",
+              "slug": null,
+              "status": "published",
+              "summary": null,
+              "tags": [
+                "Go语言"
+              ],
+              "title": "Go 工程更新",
+              "updatedAt": "<generated>",
+              "viewCount": 1
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "pageSize": 10,
+            "total": 1,
+            "totalPages": 1
+          }
+        },
+        "members": null
+      }
+    },
     {
       "operation": "listMyNotifications",
       "reason": "Node缺少发布通知生成，Go按产品事件实现",
@@ -51,7 +121,7 @@
         ],
         "pagination": {
           "page": 1,
-          "pageSize": 20,
+          "pageSize": 10,
           "total": 2,
           "totalPages": 1
         }

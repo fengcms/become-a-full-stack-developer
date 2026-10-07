@@ -2,6 +2,8 @@ package article
 
 import (
 	"context"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
+	"net/url"
 	"sync"
 	"testing"
 	"time"
@@ -53,5 +55,14 @@ func TestRollingViewWindowAndConcurrentRequests(t *testing.T) {
 	r, e = s.Views(ctx, id, values.Actor{}, "192.0.2.1", "browser")
 	if e != nil || r.(map[string]any)["viewCount"].(int64) != 2 {
 		t.Fatal(r, e)
+	}
+}
+
+func TestSearchBlankReturnsFieldError(t *testing.T) {
+	s := New(testutil.DB(t))
+	_, err := s.Search(context.Background(), url.Values{"q": {"   "}})
+	e := fault.Resolve(err)
+	if e.Code != fault.Validation || e.Data == nil {
+		t.Fatalf("missing validation details: %#v", e)
 	}
 }
