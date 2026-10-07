@@ -23,7 +23,7 @@ info:
 
     可选鉴权端点采用 OpenAPI 标准写法 `security: [{}, {bearerAuth: []}]`
     （空安全需求对象表示允许匿名），各端生成客户端须配置「持有令牌则自动附加」，实现细节见 02 §3.3（以本契约为准）。
-  version: 1.11.0
+  version: 1.12.0
   x-api-version: 1
   x-rate-limit:
     description: >
@@ -242,6 +242,9 @@ components:
           format: email
           maxLength: 255
           description: 邮箱，唯一。仅本人（/me/profile）与 admin（/users）可见，公开端点不返回
+        canSetCredentials:
+          type: boolean
+          description: 可选增补。true 仅表示微信自动建号且尚未设置本地登录凭据；缺失按 false。状态由服务端计算，不能通过资料接口修改。
         nickname: {type: string, maxLength: 32}
         avatar: {type: string, nullable: true, format: uri, maxLength: 512}
         role:
@@ -574,6 +577,13 @@ components:
           maxLength: 255
           description: 可选。v1 无邮箱验证流程（Non-goal），改后立即生效，仅做唯一性校验
       required: []
+    SetupAccountRequest:
+      type: object
+      description: 微信新会员一次性设置用户名密码；确认密码由客户端校验。
+      properties:
+        username: {type: string, minLength: 1, maxLength: 32}
+        password: {type: string, minLength: 8}
+      required: [username, password]
     OAuthCallbackRequest:
       type: object
       description: 第三方登录回调入参（M3-09 扩展点）
@@ -981,8 +991,10 @@ paths:
       description: >
         第三方登录（微信/微博等）授权回调入口，将第三方身份归并到统一 User 体系。
         新用户按 provider+openid 自动建号（默认角色 member），已存在则直接登录。
-        此为扩展端点：第一波 Node 后端可先返回 501 Not Implemented，M3-09 统一讲解设计模式与对接，
-        但契约预留，保证前后端不漂移。
+        wechat 在本期按单个配置的小程序 AppID 解释 code，经服务端向微信验证，不接收客户端 OpenID。
+        state/redirectUri 保持可选但小程序不使用、不执行重定向。微博/GitHub 继续返回 500/5000 占位。
+        微信缺少配置、平台服务异常返回 500/5000；code 无效返回 401/1002；账号禁用返回 401/1005。
+        不绑定或合并其他既有账号；微信账号设置用户名密码后可经原 login 接口登录。
       security: []
       parameters:
         - name: provider
@@ -1001,7 +1013,7 @@ paths:
         '429':
           $ref: '#/components/responses/RateLimited'
         '200':
-          description: 绑定/登录成功
+          description: 登录成功（新身份自动创建 member）
           content:
             application/json:
               schema:
@@ -1011,7 +1023,7 @@ paths:
                       data:
                         $ref: '#/components/schemas/AuthResult'
         '500':
-          description: 该第三方登录尚未实现（扩展点占位，内部错误口径）
+          description: 第三方未配置、未实现或上游异常（不暴露凭据）
           content:
             application/json:
               schema:
@@ -1022,6 +1034,89 @@ paths:
                 data:
                 requestId: req_8f3a1b2c
                 timestamp: '2026-08-10T12:00:00Z'
+        '400':
+          description: 参数校验失败（4001）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example: {code: 4001, message: 请求未完成, data: null, requestId: example, timestamp: '2026-10-07T00:00:00Z'}
+        '401':
+          description: 微信凭证无效（1002）或会员禁用（1005）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              examples:
+                invalid:
+                  value: {code: 1002, message: 微信凭证无效, data: null, requestId: example, timestamp: '2026-10-07T00:00:00Z'}
+                disabled:
+                  value: {code: 1005, message: 账号已禁用, data: null, requestId: example, timestamp: '2026-10-07T00:00:00Z'}
+  /api/v1/me/setup-account:
+    post:
+      operationId: setupAccount
+      tags: [Auth]
+      summary: 微信新会员一次性设置本地登录账号
+      x-authz: {minRole: member}
+      description: >
+        仅当前已登录、active、微信自动创建且尚未设置凭据的会员可调用。
+        用户名、密码哈希与设置状态原子更新；重复设置或用户名占用返回 409/3002。
+        userId、昵称、角色及业务数据不变。撤销旧刷新令牌并返回新的 AuthResult（同时更新刷新 Cookie）。
+        访问令牌沿用既有到期策略，不承诺即时撤销全部旧 JWT。之后改密走现有 change-password。
+        管理员重置密码会同步关闭首次设置入口。APP 和网站不新增微信登录。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetupAccountRequest'
+      responses:
+        '200':
+          description: 设置成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - properties:
+                      data:
+                        $ref: '#/components/schemas/AuthResult'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '400':
+          description: 参数校验失败（4001）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example: {code: 4001, message: 请求未完成, data: null, requestId: example, timestamp: '2026-10-07T00:00:00Z'}
+        '401':
+          description: 缺失/无效令牌（1004/1002）或禁用账号（1005）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              examples:
+                missing:
+                  value: {code: 1004, message: 未登录, data: null, requestId: example, timestamp: '2026-10-07T00:00:00Z'}
+                invalid:
+                  value: {code: 1002, message: 凭证无效, data: null, requestId: example, timestamp: '2026-10-07T00:00:00Z'}
+                disabled:
+                  value: {code: 1005, message: 账号已禁用, data: null, requestId: example, timestamp: '2026-10-07T00:00:00Z'}
+        '409':
+          description: 已设置凭据、非微信新会员或用户名冲突（3002）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example: {code: 3002, message: 请求未完成, data: null, requestId: example, timestamp: '2026-10-07T00:00:00Z'}
+        '500':
+          description: 内部错误（5000）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+              example: {code: 5000, message: 请求未完成, data: null, requestId: example, timestamp: '2026-10-07T00:00:00Z'}
   /api/v1/articles:
     get:
       operationId: listArticles
