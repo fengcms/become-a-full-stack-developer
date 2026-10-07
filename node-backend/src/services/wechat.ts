@@ -25,7 +25,8 @@ async function exchange(code: string, env: AppEnv): Promise<{ appId: string; ope
   }).toString();
   let body: { errcode?: number; openid?: string };
   try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(8000), redirect: 'error' });
+    // workerd 不支持 redirect:error；manual + 非 2xx 拒绝保持禁止重定向的边界。
+    const response = await fetch(url, { signal: AbortSignal.timeout(8000), redirect: 'manual' });
     if (!response.ok) {
       console.warn('[wechat.exchange]', { reason: 'http_status', status: response.status });
       throw new Error('upstream');

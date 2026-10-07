@@ -52,6 +52,25 @@ afterEach(() => {
 });
 
 describe('微信扩展点与首次凭据设置', () => {
+  it('使用 Workers 支持的 manual 且拒绝重定向，不向跳转目标发送凭据', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(null, {
+          status: 302,
+          headers: { Location: 'https://untrusted.example/redirect' },
+        }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    expect((await post('/auth/wechat/callback', { code: 'private-code' })).status).toBe(500);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(URL),
+      expect.objectContaining({ redirect: 'manual' }),
+    );
+    expect(await db.select().from(users)).toHaveLength(0);
+  });
+
   it('线上诊断仅记录原因和上游数值码，不记录凭据或响应原文', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.stubGlobal(
