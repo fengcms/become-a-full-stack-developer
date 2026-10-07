@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/node-backend
+
+
+ Test Files  22 passed (22)
+      Tests  153 passed (153)
+   Start at  17:05:13
+   Duration  26.13s (transform 3.85s, setup 17.69s, import 7.71s, tests 151.45s, environment 2ms)
+
