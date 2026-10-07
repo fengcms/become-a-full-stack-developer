@@ -201,7 +201,7 @@ export const metadata = {
 
 - [会员投稿工作流](https://blog.csdn.net/fungleo/article/details/167079523)
 - [会员公开主页与通知中心](https://blog.csdn.net/fungleo/article/details/167121410)
-- [响应式、可访问性与错误状态]({{LINK:M3-20}})
+- [响应式、可访问性与错误状态](https://blog.csdn.net/fungleo/article/details/167172856)
 
 ---
 

@@ -177,7 +177,7 @@ abstract final class AppLayout {
 
 - [Flutter 工程骨架与 OpenAPI 代码生成]({{LINK:M4-03}})
 - [主题与可访问性：深浅色、大字号和触控体验]({{LINK:M4-25}})
-- [响应式、可访问性与错误状态]({{LINK:M3-20}})
+- [响应式、可访问性与错误状态](https://blog.csdn.net/fungleo/article/details/167172856)
 
 ---
 

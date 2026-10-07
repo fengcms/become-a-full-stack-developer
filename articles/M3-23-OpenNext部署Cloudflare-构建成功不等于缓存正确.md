@@ -2,7 +2,7 @@
 
 > `next build` 成功，只证明 Next.js 能生成生产产物；OpenNext 打包成功，只证明 Worker 产物形成。域名、Cookie、R2 增量缓存和重新验证仍要在目标环境逐项验收。
 
-{{IMG:M3-23-封面}}
+![成为全栈·Next.js 网站前台篇·OpenNext 部署 Cloudflare：构建成功不等于缓存正确](https://i-blog.csdnimg.cn/direct/9e44ad58983e4ba287378fe47e1efbbe.png)
 
 ## 前言
 
@@ -20,7 +20,7 @@ Next.js 源码
   → 域名、Cookie、后端 API 与真实流量
 ```
 
-{{IMG:M3-23-部署链路}}
+![部署链路](https://i-blog.csdnimg.cn/direct/01a116d679ec40f6993455894f2d386d.png)
 
 | 层次 | 成功意味着 | 尚未证明 |
 | --- | --- | --- |
@@ -122,7 +122,7 @@ curl -i https://www.example.com/api/v1/me/profile
 8. 检查 Worker 日志、R2 写入和错误率
 ```
 
-{{IMG:M3-23-缓存验收}}
+![缓存验收](https://i-blog.csdnimg.cn/direct/aac6e9c4075c43e798d69378c827cccc.png)
 
 ## 远程部署前的资源清单
 
