@@ -3,15 +3,16 @@ package auth
 import (
 	"context"
 	"encoding/json"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/testutil"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 	"os"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/testutil"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 )
 
 func TestRefreshReplayCommitsRevocation(t *testing.T) {
@@ -90,5 +91,29 @@ func TestNodeBcryptVectors(t *testing.T) {
 		if !Verify(v.Password, v.Hash) {
 			t.Fatal("Node bcrypt hash incompatible")
 		}
+	}
+}
+
+func TestNodeJWTAndExpirationBoundary(t *testing.T) {
+	b, e := os.ReadFile("testdata/node-jwt.json")
+	if e != nil {
+		t.Fatal(e)
+	}
+	var fixture struct {
+		Secret, Token string
+		IssuedAt      int64
+	}
+	if e = json.Unmarshal(b, &fixture); e != nil {
+		t.Fatal(e)
+	}
+	s := New(nil, fixture.Secret)
+	s.Now = func() time.Time { return time.Unix(fixture.IssuedAt, 0) }
+	actor, e := s.Parse(fixture.Token)
+	if e != nil || actor.ID != 42 || actor.Role != "editor" {
+		t.Fatal("Node JWT incompatible", e)
+	}
+	s.Now = func() time.Time { return time.Unix(fixture.IssuedAt+3600, 0) }
+	if _, e = s.Parse(fixture.Token); fault.Resolve(e).Code != fault.Token {
+		t.Fatal("expiry boundary accepted")
 	}
 }

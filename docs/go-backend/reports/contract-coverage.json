@@ -1,0 +1,823 @@
+{
+  "baseline": "openapi.v1.yaml 1.12.0",
+  "operations": 68,
+  "requests": 74,
+  "results": [
+    {
+      "operationId": "addFavorite",
+      "method": "POST",
+      "path": "/api/v1/me/favorites",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "adminGetSiteSettings",
+      "method": "GET",
+      "path": "/api/v1/admin/site/settings",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "adminResetPassword",
+      "method": "POST",
+      "path": "/api/v1/admin/users/2/reset-password",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "adminUpdateSiteSettings",
+      "method": "PATCH",
+      "path": "/api/v1/admin/site/settings",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "approveArticle",
+      "method": "POST",
+      "path": "/api/v1/admin/articles/2/approve",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "changePassword",
+      "method": "POST",
+      "path": "/api/v1/me/change-password",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "clearMyHistory",
+      "method": "DELETE",
+      "path": "/api/v1/me/history",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "createArticle",
+      "method": "POST",
+      "path": "/api/v1/articles",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "createCategory",
+      "method": "POST",
+      "path": "/api/v1/categories",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "createComment",
+      "method": "POST",
+      "path": "/api/v1/articles/1/comments",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "createTag",
+      "method": "POST",
+      "path": "/api/v1/tags",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "deleteArticle",
+      "method": "DELETE",
+      "path": "/api/v1/articles/1",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "deleteAttachment",
+      "method": "DELETE",
+      "path": "/api/v1/attachments/1",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "deleteCategory",
+      "method": "DELETE",
+      "path": "/api/v1/categories/1",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "deleteComment",
+      "method": "DELETE",
+      "path": "/api/v1/comments/1",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "deleteTag",
+      "method": "DELETE",
+      "path": "/api/v1/tags/1",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "getArticle",
+      "method": "GET",
+      "path": "/api/v1/articles/1",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "getArticleAdjacent",
+      "method": "GET",
+      "path": "/api/v1/articles/1/adjacent",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "getArticleLikeStatus",
+      "method": "GET",
+      "path": "/api/v1/articles/1/like/status",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "getArticleRelated",
+      "method": "GET",
+      "path": "/api/v1/articles/1/related",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "getArticleToc",
+      "method": "GET",
+      "path": "/api/v1/articles/1/toc",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "getCategoryBreadcrumb",
+      "method": "GET",
+      "path": "/api/v1/categories/1/breadcrumb",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "getCategoryStats",
+      "method": "GET",
+      "path": "/api/v1/categories/stats",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "getCategoryTree",
+      "method": "GET",
+      "path": "/api/v1/categories/tree",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "getCurrentUser",
+      "method": "GET",
+      "path": "/api/v1/auth/me",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "getMemberProfile",
+      "method": "GET",
+      "path": "/api/v1/members/1",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "getMyProfile",
+      "method": "GET",
+      "path": "/api/v1/me/profile",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "getSiteSettings",
+      "method": "GET",
+      "path": "/api/v1/site/settings",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "getSiteStats",
+      "method": "GET",
+      "path": "/api/v1/stats",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "getUnreadNotificationCount",
+      "method": "GET",
+      "path": "/api/v1/me/notifications/unread-count",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "getUser",
+      "method": "GET",
+      "path": "/api/v1/users/2",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "likeArticle",
+      "method": "POST",
+      "path": "/api/v1/articles/1/like",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "listAdminArticles",
+      "method": "GET",
+      "path": "/api/v1/admin/articles",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "listAdminComments",
+      "method": "GET",
+      "path": "/api/v1/admin/comments",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "listArticleComments",
+      "method": "GET",
+      "path": "/api/v1/articles/1/comments",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "listArticles",
+      "method": "GET",
+      "path": "/api/v1/articles",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "listCategories",
+      "method": "GET",
+      "path": "/api/v1/categories",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "listMyArticles",
+      "method": "GET",
+      "path": "/api/v1/me/articles",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "listMyAttachments",
+      "method": "GET",
+      "path": "/api/v1/me/attachments",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "listMyFavorites",
+      "method": "GET",
+      "path": "/api/v1/me/favorites",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "listMyHistory",
+      "method": "GET",
+      "path": "/api/v1/me/history",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "listMyLikes",
+      "method": "GET",
+      "path": "/api/v1/me/likes",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "listMyNotifications",
+      "method": "GET",
+      "path": "/api/v1/me/notifications",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "listTags",
+      "method": "GET",
+      "path": "/api/v1/tags",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "listUsers",
+      "method": "GET",
+      "path": "/api/v1/users",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "login",
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "logout",
+      "method": "POST",
+      "path": "/api/v1/auth/logout",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "moderateComment",
+      "method": "PATCH",
+      "path": "/api/v1/comments/1/status",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "oauthCallback",
+      "method": "POST",
+      "path": "/api/v1/auth/wechat/callback",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "readAllNotifications",
+      "method": "POST",
+      "path": "/api/v1/me/notifications/read-all",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "refreshToken",
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "registerUser",
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "removeFavorite",
+      "method": "DELETE",
+      "path": "/api/v1/me/favorites/1",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "removeHistoryItem",
+      "method": "DELETE",
+      "path": "/api/v1/me/history/1",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "reportReadingProgress",
+      "method": "POST",
+      "path": "/api/v1/me/history",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "search",
+      "method": "GET",
+      "path": "/api/v1/search",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "setArticleStatus",
+      "method": "POST",
+      "path": "/api/v1/admin/articles/2/status",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "setupAccount",
+      "method": "POST",
+      "path": "/api/v1/me/setup-account",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "submitArticle",
+      "method": "POST",
+      "path": "/api/v1/articles/2/submit",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "unlikeArticle",
+      "method": "DELETE",
+      "path": "/api/v1/articles/1/like",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "updateArticle",
+      "method": "PUT",
+      "path": "/api/v1/articles/1",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "updateCategory",
+      "method": "PUT",
+      "path": "/api/v1/categories/1",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "updateMyProfile",
+      "method": "PATCH",
+      "path": "/api/v1/me/profile",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "updateNotification",
+      "method": "PATCH",
+      "path": "/api/v1/me/notifications/2",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "updateTag",
+      "method": "PUT",
+      "path": "/api/v1/tags/1",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "updateUser",
+      "method": "PATCH",
+      "path": "/api/v1/users/2",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "uploadFile",
+      "method": "POST",
+      "path": "/api/v1/upload",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    },
+    {
+      "operationId": "viewArticle",
+      "method": "POST",
+      "path": "/api/v1/articles/1/view",
+      "httpStatus": 200,
+      "responseSchema": "passed",
+      "databases": [
+        "sqlite",
+        "postgres17",
+        "mysql8.4"
+      ]
+    }
+  ]
+}

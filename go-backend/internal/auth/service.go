@@ -6,6 +6,10 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
@@ -13,9 +17,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type Service struct {

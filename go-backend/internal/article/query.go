@@ -3,14 +3,15 @@ package article
 
 import (
 	"context"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
-	"gorm.io/gorm"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
+	"gorm.io/gorm"
 )
 
 type Service struct {
@@ -108,11 +109,14 @@ func (s *Service) Page(ctx context.Context, q url.Values, status string, author 
 		filter = filter.Where("articles.category_slug IN ?", slugs)
 	}
 	var total int64
-	if e := filter.Session(&gorm.Session{}).Count(&total).Error; e != nil {
+	countQuery := filter.Session(&gorm.Session{})
+	if q.Get("keyword") != "" {
+		bounded := countQuery.Select("articles.id").Limit(2000)
+		if e := db.Table("(?) AS bounded_articles", bounded).Count(&total).Error; e != nil {
+			return nil, e
+		}
+	} else if e := countQuery.Count(&total).Error; e != nil {
 		return nil, e
-	}
-	if q.Get("keyword") != "" && total > 2000 {
-		total = 2000
 	}
 	var rows []model.Article
 	if e := filter.Select(SummaryColumns).Order(Sort(q.Get("sort"))).Limit(p.Size).Offset(p.Offset()).Find(&rows).Error; e != nil {

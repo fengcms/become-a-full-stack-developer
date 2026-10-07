@@ -1,8 +1,9 @@
 package httpapi
 
 import (
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
 	"strconv"
+
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
 )
 
 func pathID(r Request, key string) (int64, error) {

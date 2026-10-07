@@ -7,14 +7,15 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/contract"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 	"io"
 	"log/slog"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/contract"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 )
 
 type Identity interface {
@@ -153,7 +154,7 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	origin := r.Header.Get("Origin")
 	if origin != "" {
 		for _, allowed := range strings.Split(a.Origins, ",") {
-			if strings.TrimSpace(allowed) == origin {
+			if strings.TrimSpace(allowed) == origin || strings.TrimSpace(allowed) == "*" {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 				w.Header().Set("Access-Control-Allow-Credentials", "true")
 				w.Header().Add("Vary", "Origin")

@@ -14,6 +14,10 @@ func (f Fields) Has(k string) bool      { _, ok := f[k]; return ok }
 func (f Fields) String(k string) string { s, _ := f[k].(string); return s }
 func (f Fields) Int(k string) int64 {
 	switch n := f[k].(type) {
+	case int64:
+		return n
+	case int:
+		return int64(n)
 	case float64:
 		return int64(n)
 	case json.Number:
@@ -39,6 +43,9 @@ func (f Fields) Number(k string) *int64 {
 }
 func (f Fields) Strings(k string) []string {
 	r := []string{}
+	if a, ok := f[k].([]string); ok {
+		return append(r, a...)
+	}
 	if a, ok := f[k].([]any); ok {
 		for _, v := range a {
 			if s, ok := v.(string); ok {

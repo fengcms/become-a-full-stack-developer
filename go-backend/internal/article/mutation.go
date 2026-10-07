@@ -3,6 +3,10 @@ package article
 import (
 	"context"
 	"encoding/json"
+	"regexp"
+	"strconv"
+	"strings"
+
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/notification"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
@@ -10,9 +14,6 @@ import (
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"regexp"
-	"strconv"
-	"strings"
 )
 
 var slugPattern = regexp.MustCompile(`^[a-z0-9-]{1,64}$`)
@@ -104,6 +105,7 @@ func (s *Service) Update(ctx context.Context, id int64, actor values.Actor, in v
 		if !actor.Allows("editor", a.AuthorID) {
 			return fault.New(fault.Forbidden)
 		}
+		previousStatus := a.Status
 		patch := map[string]any{"updated_at": s.Now().UnixMilli()}
 		for key, col := range map[string]string{"title": "title", "content": "content", "summary": "summary", "coverImage": "cover_image"} {
 			if in.Has(key) {
@@ -156,7 +158,13 @@ func (s *Service) Update(ctx context.Context, id int64, actor values.Actor, in v
 		if e := tx.Model(&model.Article{}).Where("id = ?", id).Updates(patch).Error; e != nil {
 			return e
 		}
-		return tx.First(&a, id).Error
+		if e := tx.First(&a, id).Error; e != nil {
+			return e
+		}
+		if previousStatus != "published" && a.Status == "published" {
+			return notification.Published(tx, a, s.Now().UnixMilli())
+		}
+		return nil
 	})
 	return Detail(a), e
 }

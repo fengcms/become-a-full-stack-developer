@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"math"
 	"net/netip"
 	"os"
 	"strconv"
@@ -9,14 +10,43 @@ import (
 )
 
 type Config struct {
-	CommentRejectRatio                                                                                                                      *float64
-	Address, Driver, DSN, JWTSecret, Storage, UploadDir, Origins, WechatAppID, WechatSecret, R2Endpoint, R2Bucket, R2AccessKey, R2SecretKey string
-	Production                                                                                                                              bool
-	TrustedProxies                                                                                                                          []string
+	Address               string
+	Driver                string
+	DSN                   string
+	JWTSecret             string
+	Storage               string
+	UploadDir             string
+	Origins               string
+	WechatAppID           string
+	WechatSecret          string
+	R2Endpoint            string
+	R2Bucket              string
+	R2AccessKey           string
+	R2SecretKey           string
+	DatabaseMetricsOutput string
+	CommentRejectRatio    *float64
+	Production            bool
+	TrustedProxies        []string
 }
 
 func Load() (Config, error) {
-	c := Config{Address: env("HTTP_ADDR", "127.0.0.1:8080"), Driver: env("DB_DRIVER", "postgres"), DSN: os.Getenv("DATABASE_URL"), JWTSecret: os.Getenv("JWT_SECRET"), Storage: env("STORAGE_DRIVER", "local"), UploadDir: env("UPLOAD_DIR", "./uploads"), Origins: env("CORS_ORIGINS", "http://localhost:13001,http://127.0.0.1:13001"), WechatAppID: env("WECHAT_MINI_APP_ID", os.Getenv("WECHAT_APP_ID")), WechatSecret: env("WECHAT_MINI_APP_SECRET", os.Getenv("WECHAT_APP_SECRET")), R2Endpoint: os.Getenv("R2_ENDPOINT"), R2Bucket: os.Getenv("R2_BUCKET"), R2AccessKey: os.Getenv("R2_ACCESS_KEY_ID"), R2SecretKey: os.Getenv("R2_SECRET_ACCESS_KEY"), Production: os.Getenv("APP_ENV") == "production"}
+	c := Config{
+		Address:               env("HTTP_ADDR", "127.0.0.1:8080"),
+		Driver:                env("DB_DRIVER", "postgres"),
+		DSN:                   os.Getenv("DATABASE_URL"),
+		JWTSecret:             os.Getenv("JWT_SECRET"),
+		Storage:               env("STORAGE_DRIVER", "local"),
+		UploadDir:             env("UPLOAD_DIR", "./uploads"),
+		Origins:               env("CORS_ORIGINS", "http://localhost:13001,http://127.0.0.1:13001"),
+		WechatAppID:           env("WECHAT_MINI_APP_ID", os.Getenv("WECHAT_APP_ID")),
+		WechatSecret:          env("WECHAT_MINI_APP_SECRET", os.Getenv("WECHAT_APP_SECRET")),
+		R2Endpoint:            os.Getenv("R2_ENDPOINT"),
+		R2Bucket:              os.Getenv("R2_BUCKET"),
+		R2AccessKey:           os.Getenv("R2_ACCESS_KEY_ID"),
+		R2SecretKey:           os.Getenv("R2_SECRET_ACCESS_KEY"),
+		DatabaseMetricsOutput: os.Getenv("DB_METRICS_FILE"),
+		Production:            os.Getenv("APP_ENV") == "production",
+	}
 	if v := os.Getenv("TRUSTED_PROXIES"); v != "" {
 		c.TrustedProxies = strings.Split(v, ",")
 	}
@@ -33,7 +63,7 @@ func Load() (Config, error) {
 		return c, fmt.Errorf("unsupported storage driver")
 	}
 	ratio, e := strconv.ParseFloat(env("COMMENT_REJECT_RATIO", "0.1"), 64)
-	if e != nil || ratio < 0 || ratio > 1 {
+	if e != nil || math.IsNaN(ratio) || math.IsInf(ratio, 0) || ratio < 0 || ratio > 1 {
 		return c, fmt.Errorf("COMMENT_REJECT_RATIO must be between 0 and 1")
 	}
 	c.CommentRejectRatio = &ratio

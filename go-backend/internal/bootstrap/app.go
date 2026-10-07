@@ -3,6 +3,7 @@ package bootstrap
 
 import (
 	"fmt"
+
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/administration"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/article"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/attachment"

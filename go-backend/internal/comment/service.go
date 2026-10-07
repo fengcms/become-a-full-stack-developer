@@ -3,6 +3,12 @@ package comment
 
 import (
 	"context"
+	"net/url"
+	"regexp"
+	"strings"
+	"time"
+	"unicode/utf16"
+
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/article"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/notification"
@@ -10,11 +16,6 @@ import (
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 	"gorm.io/gorm"
-	"net/url"
-	"regexp"
-	"strings"
-	"time"
-	"unicode/utf16"
 )
 
 type Service struct {
@@ -84,7 +85,7 @@ func (s *Service) Page(ctx context.Context, key string, actor values.Actor, q ur
 		}
 		db = db.Where("article_id = ? AND status = ?", a.ID, "approved")
 	} else {
-		order = "created_at DESC, id DESC"
+		order = "created_at DESC, id ASC"
 		if status := q.Get("status"); status != "" {
 			db = db.Where("status = ?", status)
 		}

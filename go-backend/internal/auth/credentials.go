@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"

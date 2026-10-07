@@ -2,12 +2,13 @@ package article
 
 import (
 	"context"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/testutil"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/testutil"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 )
 
 func TestTocFenceUnicodeAndDuplicate(t *testing.T) {

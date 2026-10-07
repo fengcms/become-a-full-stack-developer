@@ -5,16 +5,17 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"log/slog"
+	"net/url"
+	"sync"
+	"time"
+
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/article"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/storage"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 	"gorm.io/gorm"
-	"log/slog"
-	"net/url"
-	"sync"
-	"time"
 )
 
 type Service struct {
@@ -58,11 +59,15 @@ func (s *Service) Create(ctx context.Context, user int64, articleID *int64, data
 	}
 	a := model.Attachment{UserID: user, ArticleID: articleID, StorageKey: key, URL: "/files/" + key, Storage: s.Driver, MimeType: mime, Size: int64(len(data)), CreatedAt: s.Now().UnixMilli()}
 	if e := s.DB.WithContext(ctx).Create(&a).Error; e != nil { // Conservative compensation: never remove an object referenced by another row.
+		cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		defer cancel()
 		var n int64
-		if countErr := s.DB.WithContext(ctx).Model(&model.Attachment{}).Where("storage_key = ? AND storage = ?", key, s.Driver).Count(&n).Error; countErr == nil && n == 0 {
-			if cleanupErr := provider.Delete(ctx, key); cleanupErr != nil {
+		if countErr := s.DB.WithContext(cleanupCtx).Model(&model.Attachment{}).Where("storage_key = ? AND storage = ?", key, s.Driver).Count(&n).Error; countErr == nil && n == 0 {
+			if cleanupErr := provider.Delete(cleanupCtx, key); cleanupErr != nil {
 				slog.Warn("orphan upload cleanup required", "key", key, "storage", s.Driver)
 			}
+		} else if countErr != nil {
+			slog.Warn("upload compensation inspection failed", "key", key, "storage", s.Driver)
 		}
 		return nil, e
 	}

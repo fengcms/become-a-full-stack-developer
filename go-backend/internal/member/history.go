@@ -2,12 +2,13 @@ package member
 
 import (
 	"context"
+	"net/url"
+
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/article"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"net/url"
 )
 
 func historyView(a model.Article, h model.History) map[string]any {

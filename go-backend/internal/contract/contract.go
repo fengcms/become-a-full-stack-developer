@@ -5,7 +5,9 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+
 	"github.com/santhosh-tekuri/jsonschema/v6"
+	"github.com/santhosh-tekuri/jsonschema/v6/kind"
 )
 
 //go:embed openapi.json
@@ -18,8 +20,9 @@ type Operation struct {
 	Request, Response         *jsonschema.Schema
 }
 type Catalog struct {
-	Operations map[string]Operation
-	Document   map[string]any
+	Operations                 map[string]Operation
+	Document                   map[string]any
+	Envelope, ValidationErrors *jsonschema.Schema
 }
 
 func Load() (*Catalog, error) {
@@ -42,6 +45,14 @@ func Load() (*Catalog, error) {
 		return nil, e
 	}
 	c := &Catalog{Operations: map[string]Operation{}, Document: doc}
+	c.Envelope, e = compiler.Compile("https://befull.local/openapi.json#/components/schemas/ApiResponse")
+	if e != nil {
+		return nil, e
+	}
+	c.ValidationErrors, e = compiler.Compile("https://befull.local/openapi.json#/components/schemas/ValidationErrorList")
+	if e != nil {
+		return nil, e
+	}
 	paths := doc["paths"].(map[string]any)
 	for path, value := range paths {
 		for method, v := range value.(map[string]any) {
@@ -138,6 +149,16 @@ func Errors(e error) []map[string]string {
 			}
 			field += fmt.Sprint(p)
 		}
+		if required, ok := v.ErrorKind.(*kind.Required); ok {
+			for _, missing := range required.Missing {
+				path := missing
+				if field != "" {
+					path = field + "." + missing
+				}
+				out = append(out, map[string]string{"field": path, "message": "该字段为必填项"})
+			}
+			return
+		}
 		if field == "" {
 			field = "_"
 		}
@@ -155,6 +176,14 @@ func Errors(e error) []map[string]string {
 // Site settings declare a bare schema despite the global envelope rule.
 // Validate its payload explicitly while retaining the globally required envelope.
 func (c *Catalog) CheckResponse(id string, status int, body any) error {
+	if e := c.Envelope.Validate(body); e != nil {
+		return e
+	}
+	if b, ok := body.(map[string]any); ok && b["code"] == float64(4001) {
+		if e := c.ValidationErrors.Validate(b["data"]); e != nil {
+			return e
+		}
+	}
 	op, ok := c.Operations[id]
 	if !ok {
 		return fmt.Errorf("unknown operation %s", id)

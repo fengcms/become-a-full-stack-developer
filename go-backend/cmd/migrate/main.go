@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
+	"log"
+
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/config"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
-	"log"
 )
 
 func main() {

@@ -1,11 +1,12 @@
 package article
 
 import (
-	"gorm.io/gorm/clause"
 	"regexp"
 	"strconv"
 	"strings"
 	"unicode/utf16"
+
+	"gorm.io/gorm/clause"
 )
 
 var heading = regexp.MustCompile(`^(#{1,6})\s+(.+?)\s*#*\s*$`)

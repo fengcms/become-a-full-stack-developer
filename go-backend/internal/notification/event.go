@@ -3,6 +3,7 @@ package notification
 
 import (
 	"fmt"
+
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 	"gorm.io/gorm"

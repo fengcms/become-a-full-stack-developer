@@ -1,0 +1,72 @@
+{
+  "requests": 74,
+  "comparisons": 72,
+  "operations": 68,
+  "expectedDifferences": [
+    {
+      "operation": "listMyNotifications",
+      "reason": "Node缺少发布通知生成，Go按产品事件实现",
+      "node": {
+        "list": [
+          {
+            "id": 2,
+            "userId": 2,
+            "type": "system",
+            "title": "系统消息",
+            "body": null,
+            "link": null,
+            "isRead": false,
+            "createdAt": "<generated>"
+          }
+        ],
+        "pagination": {
+          "page": 1,
+          "pageSize": 20,
+          "total": 1,
+          "totalPages": 1
+        }
+      },
+      "go": {
+        "list": [
+          {
+            "body": "会员投稿",
+            "createdAt": "<generated>",
+            "id": 1,
+            "isRead": false,
+            "link": "/articles/2",
+            "title": "文章已发布",
+            "type": "article_published",
+            "userId": 2
+          },
+          {
+            "body": null,
+            "createdAt": "<generated>",
+            "id": 2,
+            "isRead": false,
+            "link": null,
+            "title": "系统消息",
+            "type": "system",
+            "userId": 2
+          }
+        ],
+        "pagination": {
+          "page": 1,
+          "pageSize": 20,
+          "total": 2,
+          "totalPages": 1
+        }
+      }
+    },
+    {
+      "operation": "getUnreadNotificationCount",
+      "reason": "Node缺少发布通知生成，Go按产品事件实现",
+      "node": {
+        "count": 1
+      },
+      "go": {
+        "count": 2
+      }
+    }
+  ],
+  "unexpectedDifferences": []
+}

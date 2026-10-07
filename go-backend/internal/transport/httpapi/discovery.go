@@ -1,9 +1,10 @@
 package httpapi
 
 import (
+	"strconv"
+
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/article"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/comment"
-	"strconv"
 )
 
 func (a *App) BindDiscovery(s *article.Service, c *comment.Service) {

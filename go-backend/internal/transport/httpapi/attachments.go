@@ -1,13 +1,14 @@
 package httpapi
 
 import (
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/attachment"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
 	"io"
 	"net/http"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/attachment"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
 )
 
 func (a *App) BindAttachments(s *attachment.Service) {

@@ -2,11 +2,12 @@ package testutil
 
 import (
 	"context"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
-	"gorm.io/gorm"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
+	"gorm.io/gorm"
 )
 
 func DB(t testing.TB) *gorm.DB {

@@ -2,10 +2,11 @@ package member
 
 import (
 	"context"
+	"net/url"
+
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 	"gorm.io/gorm"
-	"net/url"
 )
 
 func Notification(n model.Notification) map[string]any {

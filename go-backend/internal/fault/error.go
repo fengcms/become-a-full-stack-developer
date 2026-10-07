@@ -3,6 +3,7 @@ package fault
 
 import (
 	"errors"
+
 	"gorm.io/gorm"
 )
 

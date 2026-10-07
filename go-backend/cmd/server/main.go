@@ -3,15 +3,16 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/bootstrap"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/config"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/bootstrap"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/config"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
 )
 
 func main() {
@@ -28,6 +29,14 @@ func run() error {
 	db, e := database.Open(c.Driver, c.DSN)
 	if e != nil {
 		return e
+	}
+	if c.DatabaseMetricsOutput != "" {
+		metrics := database.Observe(db)
+		defer func() {
+			if err := metrics.Write(c.DatabaseMetricsOutput); err != nil {
+				slog.Warn("database metrics output failed")
+			}
+		}()
 	}
 	sql, _ := db.DB()
 	defer sql.Close()
