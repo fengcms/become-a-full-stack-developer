@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-07",
+  "before": {
+    "users": 12,
+    "articles": 97,
+    "comments": 8,
+    "favorites": 2
+  },
+  "afterSmokeCleanup": {
+    "users": 12,
+    "articles": 97,
+    "comments": 8,
+    "favorites": 2,
+    "identities": 0
+  },
+  "foreignKeyViolations": []
+}

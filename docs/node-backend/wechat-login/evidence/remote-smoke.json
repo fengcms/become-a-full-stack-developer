@@ -1,0 +1,17 @@
+{
+  "target": "https://api-befull.kao9.com/api/v1",
+  "realWechatLogin": "NOT_TESTED_MISSING_CONFIGURATION",
+  "checks": [
+    "setup requires authentication",
+    "callback validates body",
+    "missing WeChat configuration fails closed",
+    "legacy registration",
+    "setup on explicit synthetic fixture",
+    "stable userId and nickname",
+    "refresh cookie",
+    "repeat setup rejected",
+    "password login",
+    "old refresh revoked",
+    "test fixture removed"
+  ]
+}
