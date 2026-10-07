@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/article"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/auth"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/config"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/contract"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/taxonomy"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/transport/httpapi"
 	"log/slog"
 	"net/http"
@@ -49,6 +51,7 @@ func run() error {
 	app := httpapi.New(catalog, identity, c.Origins)
 	app.TrustedProxies = c.TrustedProxies
 	app.BindAuth(identity)
+	app.BindContent(article.New(db), taxonomy.New(db))
 	server := &http.Server{Addr: c.Address, Handler: app, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second, IdleTimeout: 60 * time.Second}
 	done := make(chan error, 1)
 	go func() {
