@@ -9,6 +9,7 @@
  */
 import { sql } from 'drizzle-orm';
 import type { Db } from '@/db/client';
+import { migrateWechat } from '@/db/migrate-wechat';
 import { siteSettings } from '@/db/schema';
 
 /** 建表语句清单（与 schema.ts 保持同步；新增表在此追加）。 */
@@ -184,6 +185,7 @@ export const migrate = async (db: Db): Promise<void> => {
   for (const statement of STATEMENTS) {
     await db.run(sql.raw(statement));
   }
+  await migrateWechat(db);
   // 站点配置单条默认值（id=1），幂等：已存在则跳过（onConflictDoNothing）
   await db
     .insert(siteSettings)

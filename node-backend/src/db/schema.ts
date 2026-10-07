@@ -15,6 +15,9 @@ export const users = sqliteTable(
     id: integer('id').primaryKey({ autoIncrement: true }),
     username: text('username').notNull(),
     passwordHash: text('password_hash').notNull(),
+    credentialsConfigured: integer('credentials_configured', { mode: 'boolean' })
+      .notNull()
+      .default(true),
     role: text('role').notNull().default('member'),
     email: text('email'),
     displayName: text('display_name'),
@@ -355,3 +358,21 @@ export const siteSettings = sqliteTable('site_settings', {
 export type SiteSettingRow = typeof siteSettings.$inferSelect;
 /** 插入 site_settings 的入参类型。 */
 export type NewSiteSetting = typeof siteSettings.$inferInsert;
+
+/** 微信身份只归属一个会员；应用维度隔离，避免跨 AppID 混用 OpenID。 */
+export const wechatIdentities = sqliteTable(
+  'wechat_identities',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    appId: text('app_id').notNull(),
+    openId: text('open_id').notNull(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (t) => [
+    uniqueIndex('uniq_wechat_identity').on(t.appId, t.openId),
+    uniqueIndex('uniq_wechat_user').on(t.userId),
+  ],
+);

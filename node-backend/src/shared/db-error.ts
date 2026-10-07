@@ -14,5 +14,11 @@ const UNIQUE_CONSTRAINT_CODES = ['SQLITE_CONSTRAINT_UNIQUE', 'SQLITE_CONSTRAINT'
 export const isUniqueConstraintError = (err: unknown): boolean => {
   if (!err || typeof err !== 'object') return false;
   const code = (err as { code?: unknown }).code;
-  return typeof code === 'string' && (UNIQUE_CONSTRAINT_CODES as readonly string[]).includes(code);
+  if (typeof code === 'string' && (UNIQUE_CONSTRAINT_CODES as readonly string[]).includes(code))
+    return true;
+  // D1 通过 Error/cause 携带 SQLite 文案，仅识别 UNIQUE，不吞其他约束或网络错误。
+  const error = err as { message?: unknown; cause?: unknown };
+  if (typeof error.message === 'string' && /UNIQUE constraint failed/i.test(error.message))
+    return true;
+  return error.cause !== err && error.cause != null ? isUniqueConstraintError(error.cause) : false;
 };

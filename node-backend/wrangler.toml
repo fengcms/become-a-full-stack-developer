@@ -36,3 +36,8 @@ database_id = "fe3d7e63-39e2-44f8-9218-0f6d9fe4dc16"
 # createStorage 会因 env.R2_BUCKET 为 undefined 抛错，上传/附件接口全部 500。
 binding = "R2_BUCKET"
 bucket_name = "node-backend"
+
+# 微信小程序登录（可选；缺失时 callback 返回 500/5000，不影响密码登录）：
+#   wrangler secret put WECHAT_MINI_APP_ID
+#   wrangler secret put WECHAT_MINI_APP_SECRET
+# 不在配置文件或前端保存 AppSecret；本期仅支持此单个小程序身份空间。

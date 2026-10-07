@@ -14,12 +14,12 @@
  * 注：zod-validator 0.9 在 zod v4 下 `c.req.valid('json')` 推断为 unknown，
  * 故在 handler 内以 `as z.infer<typeof schema>` 取回精确类型（中间件已做运行时校验，安全）。
  */
-import type { Context } from 'hono';
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { getActiveEnv } from '@/config/env';
 import { type AuthVars, authMiddleware } from '@/middleware/auth';
 import { v } from '@/middleware/validate';
-import { REFRESH_TTL_MS, revokeUserTokens, rotateRefreshToken } from '@/services/refresh';
+import { revokeUserTokens, rotateRefreshToken } from '@/services/refresh';
 import {
   authenticateUser,
   buildAuthResult,
@@ -27,6 +27,8 @@ import {
   registerUser,
   toPublicUser,
 } from '@/services/user';
+import { authenticateWechat } from '@/services/wechat';
+import { clearRefreshCookie, refreshMaxAge, setRefreshCookie } from '@/shared/auth-cookie';
 import { ErrCode } from '@/shared/codes';
 import { AppError } from '@/shared/errors';
 import { failResponse, ok } from '@/shared/response';
@@ -48,23 +50,17 @@ const loginSchema = z.object({
 const refreshSchema = z.object({
   refreshToken: z.string().nullable().optional(),
 });
+const oauthSchema = z.object({
+  code: z.string().min(1),
+  state: z.string().nullable().optional(),
+  redirectUri: z.string().url().max(512).nullable().optional(),
+});
 const providerSchema = z.object({
   provider: z.enum(['wechat', 'weibo', 'github']),
 });
 
 type RegisterInput = z.infer<typeof registerSchema>;
 type LoginInput = z.infer<typeof loginSchema>;
-
-// ---- Cookie 辅助（浏览器端 refreshToken 载体，HTTP 层职责）----
-const COOKIE = 'refreshToken';
-const COOKIE_ATTRS = 'HttpOnly; SameSite=None; Secure; Path=/';
-const setRefreshCookie = (c: Context, token: string, maxAgeSec: number): void => {
-  c.header('Set-Cookie', `${COOKIE}=${token}; ${COOKIE_ATTRS}; Max-Age=${maxAgeSec}`);
-};
-const clearRefreshCookie = (c: Context): void => {
-  c.header('Set-Cookie', `${COOKIE}=; ${COOKIE_ATTRS}; Max-Age=0`);
-};
-const refreshMaxAge = (): number => Math.floor(REFRESH_TTL_MS / 1000);
 
 // ---- 端点 ----
 
@@ -126,10 +122,15 @@ authRoute.get('/me', authMiddleware, async (c) => {
   return ok(toPublicUser(u));
 });
 
-/** POST /:provider/callback — 第三方登录占位，首波返回 500（内部错误口径 5000，B0 已将契约 501 修正为 500）。 */
-authRoute.post('/:provider/callback', v.param(providerSchema), async () => {
-  // M3-09 扩展点：真实 OAuth 对接在后续批次；provider 已校验合法，此处仅占位
-  throw new AppError(ErrCode.INTERNAL, 500, '第三方登录尚未实现（M3-09 扩展点）');
+/** 微信小程序使用已有扩展点；其他 provider 保持未实现。 */
+authRoute.post('/:provider/callback', v.param(providerSchema), v.json(oauthSchema), async (c) => {
+  if (c.req.param('provider') !== 'wechat')
+    throw new AppError(ErrCode.INTERNAL, 500, '第三方登录尚未实现');
+  const { code } = c.req.valid('json') as z.infer<typeof oauthSchema>;
+  const user = await authenticateWechat(code, getActiveEnv());
+  const result = await buildAuthResult(user);
+  setRefreshCookie(c, result.refreshToken, refreshMaxAge());
+  return ok(result);
 });
 
 export { authRoute };

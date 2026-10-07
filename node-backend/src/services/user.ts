@@ -26,6 +26,7 @@ import { hashPassword, verifyPassword } from '@/shared/password';
 /** 契约 User 响应（脱敏后）。 */
 export interface PublicUser {
   id: number;
+  canSetCredentials?: boolean;
   username: string;
   email?: string;
   nickname: string;
@@ -53,6 +54,7 @@ export const ACCESS_TTL_SEC = 3600;
  */
 export const toPublicUser = (u: User): PublicUser => ({
   id: u.id,
+  canSetCredentials: !u.credentialsConfigured,
   username: u.username,
   ...(u.email ? { email: u.email } : {}),
   nickname: u.displayName ?? u.username,
@@ -211,7 +213,11 @@ export const resetPassword = async (id: number, newPassword: string): Promise<vo
   const u = await getUserById(id); // 不存在 → 404
   await getDb()
     .update(users)
-    .set({ passwordHash: await hashPassword(newPassword), updatedAt: new Date() })
+    .set({
+      passwordHash: await hashPassword(newPassword),
+      credentialsConfigured: true,
+      updatedAt: new Date(),
+    })
     .where(eq(users.id, u.id))
     .run();
   await revokeUserTokens(u.id);
@@ -266,7 +272,11 @@ export const changePassword = async (
   }
   await getDb()
     .update(users)
-    .set({ passwordHash: await hashPassword(newPassword), updatedAt: new Date() })
+    .set({
+      passwordHash: await hashPassword(newPassword),
+      credentialsConfigured: true,
+      updatedAt: new Date(),
+    })
     .where(eq(users.id, u.id))
     .run();
   await revokeUserTokens(u.id);
@@ -332,7 +342,7 @@ export const authenticateUser = async (username: string, password: string): Prom
   const user = rows[0];
   if (!user) throw new AppError(ErrCode.USERNAME_OR_PASSWORD_ERROR, 401); // 1001 不暴露账号是否存在
   if (user.status === 'disabled') throw new AppError(ErrCode.ACCOUNT_DISABLED, 401); // 1005
-  if (!(await verifyPassword(password, user.passwordHash))) {
+  if (!user.credentialsConfigured || !(await verifyPassword(password, user.passwordHash))) {
     throw new AppError(ErrCode.USERNAME_OR_PASSWORD_ERROR, 401); // 1001
   }
   return user;

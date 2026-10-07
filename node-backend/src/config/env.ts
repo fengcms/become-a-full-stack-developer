@@ -7,6 +7,8 @@ import { z } from 'zod';
 
 /** 配置 schema。新增配置项在此声明，缺省值集中在 default。 */
 const schema = z.object({
+  WECHAT_MINI_APP_ID: z.string().optional(),
+  WECHAT_MINI_APP_SECRET: z.string().optional(),
   JWT_SECRET: z.string().min(1, 'JWT_SECRET 必填'),
   DB_FILE: z.string().default(':memory:'),
   STORAGE_DRIVER: z.enum(['local', 'r2']).default('local'),

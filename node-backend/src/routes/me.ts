@@ -9,7 +9,15 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { type AuthVars, authMiddleware } from '@/middleware/auth';
 import { v } from '@/middleware/validate';
-import { changePassword, getProfile, type ProfileInput, updateProfile } from '@/services/user';
+import { setupAccount } from '@/services/setup-account';
+import {
+  buildAuthResult,
+  changePassword,
+  getProfile,
+  type ProfileInput,
+  updateProfile,
+} from '@/services/user';
+import { refreshMaxAge, setRefreshCookie } from '@/shared/auth-cookie';
 import { ok } from '@/shared/response';
 
 const meRoute = new Hono<AuthVars>();
@@ -41,6 +49,17 @@ meRoute.post('/change-password', authMiddleware, v.json(changePwSchema), async (
   const { oldPassword, newPassword } = c.req.valid('json') as ChangePwInput;
   await changePassword(Number(c.get('user').id), oldPassword, newPassword);
   return ok({});
+});
+
+const setupSchema = z.object({ username: z.string().min(1).max(32), password: z.string().min(8) });
+
+/** 只允许微信新会员一次性设置；成功后返回统一 AuthResult。 */
+meRoute.post('/setup-account', authMiddleware, v.json(setupSchema), async (c) => {
+  const input = c.req.valid('json') as z.infer<typeof setupSchema>;
+  const user = await setupAccount(Number(c.get('user').id), input.username, input.password);
+  const result = await buildAuthResult(user);
+  setRefreshCookie(c, result.refreshToken, refreshMaxAge());
+  return ok(result);
 });
 
 export { meRoute };
