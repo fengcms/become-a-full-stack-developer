@@ -3,16 +3,9 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/administration"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/article"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/auth"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/comment"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/bootstrap"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/config"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/contract"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/member"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/taxonomy"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/transport/httpapi"
 	"log/slog"
 	"net/http"
 	"os"
@@ -44,24 +37,10 @@ func run() error {
 	if e != nil {
 		return e
 	}
-	catalog, e := contract.Load()
+	app, e := bootstrap.New(db, c, bootstrap.Options{})
 	if e != nil {
 		return e
 	}
-	identity := auth.New(db, c.JWTSecret)
-	identity.AppID = c.WechatAppID
-	identity.Wechat = auth.WechatHTTP{AppID: c.WechatAppID, Secret: c.WechatSecret}
-	app := httpapi.New(catalog, identity, c.Origins)
-	app.TrustedProxies = c.TrustedProxies
-	app.BindAuth(identity)
-	content := article.New(db)
-	app.BindContent(content, taxonomy.New(db))
-	comments := comment.New(db)
-	if c.CommentRejectRatio != nil {
-		comments.RejectRatio = *c.CommentRejectRatio
-	}
-	app.BindDiscovery(content, comments)
-	app.BindMember(member.New(db), administration.New(db, content))
 	server := &http.Server{Addr: c.Address, Handler: app, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second, IdleTimeout: 60 * time.Second}
 	done := make(chan error, 1)
 	go func() {
