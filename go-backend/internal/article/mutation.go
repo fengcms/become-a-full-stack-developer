@@ -3,8 +3,8 @@ package article
 import (
 	"context"
 	"encoding/json"
-	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/auth"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 	"gorm.io/gorm"
@@ -96,7 +96,7 @@ func (s *Service) Update(ctx context.Context, id int64, actor values.Actor, in v
 	var a model.Article
 	e := s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var e error
-		a, e = Get(auth.Lock(tx), strconv.FormatInt(id, 10))
+		a, e = Get(database.Lock(tx), strconv.FormatInt(id, 10))
 		if e != nil {
 			return e
 		}
@@ -161,7 +161,7 @@ func (s *Service) Update(ctx context.Context, id int64, actor values.Actor, in v
 }
 func (s *Service) Delete(ctx context.Context, id int64, actor values.Actor) error {
 	return s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		a, e := Get(auth.Lock(tx), strconv.FormatInt(id, 10))
+		a, e := Get(database.Lock(tx), strconv.FormatInt(id, 10))
 		if e != nil {
 			return e
 		}
@@ -178,7 +178,7 @@ func (s *Service) Transition(ctx context.Context, id int64, actor values.Actor, 
 	var a model.Article
 	e := s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var e error
-		a, e = Get(auth.Lock(tx), strconv.FormatInt(id, 10))
+		a, e = Get(database.Lock(tx), strconv.FormatInt(id, 10))
 		if e != nil {
 			return e
 		}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/article"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/auth"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/comment"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/config"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/contract"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
@@ -51,7 +52,13 @@ func run() error {
 	app := httpapi.New(catalog, identity, c.Origins)
 	app.TrustedProxies = c.TrustedProxies
 	app.BindAuth(identity)
-	app.BindContent(article.New(db), taxonomy.New(db))
+	content := article.New(db)
+	app.BindContent(content, taxonomy.New(db))
+	comments := comment.New(db)
+	if c.CommentRejectRatio != nil {
+		comments.RejectRatio = *c.CommentRejectRatio
+	}
+	app.BindDiscovery(content, comments)
 	server := &http.Server{Addr: c.Address, Handler: app, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second, IdleTimeout: 60 * time.Second}
 	done := make(chan error, 1)
 	go func() {

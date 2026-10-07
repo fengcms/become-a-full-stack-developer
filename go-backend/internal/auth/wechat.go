@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 	"gorm.io/gorm"
@@ -104,7 +105,7 @@ func (s *Service) WechatLogin(ctx context.Context, code string) (map[string]any,
 			} else if err != nil {
 				return err
 			} else {
-				if err = Lock(tx).First(&u, identity.UserID).Error; err != nil {
+				if err = database.Lock(tx).First(&u, identity.UserID).Error; err != nil {
 					return err
 				}
 			}

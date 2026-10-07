@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 	"gorm.io/gorm"
@@ -42,7 +43,7 @@ func (s *Service) ChangePassword(ctx context.Context, id int64, old, newPassword
 	}
 	return s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var current model.User
-		if e := Lock(tx).First(&current, id).Error; e != nil {
+		if e := database.Lock(tx).First(&current, id).Error; e != nil {
 			return e
 		}
 		if !reset && current.PasswordHash != u.PasswordHash {
@@ -62,7 +63,7 @@ func (s *Service) Setup(ctx context.Context, id int64, in values.Fields) (map[st
 	var result map[string]any
 	e = s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var u model.User
-		if e := Lock(tx).First(&u, id).Error; e != nil {
+		if e := database.Lock(tx).First(&u, id).Error; e != nil {
 			return e
 		}
 		var count int64

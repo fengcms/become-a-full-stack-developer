@@ -7,12 +7,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 	"strconv"
 	"strings"
 	"time"
@@ -135,7 +135,7 @@ func (s *Service) Login(ctx context.Context, in values.Fields) (map[string]any, 
 	var result map[string]any
 	e := s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var current model.User
-		if e := Lock(tx).First(&current, u.ID).Error; e != nil {
+		if e := database.Lock(tx).First(&current, u.ID).Error; e != nil {
 			return e
 		}
 		if current.Status == "disabled" {
@@ -150,19 +150,13 @@ func (s *Service) Login(ctx context.Context, in values.Fields) (map[string]any, 
 	})
 	return result, e
 }
-func Lock(db *gorm.DB) *gorm.DB {
-	if db.Dialector.Name() == "sqlite" {
-		return db
-	}
-	return db.Clauses(clause.Locking{Strength: "UPDATE"})
-}
 func (s *Service) Revoke(tx *gorm.DB, id int64) error {
 	return tx.Model(&model.RefreshToken{}).Where("user_id = ? AND revoked_at IS NULL", id).Update("revoked_at", s.Now().UnixMilli()).Error
 }
 func (s *Service) Logout(ctx context.Context, id int64) error {
 	return s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var u model.User
-		if e := Lock(tx).First(&u, id).Error; e != nil {
+		if e := database.Lock(tx).First(&u, id).Error; e != nil {
 			return e
 		}
 		return s.Revoke(tx, id)
@@ -182,7 +176,7 @@ func (s *Service) Rotate(ctx context.Context, raw string) (map[string]any, error
 	var decision error
 	e := s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var u model.User
-		if e := Lock(tx).First(&u, old.UserID).Error; e != nil {
+		if e := database.Lock(tx).First(&u, old.UserID).Error; e != nil {
 			return e
 		}
 		var r model.RefreshToken

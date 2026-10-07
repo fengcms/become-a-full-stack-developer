@@ -2,11 +2,14 @@ package config
 
 import (
 	"fmt"
+	"net/netip"
 	"os"
+	"strconv"
 	"strings"
 )
 
 type Config struct {
+	CommentRejectRatio                                                                                                                      *float64
 	Address, Driver, DSN, JWTSecret, Storage, UploadDir, Origins, WechatAppID, WechatSecret, R2Endpoint, R2Bucket, R2AccessKey, R2SecretKey string
 	Production                                                                                                                              bool
 	TrustedProxies                                                                                                                          []string
@@ -28,6 +31,16 @@ func Load() (Config, error) {
 	}
 	if c.Storage != "local" && c.Storage != "r2" {
 		return c, fmt.Errorf("unsupported storage driver")
+	}
+	ratio, e := strconv.ParseFloat(env("COMMENT_REJECT_RATIO", "0.1"), 64)
+	if e != nil || ratio < 0 || ratio > 1 {
+		return c, fmt.Errorf("COMMENT_REJECT_RATIO must be between 0 and 1")
+	}
+	c.CommentRejectRatio = &ratio
+	for _, raw := range c.TrustedProxies {
+		if _, e := netip.ParsePrefix(strings.TrimSpace(raw)); e != nil {
+			return c, fmt.Errorf("TRUSTED_PROXIES must contain CIDR prefixes")
+		}
 	}
 	return c, nil
 }
