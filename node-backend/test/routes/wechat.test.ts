@@ -46,9 +46,41 @@ beforeEach(async () => {
     ),
   );
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe('微信扩展点与首次凭据设置', () => {
+  it('线上诊断仅记录原因和上游数值码，不记录凭据或响应原文', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json({
+          errcode: 40013,
+          errmsg: 'secret-do-not-return',
+          session_key: 'never-return-this',
+        }),
+      ),
+    );
+    expect((await post('/auth/wechat/callback', { code: 'private-code' })).status).toBe(500);
+    expect(warn).toHaveBeenCalledWith('[wechat.exchange]', {
+      reason: 'upstream_rejected',
+      code: 40013,
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('secret-do-not-return');
+      }),
+    );
+    expect((await post('/auth/wechat/callback', { code: 'private-code' })).status).toBe(500);
+    expect(JSON.stringify(warn.mock.calls)).not.toMatch(
+      /secret-do-not-return|never-return-this|private-code|session_key/,
+    );
+  });
+
   it('首次自动建号，后续回到同一会员，不泄露微信身份和密钥', async () => {
     const a = await wechat(),
       b = await wechat();

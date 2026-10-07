@@ -12,7 +12,10 @@ import { hashPassword } from '@/shared/password';
 async function exchange(code: string, env: AppEnv): Promise<{ appId: string; openId: string }> {
   const appId = env.WECHAT_MINI_APP_ID,
     secret = env.WECHAT_MINI_APP_SECRET;
-  if (!appId || !secret) throw new AppError(ErrCode.INTERNAL, 500, '微信登录尚未配置');
+  if (!appId || !secret) {
+    console.warn('[wechat.exchange]', { reason: 'missing_configuration' });
+    throw new AppError(ErrCode.INTERNAL, 500, '微信登录尚未配置');
+  }
   const url = new URL('https://api.weixin.qq.com/sns/jscode2session');
   url.search = new URLSearchParams({
     appid: appId,
@@ -23,10 +26,15 @@ async function exchange(code: string, env: AppEnv): Promise<{ appId: string; ope
   let body: { errcode?: number; openid?: string };
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(8000), redirect: 'error' });
-    if (!response.ok) throw new Error('upstream');
+    if (!response.ok) {
+      console.warn('[wechat.exchange]', { reason: 'http_status', status: response.status });
+      throw new Error('upstream');
+    }
     body = (await response.json()) as typeof body;
     if (!body || typeof body !== 'object') throw new Error('upstream');
   } catch {
+    // 不记录异常对象或请求 URL：它们可能包含 AppSecret 和临时 code。
+    console.warn('[wechat.exchange]', { reason: 'transport_or_invalid_response' });
     throw new AppError(ErrCode.INTERNAL, 500, '微信服务暂不可用');
   }
   if ([40029, 40163, 40226].includes(body.errcode ?? 0)) {
@@ -34,6 +42,10 @@ async function exchange(code: string, env: AppEnv): Promise<{ appId: string; ope
   }
   if (body.errcode === 45011) throw new AppError(ErrCode.RATE_LIMITED, 429);
   if (body.errcode || typeof body.openid !== 'string' || !body.openid) {
+    console.warn('[wechat.exchange]', {
+      reason: 'upstream_rejected',
+      code: typeof body.errcode === 'number' ? body.errcode : null,
+    });
     throw new AppError(ErrCode.INTERNAL, 500, '微信服务暂不可用');
   }
   return { appId, openId: body.openid };
