@@ -1,0 +1,9 @@
+{
+  "date": "2026-10-07",
+  "endpoint": "GET /api/v1/articles?page=1&pageSize=1",
+  "transport": "curl via local proxy 127.0.0.1:7897",
+  "httpStatus": 200,
+  "code": 0,
+  "items": 1,
+  "devtoolsVerified": false
+}

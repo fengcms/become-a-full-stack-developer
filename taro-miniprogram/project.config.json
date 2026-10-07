@@ -1,12 +1,35 @@
 {
   "miniprogramRoot": "dist/",
   "projectname": "befull-miniprogram",
-  "appid": "touristappid",
+  "appid": "wx3dc6aad170329a3a",
   "compileType": "miniprogram",
   "setting": {
     "urlCheck": false,
     "es6": false,
     "postcss": false,
-    "minified": false
-  }
+    "minified": false,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "enhance": false,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "editorSetting": {}
 }

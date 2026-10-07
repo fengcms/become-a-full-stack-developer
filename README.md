@@ -1,82 +1,75 @@
 # 成为一个全栈开发工程师 · 项目仓库
 
-> 用一个真实可运行的多端文章系统作素材，写一套成体系的全栈技术专栏。
-> 仓库地址：`https://github.com/fengcms/become-a-full-stack-developer`
+> 用一个真实运行的多端文章系统作素材，写一套成体系的全栈技术专栏。
+> 仓库地址：<https://github.com/fengcms/become-a-full-stack-developer>
 
-## 这个项目在做什么
+## 项目在做什么
 
 一句话：**文章是产品，代码是素材。**
 
-不是"做完系统顺便写文章"，而是"为了讲清楚全栈这件事，去建一套系统"。这个定位决定了所有取舍：
+这不是“先做完系统，再顺便写文章”，而是围绕一套真实系统逐步展开，从领域建模、API 契约与后端实现，走到管理后台、网站前台和移动 App。项目追求的是能支撑文章讲清楚的工程完整度；每个实现的技术选择、验证范围和未覆盖边界，都以仓库中的代码与记录为准。
 
-- 这个功能要不要做 → 看它对应的文章值不值得写；
-- 技术选型选哪个 → 选**能讲清楚**的，不一定选最优的；
-- 什么时候算做完 → 文章发出去才算，代码 merge 不算；
-- 做到多完善 → 做到"够支撑一篇文章的完整度"就停，不追求生产级完备。
+## 当前进度（2026-10-07）
 
-仓库是一个 **monorepo**：七个子项目作为根目录下的顶级目录共存于同一份 git 历史。这样做的唯一原因是——一个 git tag `article/Mx-yy` 能一次性 checkout 出"该篇文章发布时整个系统的代码状态"。
+| 阶段 | 实现 / 目录 | 当前状态 |
+|---|---|---|
+| M0 · 开篇与规划 | `articles/`、`docs/prd/` | 8 篇已发布 |
+| M1 · Node 后端 | [`node-backend/`](node-backend/)、`articles/M1-*.md` | 后端实现完成；31 篇已发布；首个冻结版本为 `node-backend-v1.0`，后续维护版本见 Git tags |
+| M2 · React / Vite 管理后台 | [`manage-frontend/`](manage-frontend/)、`articles/M2-*.md` | 管理后台实现完成；22 篇已发布 |
+| M3 · Next.js 网站前台（含会员中心） | [`web-frontend/`](web-frontend/)、`articles/M3-*.md` | 网站前台实现完成；24 篇已发布 |
+| M4 · Flutter App | [`flutter-app/`](flutter-app/)、`articles/M4-*.md` | App 实现完成，28 篇文章已写完并按评审意见优化；Android 本机验收完成，文章尚待发布 |
+| M5 · Taro 小程序 | 待建 | 尚未开始 |
+| M6 · Go 后端重写 | `go-backend/` 待建 | 尚未开始；目标是复用同一 API 契约 |
+| M7 · Vue 3 管理后台重写 | 待建 | 尚未开始；目标是复用同一 API 契约 |
+| M8 · 收官复盘 | — | 待开始 |
 
-## 仓库里有什么
+目前 M0–M3 共 85 篇文章已发布；M4 的 28 篇稿件在 `articles/` 中，发布后再将 CSDN 链接补入 [`ARTICLES.md`](ARTICLES.md)。M4 的 iOS 构建、真机验收、生产签名与商店发布尚未完成，具体边界见 [Flutter 交付与本机验收记录](docs/flutter-app/09-开发交付与本机验收.md)。
 
-| 路径 | 说明 |
+## 仓库结构
+
+| 路径 | 用途 |
 |---|---|
-| `articles/` | 写作期草稿。M0 产品侧八篇已回炉就绪（待出图 + 发布）；M1 起每个 M 的草稿随写作追加 |
-| `node-backend/` | **M1 Node 后端**：文章系统 API 的首个实现（Hono + Drizzle + D1/R2，兼容 Linux） |
-| `docs/` | 工程公约与权威文档：`prd/00-项目章程.md`、`02-领域模型与API契约.md`、`api/openapi.v1.yaml`（冻结契约）、`node-backend/`（M1 计划/交付/审阅）、`prd/`（批次任务包） |
-| `ARTICLES.md` | 「文章标题 ↔ git tag ↔ 代码位置 ↔ CSDN 链接」对照表，工程的导航中枢 |
-| `docs/M0-回炉丰富度改造清单.md` 等 | M0 写作期的过程文档 |
+| `articles/` | M0–M4 的文章源稿；M0–M3 已发布，M4 目前为待发布稿 |
+| `docs/prd/` | 项目章程、领域模型、API 契约设计和内容路线图 |
+| `docs/api/openapi.v1.yaml` | 多端共用的 OpenAPI 契约，当前冻结版本 `1.11.0` |
+| `docs/flutter-app/` | Flutter 产品规格、工程方案、评审、交付与缓存验收记录 |
+| `docs/manage-frontend/`、`docs/web-frontend-codex/` | 管理后台与网站前台的设计、开发和验收资料 |
+| `node-backend/` | Node.js API 后端，支持 Cloudflare Workers 与 Node/Linux 运行环境 |
+| `manage-frontend/` | React + Vite 管理后台 |
+| `web-frontend/` | Next.js 网站前台与会员中心 |
+| `flutter-app/` | Flutter Android / iOS 客户端 |
+| `ARTICLES.md` | 已发布文章的标题、源稿、CSDN 链接与发布状态索引 |
 
-## 七个子项目（波次串行，一个 M 只讲一件实现）
+M1–M7 是七个实现阶段；M0 是前期规划，M8 是最终复盘，不对应独立代码库。后续阶段会按路线图顺序推进，不把尚未开始的 M5–M7 写成已交付内容。
 
-| M 系列 | 实现 | 目录 | 优先级 |
-|---|---|---|---|
-| M0 | 开篇与规划（产品侧文章，无独立代码库） | `articles/` | 已完成草稿 |
-| M1 | Node 后端（API 首实现） | `node-backend/` | 必做 |
-| M2 | Vite + React 管理后台 | `manage-frontend/` | 必做 |
-| M3 | Next.js 网站前台（含会员中心） | `web-frontend/` | 必做 |
-| M4 | Flutter App | `app-frontend/` | 可延后 |
-| M5 | Taro 微信小程序 | 待建 | 可延后 |
-| M6 | Go 后端重写（同契约） | `go-backend/` | 可延后 |
-| M7 | Vue3 管理后台重写（同契约） | 待建 | 可延后 |
-| M8 | 收官 | — | 必做 |
+## API 契约是多端协作的基础
 
-**为什么串行**：M1+M2 跑通后手里有可发布内容，后面每一波都是在此基础上加码；并行推进的结局通常是七个半成品和零篇文章。
+- 唯一事实源：[`docs/api/openapi.v1.yaml`](docs/api/openapi.v1.yaml)，当前版本 `1.11.0`。
+- 领域设计：[领域模型与 API 契约](docs/prd/02-领域模型与API契约.md)。
+- 内容与阶段：[内容路线图](docs/prd/01-内容路线图.md)。
+- 后端、React、Next.js 与 Flutter 复用相同的接口语义；未来的 Go 与 Vue 3 实现也以该契约为对齐目标。
+- 修改契约时，先更新契约和领域说明，再同步实现与验证；不要仅为了某一个客户端悄悄改变服务端行为。
 
-## 唯一的硬地基：API 契约
+## 文章与代码如何对应
 
-七个子项目之间，只有一样东西是刚性的——**API 契约与领域模型**。它定歪了，后面六个子项目全部返工。
+项目使用**里程碑 tag**锁定契约或实现版本，不为每篇文章单独打 tag。已存在的例子包括 `contract-v1.11.0`、`node-backend-v1.0` 和后续 Node 后端维护 tag。文章的源稿与发布链接由 `ARTICLES.md` 索引；各项目的启动和验证方式以对应目录 README、工程记录及验收文档为准。
 
-- 单一事实源：`docs/api/openapi.v1.yaml`（OpenAPI 3.1，当前冻结版本 `1.11.0`）
-- 设计说明：`docs/prd/02-领域模型与API契约.md`
-- 双重门禁守护：结构门（`openapi-spec-validator`）+ 语义门（`docs/api/check_contract.py`，33 条 OK 断言）。任何契约变更必须先改文档、再改实现
-- Go 后端要实现与 Node 后端**完全一致**的接口；Vue3 后台对接与 React 后台**完全一致**的接口；Flutter / Taro 复用同一套 API
+```bash
+git tag --list
+git checkout <里程碑 tag>
+```
 
-## 文章与代码的对应机制
+## 从哪里开始
 
-教程类系列的关键工程实践，不做读者就跟不上：
+- **按专栏顺序阅读**：从 CSDN 博客 [FungLeo](https://blog.csdn.net/fungleo) 开始，或先看 [`ARTICLES.md`](ARTICLES.md) 中已发布文章的索引。
+- **了解整体规划**：阅读 [项目章程](docs/prd/00-项目章程.md) 和 [内容路线图](docs/prd/01-内容路线图.md)。
+- **运行某个子项目**：进入对应目录，按它自己的 README 安装依赖、配置环境并执行验证；Flutter 的命令与环境隔离说明见 [`flutter-app/README.md`](flutter-app/README.md)。
+- **复核 M4 实际交付**：查看 [Flutter 开发交付与本机验收](docs/flutter-app/09-开发交付与本机验收.md) 及 [缓存优化实施与验收](docs/flutter-app/14-缓存优化实施与验收.md)。
 
-1. 代码采用**里程碑式 git tag**（不打 per-article tag）：契约冻结打 `contract-v1.11.0`、各端代码冻结打 `node-backend-v1.0` / `go-backend-v1.0` 等；
-2. 读者 `git checkout node-backend-v1.0` 拿到该端冻结时的完整代码状态；
-3. 文章正文说明本篇讲解的代码落在哪个里程碑区间内；
-4. `ARTICLES.md` 维护「标题 ↔ 链接 ↔ 里程碑 tag」对照表；
-5. 对旧代码的重构不回改历史 tag，在新文章里说明演进。
+请勿将本地测试账号、`.env` 文件、数据库或 `.local/` 测试数据用于线上环境。生产配置与平台发布需要按相应项目的部署记录单独核对。
 
-## 当前进度
+## 作者
 
-| 阶段 | 状态 |
-|---|---|
-| **M0 产品侧八篇** | 已发布 CSDN（八篇全 🟢，链接回填本表）；标题体系 / 内链占位 / 配图占位 / 文末 CTA / 字数达标均已落地 |
-| **M1 Node 后端** | 开发完成（53 路径 / 67 操作，对齐冻结契约）；结构调优完成（routes/services/shared/types 分层，133 测试 + 双门 33 OK 全绿）；**2026-08-27 已正式冻结（tag `node-backend-v1.0`）** |
-| **M2 React 管理后台** | 文章草稿就绪（共 22 篇：M2-01 已发布，M2-02~M2-22 待发布）；M3–M8 未开始 |
-
-## 如何阅读
-
-- **读者（主线）**：去 CSDN 博客 `blog.csdn.net/fungleo` 按 M0→M8 顺序读；每篇开头标注依赖的前置篇目。
-- **想跑代码**：`git clone` 后 `git checkout article/Mx-yy` 切到对应篇目的代码状态，再进入对应子项目目录按各自的 README 启动。
-- **贡献 / 复核**：所有工程约定以 `docs/prd/00-项目章程.md` 为准；契约变更走「先改 `openapi.v1.yaml` → 再改实现 → 跑双门」流程。
-
-## 作者与许可
-
-- 作者：**FungLeo**（CSDN 前端专家，十年 Node.js 全栈）
-- 主发布阵地：CSDN 博客 `blog.csdn.net/fungleo`
-- 本仓库为配套源码与工程文档，随专栏写作持续演进。
+- 作者：**FungLeo**
+- 主发布阵地：<https://blog.csdn.net/fungleo>
+- 仓库持续记录文章源稿、可运行实现与工程决策；已发布状态以 `ARTICLES.md` 为准。

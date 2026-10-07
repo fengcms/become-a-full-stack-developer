@@ -1,0 +1,63 @@
+2026-10-07
+Taro 4.3.0 / webpack 5.98.0
+Command: pnpm build:weapp
+Exit code: 0
+de_modules/@tarojs/runtime/dist/e
+nv.js
+
+
+● Webpack █████████████████████████ building (28%) 2/6 entries 100/114 depende
+ncies 10/71 modules 61 active 
+ ...s/.pnpm/@babel+runtime@7.29.7/node_modules/@babel/runtime/helpers/esm/type
+of.js
+
+
+● Webpack █████████████████████████ building (28%) 2/6 entries 102/142 depende
+ncies 11/72 modules 61 active 
+ .../@babel+runtime@7.29.7/node_modules/@babel/runtime/helpers/esm/toPropertyK
+ey.js
+
+
+● Webpack █████████████████████████ building (28%) 2/6 entries 311/341 depende
+ncies 43/100 modules 56 active 
+ ...m/@babel+runtime@7.29.7/node_modules/@babel/runtime/helpers/esm/superPropG
+et.js
+
+
+● Webpack █████████████████████████ building (28%) 2/6 entries 341/357 depende
+ncies 49/111 modules 61 active 
+ ...ules/.pnpm/@babel+runtime@7.29.7/node_modules/@babel/runtime/helpers/esm/g
+et.js
+
+
+● Webpack █████████████████████████ building (28%) 2/6 entries 417/419 depende
+ncies 81/128 modules 47 active 
+ ...es/.pnpm/@tarojs+shared@4.3.0/node_modules/@tarojs/shared/dist/runtime-hoo
+ks.js
+
+
+● Webpack █████████████████████████ building (55%) 5/6 entries 438/438 depende
+ncies 131/137 modules 5 active 
+ ...bd14296d668769b7c98855fb23/node_modules/css-loader/dist/runtime/noSourceMa
+ps.js
+
+
+● Webpack █████████████████████████ sealing (78%)  
+ chunk modules optimization
+
+
+● Webpack █████████████████████████ sealing (89%)  
+ hashing
+
+
+● Webpack █████████████████████████ sealing (92%) asset processing 
+ CssMinimizerPlugin
+
+
+● Webpack █████████████████████████ sealing (92%) asset processing 
+ RealContentHashPlugin
+
+
+✔ Webpack
+  Compiled successfully in 3.10s
+
