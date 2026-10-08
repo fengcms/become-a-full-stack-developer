@@ -1,4 +1,4 @@
-// Package article owns content visibility and publishing workflows.
+// Package article 管理文章可见性和发布流程。
 package article
 
 import (

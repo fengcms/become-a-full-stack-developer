@@ -1,4 +1,4 @@
-// Package taxonomy owns category trees and the tag catalog.
+// Package taxonomy 管理分类树和标签目录。
 package taxonomy
 
 import (

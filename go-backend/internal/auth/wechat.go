@@ -19,6 +19,7 @@ import (
 
 // WechatClient 定义 code 换 openid 的最小边界，业务层不依赖具体 HTTP 客户端。
 type WechatClient interface {
+	// Exchange 将一次性微信 code 换成 openid，失败返回错误，不持久化用户。
 	Exchange(context.Context, string) (string, error)
 }
 

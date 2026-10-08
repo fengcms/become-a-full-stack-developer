@@ -1,4 +1,4 @@
-// Package bootstrap is the only place that wires concrete domain services.
+// Package bootstrap 集中装配具体领域服务及基础设施。
 package bootstrap
 
 import (

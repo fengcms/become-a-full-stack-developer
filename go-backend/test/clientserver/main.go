@@ -1,5 +1,5 @@
-// Test-only local HTTP fixture. It uses a fake WeChat exchange and an isolated
-// temporary SQLite database. It is never assembled by cmd/server.
+// Package main 提供隔离的本地 HTTP 测试夹具，使用微信替身及临时 SQLite 数据库。
+// 此命令不参与 cmd/server 的装配。
 package main
 
 import (

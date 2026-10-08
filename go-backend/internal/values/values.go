@@ -1,4 +1,4 @@
-// Package values holds validated partial input and shared wire primitives.
+// Package values 提供经过校验的部分输入及共享传输值。
 package values
 
 import (

@@ -1,4 +1,3 @@
-// Package model contains persistence rows, never HTTP responses.
 package model
 
 // Comment 评论持久化行，parentId 保持平面回复关系。

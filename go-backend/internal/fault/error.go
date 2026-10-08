@@ -1,4 +1,4 @@
-// Package fault defines transport-independent business failures.
+// Package fault 定义不依赖传输协议的业务错误。
 package fault
 
 import (

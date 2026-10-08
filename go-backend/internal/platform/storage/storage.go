@@ -1,4 +1,4 @@
-// Package storage contains byte-object adapters, independent of attachments.
+// Package storage 提供独立于附件业务的字节对象存储适配器。
 package storage
 
 import (
@@ -12,8 +12,11 @@ import (
 
 // Provider 定义对象的写、读、删能力，不感知用户和文章关系。
 type Provider interface {
+	// Put 将字节内容写入对象键，最后一个参数为内容类型；不处理业务归属。
 	Put(context.Context, string, []byte, string) error
+	// Get 读取对象内容；对象不存在时返回 nil、nil，存储故障返回错误。
 	Get(context.Context, string) ([]byte, error)
+	// Delete 删除对象；共享引用检查和失败补偿由附件服务负责。
 	Delete(context.Context, string) error
 }
 

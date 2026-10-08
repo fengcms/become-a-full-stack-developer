@@ -1,4 +1,4 @@
-// Package contract loads the checked-in, generated snapshot of the frozen API.
+// Package contract 加载已提交的冻结接口契约生成快照。
 package contract
 
 import (

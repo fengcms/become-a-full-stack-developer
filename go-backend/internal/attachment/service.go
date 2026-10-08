@@ -1,4 +1,4 @@
-// Package attachment owns upload metadata and shared object lifecycles.
+// Package attachment 管理附件元数据和共享对象生命周期。
 package attachment
 
 import (

@@ -1,4 +1,3 @@
-// Package model contains persistence rows, never HTTP responses.
 package model
 
 // Attachment 附件元数据，存储对象和所有者通过字段关联。

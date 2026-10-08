@@ -1,4 +1,4 @@
-// Package httpapi owns HTTP only: routing, validation, cookies and envelopes.
+// Package httpapi 管理 HTTP 路由、校验、Cookie 和响应信封。
 package httpapi
 
 import (
@@ -20,6 +20,7 @@ import (
 
 // Identity 提供传输层需要的 JWT 解析能力，不暴露认证数据库操作。
 type Identity interface {
+	// Parse 校验访问令牌并返回身份，失败不生成身份。
 	Parse(string) (values.Actor, error)
 }
 

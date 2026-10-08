@@ -1,4 +1,4 @@
-// Package auth owns accounts, sessions and local credentials.
+// Package auth 管理账号、会话和本地登录凭据。
 package auth
 
 import (

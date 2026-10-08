@@ -1,4 +1,3 @@
-// Package model contains persistence rows, never HTTP responses.
 package model
 
 // History 阅读历史行，可空进度区分没有记录与明确的零。

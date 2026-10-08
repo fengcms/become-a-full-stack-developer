@@ -1,4 +1,4 @@
-// Package comment owns moderation and reply relationships.
+// Package comment 管理评论审核和回复关系。
 package comment
 
 import (

@@ -1,4 +1,3 @@
-// seed 只显式执行，拒绝覆盖已有账号。
 package main
 
 import (

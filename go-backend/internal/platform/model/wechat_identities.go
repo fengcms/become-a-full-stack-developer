@@ -1,4 +1,3 @@
-// Package model contains persistence rows, never HTTP responses.
 package model
 
 // WechatIdentity AppID 和 openid 到本地用户的绑定，不保存 session_key。

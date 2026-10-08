@@ -1,4 +1,3 @@
-// Package model contains persistence rows, never HTTP responses.
 package model
 
 // Like 用户与文章的点赞关系，文章计数必须与关系行数一致。

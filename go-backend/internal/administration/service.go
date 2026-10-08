@@ -1,4 +1,4 @@
-// Package administration owns user administration and site configuration.
+// Package administration 管理后台用户操作和站点配置。
 package administration
 
 import (

@@ -1,4 +1,4 @@
-// Package notification writes explicit domain events using the caller's transaction.
+// Package notification 使用调用者的事务写入明确的领域通知。
 package notification
 
 import (

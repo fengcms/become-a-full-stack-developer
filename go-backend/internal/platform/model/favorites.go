@@ -1,4 +1,3 @@
-// Package model contains persistence rows, never HTTP responses.
 package model
 
 // Favorite 用户与文章的收藏关系，唯一约束确保重复收藏幂等。

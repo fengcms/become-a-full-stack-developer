@@ -14,7 +14,8 @@ seed:
 test:
 	go test ./... -count=1
 verify:
-	test -z "$$(gofmt -l cmd internal test)"
+	test -z "$$(gofmt -l cmd internal test scripts/doccheck)"
+	go run ./scripts/doccheck .
 	go vet ./...
 	node scripts/sync-contract.cjs --check
 	go test ./... -count=1

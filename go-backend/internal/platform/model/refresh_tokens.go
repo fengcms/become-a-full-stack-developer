@@ -1,4 +1,3 @@
-// Package model contains persistence rows, never HTTP responses.
 package model
 
 // RefreshToken 刷新会话行，只保存令牌哈希、有效期和撤销时间。

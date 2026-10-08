@@ -1,4 +1,3 @@
-// Package model contains persistence rows, never HTTP responses.
 package model
 
 // Article 文章持久化行，毫秒时间和显式软删除字段与 Node 数据一致。

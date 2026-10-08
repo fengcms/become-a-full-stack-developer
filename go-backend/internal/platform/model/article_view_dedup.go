@@ -1,4 +1,3 @@
-// Package model contains persistence rows, never HTTP responses.
 package model
 
 // ViewDedup 文章阅读的去重键和滚动窗口起点，不参与历史数据迁移。

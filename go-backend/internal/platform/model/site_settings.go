@@ -1,4 +1,3 @@
-// Package model contains persistence rows, never HTTP responses.
 package model
 
 // SiteSetting ID 固定为 1 的站点设置行，可空字段保留清空语义。

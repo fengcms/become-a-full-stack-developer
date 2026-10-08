@@ -1,4 +1,4 @@
-// Package member owns self-scoped interactions, reading and notifications.
+// Package member 管理会员自己的互动、阅读记录和通知。
 package member
 
 import (

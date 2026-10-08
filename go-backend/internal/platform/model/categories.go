@@ -1,4 +1,3 @@
-// Package model contains persistence rows, never HTTP responses.
 package model
 
 // Category 分类节点，parentId 表示父节点，层级限制由领域服务检查。
