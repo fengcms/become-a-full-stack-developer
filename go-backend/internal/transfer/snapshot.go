@@ -1,5 +1,5 @@
-// Package transfer implements an offline, versioned data format. It never
-// changes the source database and does not copy active sessions or view dedup.
+// Package transfer 提供离线版本化数据格式，不修改源数据库。
+// 快照不复制有效刷新会话和阅读去重记录。
 package transfer
 
 import (
@@ -134,7 +134,7 @@ func (s *Snapshot) Counts() map[string]int {
 	return out
 }
 
-// CanonicalJSON enables exact source/target checks without metadata timestamps.
+// CanonicalJSON 按 ID 排序业务行，便于逐表核对源和目标，不包含快照元数据。
 func (s *Snapshot) CanonicalJSON() ([]byte, error) {
 	for _, rows := range s.Tables {
 		sort.Slice(rows, func(i, j int) bool { a, _ := integer(rows[i]["id"]); b, _ := integer(rows[j]["id"]); return a < b })

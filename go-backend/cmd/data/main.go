@@ -52,7 +52,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		// Snapshots contain password hashes and identities; never overwrite silently.
+		// 快照包含密码哈希和微信身份，不能静默覆盖已有文件。
 		out, err := os.OpenFile(*file, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 		if err != nil {
 			log.Fatal(err)

@@ -11,9 +11,9 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// Metrics records aggregate driver-call elapsed time without SQL or arguments.
-// It is optional diagnostic instrumentation, not an HTTP/public metrics API.
-// Time includes GORM overhead; it is not PostgreSQL server execution time.
+// Metrics 汇总数据库调用耗时，不记录 SQL 或参数。
+// 它是可选进程诊断，不是公开 HTTP 监控接口。
+// 耗时包括 GORM 开销，不能当作 PostgreSQL 服务端执行耗时。
 type Metrics struct{ queries, failures, nanos, max atomic.Int64 }
 
 // Observe 安装只记录聚合耗时的 GORM 日志器，避免采集 SQL 和参数。

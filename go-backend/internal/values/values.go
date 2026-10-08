@@ -36,7 +36,7 @@ func (f Fields) Int(k string) int64 {
 // Bool 读取已校验的布尔值，缺失时返回 false。
 func (f Fields) Bool(k string) bool { b, _ := f[k].(bool); return b }
 
-// Text 将字符串转换为指针，可空输入返回 nil。
+// Text 读取已校验的字符串字段；字段缺失或值为 NULL 时返回 nil。
 func (f Fields) Text(k string) *string {
 	if f[k] == nil {
 		return nil
@@ -70,7 +70,7 @@ func (f Fields) Strings(k string) []string {
 	return r
 }
 
-// Text 将字符串转换为指针，可空输入返回 nil。
+// Text 返回字符串的非 nil 指针；空字符串也保留为指向空串的指针。
 func Text(s string) *string { return &s }
 
 // ISO 把数据库毫秒时间转换为契约要求的 UTC 毫秒时间字符串。
@@ -119,7 +119,7 @@ type Page struct {
 // Paging 使用通用默认20和上限100解析分页；专用端点调用 PagingWith。
 func Paging(q url.Values) Page { return PagingWith(q, 20, 100) }
 
-// PagingWith preserves endpoint-specific frozen defaults and limits.
+// PagingWith 使用端点指定的默认分页大小和上限，保留冻结契约的差异。
 func PagingWith(q url.Values, defaultSize, maxSize int) Page {
 	p, _ := strconv.Atoi(q.Get("page"))
 	s, _ := strconv.Atoi(q.Get("pageSize"))

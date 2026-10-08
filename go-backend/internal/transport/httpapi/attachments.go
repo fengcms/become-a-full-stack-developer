@@ -11,6 +11,26 @@ import (
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
 )
 
+// fileContentTypes 与 acceptedUploadTypes 是包内只读的直出和上传白名单。
+var fileContentTypes = map[string]string{
+	".png":  "image/png",
+	".jpg":  "image/jpeg",
+	".jpeg": "image/jpeg",
+	".gif":  "image/gif",
+	".webp": "image/webp",
+	".svg":  "image/svg+xml",
+	".pdf":  "application/pdf",
+}
+
+var acceptedUploadTypes = map[string]bool{
+	"image/png":       true,
+	"image/jpeg":      true,
+	"image/gif":       true,
+	"image/webp":      true,
+	"image/svg+xml":   true,
+	"application/pdf": true,
+}
+
 // BindAttachments 注册附件上传、本人附件查询和文件直出。
 func (a *App) BindAttachments(s *attachment.Service) {
 	a.Register("uploadFile", func(r Request) (any, error) {
@@ -29,15 +49,7 @@ func (a *App) BindAttachments(s *attachment.Service) {
 			a.failure(w, err)
 			return
 		}
-		mime := map[string]string{
-			".png":  "image/png",
-			".jpg":  "image/jpeg",
-			".jpeg": "image/jpeg",
-			".gif":  "image/gif",
-			".webp": "image/webp",
-			".svg":  "image/svg+xml",
-			".pdf":  "application/pdf",
-		}[strings.ToLower(filepath.Ext(key))]
+		mime := fileContentTypes[strings.ToLower(filepath.Ext(key))]
 		if mime == "" {
 			mime = "application/octet-stream"
 		}
@@ -66,15 +78,8 @@ func uploadFile(r Request, s *attachment.Service) (any, error) {
 	}
 	f := files[0]
 	mime := f.Header.Get("Content-Type")
-	accepted := map[string]bool{
-		"image/png":       true,
-		"image/jpeg":      true,
-		"image/gif":       true,
-		"image/webp":      true,
-		"image/svg+xml":   true,
-		"application/pdf": true,
-	}
-	if !accepted[mime] {
+
+	if !acceptedUploadTypes[mime] {
 		return nil, fault.Field("file", "文件类型不合法（须为图片或 PDF）")
 	}
 	if f.Size > 10*1024*1024 {

@@ -24,7 +24,7 @@ type Service struct {
 // New 创建文章服务，时钟可在边界测试中替换。
 func New(db *gorm.DB) *Service { return &Service{DB: db, Now: time.Now} }
 
-// Get 按 ID 或 slug 获取未删除文章；服务方法还检查访问者可见性。
+// Get 按 ID 或 slug 查询未软删除文章，不判断发布状态或访问者权限。
 func Get(db *gorm.DB, key string) (model.Article, error) {
 	var a model.Article
 	q := db.Scopes(database.ActiveArticles)
@@ -49,7 +49,7 @@ func Published(db *gorm.DB, id int64) (model.Article, error) {
 	return a, nil
 }
 
-// Get 按 ID 或 slug 获取未删除文章；服务方法还检查访问者可见性。
+// Get 返回访问者可见的文章详情；未发布文章仅作者或管理员可读取。
 func (s *Service) Get(ctx context.Context, key string, actor values.Actor) (map[string]any, error) {
 	a, err := Get(s.DB.WithContext(ctx), key)
 	if err != nil {
@@ -61,18 +61,21 @@ func (s *Service) Get(ctx context.Context, key string, actor values.Actor) (map[
 	return Detail(a), nil
 }
 
+// sortColumns 是包内只读排序白名单，不能由请求扩展 SQL 字段。
+var sortColumns = map[string]string{
+	"publishedAt": "COALESCE(articles.published_at,articles.created_at)",
+	"createdAt":   "articles.created_at",
+	"viewCount":   "articles.view_count",
+}
+
 // Sort 将允许的排序字段映射为固定 SQL，并追加 ID 保证顺序稳定。
 func Sort(raw string) string {
 	desc := strings.HasPrefix(raw, "-")
 	field := strings.TrimPrefix(raw, "-")
-	cols := map[string]string{
-		"publishedAt": "COALESCE(articles.published_at,articles.created_at)",
-		"createdAt":   "articles.created_at",
-		"viewCount":   "articles.view_count",
-	}
-	col, ok := cols[field]
+
+	col, ok := sortColumns[field]
 	if !ok {
-		col = cols["publishedAt"]
+		col = sortColumns["publishedAt"]
 		desc = true
 	}
 	dir := "ASC"

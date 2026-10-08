@@ -104,7 +104,7 @@ func (s *Service) WechatLogin(ctx context.Context, code string) (map[string]any,
 
 	now := s.Now().UnixMilli()
 	var result map[string]any
-	// Unique identity resolves competing first logins. Retry only a unique race after rollback.
+	// 唯一身份约束裁决并发建号；仅在唯一键冲突且事务回滚后重试。
 	for attempt := 0; attempt < 2; attempt++ {
 		err = s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 			var identity model.WechatIdentity

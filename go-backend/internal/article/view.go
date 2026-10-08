@@ -26,7 +26,7 @@ articles.published_at,
 articles.created_at,
 articles.updated_at`
 
-// Tags 解码文章保存的标签 JSON，缺失或非法值返回空数组。
+// Tags 解码内部标签数组投影，并将 nil 结果规范为空数组。
 func Tags(raw *string) []string {
 	list := []string{}
 	if raw != nil {

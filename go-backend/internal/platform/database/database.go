@@ -93,8 +93,8 @@ func Migrate(ctx context.Context, db *gorm.DB, driver string) error {
 	return err
 }
 
-// ReadOnlyDSN prevents export from creating a missing SQLite source or changing
-// its journal mode. Other drivers enforce READ ONLY on the export transaction.
+// ReadOnlyDSN 防止 SQLite 导出创建缺失源库或改变日志模式。
+// 其他驱动通过导出事务的 READ ONLY 选项限制写入。
 func ReadOnlyDSN(driver, dsn string) (string, error) {
 	if driver != "sqlite" {
 		return dsn, nil
