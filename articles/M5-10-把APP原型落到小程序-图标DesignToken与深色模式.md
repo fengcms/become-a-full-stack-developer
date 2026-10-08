@@ -22,42 +22,64 @@
 
 但“同一个图标”不意味着任何场景都用同一种颜色。普通状态、深色状态和选中状态分别服务不同层级。设计资产复用的对象是形状与语义，资源形式可以随平台改变。
 
+还有一点值得说明：拿到原型路径不等于拿到一套设计系统。原型里没有写清楚的地方——比如空状态用什么图标、危险操作用哪个颜色——仍要由实现者补齐。补齐的前提是承认这些位置原来没有定义，而不是假装原型已经涵盖。
+
 ## 二、颜色命名要说明用途
 
 `app.scss` 的页面根节点集中定义了颜色变量：
 
 ```scss
-/* 从当前样式中提取的关键变量。 */
+/* 从 src/app.scss 的 .screen 规则中提取的关键变量。 */
 .screen {
-  --bg: #f7fafd;
-  --surface: #fff;
-  --line: #e9eff5;
-  --text: #34465a;
-  --brand: #3277b5;
+  --bg:#f7fafd;
+  --surface:#fff;
+  --sunken:#f5f9fc;
+  --line:#e9eff5;
+  --title:#2f4256;
+  --text:#34465a;
+  --muted:#607286;
+  --brand:#3277b5;
+  --wash:#edf5fc;
+  --danger:#9e3d3d;
 }
 .screen.dark {
-  --bg: #121820;
-  --surface: #1a222c;
-  --line: #2e3a46;
-  --text: #c6d2de;
-  --brand: #7fb6e4;
+  --bg:#121820;
+  --surface:#1a222c;
+  --sunken:#161c24;
+  --line:#2e3a46;
+  --title:#e8eff6;
+  --text:#c6d2de;
+  --muted:#8fa0b2;
+  --brand:#7fb6e4;
+  --wash:#1c2e3e;
+  --danger:#ef9a9a;
 }
 ```
 
 为什么不叫 `blue1`、`blue2`？因为组件需要知道“这是品牌操作色”，而不是“这是第几号蓝”。当背景变深时，品牌色要保持可辨识，正文也要重新确定亮度。颜色的职责稳定，具体值可以随主题切换。
 
-当前还区分标题、次要文字、凹陷区域、浅色强调和危险操作。代码块、评论回复楼层、输入框不能都使用同一种底色，否则深色页面容易变成一片无法分层的灰。
+仔细看两套取值，会发现深色不是简单调暗：`--surface` 与 `--bg` 的差距被拉开，`--line` 从亮色下的浅灰换成更亮的灰蓝，`--danger` 也从暗红提亮成粉红。这些调整都服务于同一件事——让层级在深色下仍然看得见。
+
+当前还区分标题、次要文字、凹陷区域、浅色强调和危险操作。代码块、评论回复楼层、输入框不能都使用同一种底色，否则深色页面容易变成一片无法分层的灰。命名一旦按用途来写，新增组件时就能先问“它属于哪一层”，而不是先问“它该用哪个色号”。
 
 这些变量不是覆盖所有设计知识的完整平台。字号与间距目前仍主要集中在样式类中，没有单独建立一个可跨语言自动生成的 Token 包。文章应如实描述当前范围，而不是把几组变量说成庞大设计系统。
 
 ## 三、主题有三个选择，实际显示只有两个结果
 
-用户可以选择 light、dark、system。前两者固定主题，system 跟随系统变化。当前结果由一个快照函数计算：
+用户可以选择 light、dark、system。前两者固定主题，system 跟随系统变化。用户偏好与实际结果必须分开保存：
 
 ```ts
-// src/core/theme.ts
-const snapshot = () =>
-  mode === 'system' ? (systemDark ? 'dark' : 'light') : mode;
+// src/core/theme.ts（节选）：用户偏好与实际主题分开保存。
+export type ThemeMode = "light" | "dark" | "system";
+let mode: ThemeMode = ["system", "light", "dark"].includes(Taro.getStorageSync("befull:theme"))
+  ? Taro.getStorageSync("befull:theme")
+  : "system";
+let systemDark = Taro.getAppBaseInfo().theme === "dark";
+const snapshot = () => (mode === "system" ? (systemDark ? "dark" : "light") : mode);
+export function setTheme(value: ThemeMode) {
+  mode = value;
+  Taro.setStorageSync("befull:theme", value);
+}
 ```
 
 这个区别很重要。设置页应展示用户选择的 mode；页面需要的是计算后的实际主题。如果直接把当前深色结果保存为用户偏好，跟随系统就会悄悄变成固定深色。
@@ -65,23 +87,74 @@ const snapshot = () =>
 主题模块使用 `useSyncExternalStore` 通知组件。`Screen` 根据结果加主题类，`Icon` 根据结果选资源：
 
 ```tsx
-<Image
-  className="icon"
-  src={`/assets/icons/${name}-${active ? 'active' : theme}.png`}
-/>
+// src/components/ui.tsx（节选）：Screen 加主题类，Icon 选资源。
+export function Icon({ name, active = false }: { name: string; active?: boolean }) {
+  const theme = useTheme();
+  return <Image className="icon" src={`/assets/icons/${name}-${active ? "active" : theme}.png`} />;
+}
+export function Screen({ children }: PropsWithChildren) {
+  const theme = useTheme();
+  useDidShow(applyTheme);
+  return (
+    <View className={`screen ${theme}`} onClick={() => Taro.hideKeyboard().catch(() => {})}>
+      {children}
+    </View>
+  );
+}
 ```
 
 这段代码保护的是页面图标的一致性。原生 Tab 的图标仍由静态配置指定，当前没有动态替换其 light/dark 图片路径。原生 Tab 文字和背景会更新，但不能因此声称所有原生图标都已动态换色。
+
+```ts
+// src/app.config.ts（节选）：原生 Tab 图标路径是静态配置。
+tabBar: {
+  color: "#607286",
+  selectedColor: "#3277b5",
+  backgroundColor: "#ffffff",
+  list: [
+    {
+      pagePath: "pages/index/index",
+      iconPath: "assets/icons/home-light.png",
+      selectedIconPath: "assets/icons/home-active.png",
+    },
+  ],
+},
+darkmode: true,
+```
+
+`darkmode: true` 只是告诉平台这个工程准备了深色资源，它不会替页面决定用哪一张图；真正的切换仍在 `Icon` 里完成。这段静态配置也解释了前文那句话：Tab 图标为什么不会随主题自动换色——它的路径在编译期就已经写死。
 
 {{IMG:M5-10-主题联动}}
 
 ## 四、页面之外的颜色，也要有人负责
 
-只改 `.screen.dark`，顶部导航栏与底部原生 Tab 仍可能是亮色。项目的 `applyTheme` 同时调用导航栏颜色、页面背景和 Tab 样式 API。
+只改 `.screen.dark`，顶部导航栏与底部原生 Tab 仍可能是亮色。项目的 `applyTheme` 同时调用导航栏颜色、页面背景和 Tab 样式 API：
+
+```ts
+// src/core/theme.ts（节选）：导航栏、背景和 Tab 一起跟随主题。
+export function applyTheme() {
+  const dark = snapshot() === "dark";
+  Taro.setNavigationBarColor({
+    frontColor: dark ? "#ffffff" : "#000000",
+    backgroundColor: dark ? "#121820" : "#ffffff",
+  }).catch(() => {});
+  Taro.setBackgroundColor({
+    backgroundColor: dark ? "#121820" : "#f7fafd",
+    backgroundColorTop: dark ? "#121820" : "#f7fafd",
+  }).catch(() => {});
+  Taro.setTabBarStyle({
+    color: dark ? "#8fa0b2" : "#607286",
+    selectedColor: dark ? "#7fb6e4" : "#3277b5",
+    backgroundColor: dark ? "#1a222c" : "#ffffff",
+  }).catch(() => {});
+}
+```
 
 页面显示时再次应用主题，系统主题改变时也会更新。这样，用户从设置返回文章，不依赖文章页重新挂载才能获得正确原生颜色。
 
 平台 API 失败在这里被捕获，避免某个不适用的原生区域让整个页面崩溃。但捕获不是“所有平台行为都验证通过”。视觉验收仍应观察标题栏、Tab、键盘和正文，而不能只检查根节点类名。
+
+把这件事写成清单还有一个好处：它把“主题做好了”从一个主观判断变成若干可观察的点。深色下导航栏的返回箭头是否还看得见，Tab 的选中态与未选中态是否区分得开，代码块底色与正文是否还能分层，都是能用眼睛验证的事实，而不是审美争论。反过来，如果只检查一次“.screen 加了 dark 类”，那验证的其实只是类名加对了，离“深色可用”还差得远。抓异常也一样：它让页面不至于因为某个原生 API 不适用而整体白屏，却证明不了那个区域在真机上已经显示正确。
 
 | 区域 | 当前主题来源 | 需要观察什么 |
 |---|---|---|
@@ -89,6 +162,7 @@ const snapshot = () =>
 | 页面图标 | 实际主题与 active | 轮廓清晰、状态颜色稳定 |
 | 导航栏 | applyTheme | 返回与标题是否可见 |
 | 原生 Tab | 样式 API 加静态图标 | 文字与图标是否协调 |
+| 代码高亮 | 当前定义的高亮色 | 长代码样本在深色下的可读性 |
 | 原生输入交互 | 平台行为 | 设备上的键盘与遮挡情况 |
 
 ## 五、原型还原也包括空隙与状态
@@ -122,11 +196,15 @@ const snapshot = () =>
 
 这也留下一个需要人工关注的点：高亮颜色不是两套完全独立的主题调色板。是否在具体深色设备上足够可读，应通过长代码样本检查，不能只因背景变黑就算验收结束。
 
+把亮色变量整体取反还有一个隐蔽后果：原本靠明度差区分的前景与背景，取反后可能同时变亮或同时变暗，层级反而消失。真正可靠的做法仍是逐层决定取值，就像上面两组变量那样，让每一个语义都有自己想清楚的颜色。
+
 设计迁移的判断因此有两层：是否忠于确认过的视觉语言，是否适应当前平台与真实内容。两层都成立，才值得称为原型落地；截图像原型只是其中一份证据。
 
 ## 六、让设计要求能够持续检查
 
 我建议在后续修改中使用同一份页面矩阵：亮色与深色、内容与空状态、登录与游客、正常与错误。新增按钮先选语义色，新增图标先核对原型来源。
+
+这份矩阵不需要一次做完。每次改动只补当前涉及的那几格，长期下来它自然会覆盖主要页面。比起开工时画一张漂亮的核对表、用一次就丢，随手维护的清单更可能被真的使用。设计要求能不能落地，往往就取决于它是不是被写成了这种日常动作。
 
 这样，原型不只是开工时展示一次的图片，而是能约束后续实现的参照。下一篇看 [四 Tab 与页面栈]({{LINK:M5-11}})，设计语言会继续遇到平台生命周期的实际边界。
 

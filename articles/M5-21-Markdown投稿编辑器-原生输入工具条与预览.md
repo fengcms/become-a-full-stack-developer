@@ -25,6 +25,8 @@
 
 字符上限是当前代码与契约限制，不是按汉字数量计数。JavaScript length 的口径与用户所说“字数”也可能不同，尤其表情与组合字符。页面文案使用“字符”，更接近实现。
 
+这张表不是功能清单，而是任务清单：每一行都对应作者必须完成的一件事，控件只是达成它的手段。先确定任务，再决定用什么控件，最后才讨论手上这批控件还差什么。
+
 这一层先确保能够写、能够看、能够保存。复杂语法提示与编辑器扩展系统，不是教学小程序的首要目标。
 
 ## 二、正文只有一个拥有者
@@ -32,6 +34,7 @@
 Editor 页面保存完整 Draft，EditorForm 接收 draft 与 onChange。表单每次只产生字段 patch，再合并到最新值。
 
 ```ts
+// src/features/editor-form.tsx（节选）
 const latest = useRef(draft);
 latest.current = draft;
 function change(patch: Partial<Draft>) {
@@ -41,21 +44,36 @@ function change(patch: Partial<Draft>) {
 
 latest 很重要。图片上传可能等待几秒，其间用户继续修改标题或正文；回调若使用开始上传时的 draft，就会把新输入覆盖成旧快照。
 
-这不是把全部表单变成 ref。可见输入仍由 state 驱动，ref 只为异步动作保留当前值。职责分开后，预览和保存都消费同一份 Draft，而不是各维护一份正文。
+这不是把全部表单变成 ref。可见输入仍由 state 驱动，ref 只为异步动作保留当前值。职责分开后，预览和保存都消费同一份 Draft，而不是各维护一份正文。一个拥有者加上一个始终指向它的引用，异步回来的动作就总能落在当前文本上，而不是落在一段被替换掉的旧值上。
 
 ## 三、工具条在当前光标插入，而非猜测选区
 
 Textarea 的 onInput 与 onBlur 更新 cursor。未拿到有效位置时在末尾插入，位置超过当前长度则收窄到文本结尾：
 
 ```ts
-const d = latest.current;
-const at = cursor.current < 0
-  ? d.content.length : Math.min(cursor.current, d.content.length);
-change({ content: d.content.slice(0, at) + before + after + d.content.slice(at) });
-cursor.current = at + before.length;
+// src/features/editor-form.tsx（节选）
+function insert(before: string, after = "") {
+  const d = latest.current;
+  const at = cursor.current < 0 ? d.content.length : Math.min(cursor.current, d.content.length);
+  change({ content: d.content.slice(0, at) + before + after + d.content.slice(at) });
+  cursor.current = at + before.length;
+}
 ```
 
-H2、粗体、链接、代码、列表、引用分别提供 before／after。代码默认 TypeScript 围栏，这是工具条默认值，用户仍可手动改语言。
+六个常用工具各自带一对插入标记，点击后都走同一个 insert：
+
+| 工具 | 插入前 | 插入后 | 说明 |
+|---|---|---|---|
+| H2 | `\n## ` | 空 | 行首标题 |
+| 粗体 | `**` | `**` | 固定星号对 |
+| 链接 | `[文字](` | `)` | 说明需手填 |
+| 代码 | 围栏开头行 | 围栏收尾行 | 默认 typescript |
+| 列表 | `\n- ` | 空 | 无序项 |
+| 引用 | `\n> ` | 空 | 引用块 |
+
+把它们写成 pair 而不是逐个函数，工具条与插入逻辑之间就只隔一份数据：新增一个格式，只需要在数据里加一行。
+
+代码默认 TypeScript 围栏，这是工具条默认值，用户仍可手动改语言。
 
 当前没有读取完整选择区间，所以“粗体”插入 `****` 结构，不是把任意选中文字自动包裹。内部 cursor 引用移动，也不等于平台可见光标已被强制设回目标。文章不能把文字拼接能力写成桌面编辑器那样完整的光标控制。
 
@@ -64,6 +82,35 @@ H2、粗体、链接、代码、列表、引用分别提供 before／after。代
 ## 四、分类树展平，但层级仍要看得出来
 
 Picker 接收选项数组，分类树递归展开，在名称前加缩进提示。选项保存 ID，显示 name；未分类使用空值，而不是把零当作真实分类 ID 发给服务端。
+
+```ts
+// src/features/editor-form.tsx（节选）
+function flatten(nodes: Category[], prefix = ""): { id: number; name: string }[] {
+  return nodes.flatMap((n) => [
+    { id: n.id, name: prefix + n.name },
+    ...flatten(n.children || [], prefix + "　"),
+  ]);
+}
+```
+
+缩进用的是全角空格而不是普通空格，它在原生 Picker 里能稳定保留可见的层级感。展平只改变呈现，不改动分类数据本身，也不新建一棵分类树。
+
+选择项与分类 ID 的换算放在绑定处，未分类回落到 null：
+
+```tsx
+// src/features/editor-form.tsx（节选）
+<Picker
+  mode="selector"
+  range={options}
+  rangeKey="name"
+  value={Math.max(
+    0,
+    options.findIndex((n) => n.id === draft.categoryId),
+  )}
+  disabled={disabled}
+  onChange={(e) => change({ categoryId: options[Number(e.detail.value)].id || null })}
+>
+```
 
 这保留了后台已经定义的分类体系，不需要小程序重建一棵自己的分类树。与此同时，移动选择器的呈现与网站多级导航不同，是平台控件的合理转换。
 
@@ -75,6 +122,13 @@ Picker 接收选项数组，分类树递归展开，在名称前加缩进提示�
 
 编辑页切到预览后，显示当前标题与 Markdown 正文，读取的还是未提交 Draft。格式、代码、表格与链接算法因此沿用阅读器，不会出现另一套 Markdown 解释。
 
+```tsx
+// src/pages/editor/index.tsx（节选）
+<Markdown source={draft.content} />
+```
+
+复用的关键就在这一个 prop：预览把同一段正文交给阅读器组件，而不是自己再写一套解析。只要正文一致，编辑与阅读看到的结构就一致。预览越接近真实排版，提交前这次自查就越有意义。
+
 但它不是完整公开页快照。摘要、封面、上下篇、互动和评论没有全部进入预览。作者检查的是主要排版与内容，不是最终所有页面模块。
 
 预览不需要写服务器，更不触发公开阅读计数。这让作者可以反复查看，不用为每次预览生成稿件。真正本人稿件预览则是另一个认证阅读入口，权限仍由后端控制。
@@ -84,6 +138,28 @@ Picker 接收选项数组，分类树递归展开，在名称前加缩进提示�
 ## 六、输入、上传和保存不能各自宣布完成
 
 EditorForm 选图期间通知父页 uploading，父页禁用服务端保存和提交。回调拿到 URL 后，用最新文本插入图片或更新封面。
+
+```tsx
+// src/features/editor-form.tsx（节选）
+async function upload(cover: boolean) {
+  if (uploading || disabled) return;
+  setUploading(true);
+  onUploading(true);
+  setError("");
+  try {
+    const url = await uploadImage();
+    if (cover) change({ coverImage: url });
+    else insert(`\n![图片说明](${url})\n`);
+  } catch (e) {
+    if (!String(e).includes("cancel")) setError(message(e));
+  } finally {
+    setUploading(false);
+    onUploading(false);
+  }
+}
+```
+
+取消选择与真正失败被分开处理：异常信息里含 cancel 的不弹错误，其余才提示。插图也走同一个 insert，所以上传回来的图片会落在作者当前光标处，而不是落在一段旧文本上。上传失败与主动取消分开，用户就能分清“我放弃的”和“没成功的”这两件事。
 
 输入当前并没有因为上传而全部冻结，作者仍能继续写。这正是 latest 引用需要存在的原因。上传完的文本应叠加在最新稿件上，而不是替换它。
 
@@ -97,8 +173,21 @@ EditorForm 选图期间通知父页 uploading，父页禁用服务端保存和�
 
 此外，存本机可以保留用户内容，不会创建远端资源。清理阅读缓存也不删除它。让几个动作名称明确，用户才不会把一种保存当成另一种备份。
 
+正文输入的光标也要跟着输入与失焦一起更新，工具条插进去的位置才对得上：
 
-## 工具条的简单实现，也有值得检查的边缘
+```tsx
+// src/features/editor-form.tsx（节选）
+onInput={(e) => {
+  cursor.current = e.detail.cursor;
+  change({ content: e.detail.value });
+}}
+onBlur={(e) => {
+  cursor.current = e.detail.cursor;
+}}
+```
+
+
+## 八、工具条的简单实现，也有值得检查的边缘
 
 用户删除一大段正文后，旧 cursor 可能超过当前长度，所以插入前收窄位置。输入事件更新 cursor，失焦也更新，减少点击工具条时忘记位置的情况。
 
@@ -124,7 +213,7 @@ EditorForm 选图期间通知父页 uploading，父页禁用服务端保存和�
 
 以后若要支持导出本机稿，需要另行设计文件或剪贴板出口。当前没有这个功能，也不把共享账号描述成所有输入已经跨设备备份。保住当前输入、讲清保存位置，比一张功能很多的工具条更重要。
 
-## 八、验证可编辑，而不只验证能渲染
+## 九、验证可编辑，而不只验证能渲染
 
 开发工具实际输入过标题和 Markdown，切换预览、保存与提交都操作过；逻辑测试验证 payload 与草稿隔离。相册上传、真实光标位置与真机键盘矩阵没有全部人工验收。
 

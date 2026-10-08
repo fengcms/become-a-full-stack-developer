@@ -42,14 +42,29 @@
 工程的 `config/index.ts` 将 API 基址注入构建：
 
 ```ts
-// 关键表达式节选；不是完整配置文件。
-process.env.TARO_APP_API_BASE ||
-  'https://api-befull.kao9.com/api/v1'
+// taro-miniprogram/config/index.ts（节选）
+export default defineConfig({
+  defineConstants: {
+    __API_BASE__: JSON.stringify(
+      process.env.TARO_APP_API_BASE || "https://api-befull.kao9.com/api/v1",
+    ),
+  },
+  framework: "react",
+  compiler: "webpack5",
+  plugins: ["@tarojs/plugin-platform-weapp"],
+  // …其余尺寸与输出配置
+});
 ```
 
 请求层消费 `__API_BASE__`，页面只传相对路径。这样，真实线上阅读和临时本地集成测试能共用页面逻辑，不需要逐页改 URL。
 
 但环境切换还牵涉会话与本机草稿。一个本地用户的编号可能恰好与线上会员相同，光用 userId 做存储键会串数据。于是，会话键带 API，草稿键也带 API。这不是部署之后才处理的小细节，而是复用接口时必须补齐的环境边界。
+
+```ts
+// src/core/session.ts：存储键随 API 基址变化。
+export const API = __API_BASE__;
+const key = `befull:session:${API}`;
+```
 
 开发中用过临时本地测试后端，交付构建已恢复线上基址。临时测试账号与数据不应被写进生产数据库，更不能随着源码提交出去。
 
@@ -57,7 +72,43 @@ process.env.TARO_APP_API_BASE ||
 
 ## 四、代码没有通吃，工程能力可以迁移
 
-项目现在有 14 个注册页面、4 个原生 Tab。页面之下，按职责分成几块：
+项目现在有 14 个注册页面、4 个原生 Tab。四个主入口由 `app.config.ts` 的 `tabBar` 声明（节选）：
+
+```ts
+// src/app.config.ts（节选）
+tabBar: {
+  list: [
+    {
+      pagePath: "pages/index/index",
+      text: "首页",
+      iconPath: "assets/icons/home-light.png",
+      selectedIconPath: "assets/icons/home-active.png",
+    },
+    {
+      pagePath: "pages/categories/index",
+      text: "分类",
+      iconPath: "assets/icons/layers-light.png",
+      selectedIconPath: "assets/icons/layers-active.png",
+    },
+    {
+      pagePath: "pages/search/index",
+      text: "搜索",
+      iconPath: "assets/icons/search-light.png",
+      selectedIconPath: "assets/icons/search-active.png",
+    },
+    {
+      pagePath: "pages/member/index",
+      text: "我的",
+      iconPath: "assets/icons/user-light.png",
+      selectedIconPath: "assets/icons/user-active.png",
+    },
+  ],
+}
+```
+
+四个入口共用同一套页面路径，切换 Tab 只是切换当前页，不会新建页面栈。这一点在后面讲生命周期时要格外留意：Tab 页常驻，返回与再次进入的事件顺序和普通压栈页面不一样。
+
+页面之下，按职责分成几块：
 
 ```text
 src/core        请求、会话、缓存、Markdown、评论与草稿纯逻辑
@@ -69,6 +120,22 @@ src/pages       页面参数、数据组合与平台事件
 
 这套组织与 Web 的组件思想接近，却不是把一个通用目录复制过来便完事。Markdown 输出的是受控原生组件，评论输入要处理小程序键盘事件，图片上传要经过媒体选择和 `uploadFile`，返回刷新要看 `useDidShow`。
 
+页面本身只负责组合数据与绑定事件，不重新发明请求细节。首页就是这样：
+
+```tsx
+// src/pages/index/index.tsx（节选）：页面只传相对路径，读什么交给 Hook。
+const feed = useFeed("/articles");
+const popular = useResource<Page<Article>>("/articles?sort=-viewCount&pageSize=3");
+const settings = useResource<{ copyright: string; siteDescription: string }>("/site/settings");
+// …渲染时只用数据，不拼 URL、不管缓存
+<View onClick={() => tab("search")}>
+  <Icon name="search" />
+</View>
+<View onClick={() => go("notifications")}>
+  <Icon name="bell" />
+</View>
+```
+
 我更愿意把这些叫作“经验复用”。比如，会话代次保护旧请求、保存后立即保留稿件 ID、失败不盲目重试写入，这些判断来自前面几个客户端的真实问题。它们不依赖某种 UI 框架，值得带到下一端。
 
 反过来，浏览器的 HttpOnly Cookie、Flutter 的安全存储，也不能因为理念相同就写成小程序已经拥有。当前小程序使用平台本地存储保存会话，存储安全边界需要单独说明。
@@ -79,12 +146,34 @@ src/pages       页面参数、数据组合与平台事件
 
 纯逻辑测试能检查缓存隔离与 Markdown 解析；真实后端测试能检查保存、提交、撤回、评论关系和权限；开发工具能看到原生组件是否可操作、页面如何返回以及深色主题是否落实。
 
+测试直接驱动核心模块，不需要渲染页面。以缓存为例，它验证并发读取会合并成一次请求，只有强刷才重新取数：
+
+```ts
+// test/core.test.ts：并发读同一键，只发一次请求。
+test("缓存复用、强刷与并发请求合并", async () => {
+  const c = new DataCache(),
+    wait = deferred<number>();
+  let calls = 0;
+  const fetcher = () => {
+    calls++;
+    return wait.promise;
+  };
+  const a = c.read("key", fetcher),
+    b = c.read("key", fetcher);
+  wait.resolve(3);
+  assert.deepEqual(await Promise.all([a, b]), [3, 3]);
+  assert.equal(calls, 1);
+});
+```
+
+这类断言跨端通用——它检查的是缓存契约，与最终渲染成网页还是原生组件无关。这正是“可翻译迁移”的典型：逻辑留下，表示重做。
+
 已有构建证据记录：Taro 4.3.0、14 页面、4 Tab、产物文件总量 758869 字节。这个数是文件系统求和，不是平台上传包体，也不是启动耗时。我不拿它证明“性能优秀”，只拿它核对交付范围与产物组成。
 
 微信快捷登录还进行了线上真实链路验证。首次成功后，会员中心显示了微信会员与首次凭据设置入口。至于真机审核、上传交互的完整人工矩阵，并没有因为这一次登录成功就自动完成。
 
 
-## 一个完整需求，怎样沿着三端分解
+## 六、一个完整需求，怎样沿着三端分解
 
 拿“收藏文章”做例子，更容易看清复用。服务端拥有收藏关系和权限判断；产品规定游客先登录、成功后可在私人列表找回；设计规定选中图标与操作反馈。这三层可以保持共同含义。
 
@@ -100,11 +189,26 @@ src/pages       页面参数、数据组合与平台事件
 
 再补一张工作量清单：接口本身是否已存在，客户端展示是否已存在于参考原型，平台动作是否需要新实现，验收能否复用已有样本。一个需求如果四项都写清楚，估计工作量时就不会只剩“应该差不多”。
 
+| 检查项 | 问什么 | 结论怎么用 |
+|---|---|---|
+| 接口 | 契约里是否已存在？ | 不存在则先改契约 |
+| 展示 | 参考原型里是否已有？ | 有则只需平台化实现 |
+| 平台动作 | 是否需要新实现？ | 需要则单独排期 |
+| 验收 | 能否复用已有样本？ | 能则沿用同一口径 |
+
 也别忘记，共享会放大错误传播范围。统一请求层修对了，多页受益；修错了，也会多页受影响。因此底层模块要保留针对性的逻辑测试，而不是因为复用成功就减少验证。
 
 这个项目没有测量跨端代码共享比例，也没有据此计算开发效率百分比。我能给出的事实，是已有契约和流程减少了重新定义需求的工作，平台展示与交互仍进行了独立实现和验收。
 
-## 六、给“一套代码”一个能兑现的解释
+把上面的判断压成三张清单，新增一端时可以照着填：
+
+| 清单 | 判断依据 | 本项目的例子 |
+|---|---|---|
+| 可直接调用 | 已有稳定契约，无平台细节 | 文章、分类、会员端点 |
+| 可翻译迁移 | 逻辑相同、表示不同 | 会话竞态、草稿隔离策略 |
+| 必须重写 | 依赖目标平台运行时 | 原生组件、页面栈、键盘、分享 |
+
+## 七、给“一套代码”一个能兑现的解释
 
 这次真正共享的是后端契约、产品规则和设计资产；Taro 内部则共享页面之外的请求、会话、解析、缓存等模块。网站、Flutter 和小程序各自承担自己的渲染与平台交互。
 
