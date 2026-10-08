@@ -1,0 +1,75 @@
+Go 后端第二轮 · 文档一致性与残留检查（评审方复跑，2026-10-08，提交 9590cb1）
+
+======================================================================
+一、生产代码注释分类（中文 / 非中文）
+======================================================================
+  分类          中文   非中文
+  包级文档        7      30     （包级文档英文沿用 Go 生态惯例，第一轮报告已认可）
+  符号文档      210       6
+  内联注释       21       9
+  ------------------------------------------------------------
+  合计          238      45
+
+  注：门禁「中文注释行 ≥ 120」= 238，成立。但门禁只统计「含 CJK 的行数」，
+  不判断注释内容是否正确。下为人工抽查发现的缺陷。
+
+======================================================================
+二、缺陷 1：文档注释与实现不符（门禁无法发现）
+======================================================================
+  internal/values/values.go:73
+    // Text 将字符串转换为指针，可空输入返回 nil。
+    func Text(s string) *string { return &s }
+
+  问题：参数类型为 string（不可为 nil），函数体直接取址、永不返回 nil。
+  「可空输入返回 nil」与实现不符——它是从同文件 :39 的方法
+  「func (f Fields) Text(k string) *string」（该方法确有 nil 分支）原样复制的。
+  两个同名符号（方法 Fields.Text 与包级 Text）拥有逐字相同的文档，
+  而行为不同。这是 A-3「补齐导出文档」推进中产生的复制粘贴错误。
+
+======================================================================
+三、缺陷 2：同文件同名符号文档逐字重复
+======================================================================
+  internal/article/query.go:27   func Get(db, key)          —— 包级函数
+  internal/article/query.go:52   func (s *Service) Get(...) —— 方法
+  两条文档均为「按 ID 或 slug 获取未删除文章；服务方法还检查访问者可见性。」
+  后一条对方法准确；前一条描述了它自己并不执行的「检查访问者可见性」。
+  判据：文档中的行为声明与函数体不符（包级 Get 只做查询，可见性判断在 :53 方法里）。
+
+  （对照：internal/platform/storage 的 storage.go 接口方法 与 r2.go 实现
+   共享同一文档，属 Go 惯例，非缺陷。）
+
+======================================================================
+四、缺陷 3：中文注释体系中残留 9 条英文内联注释（一致性）
+======================================================================
+  cmd/seed/main.go:1            Seed is explicit and refuses to overwrite existing accounts.
+  cmd/data/main.go:55           Snapshots contain password hashes and identities; never overwrite silently.
+  test/clientserver/main.go:1-2 Test-only local HTTP fixture. ...
+  internal/auth/wechat.go:107   Unique identity resolves competing first logins. ...
+  internal/platform/database/metrics.go:14-16  (3 条)
+  internal/platform/database/database.go:96-97 (2 条)
+  internal/values/values.go:122 PagingWith preserves endpoint-specific frozen defaults and limits.
+  internal/transfer/snapshot.go:2,137          (2 条)
+
+  这些不是错，但在「全文中文化」的目标下属一致性残留。`//go:embed` 指令行不计入。
+  门禁的「中文注释行 ≥ 120」对此不敏感——它只要求中文行够多，不要求英文行够少。
+
+======================================================================
+五、A-11（map 字面量提为包级 var）残余：3 处「固定查表每调用重建」
+======================================================================
+  internal/transport/httpapi/attachments.go:32   mime := map[string]string{...}    固定 MIME 表
+  internal/transport/httpapi/attachments.go:69   accepted := map[string]bool{...}  固定白名单
+  internal/article/query.go:68                   cols := map[string]string{...}    固定排序列白名单
+
+  性质：与第一轮 P2-2 同类（fault.Message / Actor.Rank / Actor.Allows 已修），
+  但 A-11 工单当时只点名了 fault/values 两处，故这 3 处属「同类未列项」，
+  非工单未完成。另外约 28 处 map 字面量是「每次调用必须新建的累加器」
+  （seen/ids/by/patch），不属此列。
+
+======================================================================
+六、证据可复现性：含测试口径日志与冻结提交存在漂移
+======================================================================
+  证据文件 results/第一轮/含测试代码门禁.txt 记录：文件 93 / 行 8002 / >120 行 32
+  评审方在冻结提交上复跑：                    文件 93 / 行 8007 / >120 行 33
+  → 差 5 行、1 条长行，说明该日志抓取自「最终提交之前」的工作区状态。
+  生产口径日志（生产代码门禁.txt：70/5774/221，最长 79，嵌套 4）逐字节可复现，无漂移。
+  回复正文 §3 表中「注释行合计 290」实为含测试口径数值，生产口径应为 286。
