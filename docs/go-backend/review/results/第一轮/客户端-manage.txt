@@ -1,0 +1,8 @@
+
+ RUN  v4.1.11 /Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  10:34:50
+   Duration  542ms (transform 39ms, setup 0ms, import 56ms, tests 386ms, environment 0ms)

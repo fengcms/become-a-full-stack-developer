@@ -1,0 +1,25 @@
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/cmd/data	[no test files]
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/cmd/migrate	[no test files]
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/cmd/seed	[no test files]
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/cmd/server	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/administration	(cached)
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/article	(cached)
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/attachment	(cached)
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/auth	(cached)
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/bootstrap	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/comment	(cached)
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/config	(cached)
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/contract	(cached)
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/member	(cached)
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/notification	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database	1.712s
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/storage	(cached)
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/taxonomy	(cached)
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/testutil	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/transfer	(cached)
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/transport/httpapi	(cached)
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values	(cached)
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/test	(cached)
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/test/clientserver	[no test files]

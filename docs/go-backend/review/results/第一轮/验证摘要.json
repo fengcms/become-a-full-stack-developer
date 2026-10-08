@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-08",
+  "reviewBaseline": "043fda2",
+  "codeCommit": "9590cb1bb3cd8f75c4eefd81847c5fee5b47c5f1",
+  "openapiSha256": "7b252c7ca701b45fdfd2a1e9dc7650085ff36e4ee9644265ad3fb6c485a5e030",
+  "productionQuality": {
+    "passed": 13,
+    "failed": 0
+  },
+  "withTestsQuality": {
+    "passed": 9,
+    "failed": 4
+  },
+  "operations": 68,
+  "nodeDifferential": {
+    "successRequests": 74,
+    "exactMatches": 71,
+    "expectedDifferences": 3,
+    "unexpectedDifferences": 0,
+    "authRequests": 111,
+    "authExactMatches": 111
+  },
+  "databases": [
+    "PostgreSQL 17",
+    "MySQL 8.4",
+    "SQLite"
+  ],
+  "productionModified": false,
+  "racePassed": true,
+  "clientRequestSmoke": [
+    "web",
+    "manage",
+    "taro",
+    "flutter"
+  ],
+  "seedCLI": {
+    "userRows": 1,
+    "articleRows": 3,
+    "repeatRefused": true
+  }
+}
