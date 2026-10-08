@@ -119,6 +119,41 @@
 
 ---
 
+## M4 · Flutter App（28 篇正文完成，待发布）
+
+| 文章标题 | tag | 代码 / 草稿位置 | CSDN 链接 | 状态 |
+|---|---|---|---|---|
+| 成为全栈·Flutter App 篇·从 React 到 Flutter：声明式 UI 相似，状态与布局模型哪里不同 | — | `articles/M4-01-从React到Flutter-声明式UI相似状态与布局模型哪里不同.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·给 TypeScript 开发者的 Dart：空安全、Future 与异步错误 | — | `articles/M4-02-给TypeScript开发者的Dart-空安全Future与异步错误.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·Flutter 工程骨架与 OpenAPI 代码生成 | — | `articles/M4-03-Flutter工程骨架与OpenAPI代码生成.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·把高保真原型落成 Design Token 与 Flutter 组件 | — | `articles/M4-04-把高保真原型落成DesignToken与Flutter组件.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·go_router 与四 Tab App Shell：保留导航状态、深链和登录回跳 | — | `articles/M4-05-go_router与四TabAppShell-保留导航状态深链和登录回跳.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·Riverpod 状态边界：会话、服务端数据和表单草稿 | — | `articles/M4-06-Riverpod状态边界-会话服务端数据和表单草稿.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·Dio + Repository：统一响应信封与模型适配 | — | `articles/M4-07-Dio-Repository统一响应信封与模型适配.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·移动端错误与限流：429、重试和写请求边界 | — | `articles/M4-08-移动端错误与限流-429重试和写请求边界.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·Refresh Token 旋转与并发 401：安全存储与会话代次 | — | `articles/M4-09-Refresh-Token旋转与并发401-安全存储与会话代次.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·用真实 API 构建首页：焦点、最新与热门内容 | — | `articles/M4-10-用真实API构建首页-焦点最新与热门内容.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·分类、标签与搜索：移动端内容发现 | — | `articles/M4-11-分类标签与搜索-移动端内容发现.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·列表分页与下拉刷新：去重、失败保留和返回位置 | — | `articles/M4-12-列表分页与下拉刷新-去重失败保留和返回位置.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·Flutter Markdown 阅读器：支持范围与渲染边界 | — | `articles/M4-13-Flutter-Markdown阅读器-支持范围与渲染边界.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·服务端目录与文章辅助阅读：锚点、上下篇、浏览量和阅读历史 | — | `articles/M4-14-服务端目录与文章辅助阅读-锚点上下篇浏览量和阅读历史.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·内置 WebView：网页历史、App 返回与外链安全 | — | `articles/M4-15-内置WebView-网页历史App返回与外链安全.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·点赞、收藏与阅读历史：乐观更新和失败回退 | — | `articles/M4-16-点赞收藏与阅读历史-乐观更新和失败回退.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·叠楼评论：跨页重组与直接回复上下文 | — | `articles/M4-17-叠楼评论-跨页重组与直接回复上下文.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·会员中心：资料、密码、通知与私有数据缓存 | — | `articles/M4-18-会员中心-资料密码通知与私有数据缓存.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·投稿状态机：草稿、待审核与已发布 | — | `articles/M4-19-投稿状态机-草稿待审核与已发布.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·Markdown 编辑器：编辑、预览与离开保护 | — | `articles/M4-20-Markdown编辑器-编辑预览与离开保护.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·图片上传：原生文件、校验、进度与失败恢复 | — | `articles/M4-21-图片上传-原生文件校验进度与失败恢复.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·本机稿件恢复：账号隔离、冲突判断与恢复决策 | — | `articles/M4-22-本机稿件恢复-账号隔离冲突判断与恢复决策.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·Flutter 缓存：fresh、stale、expired 与账号边界 | — | `articles/M4-23-Flutter缓存-fresh-stale-expired与账号边界.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·写后缓存失效与图片缓存治理 | — | `articles/M4-24-写后缓存失效与图片缓存治理.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·主题与可访问性：深浅色、大字号和触控体验 | — | `articles/M4-25-主题与可访问性-深浅色大字号和触控体验.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·测试分层：单元、Widget、集成与线上只读验证 | — | `articles/M4-26-测试分层-单元Widget集成与线上只读验证.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·Flutter 构建与发布准备：Android、iOS 和签名边界 | — | `articles/M4-27-Flutter构建与发布准备-Android-iOS和签名边界.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·第四批复盘：复用了什么，移动端又新增了什么 | — | `articles/M4-28-第四批复盘-复用了什么移动端又新增了什么.md` | — | 🟡 草稿中（正文完成，待发布） |
+
+---
+
 ## M5 · Taro 小程序（24 篇正文完成，待发布）
 
 > 编号按路线图保留，建议阅读顺序：01 → 02 → 09 → 06 → 10 → 11 → 12 → 13 → 14 → 15 → 16 → 04 → 03 → 19 → 17 → 18 → 20 → 21 → 23 → 22 → 24 → 05 → 07 → 08。后端以 `node-backend-v1.0.4` 为参照；小程序实现以写作开始时 `7effc02` 为参照，尚未单独创建小程序里程碑 tag。写作检查见 [M5 创作与自检记录](docs/M5-文章创作与自检记录.md)。

@@ -87,10 +87,21 @@ def load_index(path: str) -> dict[str, str]:
 
 
 def load_published_keys(articles_md: str) -> set[str]:
-    """从 ARTICLES.md 提取状态为 🟢（或含「已发布」）的行所属篇号。"""
+    """从 ARTICLES.md 提取状态为 🟢（或状态列为「已发布」）的行所属篇号。
+
+    只判定表格行的**状态单元格**（最后一列），不做整行子串匹配。
+    否则标题里的字面「已发布」会造成假阳性——
+    例：《投稿状态机：草稿、待审核与已发布》（M4-19）曾被误判为已发布。
+    """
     keys: set[str] = set()
     for line in read_text(articles_md).splitlines():
-        if '🟢' not in line and '已发布' not in line:
+        if '|' not in line:
+            continue
+        cells = [c.strip() for c in line.strip().strip('|').split('|')]
+        if not cells:
+            continue
+        status = cells[-1]
+        if '🟢' not in status and not ('已发布' in status and '🟡' not in status):
             continue
         m = ARTICLE_PATH_RE.search(line)
         if m:

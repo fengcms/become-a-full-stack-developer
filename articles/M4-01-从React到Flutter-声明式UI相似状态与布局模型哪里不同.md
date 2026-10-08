@@ -4,7 +4,7 @@ React 开发里，写一个 `Row` 和 `Column` 往往很顺手；换到 Flutter 
 
 这篇从一个前端工程师最熟悉的声明式组件开始，拆出 Widget、Element 和 RenderObject 各自负责的事，再用列表布局说明哪些经验可以沿用、哪些要重新建立。
 
-{{IMG:M4-01-封面}}
+![成为全栈·Flutter App 篇·从 React 到 Flutter：声明式 UI 相似，状态与布局模型哪里不同](https://i-blog.csdnimg.cn/direct/8d27a1bda4524d13a9b5d1c01f796f26.png)
 
 ## 声明式相似，渲染对象不同
 
@@ -26,7 +26,7 @@ Widget build(BuildContext context) {
 
 每次调用 `build` 返回新的 `Column`、`Text` 配置，不代表整棵屏幕都重新绘制。Element 会根据位置、类型和 key 尽可能复用状态对象。优化前要先测量，而不是因为“build 被调用”就急着加复杂缓存。
 
-{{IMG:M4-01-渲染树}}
+![渲染树](https://i-blog.csdnimg.cn/direct/a0621df4647b4b04a0a04281ac82ab83.png)
 
 ## Flex 相似，约束方向值得重新学习
 
@@ -100,6 +100,7 @@ Column(
 
 开发模式下的重建日志不能直接代表 Release 帧耗时。用 Flutter DevTools 的 Performance/Widget rebuild 工具在真实长文章、滚动列表和主题切换时观察帧；若成本来自高亮解析，就缓存词法结果；若来自图片解码，限制解码尺寸；若只是轻量 Widget 配置重建，增加复杂缓存反而会让状态更难维护。
 
+![布局约束](https://i-blog.csdnimg.cn/direct/d91c2c3a11484ca79d73b417d6cd3505.png)
 
 ## 贴着工程代码读实现
 

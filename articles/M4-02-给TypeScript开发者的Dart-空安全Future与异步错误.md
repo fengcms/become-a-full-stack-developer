@@ -4,7 +4,7 @@
 
 我会用项目的数据读取链路解释空安全、Future 和异常传播，并说明生成类型之后为什么仍要做适配与验证。读者只需要会 TypeScript 的 Promise 和严格空值检查。
 
-{{IMG:M4-02-封面}}
+![成为全栈·Flutter App 篇·给 TypeScript 开发者的 Dart：空安全、Future 与异步错误](https://i-blog.csdnimg.cn/direct/ccc427d62ad549388e61c967d829f670.png)
 
 ## 空安全把“可能没有”写进类型
 
@@ -81,7 +81,7 @@ class Failed<T> extends LoadState<T> {
 
 ## DTO 不等于领域展示模型
 
-{{IMG:M4-02-异步状态}}
+![异步状态](https://i-blog.csdnimg.cn/direct/141ea14320474285b4e8eee926215e77.png)
 
 OpenAPI 生成的 DTO 帮助检查字段类型，但服务端不同接口可能返回不同包装：有的互动记录是裸数组，有的列表在 `articles` 下，有的阅读历史每项再包一层 `article`。Repository 适配这些差异后，页面消费稳定的 `ReaderArticle` 等模型。
 
