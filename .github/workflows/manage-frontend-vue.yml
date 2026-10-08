@@ -1,0 +1,33 @@
+name: Vue 管理后台检查
+
+on:
+  push:
+    paths:
+      - "manage-frontend-vue/**"
+      - ".github/workflows/manage-frontend-vue.yml"
+  pull_request:
+    paths:
+      - "manage-frontend-vue/**"
+      - ".github/workflows/manage-frontend-vue.yml"
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: manage-frontend-vue
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.4.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.14.0
+          cache: pnpm
+          cache-dependency-path: manage-frontend-vue/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
