@@ -36,7 +36,20 @@ HTTP method/path 匹配
 成功时写统一信封；失败时归一为契约错误
 ~~~
 
-操作元数据的来源是冻结契约，不应由路径字符串猜测权限。路径中包含 /admin 并不能替代授权规则；/me 路径也不能不经校验就信任客户端提供的 userId。bootstrap 在启动时还会对照契约 operation 检查注册覆盖，避免漏掉某个 operation 等到线上首个请求才发现。
+这条链上每一步失败都会产生不同的可观察结果。把它们列出来，边界是否完整就一目了然：
+
+| 阶段 | 失败时的结果 | 由谁决定 |
+|---|---|---|
+| 路由匹配 | 404，业务码 NotFound | ServeMux 与兜底 handler |
+| 令牌解析 | 401，业务码 Missing 或 Token | Identity.Parse |
+| 角色判定 | 403，业务码 Forbidden | 契约 x-authz 元数据 |
+| 公开限流 | 429，带 Retry-After，业务码 5001 | 进程内 Limiter |
+| 请求体读取 | 400，字段错误 | MaxBytesReader 与 decode |
+| schema 校验 | 400，契约 errors 数组 | 冻结契约 schema |
+| 业务处理 | 按领域错误映射 | 领域服务 |
+| panic 恢复 | 500，业务码 Internal | defer 中的 recover |
+
+操作元数据的来源是冻结契约，权限判断要读 x-authz，而不是从路径字符串猜。路径里出现 /admin，授权规则仍由契约决定；/me 路径也不能不经校验就信任客户端提供的 userId。bootstrap 在启动时还会对照契约 operation 检查注册覆盖，避免漏掉某个 operation 直到线上首个请求才暴露。
 
 ## 二、必需认证、可选认证和 owner override
 
@@ -50,19 +63,92 @@ owner override 不能仅凭 URL 中的数字确认。契约记录资源参数以
 
 契约规定公开端点每个 operation 独立每分钟 60 次，超过返回 429、Retry-After 和业务码 5001；鉴权端点不套用这项公开限流。M6 在 httpapi 中用进程内 Limiter 按 operation 加访问者 key 记录固定窗口，并限制 key map 的规模；匿名 key 取客户端 IP，已登录访问者可用 user ID。
 
-当服务部署在代理之后，远端 TCP 地址通常是代理地址。若配置了可信代理，工程会从 X-Forwarded-For 链右侧向左解析，跳过可信跳点，取第一个不可信 IP；如果远端地址本身不在可信列表里，就忽略该头，避免任何客户端伪造左侧地址绕过限流。
+~~~go
+// internal/transport/httpapi/limiter.go（节选）
+// Allow 判断当前窗口是否允许请求，拒绝时返回剩余等待秒数。
+func (l *Limiter) Allow(key string, now time.Time) (int, bool) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if len(l.windows) >= 10000 {
+		for k, v := range l.windows {
+			if now.Sub(v.Start) >= time.Minute {
+				delete(l.windows, k)
+			}
+		}
+		if len(l.windows) >= 10000 {
+			if _, ok := l.windows[key]; !ok {
+				return 60, false
+			}
+		}
+	}
+	w := l.windows[key]
+	if now.Sub(w.Start) >= time.Minute {
+		w = window{Start: now}
+	}
+	if w.Count >= 60 {
+		return int(time.Minute.Seconds()-now.Sub(w.Start).Seconds()) + 1, false
+	}
+	w.Count++
+	l.windows[key] = w
+	return 0, true
+}
+func (a *App) clientKey(r *http.Request, actor values.Actor) string {
+	if actor.ID > 0 {
+		return "u:" + strconv.FormatInt(actor.ID, 10)
+	}
+	return a.clientIP(r)
+}
+~~~
 
-这套限流有重要边界：它属于单进程内存状态，服务重启后窗口清空，多实例之间不共享计数。因此它适合本地实现和单实例保护，不等于 Cloudflare 或共享 Redis 网关的全局限流。契约写明责任在网关层时，实际部署仍要验证外层限流配置；不能因为 Go 里有 Limiter 就宣称集群全局达标。
+这段代码里有三处保护。`l.mu` 让并发请求串行更新窗口；`len(l.windows) >= 10000` 的清理分支防止 key 无限增长，清理后仍然超限时直接拒绝新 key；返回值是 `60 - 已过秒数 + 1`，让 `Retry-After` 有具体数值。`clientKey` 则说明限流键的选择：已登录用 `u:ID`，匿名才回落到 IP，这样同一出口 IP 后的多个会员不会因为一个匿名刷子而互相牵连。
+
+当服务部署在代理之后，远端 TCP 地址通常是代理地址。若配置了可信代理，工程会从 X-Forwarded-For 链右侧向左解析，跳过可信跳点，取第一个不可信 IP；如果远端地址本身不在可信列表里，就忽略该头，客户端也就难以伪造左侧地址绕过限流。
+
+这套限流有重要边界：它属于单进程内存状态，服务重启后窗口清空，多实例之间不共享计数。因此它适合本地实现和单实例保护；Cloudflare 或共享 Redis 网关的全局限流属于另一层责任。契约写明责任在网关层时，实际部署仍要验证外层限流配置。只凭 Go 里有一个 Limiter，就把集群全局达标算作已完成，并不成立。
 
 ## 四、请求体要先设上限，再解析 JSON
 
 普通 JSON body 通过 http.MaxBytesReader 限制为 2 MiB，再由 Decoder 解析到 Fields。请求体要求是一个 JSON 对象，额外拼接第二个 JSON 文档会被拒绝。可选 body 仅在契约允许时接受空 body；请求过大、格式错误或多余数据统一转成字段错误。
 
-这几个步骤避免了常见边界问题：无界读取使内存占用受客户端控制；Decoder 只读第一个 JSON 而忽略尾随数据，会让调用者以为第二段也参与处理；直接 unmarshal 到业务 model 会混合字段存在性与持久化边界。
+~~~go
+// internal/transport/httpapi/app.go（节选）
+func decode(w http.ResponseWriter, r *http.Request, out *values.Fields, optional bool) error {
+	d := json.NewDecoder(http.MaxBytesReader(w, r.Body, 2*1024*1024))
+	if err := d.Decode(out); err != nil {
+		if optional && err == io.EOF {
+			return nil
+		}
+		return fault.Field("_", "请求体须为JSON对象")
+	}
+	if *out == nil {
+		return fault.Field("_", "请求体须为JSON对象")
+	}
+	var extra any
+	if d.Decode(&extra) != io.EOF {
+		return fault.Field("_", "请求体包含多余数据")
+	}
+	return nil
+}
+~~~
+
+第二个 `Decode` 是这段代码最容易忽略的一处：它把结果读进一个被丢弃的 `extra`，只为确认读完之后恰好碰到 `io.EOF`。如果调用者发来两个拼接的 JSON 对象，第一次解码会成功，第二次却还能读到内容，于是被判定为“多余数据”。整数路径参数用同一套思路处理：
+
+~~~go
+// internal/transport/httpapi/params.go
+func pathID(r Request, key string) (int64, error) {
+	id, err := strconv.ParseInt(r.HTTP.PathValue(key), 10, 64)
+	if err != nil || id < 1 {
+		return 0, fault.New(fault.NotFound)
+	}
+	return id, nil
+}
+~~~
+
+非法或不存在的 ID 统一返回资源不存在，而不是暴露解析细节。这几个步骤挡住了几类常见边界问题：无界读取使内存占用受客户端控制；Decoder 只读第一个 JSON 而忽略尾随数据，会让调用者以为第二段也参与处理；直接 unmarshal 到业务 model 会混合字段存在性与持久化边界。
 
 上传 multipart 有自己的限制路径。当前 transport 将请求体上限设为略高于文件大小上限，以容纳 multipart 边界和字段开销；要求恰好一个 file 字段，检查 MIME 白名单、文件大小和 articleId 格式，再将字节与元数据交给附件 service。文件大小先由 multipart header 检查，再通过有界读取复核，避免只信客户端声明的 Content-Length。
 
-上传内容的真实类型识别、对象 key、摘要去重、元数据原子性和存储失败补偿由 attachment 领域能力负责。transport 负责 HTTP body 形状和传输上限，不应该把附件生命周期整段塞进 handler。
+上传内容的真实类型识别、对象 key、摘要去重、元数据原子性和存储失败补偿由 attachment 领域能力负责。transport 只管 HTTP body 形状和传输上限；附件生命周期属于领域，塞进 handler 只会让协议代码承担它无法可靠保证的责任。
 
 ## 五、统一错误信封不是把错误都变成 500
 
@@ -78,7 +164,7 @@ HTTP App 对允许的 Origin 做匹配后返回 Access-Control-Allow-Origin、Al
 
 内容响应设置 nosniff；刷新 Cookie 由公共 helper 写固定 Path、Secure、HttpOnly、SameSite 属性。浏览器跨站 Cookie 的行为仍受域名、HTTPS 和客户端策略影响，必须在真实环境验证。CORS 不是身份认证，也不是 CSRF 的完整替代品；它主要决定浏览器脚本能否读取跨域响应。
 
-## 七、哪些逻辑不应该进入 handler
+## 七、哪些逻辑该留给领域层
 
 Handler 收到的是传输请求。它可以读取 PathValue、提取已校验输入、调用领域服务并返回结果。文章是否可以从 pending 变 published、附件最后引用删除时对象何时清理、阅读量冷却是否到期，这些需要领域规则、事务或存储协作，应该归对应 service。
 
@@ -89,6 +175,8 @@ Handler 收到的是传输请求。它可以读取 PathValue、提取已校验�
 传输层测试应覆盖路由注册、无 token / 无效 token / 权限不足、公开端点匿名访问、请求体上限、错误 schema、尾随 JSON、限流边界、CORS 预检、统一信封和 panic 恢复。上传测试还需覆盖多个文件、MIME 错误、10 MiB 边界、重复 articleId 和读取失败。
 
 领域和数据库测试接着验证 owner 查询、事务回滚、文件补偿与幂等。网关层则在实际部署中验证共享限流、可信代理和 TLS。每一层的通过只证明它负责的行为，不能互相替代。
+
+如果只记一句话：边界测试的价值，在于把“系统拒绝了我”拆解成“在哪一层、以什么形状、依据哪条契约拒绝”。同样返回 400，请求体超限、schema 不匹配和尾随 JSON 是三种不同的原因，客户端需要的修正动作也不同。
 
 ## 小结：公共边界集中，业务不变量仍有归属
 

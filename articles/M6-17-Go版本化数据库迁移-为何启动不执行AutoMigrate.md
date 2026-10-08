@@ -22,6 +22,58 @@ GORM model 表达应用需要如何读写某张表：字段类型、列名、主
 
 M6 的迁移通过 goose 按版本执行。SQL 文件存放在 platform/database/migrations 下的方言目录，编译时嵌入程序；migrate 命令读取配置、连接所选数据库并调用 goose provider。应用启动路径只打开数据库、ping 连通性、组装业务服务，不会隐式更改表结构。
 
+~~~go
+// internal/platform/database/database.go（节选）
+// Migrate 执行版本化方言 SQL；不使用隐式结构体同步修改数据库。
+func Migrate(ctx context.Context, db *gorm.DB, driver string) error {
+	dialect := goose.DialectPostgres
+	switch driver {
+	case "mysql":
+		dialect = goose.DialectMySQL
+	case "sqlite":
+		dialect = goose.DialectSQLite3
+	}
+	raw, err := db.DB()
+	if err != nil {
+		return err
+	}
+	fsys, err := migrationsSub(driver)
+	if err != nil {
+		return err
+	}
+	p, err := goose.NewProvider(dialect, raw, fsys)
+	if err != nil {
+		return err
+	}
+	_, err = p.Up(ctx)
+	return err
+}
+~~~
+
+`migrationsSub(driver)` 从嵌入的迁移文件中选出对应方言的子目录，`goose.NewProvider` 绑定方言与文件系统，`p.Up` 只应用尚未执行的版本。命令入口同样很短：
+
+~~~go
+// cmd/migrate/main.go
+func main() {
+	c, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+	db, err := database.Open(c.Driver, c.DSN)
+	if err != nil {
+		log.Fatal(err)
+	}
+	sql, _ := db.DB()
+	defer sql.Close()
+	if err = database.Migrate(context.Background(), db, c.Driver); err != nil {
+		log.Fatal(err)
+	}
+	log.Print("migrations complete")
+}
+~~~
+
+它与 server 共用 `config.Load` 和 `database.Open`，唯一的差别是最后调用 `Migrate` 而不是装配 HTTP 应用。结构变更因此成为一条可以单独执行、单独观察的命令，而不是服务启动的副作用。
+
 ## 二、为什么启动时不做 AutoMigrate
 
 把迁移放到启动代码里会产生几个现实问题：
@@ -35,9 +87,20 @@ M6 的迁移通过 goose 按版本执行。SQL 文件存放在 platform/database
 
 独立 migrate 命令把结构变化变成发布流程里的明确步骤。运维可先备份，再执行迁移、检查结果，最后启动新版本。实际部署要设计兼容发布顺序：先加字段和兼容代码，再逐步切换，最后才考虑删除旧结构。单体项目也可能有滚动部署或回滚要求，因此这不是只有“大型微服务”才需要的纪律。
 
+还有一个容易被低估的点：AutoMigrate 生成的具体 SQL 往往不写进仓库，评审时看不到它到底要改什么。显式迁移把 DDL 变成可以 diff 的文件，评审者能在合并前看出“这一版新增了什么列、有没有加索引、是否动了默认值”。对教学项目来说，这份可见性本身就值得单独维护一份迁移目录。
+
 ## 三、方言目录是对真实数据库差异的承认
 
 当前工程分别维护 PostgreSQL、MySQL、SQLite 的 00001_initial.sql 和 00002_indexes.sql。相同的逻辑表会映射到不同 DDL：主键类型、文本类型、布尔表示、默认值、索引长度、外键语法和迁移事务能力可能有差异。
+
+| 关注点 | 为什么各库不同 | 验证方式 |
+|---|---|---|
+| 主键与自增 | 序列、自增列与 rowid 类型不同 | 对照三份迁移的建表语句 |
+| 文本与长度 | VARCHAR 长度语义、索引前缀长度不同 | 检查唯一索引与字段定义 |
+| 布尔与 JSON | 布尔底层类型、JSON 列或文本表示不同 | 读写同一组值并比对结果 |
+| 时间 | 本项目统一用毫秒整数，避免库间精度漂移 | 断言存储类型与转换 |
+| 外键开关 | SQLite 需要显式开启才生效 | 检查 DSN 与迁移后的约束 |
+| 事务性 DDL | 各库对 DDL 能否回滚的支持不同 | 在失败场景验证残留状态 |
 
 将 SQL 分目录并不表示业务 schema 可以各自漂移。三份迁移应实现同一组逻辑表和约束，并通过对照检查避免漏项。每个支持方言都需要执行空库迁移和旧版本升级，再检查表、索引、唯一键、外键与字段默认值。
 
@@ -51,7 +114,7 @@ M6 的迁移通过 goose 按版本执行。SQL 文件存放在 platform/database
 - seed 关心开发环境初始账号和样本；
 - data transfer 关心用户、文章、关系、计数和附件引用是否完整迁移。
 
-不应该因为结构迁移工具能运行 SQL，就把整库内容复制也塞进 migration。数据量、失败恢复、幂等性和源目标连接权限都不同；一个版本化结构文件也不适合存储庞大的业务快照。
+不能因为结构迁移工具能运行 SQL，就把整库内容复制也塞进 migration。数据量、失败恢复、幂等性和源目标连接权限都不同；一个版本化结构文件也不适合存储庞大的业务快照。把两类动作放进同一个文件，还会让“这次发布到底改了什么”变得难以回答。
 
 M6 的 data 命令单独使用 TRANSFER_DATABASE_URL，并对导出源使用只读连接策略；导入目标需要明确驱动和文件路径。dry-run 会在事务中完成导入校验后回滚，证明输入与导入路径能运行，却不代表数据已持久化，也不代替真实目标的迁移验收。离线迁移策略将在 M6-28 具体讲解。
 
@@ -79,6 +142,8 @@ SQLite 的临时文件测试有价值，因为它包含真实文件锁和持久�
 
 迁移回滚并非每条 DDL 都能安全撤销。删列或转换数据可能不可逆。遇到不可逆变化，运行手册需要明确备份、前向修复或恢复策略。goose 中存在 down migration 也不意味着它能恢复已经丢失的数据。
 
+把这几条检查写进发布清单，能让“迁移完成”这个说法变得可核对：不是看命令退出码为 0，而是看空库、旧库和失败场景各自留下了什么。迁移的正确性由这些后置状态共同定义。
+
 ## 七、一个相对安全的变更流程
 
 对新增文章字段，可以按如下思路推进：
@@ -104,6 +169,8 @@ SQLite 的临时文件测试有价值，因为它包含真实文件锁和持久�
 “先扩展、再切换、最后收缩”降低新旧代码共存时的风险。小规模教学项目可以减少流程环节，但仍应在测试库跑升级路径，并保留明确备份。
 
 不要把迁移失败自动吞掉，也不要让 server 以“尝试修好数据库结构”的方式继续监听。数据库 schema 与当前程序不兼容时，早点失败比返回结构错误或静默丢字段更容易定位。
+
+这套顺序还有一个对回滚友好的性质：只要旧列还在，旧版本应用就仍能正常启动，回滚时通常只需要切回上一版镜像，而不必重建数据库结构。正因为如此，收缩步骤应该放到最后一次独立发布里，并且要等确认没有任何进程还在读写旧列之后再动手。把扩展和收缩压在同一次发布里，等于主动放弃了这条退路。
 
 ## 小结：数据库结构要可见、可审阅、可复现
 

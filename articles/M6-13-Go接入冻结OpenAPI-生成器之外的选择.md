@@ -52,6 +52,44 @@ internal/contract/openapi.json（生成快照，受门禁比较）
 
 contract.Load 读取嵌入 JSON，解析文档，然后遍历 paths 中的每个操作。operationAt 提取 operationId、HTTP 方法、路径、x-authz 最低角色与 owner 标志、requestBody 是否 required，并编译 JSON 请求 schema 和 200 响应 schema。结果放在按 operationId 索引的 Catalog 中，供 bootstrap 绑定和 transport 校验使用。
 
+~~~go
+// internal/contract/contract.go（节选，省略操作遍历）
+// Load 读取嵌入快照，在内存规范化后编译各操作的 JSON Schema。
+func Load() (*Catalog, error) {
+	raw, err := source.ReadFile("openapi.json")
+	if err != nil {
+		return nil, err
+	}
+	var doc map[string]any
+	if err = json.Unmarshal(raw, &doc); err != nil {
+		return nil, err
+	}
+	normalize(doc)
+	compiler := jsonschema.NewCompiler()
+	if err = compiler.AddResource("https://befull.local/openapi.json", doc); err != nil {
+		return nil, err
+	}
+	inputCompiler := jsonschema.NewCompiler()
+	inputCompiler.AssertFormat()
+	if err = inputCompiler.AddResource("https://befull.local/openapi.json", doc); err != nil {
+		return nil, err
+	}
+	c := &Catalog{Operations: map[string]Operation{}, Document: doc}
+	c.Envelope, err = compiler.Compile("https://befull.local/openapi.json#/components/schemas/ApiResponse")
+	if err != nil {
+		return nil, err
+	}
+	c.ValidationErrors, err = compiler.Compile("https://befull.local/openapi.json#/components/schemas/ValidationErrorList")
+	if err != nil {
+		return nil, err
+	}
+	// ...（此处遍历 paths 中的每个操作，逐个交给 operationAt）
+	return c, nil
+}
+~~~
+
+有两处细节值得指出。第一，`inputCompiler.AssertFormat()` 只在输入编译器上开启格式断言，意味着请求体的 `format`（如 email、date-time）会被严格校验，而共享的响应编译器没有这一步，这正好对应前面说的「启用了请求格式断言」。第二，`Envelope` 与 `ValidationErrors` 两个 schema 单独编译并挂在 Catalog 上，供 `CheckResponse` 在测试中复用，而不是每次调用都重新编译。
+
 将 schema 编译放在启动阶段，意味着格式或引用错误会在程序服务请求前暴露，而非第一次遇到特殊输入才报错。启动时还会检查共享 ApiResponse 信封和字段错误结构。每个 operation 的 handler 注册也会对照契约目录验证完整性：契约有操作、工程没有绑定 handler，启动就失败。
 
 运行时请求会先经过 body 大小限制、JSON 解码和对应 schema 校验。成功处理后，HTTP 层写统一信封；操作响应 schema 由共享的 CheckResponse 校验器提供，并在契约验证测试中检查实际结果。当前 server 的每次响应写出路径不会自动调用该 schema 校验器，所以文章不把它描述成线上请求的运行时响应拦截。这样可以区分两类证据：输入边界的生产校验，以及测试对实际响应结构的检查。
@@ -63,6 +101,35 @@ schema 校验不是完整业务测试。它不知道文章作者是否有权编�
 当前冻结文件版本是 OpenAPI 3.1.0，其中一些可空字段沿用了 nullable: true 的写法。这种表述在历史工具链和现有契约里已经冻结，但 JSON Schema 2020-12 更自然的可空表达是类型联合，例如 anyOf 包含原 schema 与 null。直接把源文件改写为新形式，可能影响既有工具和多个客户端，并不是 Go 运行时适配应该擅自做的事情。
 
 Go contract.Load 在内存中遍历解析结果，将 nullable: true 转换为 anyOf: [原 schema, {type: null}]，再交给 JSON Schema 编译器。转换只作用于内存对象，不写回嵌入快照或源 YAML。原字段约束留在联合的第一个分支里，null 作为第二个分支，因此“可空”含义仍能由 schema 验证。
+
+~~~go
+// internal/contract/contract.go（节选）
+// 冻结文件在 OAS 3.1 内沿用 nullable，只在内存转换为 JSON Schema union。
+// 不写回源文件，也不把可空字段误解释为未提交字段。
+func normalize(v any) {
+	switch x := v.(type) {
+	case map[string]any:
+		for _, child := range x {
+			normalize(child)
+		}
+		if x["nullable"] == true {
+			delete(x, "nullable")
+			original := map[string]any{}
+			for k, v := range x {
+				original[k] = v
+				delete(x, k)
+			}
+			x["anyOf"] = []any{original, map[string]any{"type": "null"}}
+		}
+	case []any:
+		for _, child := range x {
+			normalize(child)
+		}
+	}
+}
+~~~
+
+注意它先递归子节点再处理当前节点，所以嵌套结构里的 nullable 也会被转换。转换动作只发生在内存 `doc` 上，`source.ReadFile` 读出的原始字节与磁盘上的 `openapi.json` 都不受影响。
 
 这里要把三件事分清：未提交字段、提交了 null、提交了一个值。nullable 只解释第二项；它不会自动让 Go struct 知道字段是否出现。输入存在性需要另一套表示，稍后 M6-14 讨论。
 

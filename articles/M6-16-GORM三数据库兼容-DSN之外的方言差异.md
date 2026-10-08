@@ -18,6 +18,51 @@ M6 明确把 PostgreSQL 作为主数据库，同时验证 MySQL 与 SQLite。为
 
 database.Open 根据 driver 选择 GORM PostgreSQL、MySQL 或 SQLite dialector，并启用错误翻译、静默 ORM logger 与 SkipDefaultTransaction。普通连接池允许最多 16 个打开连接、4 个空闲连接，连接最长复用 30 分钟；SQLite 则将 MaxOpenConns 限为 1。
 
+~~~go
+// internal/platform/database/database.go（节选）
+// Open 选择实际数据库驱动并配置连接池；SQLite 强制外键和单写连接。
+func Open(driver, dsn string) (*gorm.DB, error) {
+	var dial gorm.Dialector
+	switch driver {
+	case "postgres":
+		dial = postgres.Open(dsn)
+	case "mysql":
+		dial = mysql.Open(dsn)
+	case "sqlite":
+		base, query, _ := strings.Cut(dsn, "?")
+		options, err := url.ParseQuery(query)
+		if err != nil {
+			return nil, fmt.Errorf("invalid SQLite options")
+		}
+		// 外键是业务不变量，DSN 显式关闭外键也不能绕过。
+		options.Set("_foreign_keys", "on")
+		if options.Get("_busy_timeout") == "" {
+			options.Set("_busy_timeout", "5000")
+		}
+		if options.Get("mode") != "ro" {
+			options.Set("_journal_mode", "WAL")
+		}
+		dsn = base + "?" + options.Encode()
+		dial = sqlite.Open(dsn)
+	default:
+		return nil, fmt.Errorf("unsupported database driver %q", driver)
+	}
+	db, err := gorm.Open(dial, &gorm.Config{
+		TranslateError:         true,
+		Logger:                 logger.Default.LogMode(logger.Silent),
+		SkipDefaultTransaction: true,
+	})
+	// ...（此处取 sqlDB 并设置最大连接数、空闲连接与生命周期）
+	if driver == "sqlite" {
+		// 单连接串行写入；WAL 提高读取可用性，不等于支持多个写实例。
+		sqlDB.SetMaxOpenConns(1)
+	}
+	return db, nil
+}
+~~~
+
+这段代码把方言差异收在一个函数里。`_foreign_keys=on` 由代码强制设置，注释写明“外键是业务不变量”，即使 DSN 里显式关闭也绕不过去；`_busy_timeout` 只在缺省时补 5000 毫秒，尊重调用方已有设置；`_journal_mode=WAL` 在只读模式下跳过。最后 SQLite 单独把最大打开连接压到 1，把并发写串行化。
+
 为什么 SQLite 单独处理？在这个项目的本地和迁移使用方式中，单连接把写入串行化，减少同一文件库的并发写冲突。SQLite 启用 WAL、busy_timeout 和 foreign_keys。WAL 能改善读写并发体验，但不代表可以无条件运行多个独立写实例；一个连接池内单连接也不能消除其他进程对同一数据库文件的竞争。
 
 DSN 中显式要求开启外键，避免调用方意外关闭后让文章关系或附件引用失去数据库约束。busy timeout 给锁竞争一个有限等待窗口；超过后仍可能失败，业务层要能回滚并向客户端返回合适错误。增加 timeout 不是把 SQLite 变成多写数据库。
@@ -31,6 +76,24 @@ M6 的业务时间以毫秒级 Unix 时间存储，再由 values.ISO 转换成�
 如果把一个时间交给三种数据库的默认 timestamp 类型，列类型、时区解释、精度和驱动扫描形式可能不同。特别是只有秒级精度的数据库字段会把两条同毫秒内记录变成同一时间，稳定排序和边界测试也会变化。项目选择统一毫秒整数后，仍要确认整数范围、JSON 格式和所有客户端解析约定。
 
 布尔字段也要用真实方言测试。SQLite 没有和 PostgreSQL 完全相同的原生 Boolean 存储类型；GORM 驱动会在底层映射值。应用不能仅依赖“字段是 bool”就假定迁移 DDL、默认值、索引和读取行为等价。数据库门禁需要检查字段定义和查询结果。
+
+M6 把时间收敛到两个转换函数里。写入前由 `values.ISO` 把毫秒整数格式化成契约要求的 UTC 字符串，读取可空列时再由 `values.Date` 把 `*int64` 还原成同样的字符串，`nil` 保持 JSON null：
+
+~~~go
+// internal/values/values.go（节选）
+// ISO 把数据库毫秒时间转换为契约要求的 UTC 毫秒时间字符串。
+func ISO(ms int64) string { return time.UnixMilli(ms).UTC().Format("2006-01-02T15:04:05.000Z") }
+
+// Date 转换可空时间，nil 保持 JSON NULL。
+func Date(ms *int64) any {
+	if ms == nil {
+		return nil
+	}
+	return ISO(*ms)
+}
+~~~
+
+时间形状因此由同一段 Go 代码决定，和三种数据库各自 timestamp 类型的默认时区、精度无关。这也是为什么工程选择把时间存成整数：一旦交给列类型自己解释，格式就分散到三个方言里去了。
 
 ## 三、字符串排序与唯一性不只是 collation 设置
 
@@ -60,6 +123,42 @@ M6 为 SQLite 设单写连接，是运行策略中的限制而非数据库锁的
 
 项目有 15 张业务表，并按 PostgreSQL、MySQL、SQLite 分别维护两个 goose 版本 migration。GORM model 描述字段映射，但启动时不会 AutoMigrate；结构变更通过显式 SQL 版本化。这让团队可以审阅不同数据库对字段类型、索引、约束和默认值的实际定义。
 
+同一张 users 表，在三份迁移里的写法并不相同（节选，省略部分列）：
+
+~~~sql
+-- migrations/postgres/00001_initial.sql
+CREATE TABLE users (
+  id BIGSERIAL PRIMARY KEY,
+  username TEXT NOT NULL,
+  email TEXT,
+  status TEXT NOT NULL,
+  ...
+  UNIQUE (username)
+);
+
+-- migrations/mysql/00001_initial.sql
+CREATE TABLE users (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(255) NOT NULL,
+  email VARCHAR(255),
+  status VARCHAR(16) NOT NULL,
+  ...
+  UNIQUE (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_bin;
+
+-- migrations/sqlite/00001_initial.sql
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL,
+  email TEXT,
+  status TEXT NOT NULL,
+  ...
+  UNIQUE (username)
+);
+~~~
+
+三份 DDL 体现出三个层次的差异。主键写法不同：PostgreSQL 用 BIGSERIAL，MySQL 用 AUTO_INCREMENT，SQLite 用 rowid 上的 AUTOINCREMENT。文本类型不同：只有 MySQL 需要给 username 和 email 指定 VARCHAR(255)，因为它的索引长度受字符集影响。排序规则也不同：MySQL 那行 `COLLATE=utf8mb4_0900_bin` 明确使用二进制比较，正是为了避免默认排序规则把大小写不同的 slug 判成重复。这些都不是 ORM 能替我们决定的事。
+
 迁移不仅要在空库执行，还要从上一版本升级，检查既有数据保留和约束是否建立。数据库 schema 相同名字不表示实际类型和约束一样。每个方言的迁移目录都必须参与检查，不能只改 PostgreSQL 的 SQL 后默认另外两种也能运行。
 
 ## 七、把“支持”写成可复核的矩阵
@@ -77,6 +176,8 @@ M6 为 SQLite 设单写连接，是运行策略中的限制而非数据库锁的
 | 回滚/失败 | 后置状态核对 | 后置状态核对 | 文件库重新查询 |
 
 这里的“真实数据库”很重要。用 SQLite 替身跑完所有测试，最多能证明 SQLite 下通过，不能证明另外两种数据库。CI 若无法提供某个数据库，也应明确标记该矩阵未执行，而不能根据 GORM 文档推断兼容。
+
+维护这张矩阵的成本是真实的：每加一个字段，就要在三个方言里各写一次；每改一个索引，就要在三个文件里分别验证。反过来说，这份成本换来的是一句可以被复核的话——“这个版本在哪些数据库上、跑过哪些用例”。如果团队不愿意承担这份维护，更诚实的选择是只声明支持一个数据库，而不是让驱动列表替兼容性背书。
 
 ## 小结：多数据库是一组可验证承诺
 

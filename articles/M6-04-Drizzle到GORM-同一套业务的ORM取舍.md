@@ -122,6 +122,53 @@ Go model 使用明确 DeletedAt 指针，并在需要时调用 ActiveArticles �
 
 Go 后端要支持 PostgreSQL、MySQL 与 SQLite。GORM 为三者提供 dialector 和通用查询 API，但这并不意味着一份 AutoMigrate 就能生成符合项目预期的所有结构。M6 在 internal/platform/database/migrations 下按方言维护 goose 迁移，显式控制 15 张表、索引、外键和字段类型。
 
+驱动选择与连接池配置集中在一个 `Open` 函数里，SQLite 有额外的方言处理：
+
+~~~go
+// internal/platform/database/database.go（节选）
+// Open 选择实际数据库驱动并配置连接池；SQLite 强制外键和单写连接。
+func Open(driver, dsn string) (*gorm.DB, error) {
+	var dial gorm.Dialector
+	switch driver {
+	case "postgres":
+		dial = postgres.Open(dsn)
+	case "mysql":
+		dial = mysql.Open(dsn)
+	case "sqlite":
+		base, query, _ := strings.Cut(dsn, "?")
+		options, err := url.ParseQuery(query)
+		if err != nil {
+			return nil, fmt.Errorf("invalid SQLite options")
+		}
+		// 外键是业务不变量，DSN 显式关闭外键也不能绕过。
+		options.Set("_foreign_keys", "on")
+		if options.Get("_busy_timeout") == "" {
+			options.Set("_busy_timeout", "5000")
+		}
+		if options.Get("mode") != "ro" {
+			options.Set("_journal_mode", "WAL")
+		}
+		dsn = base + "?" + options.Encode()
+		dial = sqlite.Open(dsn)
+	default:
+		return nil, fmt.Errorf("unsupported database driver %q", driver)
+	}
+	db, err := gorm.Open(dial, &gorm.Config{
+		TranslateError:         true,
+		Logger:                 logger.Default.LogMode(logger.Silent),
+		SkipDefaultTransaction: true,
+	})
+	// ...（此处取 sqlDB 并设置最大连接数、空闲连接与生命周期）
+	if driver == "sqlite" {
+		// 单连接串行写入；WAL 提高读取可用性，不等于支持多个写实例。
+		sqlDB.SetMaxOpenConns(1)
+	}
+	return db, nil
+}
+~~~
+
+三点值得注意。第一，SQLite 的 `_foreign_keys=on` 在代码里强制设置，注释写明“外键是业务不变量”，即使 DSN 里显式关闭也绕不过去。第二，`SkipDefaultTransaction: true` 与上一节呼应：GORM 不再自动为每条写语句包事务，所以多步写入必须自己开 `Transaction`。第三，`SetMaxOpenConns(1)` 只对 SQLite 生效，把并发写收敛成串行；同一段注释特意写明 WAL“不等于支持多个写实例”，避免读者把本地单写当成集群能力。
+
 数据库差异还会体现在：
 
 - 字符串排序与唯一索引：大小写、尾随空格、字符集和索引长度可能不同；

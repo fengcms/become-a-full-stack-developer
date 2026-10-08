@@ -14,6 +14,17 @@ M6 用 Go 重写已经运行的文章系统后端，工程选用 `Go 1.26.6`、�
 
 本文只帮助你开始阅读项目代码，不代表已经掌握并发安全的 Go 服务。`goroutine`、锁和数据库事务会在后续文章里展开。
 
+把这篇当读码指南用，可以先把下面六个观察点记在心里。它不是语法清单，而是本文余下各节的索引：每一行都在提醒你，同一个概念在两种语言里的默认假设可能不同。
+
+| 概念 | TypeScript 里的直觉 | Go 里的实际 | 读码时要问的问题 |
+|---|---|---|---|
+| 数字 | number 统管整数与浮点 | int、int64 按范围区分 | 契约里这个值是什么范围 |
+| 错误 | throw 向上抛 | error 逐步返回 | 这一步失败会阻止哪些后续操作 |
+| 复用 | 类继承 | 结构体嵌入与组合 | 嵌入影响了哪些方法解析 |
+| 抽象 | interface 加 implements | 隐式接口 | 这层抽象对应的变化点在哪 |
+| 空值 | undefined 与 null | 零值、指针与存在性检查 | 缺失、null、空值分别是哪种输入 |
+| 集合 | 数组与对象 | nil slice 与空 slice 不同 | 空结果编码成的 JSON 长什么样 |
+
 ## 一、变量声明短，类型边界更清楚
 
 TypeScript 中我们可能这样写：
@@ -118,7 +129,7 @@ type Provider interface {
 
 隐式实现不意味着接口越多越灵活。每增加一层，读者就多一个跳转位置。M6 在需要替换的外部能力处保留小接口，例如微信换码和对象存储；多数领域服务直接接收 GORM 数据库句柄，没有为每张表增加通用 `Repository`。抽象应该对应真实的变化点。
 
-还有一个 `nil` 陷阱：`nil` 指针装进接口后，接口自身可能仍不等于 `nil`。因此接口值不能完全按指针的直觉判断。小接口也应写清楚返回语义，例如对象不存在时 Get 返回什么、删除前的共享引用检查由谁负责。
+还有一个 `nil` 陷阱：`nil` 指针装进接口后，接口值本身可能并不是 `nil`。因此接口值不能完全按指针的直觉判断。小接口也应写清楚返回语义，例如对象不存在时 Get 返回什么、删除前的共享引用检查由谁负责。
 
 ## 五、零值不等于字段没有提交
 
@@ -134,20 +145,34 @@ Go 的零值让变量不必先初始化：`int` 是 0，`bool` 是 false，`stri
 
 第一种可能表示保留原值，第二种可能表示清空。如果解码后都只有空字符串，业务层便丢失了区别。
 
-M6 用 `values.Fields` 保留字段是否出现，再读取字段的值：
+M6 用 `values.Fields` 保留字段是否出现，再读取字段的值。下面是它在源码里的实现，去掉注释后只剩几行，却能表达三层语义：
 
 ~~~go
-fields := values.Fields{
-    "displayName": "",
-}
-if fields.Has("displayName") {
-    // 字段已提交，即使是空字符串也可能代表清空。
+// internal/values/values.go（节选）
+// Fields 保留请求字段存在性，避免把未提交、NULL 和零值混为一谈。
+type Fields map[string]any
+
+// Has 检查字段是否提交；值为 NULL 仍视为已提交。
+func (f Fields) Has(k string) bool { _, ok := f[k]; return ok }
+
+// String 读取已校验的字符串字段，缺失时返回空字符串。
+func (f Fields) String(k string) string { s, _ := f[k].(string); return s }
+
+// Text 读取已校验的字符串字段；字段缺失或值为 NULL 时返回 nil。
+func (f Fields) Text(k string) *string {
+	if f[k] == nil {
+		return nil
+	}
+	s := f.String(k)
+	return &s
 }
 ~~~
 
-`Has` 检查键是否存在，`String` 读取字符串。可空字段还需要表达 null 与具体值。项目里的 `Fields.Text` 返回 *`string`：字段缺失或值为 null 时返回 `nil`；空字符串时则返回指向空字符串的指针。
+这里没有范围校验，只有访问方式。`Has` 用 map 的“键是否存在”判断，`String` 做一次类型断言，`Text` 把“缺失或 null”与“空字符串”分开。范围与格式校验发生在契约 schema 层，`Fields` 只负责在已经校验过的输入上，把三种状态分别暴露给调用方。
 
-但单独一个指针并不能总区分“键缺失”与“键存在且为 null”，因此部分更新还需保留外层字段是否出现。协议语义决定类型模型，而不是反过来。简单读取布尔值的 `Bool` 缺失时返回 false，只适用于调用方不需要区分缺失，或已确认字段必定提交的场景。
+可空字段还需要表达 null 与具体值。项目里的 `Fields.Text` 返回 `*string`：字段缺失或值为 null 时返回 `nil`；空字符串时则返回指向空字符串的指针。
+
+但单独一个指针无法完全区分“键缺失”与“键存在且为 null”，因此部分更新还需保留外层字段是否出现。协议语义决定类型模型，而不是反过来。简单读取布尔值的 `Bool` 缺失时返回 false，只适用于调用方不需要区分缺失，或已确认字段必定提交的场景。
 
 读代码时不妨先问：它代表请求生命周期的哪一步？哪些信息已经丢失？
 
@@ -160,7 +185,28 @@ ids := []int64{10, 20, 30}
 byID := map[int64]string{10: "article"}
 ~~~
 
-`nil slice` 长度为 0，可以追加；`nil map` 可以读，不能直接赋值，需要先初始化。JSON 编码时 `nil slice` 通常成为 null，初始化的空 `slice` 则成为 []。契约要求空数组时，响应应组装非 `nil` 空 `slice`。`values.`Fields`.Strings` 先创建空切片，保证结果没有元素时仍保留数组语义。
+`nil slice` 长度为 0，可以追加；`nil map` 可以读，不能直接赋值，需要先初始化。JSON 编码时 `nil slice` 通常成为 null，初始化的空 `slice` 则成为 []。契约要求空数组时，响应应组装非 `nil` 空 `slice`。`values.Fields` 的 `Strings` 方法就是这么做的：
+
+~~~go
+// internal/values/values.go（节选）
+// Strings 读取字符串数组，空结果仍保持数组语义。
+func (f Fields) Strings(k string) []string {
+	r := []string{}
+	if a, ok := f[k].([]string); ok {
+		return append(r, a...)
+	}
+	if a, ok := f[k].([]any); ok {
+		for _, v := range a {
+			if s, ok := v.(string); ok {
+				r = append(r, s)
+			}
+		}
+	}
+	return r
+}
+~~~
+
+第一行 `r := []string{}` 是关键：先建立空切片，无论后面是否命中，返回值都不是 `nil`。如果写成 `var r []string`，没有元素时返回的就是 `nil`，序列化后成为 `null`，和契约要求的空数组相差一个字符，却足以让客户端解析失败。这段代码同时处理 `[]string` 与 JSON 解码后的 `[]any` 两种形态，也提醒我们：同一个数组从不同入口进来，运行时类型可能不同。
 
 Map 遍历顺序不保证稳定。需要稳定排序时，应先转换成切片并明确排序，否则分页可能出现重复或漏项。Slice 也可能共享底层数组，原地排序或修改之前，应确认没有其他代码仍依赖原内容。
 

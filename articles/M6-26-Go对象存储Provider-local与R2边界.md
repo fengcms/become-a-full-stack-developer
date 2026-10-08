@@ -18,6 +18,27 @@ M6 将对象能力抽象为 platform/storage.Provider，只定义 Put、Get、De
 
 Provider 接口以 context、key、字节和 MIME 为核心。Put 写入一个对象；Get 读取对象，缺失时返回 nil 而非错误；Delete 删除对象。接口不认识 user_id、article_id、attachment 表或“最后一个引用”——这些是附件业务的责任。
 
+接口的全部内容只有三个方法：
+
+~~~go
+// internal/platform/storage/storage.go（节选）
+// Provider 定义对象的写、读、删能力，不感知用户和文章关系。
+type Provider interface {
+	// Put 将字节内容写入对象键，最后一个参数为内容类型；不处理业务归属。
+	Put(context.Context, string, []byte, string) error
+	// Get 读取对象内容；对象不存在时返回 nil、nil，存储故障返回错误。
+	Get(context.Context, string) ([]byte, error)
+	// Delete 删除对象；共享引用检查和失败补偿由附件服务负责。
+	Delete(context.Context, string) error
+}
+~~~
+
+每个方法都以 `context.Context` 开头，这是把请求取消和调用方截止时间传进 IO 层的前提。`Put` 的四个参数分别是上下文、对象键、字节内容和 MIME 类型；`Get` 返回字节切片和错误；`Delete` 只返回错误。
+
+三个注释写明了接口不做的事。`Put` 的注释说“不处理业务归属”——它不知道这些字节属于哪个用户、会被哪篇文章引用。`Get` 的注释定义了缺失语义“返回 nil、nil”：对象不存在不是错误，调用方拿到 `nil` 就当作 404，与真正的存储故障区分开。`Delete` 的注释把“共享引用检查和失败补偿”推给附件服务——删除一个对象前是否还有别的附件记录引用同一个 key，Provider 不参与判断。
+
+没有列出目录、没有签名 URL、没有元数据查询。多出来的每一项都会让两个实现各自增加承诺，而真正需要这些能力的调用方很少。
+
 这让 storage 包可以被简化测试替身实现。测试无需搭建真实 R2，就可以控制写入失败、对象缺失和读取结果；attachment.Service 测试则观察它何时调用 Put/Delete。与此同时，接口足够小，local 和 R2 都能实现，而无需伪造多余的目录、标签或事务功能。
 
 context 贯穿 IO 操作，使 HTTP 请求取消或调用方设置的截止时间能够传给 provider。实际 provider 还应有自身 timeout。不能因为接口接收 context 就假定每个 SDK 都一定尊重取消，需要针对 SDK 和 HTTP client 配置验证。
@@ -26,9 +47,108 @@ context 贯穿 IO 操作，使 HTTP 请求取消或调用方设置的截止时�
 
 Local provider 将对象保存在配置根目录下。SafeKey 只允许字母、数字、点、下划线和连字符，并拒绝点目录，避免把客户端文件名当成路径写入。附件服务根据内容 SHA-256 与扩展名生成对象 key，避免原始上传文件名进入路径。
 
+路径校验和写入流程如下：
+
+~~~go
+// internal/platform/storage/storage.go（节选）
+// SafeKey 只允许安全对象键，阻止目录穿越和任意文件路径。
+var SafeKey = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
+
+// Local 使用受限 key 和原子重命名保存本地对象。
+type Local struct{ Root string }
+
+func (l Local) path(key string) (string, error) {
+	if !SafeKey.MatchString(key) || key == "." || key == ".." {
+		return "", fmt.Errorf("invalid storage key")
+	}
+	return filepath.Join(l.Root, key), nil
+}
+
+// Put 写入指定 key 的对象，尊重请求取消和提供者超时。
+func (l Local) Put(ctx context.Context, key string, data []byte, mime string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	p, err := l.path(key)
+	if err != nil {
+		return err
+	}
+	if err = os.MkdirAll(l.Root, 0750); err != nil {
+		return err
+	}
+	f, err := os.CreateTemp(l.Root, ".upload-")
+	if err != nil {
+		return err
+	}
+	temp := f.Name()
+	defer os.Remove(temp)
+	if _, err = f.Write(data); err != nil {
+		f.Close()
+		return err
+	}
+	if err = f.Close(); err != nil {
+		return err
+	}
+	return os.Rename(temp, p)
+}
+~~~
+
+`SafeKey` 是一条白名单正则，只接受 ASCII 大小写字母、数字、点、下划线和连字符。斜杠、反斜杠、冒号都不在集合内，所以 `../../etc/passwd` 这类输入在 `path` 里第一步就被拒绝。`path` 额外单独挡掉 `.` 和 `..`——这两个字符串在正则里是合法的（只由点组成），但作为对象键没有意义且容易被用来指向父目录。所有读写方法都先经过 `path`，校验因此无法被绕过。
+
+`Put` 的顺序值得逐步看。第一步 `ctx.Err()` 检查请求是否已取消，避免为一个没人等的请求做完整写入。然后解析路径、用 `os.MkdirAll(l.Root, 0750)` 确保根目录存在。接着 `os.CreateTemp(l.Root, ".upload-")` 在**根目录内**建临时文件，`defer os.Remove(temp)` 保证任何提前返回都会清理它。数据写完、`f.Close()` 成功之后，才 `os.Rename(temp, p)` 把它改名为正式 key。
+
+关键在于 `Rename` 这一步的原子性：同一文件系统内改名是原子的，所以读取方要么看到目标文件不存在，要么看到内容完整的文件，不会读到只写了一半的中间态。如果直接在目标路径上创建文件再写，就存在一个内容不全的窗口。
+
 Local.Put 在目标目录创建临时文件，写完并关闭后再 Rename 到正式 key。这样读取方不会看到只写了一半的目标文件。临时文件在失败时清理；请求取消会在写入前检查 context。目录权限由应用路径和部署文件系统共同决定，生产环境还需要保护根目录权限、持久卷和备份。
 
 Get 读取文件内容；不存在时转成 nil, nil；Delete 对不存在文件按幂等成功处理。这个约定让上层能够把对象不存在映射为附件 404，并让删除重试不会因目标已清理而失败。
+
+~~~go
+// internal/platform/storage/storage.go（节选）
+// Get 读取指定 key 的对象，读完后关闭响应流。
+func (l Local) Get(ctx context.Context, key string) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	p, err := l.path(key)
+	if err != nil {
+		return nil, err
+	}
+	b, err := os.ReadFile(p)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	return b, err
+}
+
+// Delete 删除指定 key 的对象；共享引用判断由附件服务负责。
+func (l Local) Delete(ctx context.Context, key string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	p, err := l.path(key)
+	if err != nil {
+		return err
+	}
+	err = os.Remove(p)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	return err
+}
+~~~
+
+两个方法的共同点是都用 `errors.Is` 单独识别“文件不存在”，并把它翻译成成功语义：`Get` 返回 `nil, nil`，`Delete` 返回 `nil`。`errors.Is` 而不是 `==` 很重要，因为调用链上的错误可能被包装过，直接的相等比较会漏判。
+
+这两种翻译各自解决一个具体问题。读取时返回错误会让上层无法区分“对象确实没有”和“磁盘出问题了”，前者应当映射成 404，后者应当映射成服务端错误。删除时若把“文件不存在”当失败，一次因网络中断而重试的删除请求就会永远报错，哪怕目标早已清理干净。
+
+local provider 的几个关键行为可以汇总成表：
+
+| 行为 | 实现要点 |
+|---|---|
+| 路径安全 | `SafeKey` 白名单 + 拒绝 `.` 与 `..` |
+| 写入可见性 | 先写根目录内临时文件，再 `Rename` 到目标 key |
+| 对象缺失 | `Get` 返回 `nil, nil`，`Delete` 视为成功 |
 
 本地存储的原子 rename 只解决文件系统内的可见性，不等于数据库 transaction。对象和附件行之间仍有跨资源失败窗口，下一篇会讨论补偿。
 
@@ -36,7 +156,75 @@ Get 读取文件内容；不存在时转成 nil, nil；Delete 对不存在文件
 
 R2 provider 使用 AWS SDK 的 S3 client，按 Cloudflare R2 endpoint、bucket、access key、secret 创建客户端。配置不完整时拒绝构造。SDK 区域配置为 auto，启用 path-style endpoint，HTTP client 设定 15 秒超时，并在必要时进行 checksum 处理。
 
+客户端的构造过程集中在一个函数里：
+
+~~~go
+// internal/platform/storage/r2.go（节选）
+// R2 以 S3 兼容协议访问 R2，凭据仅保存在客户端配置中。
+type R2 struct {
+	Client *s3.Client
+	Bucket string
+}
+
+// NewR2 创建具有固定超时和签名策略的 R2 客户端。
+func NewR2(endpoint, bucket, key, secret string) (*R2, error) {
+	if endpoint == "" || bucket == "" || key == "" || secret == "" {
+		return nil, fmt.Errorf("R2 configuration incomplete")
+	}
+	cfg := aws.Config{
+		Region:                     "auto",
+		Credentials:                aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(key, secret, "")),
+		HTTPClient:                 &http.Client{Timeout: 15 * time.Second},
+		RequestChecksumCalculation: aws.RequestChecksumCalculationWhenRequired,
+		ResponseChecksumValidation: aws.ResponseChecksumValidationWhenRequired,
+	}
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) { o.BaseEndpoint = &endpoint; o.UsePathStyle = true })
+	return &R2{Client: client, Bucket: bucket}, nil
+}
+~~~
+
+函数开头四项任一为空就返回错误，这就是“配置不完整时拒绝构造”的实现——与其让一个缺 key 的客户端在第一次上传时才失败，不如在装配阶段就报出来。
+
+`Region` 写死为 `"auto"` 是 R2 的要求，它不使用 AWS 的区域概念。`Credentials` 用 `NewStaticCredentialsProvider` 包一层缓存，让 SDK 复用它。`HTTPClient` 的 15 秒超时是这一层的兜底：接口接收的 context 由调用方控制，但如果调用方没有设置截止时间，这个超时保证请求不会无限挂起。
+
+两个 checksum 配置项都设为 `WhenRequired`，意思是只在协议要求时才计算与校验校验和。这不是默认值，而是针对 R2 的显式选择——批量开启校验和有额外的 CPU 与请求开销。
+
+`s3.NewFromConfig` 的第二个参数是选项回调：`BaseEndpoint` 指向传入的 endpoint，`UsePathStyle = true` 让请求走 `endpoint/bucket/key` 形式而不是把 bucket 放进域名。R2 的 S3 兼容层需要 path-style 寻址。
+
+两种实现的差异可以对照：
+
+| 维度 | `Local` | `R2` |
+|---|---|---|
+| 构造参数 | 根目录 `Root` | endpoint、bucket、access key、secret |
+| 超时来源 | 调用方 context | HTTP client 15 秒 + 调用方 context |
+| 缺失映射 | `os.ErrNotExist` → `nil, nil` | `NoSuchKey` / `NotFound` → `nil, nil` |
+| 删除 | `os.Remove`，不存在视为成功 | S3 `DeleteObject` |
+
 Put 上传字节及 MIME；Get 读响应体并关闭流，限制读取量；遇到 NoSuchKey/NotFound 映射为对象不存在；Delete 调用 S3 DeleteObject。凭据只保存在服务配置，不序列化到附件响应。
+
+读取方法把“对象不存在”从 SDK 的错误类型里分辨出来：
+
+~~~go
+// internal/platform/storage/r2.go（Get，节选）
+// Get 读取指定 key 的对象，读完后关闭响应流。
+func (r *R2) Get(ctx context.Context, key string) ([]byte, error) {
+	res, err := r.Client.GetObject(ctx, &s3.GetObjectInput{Bucket: &r.Bucket, Key: &key})
+	if err != nil {
+		var missing *types.NoSuchKey
+		var api smithy.APIError
+		if errors.As(err, &missing) || (errors.As(err, &api) && api.ErrorCode() == "NotFound") {
+			return nil, nil
+		}
+		return nil, err
+	}
+	defer res.Body.Close()
+	return io.ReadAll(io.LimitReader(res.Body, 10485761))
+}
+~~~
+
+这里用了两种错误识别方式，因为 S3 兼容实现报告“不存在”的形态并不统一。`types.NoSuchKey` 是强类型错误，用 `errors.As` 匹配；`smithy.APIError` 是泛化的 API 错误，需要再查 `api.ErrorCode()` 是否等于 `"NotFound"`。两种命中都返回 `nil, nil`，与 local provider 的缺失语义对齐——上层拿到的行为一致，不需要知道背后是文件系统还是对象存储。
+
+`defer res.Body.Close()` 紧跟成功分支，保证响应体一定会被关闭。读取用 `io.LimitReader(res.Body, 10485761)` 把上限压在 1 MB 多一点，防止一个异常大的对象把内存吃满。注意这个限制是 10485761 而不是 10485760，多出来的一个字节让截断可以暴露而不是被静默吞掉。
 
 S3 兼容不代表所有对象存储功能相同。签名格式、endpoint、错误码、生命周期规则、访问策略和计费均需实际平台配置验证。代码实现和替身测试证明调用边界；只有有凭据的线上请求才能证明真实 bucket 联通。若没有真实 R2 验证证据，文章应明确标记待实测。
 

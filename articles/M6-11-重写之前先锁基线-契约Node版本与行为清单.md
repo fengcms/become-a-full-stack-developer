@@ -46,6 +46,32 @@ M6 开始实现前，基线记录了三个具体对象。
 
 摘要值不是协议本身，但能帮助后来者确认，文章或测试引用的是不是同一份文件。文件内容可以继续演进；一旦变化，摘要自然改变，读者就知道需要重新核对基线。
 
+元数据本身也是基线的一部分。打开生成快照，就能看到它的身份与限流约定（为篇幅省略长描述字段）：
+
+```json
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "文章系统 API",
+    "version": "1.12.0",
+    "x-api-version": 1,
+    "x-rate-limit": {
+      "limit": 60,
+      "window": "1m",
+      "code": 5001,
+      "scope": "per-endpoint",
+      "key": "client"
+    }
+  },
+  "servers": [
+    { "url": "http://localhost:3000", "description": "本地开发（Node 后端）" },
+    { "url": "http://localhost:8080", "description": "本地开发（Go 后端重写）" }
+  ]
+}
+```
+
+`version` 与文章里写的 1.12.0 对应，`x-rate-limit` 说明限流是每个公开端点独立计数、超限返回 429 与业务码 5001，`servers` 则把 Node 和 Go 两个本地入口都列了出来。这些都不是散文描述，而是可以被程序读取的约束。
+
 第二，Node 对照版本是 `node-backend-v1.0.4`，提交为：
 
 ```text
@@ -98,6 +124,33 @@ M6 的行为清单把验证问题拆成几类：
 契约先行容易被误解为“有 OpenAPI YAML，就可以直接生成 Go 服务”。实际接入时，规范版本、校验器行为、生成器能力、项目里的历史约定都需要验证。
 
 M6 的契约使用 OpenAPI 3.1。实现保存了生成的 JSON 快照，并在验证入口检查快照与 YAML 是否一致。请求进入业务前经过契约 schema 与操作级校验；但校验通过不能代替权限、状态机、数据库约束和事务测试。
+
+一个操作在契约里携带的信息，远不止路径和方法。下面是创建文章操作在 JSON 快照中的原始片段：
+
+```json
+"post": {
+  "operationId": "createArticle",
+  "x-authz": {
+    "minRole": "member"
+  },
+  "tags": [
+    "Article"
+  ],
+  "summary": "创建文章",
+  "requestBody": {
+    "required": true,
+    "content": {
+      "application/json": {
+        "schema": {
+          "$ref": "#/components/schemas/ArticleCreate"
+        }
+      }
+    }
+  }
+}
+```
+
+`operationId` 是 Go 侧 handler 注册与权限判断的键；`x-authz.minRole` 声明最低角色；`requestBody.required` 说明请求体不可省略；`$ref` 指向共享的 `ArticleCreate` schema。这四项组合起来才是“创建文章”这个操作的完整协议，而路径字符串本身只表达了很小一部分。
 
 一些契约表达与历史实现之间的冲突，需要局部处理，而不是重写整个文件。例如，nullable 在内存中需要转换成校验器支持的形式；部分 `SiteSetting` 响应 schema 与全局响应信封约定不完全一致；附件 URI 字段标成绝对地址，而实际接口会返回相对路径。这些情况都登记到验证报告，Go 在校验边界做明确兼容，不把源 YAML 静默改成“更好看”的新协议。
 

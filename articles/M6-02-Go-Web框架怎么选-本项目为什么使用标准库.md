@@ -56,18 +56,66 @@ id := r.PathValue("id")
 
 ## 三、路由表不是权限表，更不是业务逻辑
 
-看一个简化后的注册入口：
+看注册入口的关键部分。它没有在入口手写 68 行 HandleFunc，而是用契约里的操作元数据生成路由，并在同一个闭包里完成鉴权与限流：
 
 ~~~go
-func (a *App) Register(operation string, handler Handler) {
-    op := a.Catalog.Operations[operation]
-    pattern := strings.ToUpper(op.Method) + " " + op.Path
-    a.Mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
-        // 公共请求边界
-        // 之后调用对应的业务适配器
-    })
+// internal/transport/httpapi/app.go（节选，省略请求体解码与业务调用）
+// Register 统一执行鉴权、限流、解码和契约校验，再调用业务适配器。
+func (a *App) Register(id string, h Handler) {
+	op, ok := a.Catalog.Operations[id]
+	if !ok {
+		panic("unknown operation " + id)
+	}
+	a.Registered[id] = true
+	a.Mux.HandleFunc(strings.ToUpper(op.Method)+" "+op.Path, func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		defer func() {
+			if v := recover(); v != nil {
+				a.Log.Error("request panic", "operation", id)
+				a.write(w, 500, fault.Internal, nil)
+			}
+			a.Log.Info("request", "operation", id, "duration_ms", time.Since(start).Milliseconds())
+		}()
+		actor := values.Actor{}
+		header := r.Header.Get("Authorization")
+		raw := ""
+		if strings.HasPrefix(header, "Bearer ") {
+			raw = strings.TrimSpace(header[7:])
+		}
+		var err error
+		if raw != "" && a.Identity != nil {
+			actor, err = a.Identity.Parse(raw)
+		}
+		if op.MinRole != "" {
+			if raw == "" {
+				err = fault.New(fault.Missing)
+			}
+			if err == nil && actor.Rank() == 0 {
+				err = fault.New(fault.Token)
+			}
+			if err == nil && !op.Owner && !actor.Allows(op.MinRole, 0) {
+				err = fault.New(fault.Forbidden)
+			}
+		} else {
+			err = nil // Frozen Node optional authentication degrades invalid credentials to anonymous.
+			if actor.Rank() == 0 {
+				actor = values.Actor{}
+			}
+			if retry, ok := a.Limiter.Allow(id+":"+a.clientKey(r, actor), a.Now()); !ok {
+				w.Header().Set("Retry-After", fmt.Sprint(retry))
+				err = fault.New(fault.Limited)
+			}
+		}
+		if err != nil {
+			a.failure(w, err)
+			return
+		}
+		// ...（此处解码请求体、校验契约 schema 并调用业务适配器）
+	})
 }
 ~~~
+
+这里有几处细节值得留意。`pattern` 由 `op.Method` 与 `op.Path` 拼出，来源是冻结契约而不是客户端输入；`recover` 放在 `defer` 里，panic 时先记日志再返回统一 500 信封；鉴权分支区分「无令牌」与「令牌无效」两种 401；公开操作走 `else` 分支做限流，受保护操作则不占公开额度。一行 `if !op.Owner && !actor.Allows(op.MinRole, 0)` 同时表达了「角色不够」和「本人例外」两种规则。这些判断挤在同一个闭包里，正因为它们必须按固定次序发生。
 
 这里的 op 来自冻结契约，而不是从任意客户端输入拼出新的路由。注册时可以利用契约中的 HTTP 方法、路径和鉴权元数据，把公共规则安排到一次请求流程里。
 
