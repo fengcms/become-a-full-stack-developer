@@ -1,0 +1,2 @@
+两份说明相同=true，go/doc.Doc="Package example 第一份中文说明。\n\nPackage example 第一份中文说明。\n"
+两份说明相同=false，go/doc.Doc="Package example 第一份中文说明。\n\nPackage example 第二份中文说明。\n"

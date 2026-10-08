@@ -1,0 +1,16 @@
+=== RUN   TestDocumentationDefects
+=== RUN   TestDocumentationDefects/中文说明及实现重复不误报
+=== RUN   TestDocumentationDefects/重复包说明
+=== RUN   TestDocumentationDefects/英文包说明
+=== RUN   TestDocumentationDefects/缺少包说明
+=== RUN   TestDocumentationDefects/同名不同目录独立计数
+=== RUN   TestDocumentationDefects/非包注释不计数
+--- PASS: TestDocumentationDefects (0.00s)
+    --- PASS: TestDocumentationDefects/中文说明及实现重复不误报 (0.00s)
+    --- PASS: TestDocumentationDefects/重复包说明 (0.00s)
+    --- PASS: TestDocumentationDefects/英文包说明 (0.00s)
+    --- PASS: TestDocumentationDefects/缺少包说明 (0.00s)
+    --- PASS: TestDocumentationDefects/同名不同目录独立计数 (0.00s)
+    --- PASS: TestDocumentationDefects/非包注释不计数 (0.00s)
+PASS
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/scripts/doccheck	0.590s

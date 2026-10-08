@@ -1,0 +1,3 @@
+all modules verified
+github.com/fengcms/become-a-full-stack-developer/go-backend
+/Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/go-backend/internal/article

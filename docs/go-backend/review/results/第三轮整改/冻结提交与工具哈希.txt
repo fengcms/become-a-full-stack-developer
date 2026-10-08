@@ -1,0 +1,7 @@
+代码提交: ceac4e0af8528dbfbb188266022b2a062ee1846d
+归档: git archive ceac4e0af8528dbfbb188266022b2a062ee1846d go-backend
+执行目录: 归档内 go-backend；传入根参数 .
+生产及含测试两次 stdout/stderr 字节比较一致；退出状态分别为0、1。
+5ec629d3e26a1a7f8a08f6031ae8e05d65541862aa7b2ad2c2fb416b70490d3a  docs/go-backend/review/check_go_quality.go
+69124758f1d8ad4b4c416d42594d69142f7717e65b43855fdb7a8fbbdb78e4ce  docs/go-backend/review/check_go_ast.go
+7b252c7ca701b45fdfd2a1e9dc7650085ff36e4ee9644265ad3fb6c485a5e030  docs/api/openapi.v1.yaml

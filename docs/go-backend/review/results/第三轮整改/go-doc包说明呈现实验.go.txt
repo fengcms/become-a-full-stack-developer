@@ -1,0 +1,24 @@
+package main
+import (
+ "fmt"
+ "go/ast"
+ "go/doc"
+ "go/parser"
+ "go/token"
+)
+func main() {
+ for _, same := range []bool{true, false} {
+  set := token.NewFileSet()
+  var files []*ast.File
+  for index := range 2 {
+   text := "Package example 第一份中文说明。"
+   if index == 1 && !same { text = "Package example 第二份中文说明。" }
+   file, err := parser.ParseFile(set, fmt.Sprintf("file%d.go", index), "// "+text+"\npackage example\n", parser.ParseComments)
+   if err != nil { panic(err) }
+   files = append(files, file)
+  }
+  result, err := doc.NewFromFiles(set, files, "example")
+  if err != nil { panic(err) }
+  fmt.Printf("两份说明相同=%t，go/doc.Doc=%q\n", same, result.Doc)
+ }
+}

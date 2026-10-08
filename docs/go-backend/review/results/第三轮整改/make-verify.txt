@@ -1,0 +1,32 @@
+test -z "$(gofmt -l cmd internal test scripts/doccheck)"
+go run ./scripts/doccheck .
+包说明检查通过：每包一份说明，说明包含中文。
+go vet ./...
+node scripts/sync-contract.cjs --check
+go test ./... -count=1
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/cmd/data	[no test files]
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/cmd/migrate	[no test files]
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/cmd/seed	[no test files]
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/cmd/server	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/administration	0.626s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/article	0.367s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/attachment	0.826s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/auth	5.819s
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/bootstrap	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/comment	1.510s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/config	2.014s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/contract	1.024s
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/member	1.844s
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/notification	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database	2.297s
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/storage	2.292s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/taxonomy	2.324s
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/testutil	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/transfer	2.600s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/transport/httpapi	2.594s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values	2.538s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/scripts/doccheck	2.471s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/test	5.221s
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/test/clientserver	[no test files]
