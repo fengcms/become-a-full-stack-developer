@@ -16,19 +16,19 @@ import (
 )
 
 func main() {
-	if e := run(); e != nil {
-		slog.Error("server stopped", "error", e)
+	if err := run(); err != nil {
+		slog.Error("server stopped", "error", err)
 		os.Exit(1)
 	}
 }
 func run() error {
-	c, e := config.Load()
-	if e != nil {
-		return e
+	c, err := config.Load()
+	if err != nil {
+		return err
 	}
-	db, e := database.Open(c.Driver, c.DSN)
-	if e != nil {
-		return e
+	db, err := database.Open(c.Driver, c.DSN)
+	if err != nil {
+		return err
 	}
 	if c.DatabaseMetricsOutput != "" {
 		metrics := database.Observe(db)
@@ -38,19 +38,26 @@ func run() error {
 			}
 		}()
 	}
-	sql, _ := db.DB()
-	defer sql.Close()
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	e = sql.PingContext(ctx)
+	err = sqlDB.PingContext(ctx)
 	cancel()
-	if e != nil {
-		return e
+	if err != nil {
+		return err
 	}
-	app, e := bootstrap.New(db, c, bootstrap.Options{})
-	if e != nil {
-		return e
+	app, err := bootstrap.New(db, c, bootstrap.Options{})
+	if err != nil {
+		return err
 	}
-	server := &http.Server{Addr: c.Address, Handler: app, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 30 * time.Second, IdleTimeout: 60 * time.Second}
+	server := &http.Server{
+		Addr:              c.Address,
+		Handler:           app,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
 	done := make(chan error, 1)
 	go func() {
 		slog.Info("server listening", "address", c.Address, "database", c.Driver)
@@ -60,9 +67,9 @@ func run() error {
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 	defer signal.Stop(signals)
 	select {
-	case e := <-done:
-		if !errors.Is(e, http.ErrServerClosed) {
-			return e
+	case err := <-done:
+		if !errors.Is(err, http.ErrServerClosed) {
+			return err
 		}
 	case <-signals:
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

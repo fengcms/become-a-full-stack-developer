@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/article"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 	"gorm.io/gorm"
@@ -18,17 +19,26 @@ func historyView(a model.Article, h model.History) map[string]any {
 	}
 	return r
 }
+
+// History 读取当前会员的未删除文章历史，不输出其他用户的记录。
 func (s *Service) History(ctx context.Context, user int64, q url.Values) (any, error) {
 	p := values.Paging(q)
 	db := s.DB.WithContext(ctx)
-	filter := db.Model(&model.History{}).Joins("JOIN articles ON articles.id=view_history.article_id").Where("view_history.user_id = ? AND articles.deleted_at IS NULL", user)
+	filter := db.Model(&model.History{}).
+		Joins("JOIN articles ON articles.id=view_history.article_id").
+		Scopes(database.ActiveArticles).
+		Where("view_history.user_id = ?", user)
 	var n int64
-	if e := filter.Session(&gorm.Session{}).Count(&n).Error; e != nil {
-		return nil, e
+	if err := filter.Session(&gorm.Session{}).Count(&n).Error; err != nil {
+		return nil, err
 	}
 	var rows []model.History
-	if e := filter.Select("view_history.*").Order("view_history.last_read_at DESC, view_history.id DESC").Limit(p.Size).Offset(p.Offset()).Find(&rows).Error; e != nil {
-		return nil, e
+	if err := filter.Select("view_history.*").
+		Order("view_history.last_read_at DESC, view_history.id DESC").
+		Limit(p.Size).
+		Offset(p.Offset()).
+		Find(&rows).Error; err != nil {
+		return nil, err
 	}
 	ids := []int64{}
 	for _, h := range rows {
@@ -36,8 +46,8 @@ func (s *Service) History(ctx context.Context, user int64, q url.Values) (any, e
 	}
 	articles := []model.Article{}
 	if len(ids) > 0 {
-		if e := db.Select(article.SummaryColumns).Where("id IN ?", ids).Find(&articles).Error; e != nil {
-			return nil, e
+		if err := db.Select(article.SummaryColumns).Where("id IN ?", ids).Find(&articles).Error; err != nil {
+			return nil, err
 		}
 	}
 	by := map[int64]model.Article{}
@@ -50,27 +60,47 @@ func (s *Service) History(ctx context.Context, user int64, q url.Values) (any, e
 	}
 	return p.Result(list, n), nil
 }
+
+// Report 上报阅读位置，未提交进度保留原值，显式零与 NULL 分别处理。
 func (s *Service) Report(ctx context.Context, user int64, in values.Fields) (any, error) {
 	id := in.Int("articleId")
 	db := s.DB.WithContext(ctx)
-	a, e := article.Published(db, id)
-	if e != nil {
-		return nil, e
+	a, err := article.Published(db, id)
+	if err != nil {
+		return nil, err
 	}
-	h := model.History{UserID: user, ArticleID: id, LastReadAt: s.Now().UnixMilli(), Progress: in.Number("progress")}
+	h := model.History{
+		UserID:     user,
+		ArticleID:  id,
+		LastReadAt: s.Now().UnixMilli(),
+		Progress:   in.Number("progress"),
+	}
 	patch := map[string]any{"last_read_at": h.LastReadAt}
 	if in.Has("progress") {
 		patch["progress"] = h.Progress
 	}
-	e = db.Clauses(clause.OnConflict{Columns: []clause.Column{{Name: "user_id"}, {Name: "article_id"}}, DoUpdates: clause.Assignments(patch)}).Create(&h).Error
-	if e != nil {
-		return nil, e
+	err = db.Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{
+				Name: "user_id",
+			},
+			{
+				Name: "article_id",
+			},
+		},
+		DoUpdates: clause.Assignments(patch),
+	}).
+		Create(&h).Error
+	if err != nil {
+		return nil, err
 	}
-	if e = db.Where("user_id = ? AND article_id = ?", user, id).First(&h).Error; e != nil {
-		return nil, e
+	if err = db.Where("user_id = ? AND article_id = ?", user, id).First(&h).Error; err != nil {
+		return nil, err
 	}
 	return historyView(a, h), nil
 }
+
+// DeleteHistory 删除本人单条历史；文章 ID 为零时清空本人历史。
 func (s *Service) DeleteHistory(ctx context.Context, user, id int64) error {
 	q := s.DB.WithContext(ctx).Where("user_id = ?", user)
 	if id > 0 {

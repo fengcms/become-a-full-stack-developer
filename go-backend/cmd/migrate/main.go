@@ -9,18 +9,18 @@ import (
 )
 
 func main() {
-	c, e := config.Load()
-	if e != nil {
-		log.Fatal(e)
+	c, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
 	}
-	db, e := database.Open(c.Driver, c.DSN)
-	if e != nil {
-		log.Fatal(e)
+	db, err := database.Open(c.Driver, c.DSN)
+	if err != nil {
+		log.Fatal(err)
 	}
 	sql, _ := db.DB()
 	defer sql.Close()
-	if e = database.Migrate(context.Background(), db, c.Driver); e != nil {
-		log.Fatal(e)
+	if err = database.Migrate(context.Background(), db, c.Driver); err != nil {
+		log.Fatal(err)
 	}
 	log.Print("migrations complete")
 }

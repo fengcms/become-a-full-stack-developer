@@ -12,6 +12,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// Config 集中描述启动配置，不负责建立数据库连接或执行迁移。
 type Config struct {
 	Address               string
 	Driver                string
@@ -32,8 +33,9 @@ type Config struct {
 	TrustedProxies        []string
 }
 
+// Load 读取本地环境文件和环境变量，并拒绝不安全或不完整的启动配置。
 func Load() (Config, error) {
-	if e := godotenv.Load(".env"); e != nil && !errors.Is(e, os.ErrNotExist) {
+	if err := godotenv.Load(".env"); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return Config{}, fmt.Errorf("invalid local .env configuration")
 	}
 	c := Config{
@@ -68,13 +70,13 @@ func Load() (Config, error) {
 	if c.Storage != "local" && c.Storage != "r2" {
 		return c, fmt.Errorf("unsupported storage driver")
 	}
-	ratio, e := strconv.ParseFloat(env("COMMENT_REJECT_RATIO", "0.1"), 64)
-	if e != nil || math.IsNaN(ratio) || math.IsInf(ratio, 0) || ratio < 0 || ratio > 1 {
+	ratio, err := strconv.ParseFloat(env("COMMENT_REJECT_RATIO", "0.1"), 64)
+	if err != nil || math.IsNaN(ratio) || math.IsInf(ratio, 0) || ratio < 0 || ratio > 1 {
 		return c, fmt.Errorf("COMMENT_REJECT_RATIO must be between 0 and 1")
 	}
 	c.CommentRejectRatio = &ratio
 	for _, raw := range c.TrustedProxies {
-		if _, e := netip.ParsePrefix(strings.TrimSpace(raw)); e != nil {
+		if _, err := netip.ParsePrefix(strings.TrimSpace(raw)); err != nil {
 			return c, fmt.Errorf("TRUSTED_PROXIES must contain CIDR prefixes")
 		}
 	}

@@ -3,9 +3,9 @@ package contract
 import "testing"
 
 func TestFrozenCatalog(t *testing.T) {
-	c, e := Load()
-	if e != nil {
-		t.Fatal(e)
+	c, err := Load()
+	if err != nil {
+		t.Fatal(err)
 	}
 	if len(c.Operations) != 68 {
 		t.Fatal(len(c.Operations))
@@ -16,10 +16,10 @@ func TestFrozenCatalog(t *testing.T) {
 		}
 	}
 	op := c.Operations["updateMyProfile"]
-	if e := op.Request.Validate(map[string]any{"avatar": nil, "nickname": ""}); e != nil {
-		t.Fatal(e)
+	if err := op.Request.Validate(map[string]any{"avatar": nil, "nickname": ""}); err != nil {
+		t.Fatal(err)
 	}
-	if e := op.Request.Validate(map[string]any{"nickname": 17}); e == nil {
+	if err := op.Request.Validate(map[string]any{"nickname": 17}); err == nil {
 		t.Fatal("invalid input accepted")
 	}
 }

@@ -9,52 +9,67 @@ import (
 	"time"
 
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault"
+	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 	"gorm.io/gorm"
 )
 
+// Service 负责文章可见性、发布状态和相关关系的一致性。
 type Service struct {
 	DB  *gorm.DB
 	Now func() time.Time
 }
 
+// New 创建文章服务，时钟可在边界测试中替换。
 func New(db *gorm.DB) *Service { return &Service{DB: db, Now: time.Now} }
+
+// Get 按 ID 或 slug 获取未删除文章；服务方法还检查访问者可见性。
 func Get(db *gorm.DB, key string) (model.Article, error) {
 	var a model.Article
-	q := db.Where("deleted_at IS NULL")
-	if id, e := strconv.ParseInt(key, 10, 64); e == nil {
+	q := db.Scopes(database.ActiveArticles)
+	if id, err := strconv.ParseInt(key, 10, 64); err == nil {
 		q = q.Where("id = ?", id)
 	} else {
 		q = q.Where("slug = ?", key)
 	}
-	e := q.First(&a).Error
-	return a, e
+	err := q.First(&a).Error
+	return a, err
 }
+
+// Published 读取公开文章；未发布状态与不存在统一返回 404。
 func Published(db *gorm.DB, id int64) (model.Article, error) {
-	a, e := Get(db, strconv.FormatInt(id, 10))
-	if e != nil {
-		return a, e
+	a, err := Get(db, strconv.FormatInt(id, 10))
+	if err != nil {
+		return a, err
 	}
 	if a.Status != "published" {
 		return a, fault.New(fault.NotFound)
 	}
 	return a, nil
 }
+
+// Get 按 ID 或 slug 获取未删除文章；服务方法还检查访问者可见性。
 func (s *Service) Get(ctx context.Context, key string, actor values.Actor) (map[string]any, error) {
-	a, e := Get(s.DB.WithContext(ctx), key)
-	if e != nil {
-		return nil, e
+	a, err := Get(s.DB.WithContext(ctx), key)
+	if err != nil {
+		return nil, err
 	}
 	if a.Status != "published" && actor.ID != a.AuthorID && actor.Role != "admin" {
 		return nil, fault.New(fault.NotFound)
 	}
 	return Detail(a), nil
 }
+
+// Sort 将允许的排序字段映射为固定 SQL，并追加 ID 保证顺序稳定。
 func Sort(raw string) string {
 	desc := strings.HasPrefix(raw, "-")
 	field := strings.TrimPrefix(raw, "-")
-	cols := map[string]string{"publishedAt": "COALESCE(articles.published_at,articles.created_at)", "createdAt": "articles.created_at", "viewCount": "articles.view_count"}
+	cols := map[string]string{
+		"publishedAt": "COALESCE(articles.published_at,articles.created_at)",
+		"createdAt":   "articles.created_at",
+		"viewCount":   "articles.view_count",
+	}
 	col, ok := cols[field]
 	if !ok {
 		col = cols["publishedAt"]
@@ -66,10 +81,12 @@ func Sort(raw string) string {
 	}
 	return col + " " + dir + ", articles.id DESC"
 }
+
+// Page 按权限调用方传入的范围分页查询；关键词计数限制在 2000 条以内。
 func (s *Service) Page(ctx context.Context, q url.Values, status string, author int64) (map[string]any, error) {
 	p := values.Paging(q)
 	db := s.DB.WithContext(ctx)
-	filter := db.Model(&model.Article{}).Where("articles.deleted_at IS NULL")
+	filter := db.Model(&model.Article{}).Scopes(database.ActiveArticles)
 	if status != "" {
 		filter = filter.Where("articles.status = ?", status)
 	}
@@ -84,8 +101,8 @@ func (s *Service) Page(ctx context.Context, q url.Values, status string, author 
 	}
 	if cat := q.Get("category"); cat != "" {
 		var all []model.Category
-		if e := db.Find(&all).Error; e != nil {
-			return nil, e
+		if err := db.Find(&all).Error; err != nil {
+			return nil, err
 		}
 		slugs := []string{}
 		ids := map[int64]bool{}
@@ -112,15 +129,19 @@ func (s *Service) Page(ctx context.Context, q url.Values, status string, author 
 	countQuery := filter.Session(&gorm.Session{})
 	if q.Get("keyword") != "" {
 		bounded := countQuery.Select("articles.id").Limit(2000)
-		if e := db.Table("(?) AS bounded_articles", bounded).Count(&total).Error; e != nil {
-			return nil, e
+		if err := db.Table("(?) AS bounded_articles", bounded).Count(&total).Error; err != nil {
+			return nil, err
 		}
-	} else if e := countQuery.Count(&total).Error; e != nil {
-		return nil, e
+	} else if err := countQuery.Count(&total).Error; err != nil {
+		return nil, err
 	}
 	var rows []model.Article
-	if e := filter.Select(SummaryColumns).Order(Sort(q.Get("sort"))).Limit(p.Size).Offset(p.Offset()).Find(&rows).Error; e != nil {
-		return nil, e
+	if err := filter.Select(SummaryColumns).
+		Order(Sort(q.Get("sort"))).
+		Limit(p.Size).
+		Offset(p.Offset()).
+		Find(&rows).Error; err != nil {
+		return nil, err
 	}
 	list := List(rows)
 	return p.Result(list, total), nil

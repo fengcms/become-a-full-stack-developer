@@ -18,19 +18,27 @@ import (
 func TestSharedKeyAndDatabaseFailureCompensation(t *testing.T) {
 	db := testutil.DB(t)
 	ctx := context.Background()
-	u := model.User{Username: "upload-" + time.Now().Format("150405.000000"), PasswordHash: "!", CredentialsConfigured: true, Role: "member", Status: "active", CreatedAt: 1, UpdatedAt: 1}
-	if e := db.Create(&u).Error; e != nil {
-		t.Fatal(e)
+	u := model.User{
+		Username:              "upload-" + time.Now().Format("150405.000000"),
+		PasswordHash:          "!",
+		CredentialsConfigured: true,
+		Role:                  "member",
+		Status:                "active",
+		CreatedAt:             1,
+		UpdatedAt:             1,
+	}
+	if err := db.Create(&u).Error; err != nil {
+		t.Fatal(err)
 	}
 	local := storage.Local{Root: t.TempDir()}
 	s := New(db, "local", map[string]storage.Provider{"local": local})
-	first, e := s.Create(ctx, u.ID, nil, []byte("shared"), ".png", "image/png")
-	if e != nil {
-		t.Fatal(e)
+	first, err := s.Create(ctx, u.ID, nil, []byte("shared"), ".png", "image/png")
+	if err != nil {
+		t.Fatal(err)
 	}
-	second, e := s.Create(ctx, u.ID, nil, []byte("shared"), ".png", "image/png")
-	if e != nil {
-		t.Fatal(e)
+	second, err := s.Create(ctx, u.ID, nil, []byte("shared"), ".png", "image/png")
+	if err != nil {
+		t.Fatal(err)
 	}
 	f := first.(map[string]any)
 	v := second.(map[string]any)
@@ -38,23 +46,23 @@ func TestSharedKeyAndDatabaseFailureCompensation(t *testing.T) {
 		t.Fatal("content key differs")
 	}
 	actor := values.Actor{ID: u.ID, Role: "member"}
-	if e = s.Delete(ctx, f["id"].(int64), actor); e != nil {
-		t.Fatal(e)
+	if err = s.Delete(ctx, f["id"].(int64), actor); err != nil {
+		t.Fatal(err)
 	}
 	key := fmt.Sprint(f["url"])[len("/files/"):]
-	if b, e := s.Read(ctx, key); e != nil || string(b) != "shared" {
-		t.Fatal("shared reference removed", e)
+	if b, err := s.Read(ctx, key); err != nil || string(b) != "shared" {
+		t.Fatal("shared reference removed", err)
 	}
-	if _, e = s.Create(ctx, 999999999, nil, []byte("shared"), ".png", "image/png"); e == nil {
+	if _, err = s.Create(ctx, 999999999, nil, []byte("shared"), ".png", "image/png"); err == nil {
 		t.Fatal("missing FK accepted")
 	}
-	if b, e := s.Read(ctx, key); e != nil || string(b) != "shared" {
-		t.Fatal("compensation deleted existing reference", e)
+	if b, err := s.Read(ctx, key); err != nil || string(b) != "shared" {
+		t.Fatal("compensation deleted existing reference", err)
 	}
-	if e = s.Delete(ctx, v["id"].(int64), actor); e != nil {
-		t.Fatal(e)
+	if err = s.Delete(ctx, v["id"].(int64), actor); err != nil {
+		t.Fatal(err)
 	}
-	if _, e = s.Read(ctx, key); e == nil {
+	if _, err = s.Read(ctx, key); err == nil {
 		t.Fatal("last reference didn't remove object")
 	}
 }
@@ -79,13 +87,21 @@ func (s failingStorage) Delete(ctx context.Context, key string) error {
 func TestObjectFailuresAndConcurrentSharedReference(t *testing.T) {
 	db := testutil.DB(t)
 	ctx := context.Background()
-	u := model.User{Username: "upload-fault-" + time.Now().Format("150405.000000"), PasswordHash: "!", CredentialsConfigured: true, Role: "member", Status: "active", CreatedAt: 1, UpdatedAt: 1}
-	if e := db.Create(&u).Error; e != nil {
-		t.Fatal(e)
+	u := model.User{
+		Username:              "upload-fault-" + time.Now().Format("150405.000000"),
+		PasswordHash:          "!",
+		CredentialsConfigured: true,
+		Role:                  "member",
+		Status:                "active",
+		CreatedAt:             1,
+		UpdatedAt:             1,
+	}
+	if err := db.Create(&u).Error; err != nil {
+		t.Fatal(err)
 	}
 	local := storage.Local{Root: t.TempDir()}
 	s := New(db, "local", map[string]storage.Provider{"local": failingStorage{Local: local, failPut: true}})
-	if _, e := s.Create(ctx, u.ID, nil, []byte("fault"), ".png", "image/png"); e == nil {
+	if _, err := s.Create(ctx, u.ID, nil, []byte("fault"), ".png", "image/png"); err == nil {
 		t.Fatal("put failure hidden")
 	}
 	var count int64
@@ -94,26 +110,26 @@ func TestObjectFailuresAndConcurrentSharedReference(t *testing.T) {
 		t.Fatal("put failure committed metadata")
 	}
 	s.Providers["local"] = failingStorage{Local: local, failDelete: true}
-	v, e := s.Create(ctx, u.ID, nil, []byte("fault"), ".png", "image/png")
-	if e != nil {
-		t.Fatal(e)
+	v, err := s.Create(ctx, u.ID, nil, []byte("fault"), ".png", "image/png")
+	if err != nil {
+		t.Fatal(err)
 	}
 	item := v.(map[string]any)
-	if e = s.Delete(ctx, item["id"].(int64), values.Actor{ID: u.ID, Role: "member"}); e != nil {
-		t.Fatal("best effort delete changed protocol", e)
+	if err = s.Delete(ctx, item["id"].(int64), values.Actor{ID: u.ID, Role: "member"}); err != nil {
+		t.Fatal("best effort delete changed protocol", err)
 	}
 	db.Model(&model.Attachment{}).Where("id = ?", item["id"]).Count(&count)
 	if count != 0 {
 		t.Fatal("metadata retained")
 	}
 	key := strings.TrimPrefix(item["url"].(string), "/files/")
-	if bytes, e := local.Get(ctx, key); e != nil || string(bytes) != "fault" {
+	if bytes, err := local.Get(ctx, key); err != nil || string(bytes) != "fault" {
 		t.Fatal("expected retained object for reconciliation")
 	}
 	s.Providers["local"] = local
-	original, e := s.Create(ctx, u.ID, nil, []byte("concurrent"), ".png", "image/png")
-	if e != nil {
-		t.Fatal(e)
+	original, err := s.Create(ctx, u.ID, nil, []byte("concurrent"), ".png", "image/png")
+	if err != nil {
+		t.Fatal(err)
 	}
 	var wg sync.WaitGroup
 	errs := make(chan error, 2)
@@ -122,19 +138,19 @@ func TestObjectFailuresAndConcurrentSharedReference(t *testing.T) {
 	})
 	var replacement any
 	wg.Go(func() {
-		var e error
-		replacement, e = s.Create(ctx, u.ID, nil, []byte("concurrent"), ".png", "image/png")
-		errs <- e
+		var err error
+		replacement, err = s.Create(ctx, u.ID, nil, []byte("concurrent"), ".png", "image/png")
+		errs <- err
 	})
 	wg.Wait()
 	close(errs)
-	for e := range errs {
-		if e != nil {
-			t.Fatal(e)
+	for err := range errs {
+		if err != nil {
+			t.Fatal(err)
 		}
 	}
 	key = strings.TrimPrefix(replacement.(map[string]any)["url"].(string), "/files/")
-	if bytes, e := s.Read(ctx, key); e != nil || string(bytes) != "concurrent" {
-		t.Fatal("racing deletion removed new reference", e)
+	if bytes, err := s.Read(ctx, key); err != nil || string(bytes) != "concurrent" {
+		t.Fatal("racing deletion removed new reference", err)
 	}
 }

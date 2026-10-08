@@ -18,9 +18,12 @@ import (
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values"
 )
 
+// Identity 提供传输层需要的 JWT 解析能力，不暴露认证数据库操作。
 type Identity interface {
 	Parse(string) (values.Actor, error)
 }
+
+// Request 携带已校验输入、访问者和原始 HTTP 上下文。
 type Request struct {
 	HTTP   *http.Request
 	Actor  values.Actor
@@ -28,9 +31,13 @@ type Request struct {
 	Writer http.ResponseWriter
 }
 
+// Context 透传请求上下文，让取消和超时传播到领域与数据库。
 func (r Request) Context() context.Context { return r.HTTP.Context() }
 
+// Handler 定义领域调用适配器，返回值由统一信封序列化。
 type Handler func(Request) (any, error)
+
+// App 持有路由、契约、认证和限流配置，不保存业务实体状态。
 type App struct {
 	TrustedProxies []string
 	Mux            *http.ServeMux
@@ -43,12 +50,28 @@ type App struct {
 	Now            func() time.Time
 }
 
+// New 建立传输应用及健康端点，具体业务由装配根绑定。
 func New(c *contract.Catalog, id Identity, origins string) *App {
-	a := &App{Mux: http.NewServeMux(), Catalog: c, Identity: id, Origins: origins, Log: slog.Default(), Limiter: NewLimiter(), Registered: map[string]bool{}, Now: time.Now}
-	a.Mux.HandleFunc("GET /api/v1/health", func(w http.ResponseWriter, r *http.Request) { a.write(w, 200, 0, map[string]string{"status": "ok"}) })
+	a := &App{
+		Mux:        http.NewServeMux(),
+		Catalog:    c,
+		Identity:   id,
+		Origins:    origins,
+		Log:        slog.Default(),
+		Limiter:    NewLimiter(),
+		Registered: map[string]bool{},
+		Now:        time.Now,
+	}
+	a.Mux.HandleFunc("GET /api/v1/health", func(w http.ResponseWriter, r *http.Request) {
+		a.write(w, 200, 0, map[string]string{
+			"status": "ok",
+		})
+	})
 	a.Mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) { a.write(w, 404, fault.NotFound, nil) })
 	return a
 }
+
+// Register 统一执行鉴权、限流、解码和契约校验，再调用业务适配器。
 func (a *App) Register(id string, h Handler) {
 	op, ok := a.Catalog.Operations[id]
 	if !ok {
@@ -100,19 +123,24 @@ func (a *App) Register(id string, h Handler) {
 		}
 		in := values.Fields{}
 		if op.Request != nil {
-			e := decode(w, r, &in, !op.BodyRequired)
-			if e != nil {
-				a.failure(w, e)
+			err := decode(w, r, &in, !op.BodyRequired)
+			if err != nil {
+				a.failure(w, err)
 				return
 			}
-			if e = op.Request.Validate(map[string]any(in)); e != nil {
-				a.failure(w, &fault.Error{Code: fault.Validation, Data: map[string]any{"errors": contract.Errors(e)}})
+			if err = op.Request.Validate(map[string]any(in)); err != nil {
+				a.failure(w, &fault.Error{Code: fault.Validation, Data: map[string]any{"errors": contract.Errors(err)}})
 				return
 			}
 		}
-		result, e := h(Request{HTTP: r, Actor: actor, Input: in, Writer: w})
-		if e != nil {
-			a.failure(w, e)
+		result, err := h(Request{
+			HTTP:   r,
+			Actor:  actor,
+			Input:  in,
+			Writer: w,
+		})
+		if err != nil {
+			a.failure(w, err)
 			return
 		}
 		a.write(w, 200, 0, result)
@@ -120,8 +148,8 @@ func (a *App) Register(id string, h Handler) {
 }
 func decode(w http.ResponseWriter, r *http.Request, out *values.Fields, optional bool) error {
 	d := json.NewDecoder(http.MaxBytesReader(w, r.Body, 2*1024*1024))
-	if e := d.Decode(out); e != nil {
-		if optional && e == io.EOF {
+	if err := d.Decode(out); err != nil {
+		if optional && err == io.EOF {
 			return nil
 		}
 		return fault.Field("_", "请求体须为JSON对象")
@@ -135,10 +163,10 @@ func decode(w http.ResponseWriter, r *http.Request, out *values.Fields, optional
 	}
 	return nil
 }
-func (a *App) failure(w http.ResponseWriter, e error) {
-	f := fault.Resolve(e)
+func (a *App) failure(w http.ResponseWriter, err error) {
+	f := fault.Resolve(err)
 	if f.Code == fault.Internal {
-		a.Log.Error("internal request failure", "error_type", fmt.Sprintf("%T", e))
+		a.Log.Error("internal request failure", "error_type", fmt.Sprintf("%T", err))
 	}
 	a.write(w, fault.Status(f.Code), f.Code, f.Data)
 }
@@ -148,8 +176,16 @@ func (a *App) write(w http.ResponseWriter, status, code int, data any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(map[string]any{"code": code, "message": fault.Message(code), "data": data, "requestId": hex.EncodeToString(id), "timestamp": values.ISO(a.Now().UnixMilli())})
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"code":      code,
+		"message":   fault.Message(code),
+		"data":      data,
+		"requestId": hex.EncodeToString(id),
+		"timestamp": values.ISO(a.Now().UnixMilli()),
+	})
 }
+
+// ServeHTTP 包装安全响应头、跨域策略和异常恢复。
 func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	origin := r.Header.Get("Origin")
 	if origin != "" {
@@ -170,10 +206,20 @@ func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	a.Mux.ServeHTTP(w, r)
 }
+
+// Cookie 按固定安全属性写刷新 Cookie；空令牌会清除 Cookie。
 func Cookie(w http.ResponseWriter, token string) {
 	age := 604800
 	if token == "" {
 		age = -1
 	}
-	http.SetCookie(w, &http.Cookie{Name: "refreshToken", Value: token, Path: "/", MaxAge: age, Secure: true, HttpOnly: true, SameSite: http.SameSiteNoneMode})
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refreshToken",
+		Value:    token,
+		Path:     "/",
+		MaxAge:   age,
+		Secure:   true,
+		HttpOnly: true,
+		SameSite: http.SameSiteNoneMode,
+	})
 }

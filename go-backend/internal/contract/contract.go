@@ -13,85 +13,70 @@ import (
 //go:embed openapi.json
 var source embed.FS
 
+// Operation 记录冻结操作的路径、权限和编译后的输入输出校验器。
 type Operation struct {
 	BodyRequired              bool
 	ID, Method, Path, MinRole string
 	Owner                     bool
 	Request, Response         *jsonschema.Schema
 }
+
+// Catalog 保存操作目录和响应信封规则，供启动装配及测试复用。
 type Catalog struct {
 	Operations                 map[string]Operation
 	Document                   map[string]any
 	Envelope, ValidationErrors *jsonschema.Schema
 }
 
+// Load 读取嵌入快照，在内存规范化后编译各操作的 JSON Schema。
 func Load() (*Catalog, error) {
-	raw, e := source.ReadFile("openapi.json")
-	if e != nil {
-		return nil, e
+	raw, err := source.ReadFile("openapi.json")
+	if err != nil {
+		return nil, err
 	}
 	var doc map[string]any
-	if e = json.Unmarshal(raw, &doc); e != nil {
-		return nil, e
+	if err = json.Unmarshal(raw, &doc); err != nil {
+		return nil, err
 	}
 	normalize(doc)
 	compiler := jsonschema.NewCompiler()
-	if e = compiler.AddResource("https://befull.local/openapi.json", doc); e != nil {
-		return nil, e
+	if err = compiler.AddResource("https://befull.local/openapi.json", doc); err != nil {
+		return nil, err
 	}
 	inputCompiler := jsonschema.NewCompiler()
 	inputCompiler.AssertFormat()
-	if e = inputCompiler.AddResource("https://befull.local/openapi.json", doc); e != nil {
-		return nil, e
+	if err = inputCompiler.AddResource("https://befull.local/openapi.json", doc); err != nil {
+		return nil, err
 	}
 	c := &Catalog{Operations: map[string]Operation{}, Document: doc}
-	c.Envelope, e = compiler.Compile("https://befull.local/openapi.json#/components/schemas/ApiResponse")
-	if e != nil {
-		return nil, e
+	c.Envelope, err = compiler.Compile("https://befull.local/openapi.json#/components/schemas/ApiResponse")
+	if err != nil {
+		return nil, err
 	}
-	c.ValidationErrors, e = compiler.Compile("https://befull.local/openapi.json#/components/schemas/ValidationErrorList")
-	if e != nil {
-		return nil, e
+	c.ValidationErrors, err = compiler.Compile("https://befull.local/openapi.json#/components/schemas/ValidationErrorList")
+	if err != nil {
+		return nil, err
 	}
-	paths := doc["paths"].(map[string]any)
+	paths, ok := doc["paths"].(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("contract paths must be an object")
+	}
 	for path, value := range paths {
-		for method, v := range value.(map[string]any) {
-			o, ok := v.(map[string]any)
-			if !ok || o["operationId"] == nil {
-				continue
+		methods, ok := value.(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("contract path %s must be an object", path)
+		}
+		for method, value := range methods {
+			op, err := operationAt(path, method, value, compiler, inputCompiler)
+			if err != nil {
+				return nil, err
 			}
-			op := Operation{ID: o["operationId"].(string), Method: method, Path: path}
-			if a, ok := o["x-authz"].(map[string]any); ok {
-				op.MinRole, _ = a["minRole"].(string)
-				op.Owner = a["ownerOverride"] != nil
+			if op.ID != "" {
+				c.Operations[op.ID] = op
 			}
-			base := "https://befull.local/openapi.json#/paths/" + escape(path) + "/" + method
-			if b, ok := o["requestBody"].(map[string]any); ok {
-				op.BodyRequired, _ = b["required"].(bool)
-				if content, ok := b["content"].(map[string]any); ok {
-					if _, ok := content["application/json"]; ok {
-						op.Request, e = inputCompiler.Compile(base + "/requestBody/content/application~1json/schema")
-						if e != nil {
-							return nil, fmt.Errorf("%s request: %w", op.ID, e)
-						}
-					}
-				}
-			}
-			if resp, ok := o["responses"].(map[string]any); ok {
-				if response, ok := resp["200"].(map[string]any); ok {
-					if content, ok := response["content"].(map[string]any); ok {
-						if _, ok := content["application/json"]; ok {
-							op.Response, e = compiler.Compile(base + "/responses/200/content/application~1json/schema")
-							if e != nil {
-								return nil, fmt.Errorf("%s response: %w", op.ID, e)
-							}
-						}
-					}
-				}
-			}
-			c.Operations[op.ID] = op
 		}
 	}
+
 	return c, nil
 }
 func escape(s string) string {
@@ -109,8 +94,8 @@ func escape(s string) string {
 	return r
 }
 
-// The frozen document uses nullable (OAS 3.0 vocabulary) inside OAS 3.1.
-// Translate in memory to JSON Schema unions, including nullable $ref.
+// 冻结文件在 OAS 3.1 内沿用 nullable，只在内存转换为 JSON Schema union。
+// 不写回源文件，也不把可空字段误解释为未提交字段。
 func normalize(v any) {
 	switch x := v.(type) {
 	case map[string]any:
@@ -132,7 +117,9 @@ func normalize(v any) {
 		}
 	}
 }
-func Errors(e error) []map[string]string {
+
+// Errors 将校验树展开成字段错误，必填字段保留具体路径。
+func Errors(err error) []map[string]string {
 	out := []map[string]string{}
 	var walk func(*jsonschema.ValidationError)
 	walk = func(v *jsonschema.ValidationError) {
@@ -164,24 +151,24 @@ func Errors(e error) []map[string]string {
 		}
 		out = append(out, map[string]string{"field": field, "message": v.Error()})
 	}
-	if v, ok := e.(*jsonschema.ValidationError); ok {
+	if v, ok := err.(*jsonschema.ValidationError); ok {
 		walk(v)
 	}
 	if len(out) == 0 {
-		out = append(out, map[string]string{"field": "_", "message": e.Error()})
+		out = append(out, map[string]string{"field": "_", "message": err.Error()})
 	}
 	return out
 }
 
-// Site settings declare a bare schema despite the global envelope rule.
-// Validate its payload explicitly while retaining the globally required envelope.
+// CheckResponse 保留全局响应信封，同时单独校验站点设置的裸 payload schema。
+// 这是处理冻结资料内部差异，不修改各客户端已经依赖的响应形状。
 func (c *Catalog) CheckResponse(id string, status int, body any) error {
-	if e := c.Envelope.Validate(body); e != nil {
-		return e
+	if err := c.Envelope.Validate(body); err != nil {
+		return err
 	}
 	if b, ok := body.(map[string]any); ok && b["code"] == float64(4001) {
-		if e := c.ValidationErrors.Validate(b["data"]); e != nil {
-			return e
+		if err := c.ValidationErrors.Validate(b["data"]); err != nil {
+			return err
 		}
 	}
 	op, ok := c.Operations[id]

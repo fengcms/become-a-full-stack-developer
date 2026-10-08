@@ -1,6 +1,7 @@
 // Package model contains persistence rows, never HTTP responses.
 package model
 
+// Comment 评论持久化行，parentId 保持平面回复关系。
 type Comment struct {
 	ID             int64   `gorm:"column:id;primaryKey;autoIncrement"`
 	ArticleID      int64   `gorm:"column:article_id"`

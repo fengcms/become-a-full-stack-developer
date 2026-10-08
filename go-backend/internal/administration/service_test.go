@@ -13,16 +13,24 @@ import (
 
 func TestSelfGuardAndSiteNull(t *testing.T) {
 	db := testutil.DB(t)
-	u := model.User{Username: "admin-" + time.Now().Format("150405.000000"), PasswordHash: "!", CredentialsConfigured: true, Role: "admin", Status: "active", CreatedAt: 1, UpdatedAt: 1}
-	if e := db.Create(&u).Error; e != nil {
-		t.Fatal(e)
+	u := model.User{
+		Username:              "admin-" + time.Now().Format("150405.000000"),
+		PasswordHash:          "!",
+		CredentialsConfigured: true,
+		Role:                  "admin",
+		Status:                "active",
+		CreatedAt:             1,
+		UpdatedAt:             1,
+	}
+	if err := db.Create(&u).Error; err != nil {
+		t.Fatal(err)
 	}
 	s := New(db, nil)
-	if _, e := s.UpdateUser(context.Background(), u.ID, u.ID, values.Fields{"status": "disabled"}); fault.Resolve(e).Code != fault.Forbidden {
-		t.Fatal(e)
+	if _, err := s.UpdateUser(context.Background(), u.ID, u.ID, values.Fields{"status": "disabled"}); fault.Resolve(err).Code != fault.Forbidden {
+		t.Fatal(err)
 	}
-	r, e := s.Site(context.Background(), values.Fields{"siteTitle": nil, "siteName": "测试"})
-	if e != nil || r.(map[string]any)["siteTitle"].(*string) != nil {
-		t.Fatal(r, e)
+	r, err := s.Site(context.Background(), values.Fields{"siteTitle": nil, "siteName": "测试"})
+	if err != nil || r.(map[string]any)["siteTitle"].(*string) != nil {
+		t.Fatal(r, err)
 	}
 }

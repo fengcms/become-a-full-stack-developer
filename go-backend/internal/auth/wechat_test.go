@@ -26,14 +26,14 @@ func TestConcurrentWechatAndCredentials(t *testing.T) {
 	results := make(chan map[string]any, 2)
 	errs := make(chan error, 2)
 	for range 2 {
-		wg.Go(func() { r, e := s.WechatLogin(context.Background(), "code"); results <- r; errs <- e })
+		wg.Go(func() { r, err := s.WechatLogin(context.Background(), "code"); results <- r; errs <- err })
 	}
 	wg.Wait()
 	close(errs)
 	close(results)
-	for e := range errs {
-		if e != nil {
-			t.Fatal(e)
+	for err := range errs {
+		if err != nil {
+			t.Fatal(err)
 		}
 	}
 	var uid int64
@@ -45,30 +45,30 @@ func TestConcurrentWechatAndCredentials(t *testing.T) {
 		uid = id
 	}
 	var count int64
-	if e := db.Model(&model.WechatIdentity{}).Where("app_id = ?", s.AppID).Count(&count).Error; e != nil || count != 1 {
-		t.Fatal(count, e)
+	if err := db.Model(&model.WechatIdentity{}).Where("app_id = ?", s.AppID).Count(&count).Error; err != nil || count != 1 {
+		t.Fatal(count, err)
 	}
 	setupErrors := make(chan error, 2)
 	for range 2 {
 		wg.Go(func() {
-			_, e := s.Setup(context.Background(), uid, values.Fields{"username": "wx-local-" + stamp, "password": "password123"})
-			setupErrors <- e
+			_, err := s.Setup(context.Background(), uid, values.Fields{"username": "wx-local-" + stamp, "password": "password123"})
+			setupErrors <- err
 		})
 	}
 	wg.Wait()
 	close(setupErrors)
 	wins := 0
-	for e := range setupErrors {
-		if e == nil {
+	for err := range setupErrors {
+		if err == nil {
 			wins++
-		} else if fault.Resolve(e).Code != fault.Conflict {
-			t.Fatal(e)
+		} else if fault.Resolve(err).Code != fault.Conflict {
+			t.Fatal(err)
 		}
 	}
 	if wins != 1 {
 		t.Fatal("setup winners", wins)
 	}
-	if _, e := s.Login(context.Background(), values.Fields{"username": "wx-local-" + stamp, "password": "password123"}); e != nil {
-		t.Fatal(e)
+	if _, err := s.Login(context.Background(), values.Fields{"username": "wx-local-" + stamp, "password": "password123"}); err != nil {
+		t.Fatal(err)
 	}
 }

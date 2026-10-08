@@ -18,33 +18,45 @@ import (
 func TestNotificationFailureRollsBackDomainState(t *testing.T) {
 	db := testutil.DB(t)
 	ctx := context.Background()
-	u := model.User{Username: "event-" + time.Now().Format("150405.000000"), PasswordHash: "!", CredentialsConfigured: true, Role: "member", Status: "active", CreatedAt: 1, UpdatedAt: 1}
-	if e := db.Create(&u).Error; e != nil {
-		t.Fatal(e)
+	u := model.User{
+		Username:              "event-" + time.Now().Format("150405.000000"),
+		PasswordHash:          "!",
+		CredentialsConfigured: true,
+		Role:                  "member",
+		Status:                "active",
+		CreatedAt:             1,
+		UpdatedAt:             1,
+	}
+	if err := db.Create(&u).Error; err != nil {
+		t.Fatal(err)
 	}
 	as := article.New(db)
 	actor := values.Actor{ID: u.ID, Role: "admin"}
-	a, e := as.Create(ctx, actor, values.Fields{"title": "通知事务", "content": "内容", "status": "pending"})
-	if e != nil {
-		t.Fatal(e)
+	a, err := as.Create(ctx, actor, values.Fields{
+		"title":   "通知事务",
+		"content": "内容",
+		"status":  "pending",
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 	aid := a["id"].(int64)
 	fail := func() {
-		if e := db.Callback().Create().Before("gorm:create").Register("test:fail_notification", func(tx *gorm.DB) {
+		if err := db.Callback().Create().Before("gorm:create").Register("test:fail_notification", func(tx *gorm.DB) {
 			if tx.Statement.Table == "notifications" {
 				tx.AddError(errors.New("injected notification write failure"))
 			}
-		}); e != nil {
-			t.Fatal(e)
+		}); err != nil {
+			t.Fatal(err)
 		}
 	}
 	restore := func() { _ = db.Callback().Create().Remove("test:fail_notification") }
 	defer restore()
 	fail()
-	if _, e = as.Transition(ctx, aid, actor, "approve", ""); e == nil {
+	if _, err = as.Transition(ctx, aid, actor, "approve", ""); err == nil {
 		t.Fatal("publication succeeded despite failed notification")
 	}
-	if _, e = as.Update(ctx, aid, actor, values.Fields{"status": "published"}); e == nil {
+	if _, err = as.Update(ctx, aid, actor, values.Fields{"status": "published"}); err == nil {
 		t.Fatal("PUT publication succeeded despite failed notification")
 	}
 	var row model.Article
@@ -53,11 +65,11 @@ func TestNotificationFailureRollsBackDomainState(t *testing.T) {
 		t.Fatal("publication was partially committed")
 	}
 	restore()
-	if _, e = as.Transition(ctx, aid, actor, "approve", ""); e != nil {
-		t.Fatal(e)
+	if _, err = as.Transition(ctx, aid, actor, "approve", ""); err != nil {
+		t.Fatal(err)
 	}
-	if _, e = as.Transition(ctx, aid, actor, "set", "published"); e != nil {
-		t.Fatal(e)
+	if _, err = as.Transition(ctx, aid, actor, "set", "published"); err != nil {
+		t.Fatal(err)
 	}
 	var count int64
 	db.Model(&model.Notification{}).Where("user_id = ? AND type = ?", u.ID, "article_published").Count(&count)
@@ -65,13 +77,13 @@ func TestNotificationFailureRollsBackDomainState(t *testing.T) {
 		t.Fatal("publication notification count", count)
 	}
 	cs := comment.New(db)
-	c, e := cs.Create(ctx, fmt.Sprint(aid), actor, values.Fields{"content": "广告"})
-	if e != nil {
-		t.Fatal(e)
+	c, err := cs.Create(ctx, fmt.Sprint(aid), actor, values.Fields{"content": "广告"})
+	if err != nil {
+		t.Fatal(err)
 	}
 	cid := c.(map[string]any)["id"].(int64)
 	fail()
-	if _, e = cs.Review(ctx, cid, values.Fields{"status": "approved"}); e == nil {
+	if _, err = cs.Review(ctx, cid, values.Fields{"status": "approved"}); err == nil {
 		t.Fatal("review succeeded despite failed notification")
 	}
 	var cr model.Comment
@@ -81,8 +93,8 @@ func TestNotificationFailureRollsBackDomainState(t *testing.T) {
 	}
 	restore()
 	for range 2 {
-		if _, e = cs.Review(ctx, cid, values.Fields{"status": "approved"}); e != nil {
-			t.Fatal(e)
+		if _, err = cs.Review(ctx, cid, values.Fields{"status": "approved"}); err != nil {
+			t.Fatal(err)
 		}
 	}
 	db.Model(&model.Notification{}).Where("user_id = ? AND type = ?", u.ID, "comment_approved").Count(&count)

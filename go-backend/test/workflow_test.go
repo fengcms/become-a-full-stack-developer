@@ -55,8 +55,8 @@ func (r *runner) call(id, actor string, params map[string]int64, body any) map[s
 	path = strings.ReplaceAll(path, "{provider}", "wechat")
 	var b bytes.Buffer
 	if body != nil {
-		if e := json.NewEncoder(&b).Encode(body); e != nil {
-			r.t.Fatal(e)
+		if err := json.NewEncoder(&b).Encode(body); err != nil {
+			r.t.Fatal(err)
 		}
 	}
 	req := httptest.NewRequest(strings.ToUpper(op.Method), path, &b)
@@ -67,42 +67,74 @@ func (r *runner) call(id, actor string, params map[string]int64, body any) map[s
 	w := httptest.NewRecorder()
 	r.app.ServeHTTP(w, req)
 	var envelope map[string]any
-	if e := json.Unmarshal(w.Body.Bytes(), &envelope); e != nil {
+	if err := json.Unmarshal(w.Body.Bytes(), &envelope); err != nil {
 		r.t.Fatalf("%s: %s", id, w.Body.String())
 	}
-	r.trace = append(r.trace, trace{id, strings.ToUpper(op.Method), path, actor, body, w.Code, envelope})
+	r.trace = append(r.trace, trace{
+		id,
+		strings.ToUpper(op.Method),
+		path,
+		actor,
+		body,
+		w.Code,
+		envelope,
+	})
 	if w.Code != 200 {
 		r.t.Fatalf("%s HTTP%d: %s", id, w.Code, w.Body.String())
 	}
-	if e := r.app.Catalog.CheckResponse(id, 200, envelope); e != nil {
-		r.t.Fatalf("%s schema: %v\n%s", id, e, w.Body.String())
+	if err := r.app.Catalog.CheckResponse(id, 200, envelope); err != nil {
+		r.t.Fatalf("%s schema: %v\n%s", id, err, w.Body.String())
 	}
 	r.seen[id] = true
 	return envelope
 }
-func data(e map[string]any) map[string]any { return e["data"].(map[string]any) }
-func idOf(e map[string]any) int64          { return int64(data(e)["id"].(float64)) }
-func token(e map[string]any) string        { return data(e)["accessToken"].(string) }
+func data(err map[string]any) map[string]any { return err["data"].(map[string]any) }
+func idOf(err map[string]any) int64          { return int64(data(err)["id"].(float64)) }
+func token(err map[string]any) string        { return data(err)["accessToken"].(string) }
 func TestAllOperations(t *testing.T) {
 	db := testutil.DB(t)
-	hash, e := auth.Hash("password123")
-	if e != nil {
-		t.Fatal(e)
+	hash, err := auth.Hash("password123")
+	if err != nil {
+		t.Fatal(err)
 	}
 	stamp := time.Now().Format("150405.000000")
-	admin := model.User{Username: "admin-" + stamp, PasswordHash: hash, CredentialsConfigured: true, Role: "admin", Status: "active", Level: 1, CreatedAt: 1000, UpdatedAt: 1000}
-	if e = db.Create(&admin).Error; e != nil {
-		t.Fatal(e)
+	admin := model.User{
+		Username:              "admin-" + stamp,
+		PasswordHash:          hash,
+		CredentialsConfigured: true,
+		Role:                  "admin",
+		Status:                "active",
+		Level:                 1,
+		CreatedAt:             1000,
+		UpdatedAt:             1000,
 	}
-	app, e := bootstrap.New(db, config.Config{JWTSecret: strings.Repeat("s", 32), Storage: "local", UploadDir: t.TempDir(), WechatAppID: "workflow-" + stamp}, bootstrap.Options{Wechat: fakeWechat{}})
-	if e != nil {
-		t.Fatal(e)
+	if err = db.Create(&admin).Error; err != nil {
+		t.Fatal(err)
+	}
+	app, err := bootstrap.New(db, config.Config{
+		JWTSecret:   strings.Repeat("s", 32),
+		Storage:     "local",
+		UploadDir:   t.TempDir(),
+		WechatAppID: "workflow-" + stamp,
+	}, bootstrap.Options{Wechat: fakeWechat{}})
+	if err != nil {
+		t.Fatal(err)
 	}
 	app.Log = slog.New(slog.NewTextHandler(io.Discard, nil))
-	r := runner{t: t, app: app, seen: map[string]bool{}, actors: map[string]string{}}
+	r := runner{
+		t:      t,
+		app:    app,
+		seen:   map[string]bool{},
+		actors: map[string]string{},
+	}
 	login := r.call("login", "", nil, values.Fields{"username": admin.Username, "password": "password123"})
 	r.actors["admin"] = token(login)
-	member := r.call("registerUser", "", nil, values.Fields{"username": "member-" + stamp, "email": stamp + "@test.invalid", "password": "password123", "nickname": "读者"})
+	member := r.call("registerUser", "", nil, values.Fields{
+		"username": "member-" + stamp,
+		"email":    stamp + "@test.invalid",
+		"password": "password123",
+		"nickname": "读者",
+	})
 	r.actors["member"] = token(member)
 	uid := int64(data(member)["user"].(map[string]any)["id"].(float64))
 	for _, id := range []string{"getCurrentUser", "getMyProfile"} {
@@ -114,8 +146,16 @@ func TestAllOperations(t *testing.T) {
 	r.call("updateUser", "admin", map[string]int64{"id": uid}, values.Fields{"level": 3})
 	cat := r.call("createCategory", "admin", nil, values.Fields{"name": "工程", "slug": "engineering-" + strings.ReplaceAll(stamp, ".", "-")})
 	cid := idOf(cat)
-	r.call("updateCategory", "admin", map[string]int64{"id": cid}, values.Fields{"name": "工程实践", "slug": data(cat)["slug"], "sortOrder": 0})
-	for _, id := range []string{"listCategories", "getCategoryTree", "getCategoryStats"} {
+	r.call("updateCategory", "admin", map[string]int64{"id": cid}, values.Fields{
+		"name":      "工程实践",
+		"slug":      data(cat)["slug"],
+		"sortOrder": 0,
+	})
+	for _, id := range []string{
+		"listCategories",
+		"getCategoryTree",
+		"getCategoryStats",
+	} {
 		r.call(id, "", nil, nil)
 	}
 	r.call("getCategoryBreadcrumb", "", map[string]int64{"id": cid}, nil)
@@ -123,11 +163,26 @@ func TestAllOperations(t *testing.T) {
 	tid := idOf(tag)
 	r.call("updateTag", "admin", map[string]int64{"id": tid}, values.Fields{"name": "Go语言", "slug": data(tag)["slug"]})
 	r.call("listTags", "", nil, nil)
-	published := r.call("createArticle", "admin", nil, values.Fields{"title": "Go 工程", "content": "# 介绍\n```go\n# 不是标题\n```\n## 细节\n## 细节", "summary": "兼容实践", "categoryId": cid, "tags": []string{"Go语言"}, "status": "published"})
+	published := r.call("createArticle", "admin", nil, values.Fields{
+		"title":      "Go 工程",
+		"content":    "# 介绍\n```go\n# 不是标题\n```\n## 细节\n## 细节",
+		"summary":    "兼容实践",
+		"categoryId": cid,
+		"tags":       []string{"Go语言"},
+		"status":     "published",
+	})
 	aid := idOf(published)
-	params := map[string]int64{"id": aid, "idOrSlug": aid, "articleId": aid}
+	params := map[string]int64{
+		"id":        aid,
+		"idOrSlug":  aid,
+		"articleId": aid,
+	}
 	r.call("getArticle", "", params, nil)
-	r.call("updateArticle", "admin", params, values.Fields{"title": "Go 工程更新", "content": "# 介绍\n## 实践", "summary": nil})
+	r.call("updateArticle", "admin", params, values.Fields{
+		"title":   "Go 工程更新",
+		"content": "# 介绍\n## 实践",
+		"summary": nil,
+	})
 	r.call("listArticles", "", nil, nil)
 	r.call("listMyArticles", "admin", nil, nil)
 	r.call("listAdminArticles", "admin", nil, nil)
@@ -137,7 +192,12 @@ func TestAllOperations(t *testing.T) {
 	r.call("submitArticle", "member", map[string]int64{"id": did}, nil)
 	r.call("approveArticle", "admin", map[string]int64{"id": did}, nil)
 	r.call("setArticleStatus", "admin", map[string]int64{"id": did}, values.Fields{"status": "published"})
-	for _, id := range []string{"getArticleAdjacent", "getArticleRelated", "getArticleToc", "viewArticle"} {
+	for _, id := range []string{
+		"getArticleAdjacent",
+		"getArticleRelated",
+		"getArticleToc",
+		"viewArticle",
+	} {
 		r.call(id, "", params, nil)
 	}
 	// Search has a required query parameter, not a request body.
@@ -170,9 +230,14 @@ func TestAllOperations(t *testing.T) {
 	r.call("listMyHistory", "member", nil, nil)
 	r.call("removeHistoryItem", "member", params, nil)
 	r.call("clearMyHistory", "member", nil, nil)
-	n := model.Notification{UserID: uid, Type: "system", Title: "系统消息", CreatedAt: 1000}
-	if e = db.Create(&n).Error; e != nil {
-		t.Fatal(e)
+	n := model.Notification{
+		UserID:    uid,
+		Type:      "system",
+		Title:     "系统消息",
+		CreatedAt: 1000,
+	}
+	if err = db.Create(&n).Error; err != nil {
+		t.Fatal(err)
 	}
 	r.call("listMyNotifications", "member", nil, nil)
 	r.call("getUnreadNotificationCount", "member", nil, nil)
@@ -186,9 +251,9 @@ func TestAllOperations(t *testing.T) {
 	// Multipart is validated by its own trust-boundary parser.
 	var form bytes.Buffer
 	writer := multipart.NewWriter(&form)
-	part, e := writer.CreatePart(textproto.MIMEHeader{"Content-Disposition": {`form-data; name="file"; filename="image.svg"`}, "Content-Type": {"image/svg+xml"}})
-	if e != nil {
-		t.Fatal(e)
+	part, err := writer.CreatePart(textproto.MIMEHeader{"Content-Disposition": {`form-data; name="file"; filename="image.svg"`}, "Content-Type": {"image/svg+xml"}})
+	if err != nil {
+		t.Fatal(err)
 	}
 	_, _ = part.Write([]byte("<svg/>"))
 	_ = writer.Close()
@@ -202,11 +267,24 @@ func TestAllOperations(t *testing.T) {
 	if w.Code != 200 {
 		t.Fatal(w.Body.String())
 	}
-	if e = app.Catalog.CheckResponse("uploadFile", 200, upload); e != nil {
-		t.Fatal(e)
+	if err = app.Catalog.CheckResponse("uploadFile", 200, upload); err != nil {
+		t.Fatal(err)
 	}
 	r.seen["uploadFile"] = true
-	r.trace = append(r.trace, trace{"uploadFile", "POST", "/api/v1/upload", "member", map[string]any{"_multipart": true, "name": "image.svg", "mime": "image/svg+xml", "content": "<svg/>"}, 200, upload})
+	r.trace = append(r.trace, trace{
+		"uploadFile",
+		"POST",
+		"/api/v1/upload",
+		"member",
+		map[string]any{
+			"_multipart": true,
+			"name":       "image.svg",
+			"mime":       "image/svg+xml",
+			"content":    "<svg/>",
+		},
+		200,
+		upload,
+	})
 	r.call("listMyAttachments", "member", nil, nil)
 	fileReq := httptest.NewRequest("GET", data(upload)["url"].(string), nil)
 	fileRes := httptest.NewRecorder()
@@ -237,8 +315,8 @@ func TestAllOperations(t *testing.T) {
 	t.Logf("schema-validated operations: %d/68", len(r.seen))
 	if path := os.Getenv("TRACE_OUTPUT"); path != "" {
 		b, _ := json.MarshalIndent(map[string]any{"seed": map[string]any{"admin": admin}, "requests": r.trace}, "", "  ")
-		if e = os.WriteFile(path, b, 0600); e != nil {
-			t.Fatal(e)
+		if err = os.WriteFile(path, b, 0600); err != nil {
+			t.Fatal(err)
 		}
 	}
 }

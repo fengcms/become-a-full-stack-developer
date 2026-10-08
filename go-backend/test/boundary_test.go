@@ -22,9 +22,14 @@ import (
 func TestEveryOperationTrustBoundary(t *testing.T) {
 	db := testutil.DB(t)
 	secret := strings.Repeat("b", 32)
-	app, e := bootstrap.New(db, config.Config{JWTSecret: secret, Storage: "local", UploadDir: t.TempDir(), Origins: "http://client.local"}, bootstrap.Options{})
-	if e != nil {
-		t.Fatal(e)
+	app, err := bootstrap.New(db, config.Config{
+		JWTSecret: secret,
+		Storage:   "local",
+		UploadDir: t.TempDir(),
+		Origins:   "http://client.local",
+	}, bootstrap.Options{})
+	if err != nil {
+		t.Fatal(err)
 	}
 	app.Log = slog.New(slog.NewTextHandler(io.Discard, nil))
 	tokens := map[string]string{}
@@ -32,9 +37,18 @@ func TestEveryOperationTrustBoundary(t *testing.T) {
 	records := []trace{}
 	service := auth.New(db, secret)
 	for _, role := range []string{"member", "admin"} {
-		u := model.User{Username: role + "-boundary-" + time.Now().Format("150405.000000"), PasswordHash: "!", CredentialsConfigured: true, Role: role, Status: "active", Level: 1, CreatedAt: 1000, UpdatedAt: 1000}
-		if e = db.Create(&u).Error; e != nil {
-			t.Fatal(e)
+		u := model.User{
+			Username:              role + "-boundary-" + time.Now().Format("150405.000000"),
+			PasswordHash:          "!",
+			CredentialsConfigured: true,
+			Role:                  role,
+			Status:                "active",
+			Level:                 1,
+			CreatedAt:             1000,
+			UpdatedAt:             1000,
+		}
+		if err = db.Create(&u).Error; err != nil {
+			t.Fatal(err)
 		}
 		seeded = append(seeded, u)
 		result, err := service.Result(db, u)
@@ -46,7 +60,11 @@ func TestEveryOperationTrustBoundary(t *testing.T) {
 	checked := 0
 	for id, op := range app.Catalog.Operations {
 		path := op.Path
-		for _, param := range []string{"id", "idOrSlug", "articleId"} {
+		for _, param := range []string{
+			"id",
+			"idOrSlug",
+			"articleId",
+		} {
 			path = strings.ReplaceAll(path, "{"+param+"}", "999999999")
 		}
 		path = strings.ReplaceAll(path, "{provider}", "wechat")
@@ -85,7 +103,15 @@ func TestEveryOperationTrustBoundary(t *testing.T) {
 				}
 				var input any
 				_ = json.Unmarshal([]byte(body), &input)
-				records = append(records, trace{id, strings.ToUpper(op.Method), path, actor, input, w.Code, out})
+				records = append(records, trace{
+					id,
+					strings.ToUpper(op.Method),
+					path,
+					actor,
+					input,
+					w.Code,
+					out,
+				})
 			}
 			checked++
 		}
@@ -119,17 +145,21 @@ func TestEveryOperationTrustBoundary(t *testing.T) {
 	t.Logf("operation trust-boundary assertions: %d", checked)
 	if path := os.Getenv("BOUNDARY_TRACE_OUTPUT"); path != "" {
 		b, _ := json.MarshalIndent(map[string]any{"seed": map[string]any{"users": seeded}, "requests": records}, "", "  ")
-		if e := os.WriteFile(path, b, 0600); e != nil {
-			t.Fatal(e)
+		if err := os.WriteFile(path, b, 0600); err != nil {
+			t.Fatal(err)
 		}
 	}
 }
 
 func TestSessionCookieAndReplayBoundary(t *testing.T) {
 	db := testutil.DB(t)
-	app, e := bootstrap.New(db, config.Config{JWTSecret: strings.Repeat("s", 32), Storage: "local", UploadDir: t.TempDir()}, bootstrap.Options{})
-	if e != nil {
-		t.Fatal(e)
+	app, err := bootstrap.New(db, config.Config{
+		JWTSecret: strings.Repeat("s", 32),
+		Storage:   "local",
+		UploadDir: t.TempDir(),
+	}, bootstrap.Options{})
+	if err != nil {
+		t.Fatal(err)
 	}
 	app.Log = slog.New(slog.NewTextHandler(io.Discard, nil))
 	request := func(path, body, token, cookie string) *httptest.ResponseRecorder {

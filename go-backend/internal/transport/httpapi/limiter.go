@@ -16,12 +16,17 @@ type window struct {
 	Start time.Time
 	Count int
 }
+
+// Limiter 按操作及访问者记录有界的进程内限流窗口。
 type Limiter struct {
 	mu      sync.Mutex
 	windows map[string]window
 }
 
+// NewLimiter 创建空限流窗口集合，避免不同应用实例共用测试状态。
 func NewLimiter() *Limiter { return &Limiter{windows: map[string]window{}} }
+
+// Allow 判断当前窗口是否允许请求，拒绝时返回剩余等待秒数。
 func (l *Limiter) Allow(key string, now time.Time) (int, bool) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -49,8 +54,8 @@ func (l *Limiter) Allow(key string, now time.Time) (int, bool) {
 	return 0, true
 }
 func clientIP(r *http.Request) string {
-	ip, _, e := net.SplitHostPort(r.RemoteAddr)
-	if e != nil {
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
 		return r.RemoteAddr
 	}
 	return ip
@@ -58,14 +63,14 @@ func clientIP(r *http.Request) string {
 
 func (a *App) clientIP(r *http.Request) string {
 	ip := clientIP(r)
-	addr, e := netip.ParseAddr(ip)
-	if e != nil {
+	addr, err := netip.ParseAddr(ip)
+	if err != nil {
 		return ip
 	}
 	trusted := false
 	for _, raw := range a.TrustedProxies {
-		p, e := netip.ParsePrefix(strings.TrimSpace(raw))
-		if e == nil && p.Contains(addr) {
+		p, err := netip.ParsePrefix(strings.TrimSpace(raw))
+		if err == nil && p.Contains(addr) {
 			trusted = true
 			break
 		}
@@ -75,15 +80,15 @@ func (a *App) clientIP(r *http.Request) string {
 	} // Walk from the trusted edge; don't trust a spoofed leftmost entry.
 	chain := strings.Split(r.Header.Get("X-Forwarded-For"), ",")
 	for i := len(chain) - 1; i >= 0; i-- {
-		candidate, e := netip.ParseAddr(strings.TrimSpace(chain[i]))
-		if e != nil {
+		candidate, err := netip.ParseAddr(strings.TrimSpace(chain[i]))
+		if err != nil {
 			continue
 		}
 		ip = candidate.String()
 		isTrusted := false
 		for _, raw := range a.TrustedProxies {
-			p, e := netip.ParsePrefix(strings.TrimSpace(raw))
-			if e == nil && p.Contains(candidate) {
+			p, err := netip.ParsePrefix(strings.TrimSpace(raw))
+			if err == nil && p.Contains(candidate) {
 				isTrusted = true
 				break
 			}

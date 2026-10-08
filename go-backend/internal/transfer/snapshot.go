@@ -6,18 +6,17 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model"
 	"gorm.io/gorm"
 )
 
+// Snapshot 离线版本化业务快照，不包含有效会话和对象内容。
 type Snapshot struct {
 	Version   int                         `json:"version"`
 	Source    string                      `json:"source"`
@@ -38,13 +37,19 @@ var tables = []table{
 	{"notifications", model.Notification{}}, {"site_settings", model.SiteSetting{}},
 }
 
+// Export 在只读一致性事务内导出白名单业务表，源数据库不被修改。
 func Export(ctx context.Context, db *gorm.DB, source string) (*Snapshot, error) {
-	out := &Snapshot{Version: 1, Source: source, CreatedAt: time.Now().UTC().Format(time.RFC3339Nano), Tables: map[string][]map[string]any{}}
-	e := db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	out := &Snapshot{
+		Version:   1,
+		Source:    source,
+		CreatedAt: time.Now().UTC().Format(time.RFC3339Nano),
+		Tables:    map[string][]map[string]any{},
+	}
+	txErr := db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		for _, table := range tables {
 			var rows []map[string]any
-			if e := tx.Table(table.name).Order("id ASC").Find(&rows).Error; e != nil {
-				return fmt.Errorf("export %s: %w", table.name, e)
+			if err := tx.Table(table.name).Order("id ASC").Find(&rows).Error; err != nil {
+				return fmt.Errorf("export %s: %w", table.name, err)
 			}
 			if rows == nil {
 				rows = []map[string]any{}
@@ -60,110 +65,9 @@ func Export(ctx context.Context, db *gorm.DB, source string) (*Snapshot, error) 
 		}
 		return nil
 	}, &sql.TxOptions{Isolation: sql.LevelRepeatableRead, ReadOnly: true})
-	return out, e
+	return out, txErr
 }
 
-// Normalize enforces the fixed table/column allowlist and scalar types. IDs and
-// timestamps are integer JSON numbers rather than lossy float64 conversions.
-func (s *Snapshot) Normalize() error {
-	if s.Version != 1 {
-		return fmt.Errorf("unsupported snapshot version")
-	}
-	allowed := map[string]bool{}
-	for _, table := range tables {
-		allowed[table.name] = true
-		rows, ok := s.Tables[table.name]
-		if !ok {
-			return fmt.Errorf("missing table %s", table.name)
-		}
-		columns := map[string]reflect.Type{}
-		typ := reflect.TypeOf(table.row)
-		for i := 0; i < typ.NumField(); i++ {
-			f := typ.Field(i)
-			col := strings.Split(strings.TrimPrefix(f.Tag.Get("gorm"), "column:"), ";")[0]
-			columns[col] = f.Type
-		}
-		ids := map[int64]bool{}
-		for _, row := range rows {
-			for key, value := range row {
-				typ, ok := columns[key]
-				if !ok {
-					return fmt.Errorf("unknown column %s.%s", table.name, key)
-				}
-				nullable := typ.Kind() == reflect.Pointer
-				if nullable {
-					typ = typ.Elem()
-				}
-				if value == nil {
-					if !nullable {
-						return fmt.Errorf("null %s.%s", table.name, key)
-					}
-					continue
-				}
-				switch typ.Kind() {
-				case reflect.Int64:
-					n, e := integer(value)
-					if e != nil {
-						return fmt.Errorf("invalid integer %s.%s", table.name, key)
-					}
-					row[key] = n
-				case reflect.Bool:
-					if _, ok := value.(bool); !ok {
-						n, e := integer(value)
-						if e != nil || (n != 0 && n != 1) {
-							return fmt.Errorf("invalid boolean %s.%s", table.name, key)
-						}
-						row[key] = n == 1
-					}
-				case reflect.String:
-					if _, ok := value.(string); !ok {
-						return fmt.Errorf("invalid text %s.%s", table.name, key)
-					}
-				default:
-					return fmt.Errorf("unsupported column type")
-				}
-			}
-			// Pre-WeChat Node backups may not have this additive column.
-			if table.name == "users" {
-				if _, ok := row["credentials_configured"]; !ok {
-					row["credentials_configured"] = true
-				}
-			}
-			id, e := integer(row["id"])
-			if e != nil || id < 1 || ids[id] {
-				return fmt.Errorf("invalid/duplicate id in %s", table.name)
-			}
-			ids[id] = true
-			if e := productValues(table.name, row); e != nil {
-				return e
-			}
-		}
-		if table.name == "categories" || table.name == "comments" {
-			ordered, e := parentsFirst(rows)
-			if e != nil {
-				return fmt.Errorf("%s: %w", table.name, e)
-			}
-			s.Tables[table.name] = ordered
-			if table.name == "categories" {
-				depth := map[int64]int{}
-				for _, row := range ordered {
-					id, _ := integer(row["id"])
-					parent, _ := integer(row["parent_id"])
-					depth[id] = depth[parent] + 1
-					if depth[id] > 4 {
-						return fmt.Errorf("category depth exceeds 4")
-					}
-				}
-			}
-		}
-	}
-	for name := range s.Tables {
-		if !allowed[name] {
-			return fmt.Errorf("unexpected table %s; session/dedup import is prohibited", name)
-		}
-	}
-	return nil
-}
 func integer(v any) (int64, error) {
 	switch n := v.(type) {
 	case int64:
@@ -213,88 +117,6 @@ func parentsFirst(rows []map[string]any) ([]map[string]any, error) {
 	return out, nil
 }
 
-var dryRun = errors.New("validated dry run rollback")
-
-func Import(ctx context.Context, db *gorm.DB, driver string, s *Snapshot, preview bool) error {
-	if e := s.Normalize(); e != nil {
-		return e
-	}
-	e := db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// This command is only for an isolated, migrated empty target. It cannot
-		// silently merge IDs, overwrite accounts or duplicate existing content.
-		for _, name := range append(tableNames(), "refresh_tokens", "article_view_dedup") {
-			if name == "site_settings" {
-				continue
-			}
-			var count int64
-			if e := tx.Table(name).Count(&count).Error; e != nil {
-				return e
-			}
-			if count != 0 {
-				return fmt.Errorf("target %s is not empty", name)
-			}
-		}
-		for _, table := range tables {
-			rows := s.Tables[table.name]
-			if table.name == "site_settings" {
-				if len(rows) != 1 || rows[0]["id"] != int64(1) {
-					return fmt.Errorf("site settings must contain singleton id 1")
-				}
-				if e := tx.Table(table.name).Where("id = ?", 1).Updates(rows[0]).Error; e != nil {
-					return e
-				}
-				continue
-			}
-			for _, row := range rows {
-				copyRow := make(map[string]any, len(row))
-				for key, value := range row {
-					copyRow[key] = value
-				}
-				if e := tx.Table(table.name).Create(copyRow).Error; e != nil {
-					return fmt.Errorf("import %s failed: %w", table.name, e)
-				}
-			}
-		}
-		if e := audit(tx); e != nil {
-			return e
-		}
-		if preview {
-			return dryRun
-		}
-		if driver == "postgres" {
-			// Identifiers come solely from the compiled allowlist, never JSON input.
-			for _, table := range tables {
-				query := fmt.Sprintf("SELECT setval(pg_get_serial_sequence('%s','id'), COALESCE((SELECT MAX(id) FROM %s),1), EXISTS(SELECT 1 FROM %s))", table.name, table.name, table.name)
-				if e := tx.Exec(query).Error; e != nil {
-					return e
-				}
-			}
-		}
-		return nil
-	})
-	if errors.Is(e, dryRun) {
-		return nil
-	}
-	return e
-}
-func audit(tx *gorm.DB) error {
-	for _, query := range []string{
-		"SELECT COUNT(*) FROM articles a LEFT JOIN users u ON a.author_id=u.id WHERE u.id IS NULL",
-		"SELECT COUNT(*) FROM articles a LEFT JOIN categories c ON a.category_id=c.id WHERE a.deleted_at IS NULL AND a.category_id IS NOT NULL AND c.id IS NULL",
-		"SELECT COUNT(*) FROM comments c JOIN comments p ON c.parent_id=p.id WHERE c.article_id <> p.article_id",
-		"SELECT COUNT(*) FROM attachments f LEFT JOIN articles a ON f.article_id=a.id WHERE f.article_id IS NOT NULL AND a.id IS NULL",
-		"SELECT COUNT(*) FROM articles a WHERE a.like_count <> (SELECT COUNT(*) FROM likes l WHERE l.article_id=a.id)",
-	} {
-		var count int64
-		if e := tx.Raw(query).Scan(&count).Error; e != nil {
-			return e
-		}
-		if count > 0 {
-			return fmt.Errorf("relationship/counter audit failed (%d rows); source must be reviewed before import", count)
-		}
-	}
-	return nil
-}
 func tableNames() []string {
 	out := []string{}
 	for _, table := range tables {
@@ -302,6 +124,8 @@ func tableNames() []string {
 	}
 	return out
 }
+
+// Counts 返回每个保留业务表的行数，输出核查证据而不打印敏感字段。
 func (s *Snapshot) Counts() map[string]int {
 	out := map[string]int{}
 	for k, v := range s.Tables {
@@ -332,13 +156,13 @@ func productValues(table string, row map[string]any) error {
 	}
 	switch table {
 	case "users":
-		if e := allowed("role", "member", "editor", "admin"); e != nil {
-			return e
+		if err := allowed("role", "member", "editor", "admin"); err != nil {
+			return err
 		}
 		return allowed("status", "active", "disabled")
 	case "articles":
-		if e := allowed("status", "draft", "pending", "published"); e != nil {
-			return e
+		if err := allowed("status", "draft", "pending", "published"); err != nil {
+			return err
 		}
 		for _, key := range []string{"view_count", "like_count"} {
 			if row[key] != nil {

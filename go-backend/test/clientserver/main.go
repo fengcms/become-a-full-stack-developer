@@ -25,38 +25,61 @@ import (
 
 type wechat struct{}
 
+// Exchange 为测试返回固定微信身份，不访问真实外部服务。
 func (wechat) Exchange(context.Context, string) (string, error) { return "client-smoke-openid", nil }
 func main() {
-	dir, e := os.MkdirTemp("", "befull-client-smoke-")
-	if e != nil {
-		log.Fatal(e)
+	dir, err := os.MkdirTemp("", "befull-client-smoke-")
+	if err != nil {
+		log.Fatal(err)
 	}
 	defer os.RemoveAll(dir)
-	db, e := database.Open("sqlite", filepath.Join(dir, "fixture.db"))
-	if e != nil {
-		log.Fatal(e)
+	db, err := database.Open("sqlite", filepath.Join(dir, "fixture.db"))
+	if err != nil {
+		log.Fatal(err)
 	}
 	raw, _ := db.DB()
 	defer raw.Close()
-	if e = database.Migrate(context.Background(), db, "sqlite"); e != nil {
-		log.Fatal(e)
+	if err = database.Migrate(context.Background(), db, "sqlite"); err != nil {
+		log.Fatal(err)
 	}
-	hash, e := auth.Hash("m6-smoke-password")
-	if e != nil {
-		log.Fatal(e)
+	hash, err := auth.Hash("m6-smoke-password")
+	if err != nil {
+		log.Fatal(err)
 	}
-	u := model.User{Username: "smoke-admin", PasswordHash: hash, CredentialsConfigured: true, Role: "admin", Status: "active", Level: 1, CreatedAt: 1, UpdatedAt: 1}
-	if e = db.Create(&u).Error; e != nil {
-		log.Fatal(e)
+	u := model.User{
+		Username:              "smoke-admin",
+		PasswordHash:          hash,
+		CredentialsConfigured: true,
+		Role:                  "admin",
+		Status:                "active",
+		Level:                 1,
+		CreatedAt:             1,
+		UpdatedAt:             1,
 	}
-	if _, e = article.New(db).Create(context.Background(), values.Actor{ID: u.ID, Role: u.Role}, values.Fields{"title": "Go 客户端验证", "content": "# Go 实践", "status": "published"}); e != nil {
-		log.Fatal(e)
+	if err = db.Create(&u).Error; err != nil {
+		log.Fatal(err)
 	}
-	app, e := bootstrap.New(db, config.Config{JWTSecret: strings.Repeat("t", 32), Storage: "local", UploadDir: filepath.Join(dir, "files"), WechatAppID: "client-smoke"}, bootstrap.Options{Wechat: wechat{}})
-	if e != nil {
-		log.Fatal(e)
+	if _, err = article.New(db).Create(context.Background(), values.Actor{ID: u.ID, Role: u.Role}, values.Fields{
+		"title":   "Go 客户端验证",
+		"content": "# Go 实践",
+		"status":  "published",
+	}); err != nil {
+		log.Fatal(err)
 	}
-	server := &http.Server{Addr: "127.0.0.1:18083", Handler: app, ReadHeaderTimeout: 5 * time.Second}
+	app, err := bootstrap.New(db, config.Config{
+		JWTSecret:   strings.Repeat("t", 32),
+		Storage:     "local",
+		UploadDir:   filepath.Join(dir, "files"),
+		WechatAppID: "client-smoke",
+	}, bootstrap.Options{Wechat: wechat{}})
+	if err != nil {
+		log.Fatal(err)
+	}
+	server := &http.Server{
+		Addr:              "127.0.0.1:18083",
+		Handler:           app,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
@@ -66,7 +89,7 @@ func main() {
 		_ = server.Shutdown(ctx)
 	}()
 	log.Println("TEST fixture HTTP server: http://127.0.0.1:18083 (fake WeChat)")
-	if e = server.ListenAndServe(); e != nil && !errors.Is(e, http.ErrServerClosed) {
-		log.Fatal(e)
+	if err = server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Fatal(err)
 	}
 }

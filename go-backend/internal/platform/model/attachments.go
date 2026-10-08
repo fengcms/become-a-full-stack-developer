@@ -1,6 +1,7 @@
 // Package model contains persistence rows, never HTTP responses.
 package model
 
+// Attachment 附件元数据，存储对象和所有者通过字段关联。
 type Attachment struct {
 	ID         int64  `gorm:"column:id;primaryKey;autoIncrement"`
 	UserID     int64  `gorm:"column:user_id"`

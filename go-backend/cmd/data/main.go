@@ -26,65 +26,65 @@ func main() {
 	if dsn == "" {
 		log.Fatal("TRANSFER_DATABASE_URL required")
 	}
-	var e error
+	var err error
 	if *mode == "export" {
-		dsn, e = database.ReadOnlyDSN(*driver, dsn)
-		if e != nil {
-			log.Fatal(e)
+		dsn, err = database.ReadOnlyDSN(*driver, dsn)
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
-	db, e := database.Open(*driver, dsn)
-	if e != nil {
+	db, err := database.Open(*driver, dsn)
+	if err != nil {
 		log.Fatal("database unavailable")
 	}
 	raw, _ := db.DB()
 	defer raw.Close()
 	switch *mode {
 	case "export":
-		snap, e := transfer.Export(context.Background(), db, *driver)
-		if e != nil {
-			log.Fatal(e)
+		snap, err := transfer.Export(context.Background(), db, *driver)
+		if err != nil {
+			log.Fatal(err)
 		}
-		if e = snap.Normalize(); e != nil {
-			log.Fatal(e)
+		if err = snap.Normalize(); err != nil {
+			log.Fatal(err)
 		}
-		data, e := json.MarshalIndent(snap, "", "  ")
-		if e != nil {
-			log.Fatal(e)
+		data, err := json.MarshalIndent(snap, "", "  ")
+		if err != nil {
+			log.Fatal(err)
 		}
 		// Snapshots contain password hashes and identities; never overwrite silently.
-		out, e := os.OpenFile(*file, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
-		if e != nil {
-			log.Fatal(e)
+		out, err := os.OpenFile(*file, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+		if err != nil {
+			log.Fatal(err)
 		}
-		if _, e = out.Write(data); e != nil {
+		if _, err = out.Write(data); err != nil {
 			out.Close()
-			log.Fatal(e)
+			log.Fatal(err)
 		}
-		if e = out.Close(); e != nil {
-			log.Fatal(e)
+		if err = out.Close(); err != nil {
+			log.Fatal(err)
 		}
 		counts, _ := json.Marshal(snap.Counts())
 		fmt.Println("exported", string(counts))
 	case "import":
-		in, e := os.Open(*file)
-		if e != nil {
-			log.Fatal(e)
+		in, err := os.Open(*file)
+		if err != nil {
+			log.Fatal(err)
 		}
 		defer in.Close()
 		decoder := json.NewDecoder(in)
 		decoder.UseNumber()
 		decoder.DisallowUnknownFields()
 		var snap transfer.Snapshot
-		if e = decoder.Decode(&snap); e != nil {
-			log.Fatal(e)
+		if err = decoder.Decode(&snap); err != nil {
+			log.Fatal(err)
 		}
 		var extra any
 		if decoder.Decode(&extra) != io.EOF {
 			log.Fatal("snapshot must contain exactly one JSON document")
 		}
-		if e = transfer.Import(context.Background(), db, *driver, &snap, *preview); e != nil {
-			log.Fatal(e)
+		if err = transfer.Import(context.Background(), db, *driver, &snap, *preview); err != nil {
+			log.Fatal(err)
 		}
 		counts, _ := json.Marshal(snap.Counts())
 		fmt.Printf("import validated (dry-run=%v): %s\n", *preview, counts)

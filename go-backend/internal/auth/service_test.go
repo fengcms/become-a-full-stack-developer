@@ -18,59 +18,71 @@ import (
 func TestRefreshReplayCommitsRevocation(t *testing.T) {
 	db := testutil.DB(t)
 	s := New(db, strings.Repeat("s", 32))
-	in := values.Fields{"username": "rotate-" + time.Now().Format("150405.000000"), "email": time.Now().Format("150405.000000") + "@test.invalid", "password": "password123"}
-	result, e := s.Register(context.Background(), in)
-	if e != nil {
-		t.Fatal(e)
+	in := values.Fields{
+		"username": "rotate-" + time.Now().Format("150405.000000"),
+		"email":    time.Now().Format("150405.000000") + "@test.invalid",
+		"password": "password123",
+	}
+	result, err := s.Register(context.Background(), in)
+	if err != nil {
+		t.Fatal(err)
 	}
 	old := result["refreshToken"].(string)
-	fresh, e := s.Rotate(context.Background(), old)
-	if e != nil {
-		t.Fatal(e)
+	fresh, err := s.Rotate(context.Background(), old)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if _, e = s.Rotate(context.Background(), old); fault.Resolve(e).Code != fault.Refresh {
-		t.Fatal(e)
+	if _, err = s.Rotate(context.Background(), old); fault.Resolve(err).Code != fault.Refresh {
+		t.Fatal(err)
 	}
-	if _, e = s.Rotate(context.Background(), fresh["refreshToken"].(string)); fault.Resolve(e).Code != fault.Refresh {
-		t.Fatal("family revocation rolled back", e)
+	if _, err = s.Rotate(context.Background(), fresh["refreshToken"].(string)); fault.Resolve(err).Code != fault.Refresh {
+		t.Fatal("family revocation rolled back", err)
 	}
 }
 func TestConcurrentRefresh(t *testing.T) {
 	db := testutil.DB(t)
 	s := New(db, strings.Repeat("s", 32))
 	stamp := time.Now().Format("150405.000000")
-	r, e := s.Register(context.Background(), values.Fields{"username": "concurrent-" + stamp, "email": stamp + "@test.invalid", "password": "password123"})
-	if e != nil {
-		t.Fatal(e)
+	r, err := s.Register(context.Background(), values.Fields{
+		"username": "concurrent-" + stamp,
+		"email":    stamp + "@test.invalid",
+		"password": "password123",
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 	var wg sync.WaitGroup
 	results := make(chan error, 2)
 	for range 2 {
-		wg.Go(func() { _, e := s.Rotate(context.Background(), r["refreshToken"].(string)); results <- e })
+		wg.Go(func() { _, err := s.Rotate(context.Background(), r["refreshToken"].(string)); results <- err })
 	}
 	wg.Wait()
 	close(results)
 	success := 0
-	for e := range results {
-		if e == nil {
+	for err := range results {
+		if err == nil {
 			success++
-		} else if fault.Resolve(e).Code != fault.Refresh {
-			t.Fatal(e)
+		} else if fault.Resolve(err).Code != fault.Refresh {
+			t.Fatal(err)
 		}
 	}
 	if success != 1 {
 		t.Fatal("successful consumers", success)
 	}
 	var n int64
-	if e = db.Model(&model.RefreshToken{}).Where("user_id = ? AND revoked_at IS NULL", r["user"].(map[string]any)["id"]).Count(&n).Error; e != nil || n != 0 {
-		t.Fatal("replay must revoke family", n, e)
+	if err = db.Model(&model.RefreshToken{}).Where("user_id = ? AND revoked_at IS NULL", r["user"].(map[string]any)["id"]).Count(&n).Error; err != nil || n != 0 {
+		t.Fatal("replay must revoke family", n, err)
 	}
 }
 func TestBcryptCompatibility(t *testing.T) {
-	for _, pw := range []string{"password123", strings.Repeat("a", 80), strings.Repeat("你好😀", 12)} {
-		hash, e := Hash(pw)
-		if e != nil || !Verify(pw, hash) {
-			t.Fatal(e)
+	for _, pw := range []string{
+		"password123",
+		strings.Repeat("a", 80),
+		strings.Repeat("你好😀", 12),
+	} {
+		hash, err := Hash(pw)
+		if err != nil || !Verify(pw, hash) {
+			t.Fatal(err)
 		}
 		if Verify("wrong-password", hash) {
 			t.Fatal("wrong password accepted")
@@ -79,13 +91,13 @@ func TestBcryptCompatibility(t *testing.T) {
 }
 
 func TestNodeBcryptVectors(t *testing.T) {
-	b, e := os.ReadFile("testdata/node-bcrypt.json")
-	if e != nil {
-		t.Fatal(e)
+	b, err := os.ReadFile("testdata/node-bcrypt.json")
+	if err != nil {
+		t.Fatal(err)
 	}
 	var vectors []struct{ Password, Hash string }
-	if e = json.Unmarshal(b, &vectors); e != nil {
-		t.Fatal(e)
+	if err = json.Unmarshal(b, &vectors); err != nil {
+		t.Fatal(err)
 	}
 	for _, v := range vectors {
 		if !Verify(v.Password, v.Hash) {
@@ -95,25 +107,25 @@ func TestNodeBcryptVectors(t *testing.T) {
 }
 
 func TestNodeJWTAndExpirationBoundary(t *testing.T) {
-	b, e := os.ReadFile("testdata/node-jwt.json")
-	if e != nil {
-		t.Fatal(e)
+	b, err := os.ReadFile("testdata/node-jwt.json")
+	if err != nil {
+		t.Fatal(err)
 	}
 	var fixture struct {
 		Secret, Token string
 		IssuedAt      int64
 	}
-	if e = json.Unmarshal(b, &fixture); e != nil {
-		t.Fatal(e)
+	if err = json.Unmarshal(b, &fixture); err != nil {
+		t.Fatal(err)
 	}
 	s := New(nil, fixture.Secret)
 	s.Now = func() time.Time { return time.Unix(fixture.IssuedAt, 0) }
-	actor, e := s.Parse(fixture.Token)
-	if e != nil || actor.ID != 42 || actor.Role != "editor" {
-		t.Fatal("Node JWT incompatible", e)
+	actor, err := s.Parse(fixture.Token)
+	if err != nil || actor.ID != 42 || actor.Role != "editor" {
+		t.Fatal("Node JWT incompatible", err)
 	}
 	s.Now = func() time.Time { return time.Unix(fixture.IssuedAt+3600, 0) }
-	if _, e = s.Parse(fixture.Token); fault.Resolve(e).Code != fault.Token {
+	if _, err = s.Parse(fixture.Token); fault.Resolve(err).Code != fault.Token {
 		t.Fatal("expiry boundary accepted")
 	}
 }

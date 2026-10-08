@@ -1,6 +1,7 @@
 // Package model contains persistence rows, never HTTP responses.
 package model
 
+// Notification 用户通知行，审核或发布事件在所属事务中创建。
 type Notification struct {
 	ID        int64   `gorm:"column:id;primaryKey;autoIncrement"`
 	UserID    int64   `gorm:"column:user_id"`

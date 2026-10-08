@@ -13,24 +13,28 @@ import (
 func TestLocalSafety(t *testing.T) {
 	s := Local{Root: t.TempDir()}
 	ctx := context.Background()
-	if e := s.Put(ctx, "abc.svg", []byte("image"), "image/svg+xml"); e != nil {
-		t.Fatal(e)
+	if err := s.Put(ctx, "abc.svg", []byte("image"), "image/svg+xml"); err != nil {
+		t.Fatal(err)
 	}
-	b, e := s.Get(ctx, "abc.svg")
-	if e != nil || string(b) != "image" {
-		t.Fatal(e)
+	b, err := s.Get(ctx, "abc.svg")
+	if err != nil || string(b) != "image" {
+		t.Fatal(err)
 	}
-	for _, key := range []string{"../secret", "..", "/etc/passwd"} {
-		if _, e = s.Get(ctx, key); e == nil {
+	for _, key := range []string{
+		"../secret",
+		"..",
+		"/etc/passwd",
+	} {
+		if _, err = s.Get(ctx, key); err == nil {
 			t.Fatal("unsafe key accepted", key)
 		}
 	}
-	if e = s.Delete(ctx, "abc.svg"); e != nil {
-		t.Fatal(e)
+	if err = s.Delete(ctx, "abc.svg"); err != nil {
+		t.Fatal(err)
 	}
-	b, e = s.Get(ctx, "abc.svg")
-	if e != nil || b != nil {
-		t.Fatal("delete failed", e)
+	b, err = s.Get(ctx, "abc.svg")
+	if err != nil || b != nil {
+		t.Fatal("delete failed", err)
 	}
 }
 func TestR2SignedObjectLifecycle(t *testing.T) {
@@ -62,23 +66,23 @@ func TestR2SignedObjectLifecycle(t *testing.T) {
 		}
 	}))
 	defer server.Close()
-	s, e := NewR2(server.URL, "bucket", "fake-key", "fake-secret")
-	if e != nil {
-		t.Fatal(e)
+	s, err := NewR2(server.URL, "bucket", "fake-key", "fake-secret")
+	if err != nil {
+		t.Fatal(err)
 	}
 	ctx := context.Background()
-	if e = s.Put(ctx, "x.png", []byte("r2 bytes"), "image/png"); e != nil {
-		t.Fatal(e)
+	if err = s.Put(ctx, "x.png", []byte("r2 bytes"), "image/png"); err != nil {
+		t.Fatal(err)
 	}
-	b, e := s.Get(ctx, "x.png")
-	if e != nil || string(b) != "r2 bytes" {
-		t.Fatal(string(b), e)
+	b, err := s.Get(ctx, "x.png")
+	if err != nil || string(b) != "r2 bytes" {
+		t.Fatal(string(b), err)
 	}
-	if e = s.Delete(ctx, "x.png"); e != nil {
-		t.Fatal(e)
+	if err = s.Delete(ctx, "x.png"); err != nil {
+		t.Fatal(err)
 	}
-	b, e = s.Get(ctx, "x.png")
-	if e != nil || b != nil {
-		t.Fatal(e)
+	b, err = s.Get(ctx, "x.png")
+	if err != nil || b != nil {
+		t.Fatal(err)
 	}
 }

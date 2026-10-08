@@ -17,27 +17,43 @@ func TestCategoryDepthCycleAndZeroValues(t *testing.T) {
 	stamp := time.Now().Format("150405000000")
 	ids := []int64{}
 	for depth := 1; depth <= 4; depth++ {
-		in := values.Fields{"name": "分类", "slug": fmt.Sprintf("c-%s-%d", stamp, depth), "sortOrder": float64(8)}
+		in := values.Fields{
+			"name":      "分类",
+			"slug":      fmt.Sprintf("c-%s-%d", stamp, depth),
+			"sortOrder": float64(8),
+		}
 		if depth > 1 {
 			in["parentId"] = float64(ids[depth-2])
 		}
-		v, e := s.Save(ctx, 0, in)
-		if e != nil {
-			t.Fatal(e)
+		v, err := s.Save(ctx, 0, in)
+		if err != nil {
+			t.Fatal(err)
 		}
 		ids = append(ids, v.(map[string]any)["id"].(int64))
 	}
-	if _, e := s.Save(ctx, 0, values.Fields{"name": "过深", "slug": "deep-" + stamp, "parentId": float64(ids[3])}); fault.Resolve(e).Code != fault.Conflict {
-		t.Fatal(e)
+	if _, err := s.Save(ctx, 0, values.Fields{
+		"name":     "过深",
+		"slug":     "deep-" + stamp,
+		"parentId": float64(ids[3]),
+	}); fault.Resolve(err).Code != fault.Conflict {
+		t.Fatal(err)
 	}
-	if _, e := s.Save(ctx, ids[0], values.Fields{"name": "成环", "slug": "cycle-" + stamp, "parentId": float64(ids[3])}); fault.Resolve(e).Code != fault.Conflict {
-		t.Fatal(e)
+	if _, err := s.Save(ctx, ids[0], values.Fields{
+		"name":     "成环",
+		"slug":     "cycle-" + stamp,
+		"parentId": float64(ids[3]),
+	}); fault.Resolve(err).Code != fault.Conflict {
+		t.Fatal(err)
 	}
-	if e := s.Delete(ctx, ids[0]); fault.Resolve(e).Code != fault.Conflict {
-		t.Fatal(e)
+	if err := s.Delete(ctx, ids[0]); fault.Resolve(err).Code != fault.Conflict {
+		t.Fatal(err)
 	}
-	v, e := s.Save(ctx, ids[3], values.Fields{"name": "第四层", "slug": "leaf-" + stamp, "sortOrder": float64(0)})
-	if e != nil || v.(map[string]any)["sortOrder"].(int64) != 0 {
-		t.Fatal(v, e)
+	v, err := s.Save(ctx, ids[3], values.Fields{
+		"name":      "第四层",
+		"slug":      "leaf-" + stamp,
+		"sortOrder": float64(0),
+	})
+	if err != nil || v.(map[string]any)["sortOrder"].(int64) != 0 {
+		t.Fatal(v, err)
 	}
 }

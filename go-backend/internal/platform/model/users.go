@@ -1,6 +1,7 @@
 // Package model contains persistence rows, never HTTP responses.
 package model
 
+// User 账号行；密码哈希和凭据配置标志不直接序列化为 HTTP 响应。
 type User struct {
 	ID                    int64   `gorm:"column:id;primaryKey;autoIncrement"`
 	Username              string  `gorm:"column:username"`

@@ -18,15 +18,17 @@ import (
 	"gorm.io/gorm"
 )
 
+// Options 允许测试注入外部服务替身，正式运行使用真实适配器。
 type Options struct {
 	Wechat    auth.WechatClient
 	Providers map[string]storage.Provider
 }
 
+// New 作为唯一装配根连接各领域，并检查全部契约操作已注册。
 func New(db *gorm.DB, c config.Config, o Options) (*httpapi.App, error) {
-	catalog, e := contract.Load()
-	if e != nil {
-		return nil, e
+	catalog, err := contract.Load()
+	if err != nil {
+		return nil, err
 	}
 	identity := auth.New(db, c.JWTSecret)
 	identity.AppID = c.WechatAppID
@@ -38,9 +40,9 @@ func New(db *gorm.DB, c config.Config, o Options) (*httpapi.App, error) {
 	if p == nil {
 		p = map[string]storage.Provider{"local": storage.Local{Root: c.UploadDir}}
 		if c.R2Endpoint != "" || c.Storage == "r2" {
-			r2, e := storage.NewR2(c.R2Endpoint, c.R2Bucket, c.R2AccessKey, c.R2SecretKey)
-			if e != nil {
-				return nil, e
+			r2, err := storage.NewR2(c.R2Endpoint, c.R2Bucket, c.R2AccessKey, c.R2SecretKey)
+			if err != nil {
+				return nil, err
 			}
 			p["r2"] = r2
 		}

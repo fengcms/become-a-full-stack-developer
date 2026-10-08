@@ -20,25 +20,41 @@ func TestMigrations(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.driver, func(t *testing.T) {
-			db, e := Open(c.driver, c.dsn)
-			if e != nil {
-				t.Fatal(e)
+			db, err := Open(c.driver, c.dsn)
+			if err != nil {
+				t.Fatal(err)
 			}
 			raw, _ := db.DB()
 			defer raw.Close()
 			for range 2 {
-				if e = Migrate(context.Background(), db, c.driver); e != nil {
-					t.Fatal(e)
+				if err = Migrate(context.Background(), db, c.driver); err != nil {
+					t.Fatal(err)
 				}
 			}
-			for _, table := range []string{"users", "refresh_tokens", "wechat_identities", "categories", "tags", "articles", "article_tags", "article_view_dedup", "comments", "attachments", "favorites", "view_history", "likes", "notifications", "site_settings"} {
+			for _, table := range []string{
+				"users",
+				"refresh_tokens",
+				"wechat_identities",
+				"categories",
+				"tags",
+				"articles",
+				"article_tags",
+				"article_view_dedup",
+				"comments",
+				"attachments",
+				"favorites",
+				"view_history",
+				"likes",
+				"notifications",
+				"site_settings",
+			} {
 				if !db.Migrator().HasTable(table) {
 					t.Error("missing", table)
 				}
 			}
 			var setting model.SiteSetting
-			if e = db.First(&setting, 1).Error; e != nil {
-				t.Fatal(e)
+			if err = db.First(&setting, 1).Error; err != nil {
+				t.Fatal(err)
 			}
 		})
 	}
@@ -50,15 +66,15 @@ func TestVersionOneUpgradePreservesData(t *testing.T) {
 		driver = "sqlite"
 		dsn = filepath.Join(t.TempDir(), "upgrade.db")
 	}
-	db, e := Open(driver, dsn)
-	if e != nil {
-		t.Fatal(e)
+	db, err := Open(driver, dsn)
+	if err != nil {
+		t.Fatal(err)
 	}
 	raw, _ := db.DB()
 	defer raw.Close()
-	fsys, e := migrationsSub(driver)
-	if e != nil {
-		t.Fatal(e)
+	fsys, err := migrationsSub(driver)
+	if err != nil {
+		t.Fatal(err)
 	}
 	dialect := goose.DialectSQLite3
 	if driver == "postgres" {
@@ -66,23 +82,32 @@ func TestVersionOneUpgradePreservesData(t *testing.T) {
 	} else if driver == "mysql" {
 		dialect = goose.DialectMySQL
 	}
-	provider, e := goose.NewProvider(dialect, raw, fsys)
-	if e != nil {
-		t.Fatal(e)
+	provider, err := goose.NewProvider(dialect, raw, fsys)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if _, e = provider.UpTo(context.Background(), 1); e != nil {
-		t.Fatal(e)
+	if _, err = provider.UpTo(context.Background(), 1); err != nil {
+		t.Fatal(err)
 	}
-	u := model.User{Username: "upgrade-preserve", PasswordHash: "historical-hash", CredentialsConfigured: true, Role: "member", Status: "active", Level: 1, CreatedAt: 1234, UpdatedAt: 1234}
-	if e = db.Create(&u).Error; e != nil {
-		t.Fatal(e)
+	u := model.User{
+		Username:              "upgrade-preserve",
+		PasswordHash:          "historical-hash",
+		CredentialsConfigured: true,
+		Role:                  "member",
+		Status:                "active",
+		Level:                 1,
+		CreatedAt:             1234,
+		UpdatedAt:             1234,
 	}
-	if e = Migrate(context.Background(), db, driver); e != nil {
-		t.Fatal(e)
+	if err = db.Create(&u).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err = Migrate(context.Background(), db, driver); err != nil {
+		t.Fatal(err)
 	}
 	var after model.User
-	if e = db.First(&after, u.ID).Error; e != nil || after.PasswordHash != u.PasswordHash || after.CreatedAt != 1234 {
-		t.Fatal("upgrade changed account", e)
+	if err = db.First(&after, u.ID).Error; err != nil || after.PasswordHash != u.PasswordHash || after.CreatedAt != 1234 {
+		t.Fatal("upgrade changed account", err)
 	}
 	if !db.Migrator().HasIndex(&model.Article{}, "idx_articles_status") {
 		t.Fatal("upgrade index missing")
@@ -91,37 +116,37 @@ func TestVersionOneUpgradePreservesData(t *testing.T) {
 
 func TestSQLiteReadOnlySourceAndForeignKeys(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "source.db")
-	db, e := Open("sqlite", path+"?_foreign_keys=off")
-	if e != nil {
-		t.Fatal(e)
+	db, err := Open("sqlite", path+"?_foreign_keys=off")
+	if err != nil {
+		t.Fatal(err)
 	}
 	raw, _ := db.DB()
-	if e = Migrate(context.Background(), db, "sqlite"); e != nil {
-		t.Fatal(e)
+	if err = Migrate(context.Background(), db, "sqlite"); err != nil {
+		t.Fatal(err)
 	}
 	var enabled int
-	if e = db.Raw("PRAGMA foreign_keys").Scan(&enabled).Error; e != nil || enabled != 1 {
+	if err = db.Raw("PRAGMA foreign_keys").Scan(&enabled).Error; err != nil || enabled != 1 {
 		t.Fatal("foreign keys disabled")
 	}
 	raw.Close()
-	dsn, e := ReadOnlyDSN("sqlite", path)
-	if e != nil {
-		t.Fatal(e)
+	dsn, err := ReadOnlyDSN("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
 	}
-	source, e := Open("sqlite", dsn)
-	if e != nil {
-		t.Fatal(e)
+	source, err := Open("sqlite", dsn)
+	if err != nil {
+		t.Fatal(err)
 	}
 	r, _ := source.DB()
 	defer r.Close()
-	if e = source.Exec("UPDATE site_settings SET site_name = ? WHERE id = 1", "must fail").Error; e == nil {
+	if err = source.Exec("UPDATE site_settings SET site_name = ? WHERE id = 1", "must fail").Error; err == nil {
 		t.Fatal("read-only source accepted writes")
 	}
-	missing, e := ReadOnlyDSN("sqlite", filepath.Join(t.TempDir(), "missing.db"))
-	if e != nil {
-		t.Fatal(e)
+	missing, err := ReadOnlyDSN("sqlite", filepath.Join(t.TempDir(), "missing.db"))
+	if err != nil {
+		t.Fatal(err)
 	}
-	if _, e = Open("sqlite", missing); e == nil {
+	if _, err = Open("sqlite", missing); err == nil {
 		t.Fatal("export created missing source")
 	}
 }

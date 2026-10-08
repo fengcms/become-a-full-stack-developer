@@ -10,66 +10,80 @@ import (
 	"gorm.io/gorm"
 )
 
+// Profile 读取或按存在性更新个人资料，保留 NULL 和未提交字段的区别。
 func (s *Service) Profile(ctx context.Context, id int64, in values.Fields) (map[string]any, error) {
-	u, e := s.User(ctx, id)
-	if e != nil {
-		return nil, e
+	u, err := s.User(ctx, id)
+	if err != nil {
+		return nil, err
 	}
 	patch := map[string]any{}
-	for key, col := range map[string]string{"nickname": "display_name", "avatar": "avatar_url", "email": "email"} {
+	for key, col := range map[string]string{
+		"nickname": "display_name",
+		"avatar":   "avatar_url",
+		"email":    "email",
+	} {
 		if in.Has(key) {
 			patch[col] = in[key]
 		}
 	}
 	if len(patch) > 0 {
 		patch["updated_at"] = s.Now().UnixMilli()
-		if e = s.DB.WithContext(ctx).Model(&model.User{}).Where("id = ?", id).Updates(patch).Error; e != nil {
-			return nil, e
+		if err = s.DB.WithContext(ctx).Model(&model.User{}).Where("id = ?", id).Updates(patch).Error; err != nil {
+			return nil, err
 		}
-		u, e = s.User(ctx, id)
+		u, err = s.User(ctx, id)
 	}
-	return Public(u), e
+	return Public(u), err
 }
+
+// ChangePassword 在事务外执行昂贵的密码计算，锁内复核后更新并撤销会话。
 func (s *Service) ChangePassword(ctx context.Context, id int64, old, newPassword string, reset bool) error {
-	u, e := s.User(ctx, id)
-	if e != nil {
-		return e
+	u, err := s.User(ctx, id)
+	if err != nil {
+		return err
 	}
 	if !reset && !Verify(old, u.PasswordHash) {
 		return fault.Field("oldPassword", "旧密码错误")
 	}
-	hash, e := Hash(newPassword)
-	if e != nil {
-		return e
+	// bcrypt 在取得数据库锁前完成，避免长时间占有账号行锁。
+	hash, err := Hash(newPassword)
+	if err != nil {
+		return err
 	}
 	return s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var current model.User
-		if e := database.Lock(tx).First(&current, id).Error; e != nil {
-			return e
+		if err := database.Lock(tx).First(&current, id).Error; err != nil {
+			return err
 		}
 		if !reset && current.PasswordHash != u.PasswordHash {
 			return fault.Field("oldPassword", "旧密码错误")
 		}
-		if e := tx.Model(&model.User{}).Where("id = ?", id).Updates(map[string]any{"password_hash": hash, "credentials_configured": true, "updated_at": s.Now().UnixMilli()}).Error; e != nil {
-			return e
+		if err := tx.Model(&model.User{}).Where("id = ?", id).Updates(map[string]any{
+			"password_hash":          hash,
+			"credentials_configured": true,
+			"updated_at":             s.Now().UnixMilli(),
+		}).Error; err != nil {
+			return err
 		}
 		return s.Revoke(tx, id)
 	})
 }
+
+// Setup 仅为未配置凭据的微信账号设置一次用户名密码，并旋转会话。
 func (s *Service) Setup(ctx context.Context, id int64, in values.Fields) (map[string]any, error) {
-	hash, e := Hash(in.String("password"))
-	if e != nil {
-		return nil, e
+	hash, err := Hash(in.String("password"))
+	if err != nil {
+		return nil, err
 	}
 	var result map[string]any
-	e = s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err = s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var u model.User
-		if e := database.Lock(tx).First(&u, id).Error; e != nil {
-			return e
+		if err := database.Lock(tx).First(&u, id).Error; err != nil {
+			return err
 		}
 		var count int64
-		if e := tx.Model(&model.WechatIdentity{}).Where("user_id = ?", id).Count(&count).Error; e != nil {
-			return e
+		if err := tx.Model(&model.WechatIdentity{}).Where("user_id = ?", id).Count(&count).Error; err != nil {
+			return err
 		}
 		if u.Status != "active" {
 			return fault.New(fault.Disabled)
@@ -77,7 +91,12 @@ func (s *Service) Setup(ctx context.Context, id int64, in values.Fields) (map[st
 		if u.CredentialsConfigured || count == 0 {
 			return fault.New(fault.Conflict)
 		}
-		patch := map[string]any{"username": in.String("username"), "password_hash": hash, "credentials_configured": true, "updated_at": s.Now().UnixMilli()}
+		patch := map[string]any{
+			"username":               in.String("username"),
+			"password_hash":          hash,
+			"credentials_configured": true,
+			"updated_at":             s.Now().UnixMilli(),
+		}
 		r := tx.Model(&model.User{}).Where("id = ? AND credentials_configured = ?", id, false).Updates(patch)
 		if r.Error != nil {
 			return r.Error
@@ -85,15 +104,15 @@ func (s *Service) Setup(ctx context.Context, id int64, in values.Fields) (map[st
 		if r.RowsAffected != 1 {
 			return fault.New(fault.Conflict)
 		}
-		if e := s.Revoke(tx, id); e != nil {
-			return e
+		if err := s.Revoke(tx, id); err != nil {
+			return err
 		}
-		if e := tx.First(&u, id).Error; e != nil {
-			return e
+		if err := tx.First(&u, id).Error; err != nil {
+			return err
 		}
-		var e error
-		result, e = s.Result(tx, u)
-		return e
+		var err error
+		result, err = s.Result(tx, u)
+		return err
 	})
-	return result, e
+	return result, err
 }

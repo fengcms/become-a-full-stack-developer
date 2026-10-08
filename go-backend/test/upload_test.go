@@ -22,32 +22,74 @@ import (
 func TestMultipartSizeAndShapeBoundary(t *testing.T) {
 	db := testutil.DB(t)
 	secret := strings.Repeat("s", 32)
-	u := model.User{Username: "multipart-" + time.Now().Format("150405.000000"), PasswordHash: "!", Role: "member", Status: "active", Level: 1, CreatedAt: 1, UpdatedAt: 1}
-	if e := db.Create(&u).Error; e != nil {
-		t.Fatal(e)
+	u := model.User{
+		Username:     "multipart-" + time.Now().Format("150405.000000"),
+		PasswordHash: "!",
+		Role:         "member",
+		Status:       "active",
+		Level:        1,
+		CreatedAt:    1,
+		UpdatedAt:    1,
 	}
-	result, e := auth.New(db, secret).Result(db, u)
-	if e != nil {
-		t.Fatal(e)
+	if err := db.Create(&u).Error; err != nil {
+		t.Fatal(err)
 	}
-	app, e := bootstrap.New(db, config.Config{JWTSecret: secret, Storage: "local", UploadDir: t.TempDir()}, bootstrap.Options{})
-	if e != nil {
-		t.Fatal(e)
+	result, err := auth.New(db, secret).Result(db, u)
+	if err != nil {
+		t.Fatal(err)
+	}
+	app, err := bootstrap.New(db, config.Config{
+		JWTSecret: secret,
+		Storage:   "local",
+		UploadDir: t.TempDir(),
+	}, bootstrap.Options{})
+	if err != nil {
+		t.Fatal(err)
 	}
 	app.Log = slog.New(slog.NewTextHandler(io.Discard, nil))
 	for _, tc := range []struct {
 		name, mime        string
 		count, size, want int
 	}{
-		{"missing", "image/png", 0, 0, 400}, {"duplicate", "image/png", 2, 1, 400}, {"bad-mime", "application/javascript", 1, 1, 400}, {"exact-10MiB", "image/png", 1, 10 * 1024 * 1024, 200}, {"over-10MiB", "image/png", 1, 10*1024*1024 + 1, 400},
+		{
+			"missing",
+			"image/png",
+			0,
+			0,
+			400,
+		}, {
+			"duplicate",
+			"image/png",
+			2,
+			1,
+			400,
+		}, {
+			"bad-mime",
+			"application/javascript",
+			1,
+			1,
+			400,
+		}, {
+			"exact-10MiB",
+			"image/png",
+			1,
+			10 * 1024 * 1024,
+			200,
+		}, {
+			"over-10MiB",
+			"image/png",
+			1,
+			10*1024*1024 + 1,
+			400,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var b bytes.Buffer
 			writer := multipart.NewWriter(&b)
 			for range tc.count {
-				part, e := writer.CreatePart(textproto.MIMEHeader{"Content-Disposition": {`form-data; name="file"; filename="edge.png"`}, "Content-Type": {tc.mime}})
-				if e != nil {
-					t.Fatal(e)
+				part, err := writer.CreatePart(textproto.MIMEHeader{"Content-Disposition": {`form-data; name="file"; filename="edge.png"`}, "Content-Type": {tc.mime}})
+				if err != nil {
+					t.Fatal(err)
 				}
 				_, _ = part.Write(make([]byte, tc.size))
 			}
@@ -62,8 +104,8 @@ func TestMultipartSizeAndShapeBoundary(t *testing.T) {
 			if w.Code != tc.want {
 				t.Fatal(w.Code, w.Body.String())
 			}
-			if e := app.Catalog.CheckResponse("uploadFile", w.Code, body); e != nil {
-				t.Fatal(e)
+			if err := app.Catalog.CheckResponse("uploadFile", w.Code, body); err != nil {
+				t.Fatal(err)
 			}
 		})
 	}

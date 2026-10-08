@@ -18,23 +18,42 @@ import (
 	"gorm.io/gorm"
 )
 
+// Service 处理评论可见性、敏感词状态、父子关系和审核事务。
 type Service struct {
 	RejectRatio float64
 	DB          *gorm.DB
 	Now         func() time.Time
 }
 
-func New(db *gorm.DB) *Service             { return &Service{DB: db, Now: time.Now, RejectRatio: 0.1} }
+// New 创建评论服务，默认采用冻结的 10% 敏感词拒绝阈值。
+func New(db *gorm.DB) *Service {
+	return &Service{
+		DB:          db,
+		Now:         time.Now,
+		RejectRatio: 0.1,
+	}
+}
+
+// Moderate 以默认阈值判断敏感词，长度按 JavaScript UTF-16 规则计算。
 func Moderate(raw string) (string, string) { return moderate(raw, 0.1) }
 func moderate(raw string, threshold float64) (string, string) {
 	content := raw
 	hits := 0
-	for _, word := range []string{"广告", "spam", "fuck", "shit", "垃圾", "代开发票"} {
+	for _, word := range []string{
+		"广告",
+		"spam",
+		"fuck",
+		"shit",
+		"垃圾",
+		"代开发票",
+	} {
 		re := regexp.MustCompile("(?i)" + regexp.QuoteMeta(word))
 		for _, m := range re.FindAllString(raw, -1) {
 			hits += len(utf16.Encode([]rune(m)))
 		}
-		content = re.ReplaceAllStringFunc(content, func(m string) string { return strings.Repeat("*", len(utf16.Encode([]rune(m)))) })
+		content = re.ReplaceAllStringFunc(content, func(m string) string {
+			return strings.Repeat("*", len(utf16.Encode([]rune(m))))
+		})
 	}
 	status := "approved"
 	length := len(utf16.Encode([]rune(raw)))
@@ -43,14 +62,28 @@ func moderate(raw string, threshold float64) (string, string) {
 	}
 	return content, status
 }
+
+// View 转换评论字段，展示文本有界但数据库保留完整输入。
 func View(c model.Comment) map[string]any {
-	return map[string]any{"id": c.ID, "articleId": c.ArticleID, "userId": c.UserID, "userName": c.UserName, "parentId": c.ParentID, "content": display(c.Content, 2000), "status": c.Status, "rejectedReason": reasonView(c.RejectedReason), "createdAt": values.ISO(c.CreatedAt)}
+	return map[string]any{
+		"id":             c.ID,
+		"articleId":      c.ArticleID,
+		"userId":         c.UserID,
+		"userName":       c.UserName,
+		"parentId":       c.ParentID,
+		"content":        display(c.Content, 2000),
+		"status":         c.Status,
+		"rejectedReason": reasonView(c.RejectedReason),
+		"createdAt":      values.ISO(c.CreatedAt),
+	}
 }
+
+// Create 只允许对公开文章评论，并校验回复属于同一篇文章。
 func (s *Service) Create(ctx context.Context, key string, actor values.Actor, in values.Fields) (any, error) {
 	db := s.DB.WithContext(ctx)
-	a, e := article.Get(db, key)
-	if e != nil {
-		return nil, e
+	a, err := article.Get(db, key)
+	if err != nil {
+		return nil, err
 	}
 	if a.Status != "published" {
 		return nil, fault.New(fault.NotFound)
@@ -58,27 +91,37 @@ func (s *Service) Create(ctx context.Context, key string, actor values.Actor, in
 	parent := in.Number("parentId")
 	if parent != nil {
 		var p model.Comment
-		if e = db.Where("id = ? AND article_id = ?", *parent, a.ID).First(&p).Error; e != nil {
-			return nil, e
+		if err = db.Where("id = ? AND article_id = ?", *parent, a.ID).First(&p).Error; err != nil {
+			return nil, err
 		}
 	}
 	var u model.User
-	if e = db.First(&u, actor.ID).Error; e != nil {
-		return nil, e
+	if err = db.First(&u, actor.ID).Error; err != nil {
+		return nil, err
 	}
 	content, status := moderate(in.String("content"), s.RejectRatio)
-	c := model.Comment{ArticleID: a.ID, UserID: u.ID, UserName: values.Name(u.DisplayName, u.Username), ParentID: parent, Content: content, Status: status, CreatedAt: s.Now().UnixMilli()}
-	e = db.Create(&c).Error
-	return View(c), e
+	c := model.Comment{
+		ArticleID: a.ID,
+		UserID:    u.ID,
+		UserName:  values.Name(u.DisplayName, u.Username),
+		ParentID:  parent,
+		Content:   content,
+		Status:    status,
+		CreatedAt: s.Now().UnixMilli(),
+	}
+	err = db.Create(&c).Error
+	return View(c), err
 }
+
+// Page 按公开或后台范围读取平面评论，parentId 留给客户端组装楼层。
 func (s *Service) Page(ctx context.Context, key string, actor values.Actor, q url.Values, admin bool) (any, error) {
 	p := values.Paging(q)
 	db := s.DB.WithContext(ctx).Model(&model.Comment{})
 	order := "created_at ASC, id ASC"
 	if !admin {
-		a, e := article.Get(s.DB.WithContext(ctx), key)
-		if e != nil {
-			return nil, e
+		a, err := article.Get(s.DB.WithContext(ctx), key)
+		if err != nil {
+			return nil, err
 		}
 		if a.Status != "published" && actor.ID != a.AuthorID && actor.Role != "admin" {
 			return nil, fault.New(fault.NotFound)
@@ -94,12 +137,12 @@ func (s *Service) Page(ctx context.Context, key string, actor values.Actor, q ur
 		}
 	}
 	var total int64
-	if e := db.Session(&gorm.Session{}).Count(&total).Error; e != nil {
-		return nil, e
+	if err := db.Session(&gorm.Session{}).Count(&total).Error; err != nil {
+		return nil, err
 	}
 	var rows []model.Comment
-	if e := db.Order(order).Limit(p.Size).Offset(p.Offset()).Find(&rows).Error; e != nil {
-		return nil, e
+	if err := db.Order(order).Limit(p.Size).Offset(p.Offset()).Find(&rows).Error; err != nil {
+		return nil, err
 	}
 	out := []map[string]any{}
 	for _, c := range rows {
@@ -107,59 +150,20 @@ func (s *Service) Page(ctx context.Context, key string, actor values.Actor, q ur
 	}
 	return p.Result(out, total), nil
 }
+
+// Delete 检查删除权限并从叶子向上删除整支回复，避免外键冲突。
 func (s *Service) Delete(ctx context.Context, id int64, actor values.Actor) error {
 	return s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var c model.Comment
-		if e := database.Lock(tx).First(&c, id).Error; e != nil {
-			return e
-		}
-		if !actor.Allows("editor", c.UserID) {
-			return fault.New(fault.Forbidden)
-		}
-		var rows []model.Comment
-		if e := tx.Where("article_id = ?", c.ArticleID).Find(&rows).Error; e != nil {
-			return e
-		}
-		ids := map[int64]bool{id: true}
-		for changed := true; changed; {
-			changed = false
-			for _, r := range rows {
-				if r.ParentID != nil && ids[*r.ParentID] && !ids[r.ID] {
-					ids[r.ID] = true
-					changed = true
-				}
-			}
-		} // Delete leaves first to respect the self foreign key.
-		for len(ids) > 0 {
-			progress := false
-			for child := range ids {
-				hasChild := false
-				for _, r := range rows {
-					if r.ParentID != nil && *r.ParentID == child && ids[r.ID] {
-						hasChild = true
-						break
-					}
-				}
-				if !hasChild {
-					if e := tx.Delete(&model.Comment{}, child).Error; e != nil {
-						return e
-					}
-					delete(ids, child)
-					progress = true
-				}
-			}
-			if !progress {
-				return fault.New(fault.Conflict)
-			}
-		}
-		return nil
+		return deleteBranchTx(tx, id, actor)
 	})
 }
+
+// Review 更新审核状态；首次转为 approved 时在同一事务写通知。
 func (s *Service) Review(ctx context.Context, id int64, in values.Fields) (any, error) {
 	var c model.Comment
-	e := s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if e := database.Lock(tx).First(&c, id).Error; e != nil {
-			return e
+	txErr := s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := database.Lock(tx).First(&c, id).Error; err != nil {
+			return err
 		}
 		previous := c.Status
 		c.Status = in.String("status")
@@ -168,15 +172,19 @@ func (s *Service) Review(ctx context.Context, id int64, in values.Fields) (any, 
 		} else if in.Has("reason") {
 			c.RejectedReason = in.Text("reason")
 		}
-		if e := tx.Model(&c).Updates(map[string]any{"status": c.Status, "rejected_reason": c.RejectedReason}).Error; e != nil {
-			return e
+		if err := tx.Model(&c).
+			Updates(map[string]any{
+				"status":          c.Status,
+				"rejected_reason": c.RejectedReason,
+			}).Error; err != nil {
+			return err
 		}
 		if previous != "approved" && c.Status == "approved" {
 			return notification.Approved(tx, c, s.Now().UnixMilli())
 		}
 		return nil
 	})
-	return View(c), e
+	return View(c), txErr
 }
 
 func display(s string, n int) string {
@@ -192,4 +200,53 @@ func reasonView(s *string) *string {
 	}
 	v := display(*s, 200)
 	return &v
+}
+
+// deleteBranchTx 收集整支回复，再从叶子删除，尊重评论的自引用外键。
+func deleteBranchTx(tx *gorm.DB, id int64, actor values.Actor) error {
+	var c model.Comment
+	if err := database.Lock(tx).First(&c, id).Error; err != nil {
+		return err
+	}
+	if !actor.Allows("editor", c.UserID) {
+		return fault.New(fault.Forbidden)
+	}
+	var rows []model.Comment
+	if err := tx.Where("article_id = ?", c.ArticleID).Find(&rows).Error; err != nil {
+		return err
+	}
+	ids := map[int64]bool{id: true}
+	for changed := true; changed; {
+		changed = false
+		for _, r := range rows {
+			if r.ParentID != nil && ids[*r.ParentID] && !ids[r.ID] {
+				ids[r.ID] = true
+				changed = true
+			}
+		}
+	}
+	// 子评论先删除，再删除父评论；不能靠关闭外键换取成功。
+	for len(ids) > 0 {
+		progress := false
+		for child := range ids {
+			hasChild := false
+			for _, r := range rows {
+				if r.ParentID != nil && *r.ParentID == child && ids[r.ID] {
+					hasChild = true
+					break
+				}
+			}
+			if !hasChild {
+				if err := tx.Delete(&model.Comment{}, child).Error; err != nil {
+					return err
+				}
+				delete(ids, child)
+				progress = true
+			}
+		}
+		if !progress {
+			return fault.New(fault.Conflict)
+		}
+	}
+	return nil
 }

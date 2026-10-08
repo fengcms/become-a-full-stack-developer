@@ -1,6 +1,7 @@
 // Package model contains persistence rows, never HTTP responses.
 package model
 
+// SiteSetting ID 固定为 1 的站点设置行，可空字段保留清空语义。
 type SiteSetting struct {
 	ID              int64   `gorm:"column:id;primaryKey;autoIncrement"`
 	SiteName        string  `gorm:"column:site_name"`

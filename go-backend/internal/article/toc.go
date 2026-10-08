@@ -19,6 +19,8 @@ func jsSlice(s string, n int) string {
 	}
 	return string(utf16.Decode(u))
 }
+
+// ParseToc 解析标题，跳过代码围栏，并保持与 Node 一致的中文和重复锚点。
 func ParseToc(content string) []map[string]any {
 	out := []map[string]any{}
 	seen := map[string]int{}
@@ -50,7 +52,11 @@ func ParseToc(content string) []map[string]any {
 			suffix := "-" + strconv.Itoa(n)
 			anchor = jsSlice(anchor, 100-len(suffix)) + suffix
 		}
-		out = append(out, map[string]any{"level": len(m[1]), "text": jsSlice(text, 200), "anchor": anchor})
+		out = append(out, map[string]any{
+			"level":  len(m[1]),
+			"text":   jsSlice(text, 200),
+			"anchor": anchor,
+		})
 	}
 	return out
 }

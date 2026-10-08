@@ -17,29 +17,43 @@ import (
 	"gorm.io/gorm"
 )
 
+// WechatClient 定义 code 换 openid 的最小边界，业务层不依赖具体 HTTP 客户端。
 type WechatClient interface {
 	Exchange(context.Context, string) (string, error)
 }
+
+// WechatHTTP 保存官方换码配置；密钥只用于请求，不进入业务数据或日志。
 type WechatHTTP struct {
 	AppID, Secret string
 	Client        *http.Client
 }
 
+// Exchange 访问固定微信官方地址，限制超时和重定向，并映射供应商错误。
 func (w WechatHTTP) Exchange(ctx context.Context, code string) (string, error) {
 	if w.AppID == "" || w.Secret == "" {
 		return "", fault.New(fault.Internal)
 	}
-	q := url.Values{"appid": {w.AppID}, "secret": {w.Secret}, "js_code": {code}, "grant_type": {"authorization_code"}}
-	req, e := http.NewRequestWithContext(ctx, "GET", "https://api.weixin.qq.com/sns/jscode2session?"+q.Encode(), nil)
-	if e != nil {
+	q := url.Values{
+		"appid":      {w.AppID},
+		"secret":     {w.Secret},
+		"js_code":    {code},
+		"grant_type": {"authorization_code"},
+	}
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://api.weixin.qq.com/sns/jscode2session?"+q.Encode(), nil)
+	if err != nil {
 		return "", fault.New(fault.Internal)
 	}
 	client := w.Client
 	if client == nil {
-		client = &http.Client{Timeout: 8 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+		client = &http.Client{
+			Timeout: 8 * time.Second,
+			CheckRedirect: func(*http.Request, []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		}
 	}
-	r, e := client.Do(req)
-	if e != nil {
+	r, err := client.Do(req)
+	if err != nil {
 		return "", fault.New(fault.Internal)
 	}
 	defer r.Body.Close()
@@ -61,26 +75,28 @@ func (w WechatHTTP) Exchange(ctx context.Context, code string) (string, error) {
 	}
 	return b.OpenID, nil
 }
+
+// WechatLogin 按 AppID 与 openid 查找或创建账号，唯一约束处理并发首次登录。
 func (s *Service) WechatLogin(ctx context.Context, code string) (map[string]any, error) {
 	if s.Wechat == nil || s.AppID == "" {
 		return nil, fault.New(fault.Internal)
 	}
-	openid, e := s.Wechat.Exchange(ctx, code)
-	if e != nil {
-		return nil, e
+	openid, err := s.Wechat.Exchange(ctx, code)
+	if err != nil {
+		return nil, err
 	}
 	random := make([]byte, 14)
-	if _, e = rand.Read(random); e != nil {
-		return nil, e
+	if _, err = rand.Read(random); err != nil {
+		return nil, err
 	}
 	name := "wx_" + hex.EncodeToString(random)
 	var preIdentity model.WechatIdentity
 	lookup := s.DB.WithContext(ctx).Where("app_id = ? AND open_id = ?", s.AppID, openid).First(&preIdentity).Error
 	passwordHash := ""
 	if lookup == gorm.ErrRecordNotFound {
-		passwordHash, e = Hash(hex.EncodeToString(random) + "-unavailable-local-credentials")
-		if e != nil {
-			return nil, e
+		passwordHash, err = Hash(hex.EncodeToString(random) + "-unavailable-local-credentials")
+		if err != nil {
+			return nil, err
 		}
 	} else if lookup != nil {
 		return nil, lookup
@@ -90,16 +106,31 @@ func (s *Service) WechatLogin(ctx context.Context, code string) (map[string]any,
 	var result map[string]any
 	// Unique identity resolves competing first logins. Retry only a unique race after rollback.
 	for attempt := 0; attempt < 2; attempt++ {
-		e = s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		err = s.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 			var identity model.WechatIdentity
 			err := tx.Where("app_id = ? AND open_id = ?", s.AppID, openid).First(&identity).Error
 			var u model.User
 			if err == gorm.ErrRecordNotFound {
-				u = model.User{Username: name, PasswordHash: passwordHash, CredentialsConfigured: false, DisplayName: values.Text("微信会员"), Role: "member", Status: "active", Level: 1, CreatedAt: now, UpdatedAt: now}
+				u = model.User{
+					Username:              name,
+					PasswordHash:          passwordHash,
+					CredentialsConfigured: false,
+					DisplayName:           values.Text("微信会员"),
+					Role:                  "member",
+					Status:                "active",
+					Level:                 1,
+					CreatedAt:             now,
+					UpdatedAt:             now,
+				}
 				if err = tx.Create(&u).Error; err != nil {
 					return err
 				}
-				identity = model.WechatIdentity{AppID: s.AppID, OpenID: openid, UserID: u.ID, CreatedAt: now}
+				identity = model.WechatIdentity{
+					AppID:     s.AppID,
+					OpenID:    openid,
+					UserID:    u.ID,
+					CreatedAt: now,
+				}
 				if err = tx.Create(&identity).Error; err != nil {
 					return err
 				}
@@ -116,12 +147,12 @@ func (s *Service) WechatLogin(ctx context.Context, code string) (map[string]any,
 			result, err = s.Result(tx, u)
 			return err
 		})
-		if e == nil {
+		if err == nil {
 			return result, nil
 		}
-		if fault.Resolve(e).Code != fault.Conflict {
-			return nil, e
+		if fault.Resolve(err).Code != fault.Conflict {
+			return nil, err
 		}
 	}
-	return nil, e
+	return nil, err
 }

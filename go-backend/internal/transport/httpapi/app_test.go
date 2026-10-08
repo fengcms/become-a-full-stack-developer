@@ -13,9 +13,9 @@ import (
 )
 
 func TestPublicLimitIsPerOperation(t *testing.T) {
-	c, e := contract.Load()
-	if e != nil {
-		t.Fatal(e)
+	c, err := contract.Load()
+	if err != nil {
+		t.Fatal(err)
 	}
 	a := New(c, nil, "")
 	a.Log = slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -42,9 +42,9 @@ func TestPublicLimitIsPerOperation(t *testing.T) {
 	}
 }
 func TestAuthenticationAndInputBoundary(t *testing.T) {
-	c, e := contract.Load()
-	if e != nil {
-		t.Fatal(e)
+	c, err := contract.Load()
+	if err != nil {
+		t.Fatal(err)
 	}
 	a := New(c, nil, "http://client.local")
 	a.Log = slog.New(slog.NewTextHandler(io.Discard, nil))
