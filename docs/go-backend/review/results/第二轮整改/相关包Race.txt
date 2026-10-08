@@ -1,0 +1,2 @@
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/article	2.075s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/transport/httpapi	2.627s

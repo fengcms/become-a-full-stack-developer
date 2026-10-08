@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-08",
+  "codeCommit": "d08bf0d0f5697abbb87d994af883a763bcb6d0bb",
+  "goBackendTree": "7816cb8ec6a0a150107ea6dc7425fb79af33996c",
+  "baselineCommit": "9590cb1",
+  "toolsSha256": {
+    "check_go_quality.go": "5ec629d3e26a1a7f8a08f6031ae8e05d65541862aa7b2ad2c2fb416b70490d3a",
+    "check_go_ast.go": "69124758f1d8ad4b4c416d42594d69142f7717e65b43855fdb7a8fbbdb78e4ce"
+  },
+  "production": {
+    "files": 70,
+    "lines": 5782,
+    "functions": 221,
+    "chineseComments": 252,
+    "comments": 288,
+    "passed": 13,
+    "failed": 0
+  },
+  "withTests": {
+    "files": 93,
+    "lines": 8015,
+    "functions": 266,
+    "chineseComments": 252,
+    "comments": 292,
+    "passed": 9,
+    "failed": 4
+  },
+  "staticLogsComparedTwice": {
+    "production": "byte-identical",
+    "withTests": "byte-identical"
+  },
+  "openapiSha256": "7b252c7ca701b45fdfd2a1e9dc7650085ff36e4ee9644265ad3fb6c485a5e030",
+  "verifyPassed": true,
+  "raceScope": [
+    "internal/article",
+    "internal/transport/httpapi"
+  ],
+  "matrixRerun": false,
+  "clientSmokeRerun": false,
+  "performanceRerun": false
+}

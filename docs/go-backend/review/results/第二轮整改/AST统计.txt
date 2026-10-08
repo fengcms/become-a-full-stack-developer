@@ -1,0 +1,123 @@
+======================================================================
+Go 代码工艺 AST 量化　根目录=.　含测试=false
+======================================================================
+文件 70 个／物理行 5782／函数与方法 221 个
+注释组：中文 252 ／ 非中文 33
+>80 行 0 个／>120 行 0 个／最大函数 79 行／最大控制流嵌套 4 层
+
+--- Top 25 最长函数（含方法）---
+    79 行  深度2  形参2   internal/auth/wechat.go:80  *Service.WechatLogin
+    79 行  深度2  形参0   cmd/data/main.go:16  main
+    74 行  深度1  形参2   internal/transport/httpapi/app.go:75  *App.Register
+    66 行  深度1  形参0   test/clientserver/main.go:30  main
+    64 行  深度0  形参2   internal/transport/httpapi/member.go:9  *App.BindMember
+    63 行  深度0  形参1   internal/transport/httpapi/auth.go:9  *App.BindAuth
+    63 行  深度4  形参4   internal/article/query.go:89  *Service.Page
+    59 行  深度3  形参4   internal/taxonomy/categories.go:215  *Service.saveCategoryTx
+    59 行  深度1  形参3   internal/article/mutation.go:61  *Service.Create
+    59 行  深度3  形参3   internal/article/discovery.go:63  *Service.Related
+    58 行  深度3  形参2   internal/article/discovery.go:124  *Service.Search
+    57 行  深度1  形参0   cmd/server/main.go:24  run
+    54 行  深度2  形参2   internal/auth/service.go:237  *Service.Rotate
+    52 行  深度4  形参4   internal/taxonomy/tags.go:82  *Service.saveTagTx
+    52 行  深度2  形参4   internal/article/mutation.go:166  *Service.updatePatch
+    51 行  深度1  形参2   internal/transport/httpapi/content.go:9  *App.BindContent
+    50 行  深度3  形参0   internal/contract/contract.go:32  Load
+    50 行  深度2  形参1   internal/administration/site.go:49  *Service.Stats
+    50 行  深度3  形参6   internal/attachment/service.go:59  *Service.Create
+    49 行  深度2  形参2   internal/transport/httpapi/attachments.go:69  uploadFile
+    48 行  深度0  形参4   internal/member/interactions.go:27  *Service.Like
+    48 行  深度2  形参0   internal/config/config.go:37  Load
+    48 行  深度0  形参5   internal/article/discovery.go:193  *Service.Views
+    48 行  深度2  形参6   internal/article/mutation.go:250  *Service.transitionTx
+    47 行  深度4  形参3   internal/comment/service.go:206  deleteBranchTx
+
+--- >80 行函数清单 ---
+  （无）
+
+--- 形参 >5 个的函数（可读性）---
+  形参6   internal/attachment/service.go:59  *Service.Create
+  形参6   internal/article/mutation.go:250  *Service.transitionTx
+
+--- 长匿名闭包（>40 行）---
+    67 行  深度2   internal/transport/httpapi/app.go:81  (闭包 in Register)
+    44 行  深度2   internal/member/interactions.go:29  (闭包 in Like)
+    43 行  深度4   internal/article/discovery.go:196  (闭包 in Views)
+    41 行  深度3   internal/auth/wechat.go:109  (闭包 in WechatLogin)
+
+--- 标识符命名：`e` 出现 0 次 ／ `err` 出现 849 次 ---
+
+--- 导出符号缺文档注释：顶层 0 个 ／ 方法 15 个 ---
+  （顶层导出均已有文档注释）
+
+--- 分文件注释覆盖（行数／中文注释／非中文注释）---
+   298 行  中12 非中 0  internal/article/mutation.go
+   291 行  中15 非中 1  internal/auth/service.go
+   274 行  中11 非中 1  internal/taxonomy/categories.go
+   253 行  中10 非中 1  internal/comment/service.go
+   241 行  中 5 非中 0  internal/article/discovery.go
+   226 行  中 9 非中 1  internal/transport/httpapi/app.go
+   194 行  中 7 非中 1  internal/attachment/service.go
+   192 行  中 8 非中 2  internal/contract/contract.go
+   184 行  中 6 非中 0  internal/transfer/snapshot.go
+   159 行  中 5 非中 0  internal/auth/wechat.go
+   153 行  中20 非中 1  internal/values/values.go
+   152 行  中 8 非中 1  internal/article/query.go
+   145 行  中 7 非中 1  internal/member/interactions.go
+   144 行  中 4 非中 0  internal/transfer/normalize.go
+   134 行  中 4 非中 0  internal/taxonomy/tags.go
+   133 行  中 7 非中 1  internal/administration/service.go
+   119 行  中 4 非中 0  internal/auth/credentials.go
+   118 行  中 3 非中 0  internal/transport/httpapi/attachments.go
+   117 行  中 7 非中 1  internal/platform/database/database.go
+   111 行  中 3 非中 0  internal/member/history.go
+   111 行  中 5 非中 0  internal/transfer/import.go
+   110 行  中 2 非中 0  cmd/seed/main.go
+   108 行  中 3 非中 0  internal/transport/httpapi/limiter.go
+   106 行  中 8 非中 1  internal/fault/error.go
+    99 行  中 2 非中 0  internal/administration/site.go
+    96 行  中 1 非中 2  test/clientserver/main.go
+    95 行  中 1 非中 0  cmd/data/main.go
+    92 行  中 6 非中 1  internal/platform/storage/storage.go
+    91 行  中 2 非中 0  internal/config/config.go
+    81 行  中 0 非中 0  cmd/server/main.go
+    74 行  中 5 非中 0  internal/member/notifications.go
+    74 行  中 5 非中 0  internal/article/view.go
+    73 行  中 2 非中 0  internal/transport/httpapi/member.go
+    72 行  中 1 非中 0  internal/article/toc.go
+    72 行  中 5 非中 0  internal/platform/storage/r2.go
+    72 行  中 1 非中 0  internal/transport/httpapi/auth.go
+    69 行  中 2 非中 1  internal/bootstrap/app.go
+    63 行  中10 非中 0  internal/platform/database/metrics.go
+    60 行  中 2 非中 0  internal/contract/operation.go
+    60 行  中 1 非中 0  internal/transport/httpapi/content.go
+    42 行  中 1 非中 0  internal/transport/httpapi/discovery.go
+    36 行  中 2 非中 1  internal/notification/event.go
+    33 行  中 1 非中 0  internal/testutil/database.go
+    28 行  中 1 非中 1  internal/platform/model/articles.go
+    28 行  中 2 非中 0  internal/transport/httpapi/params.go
+    27 行  中 0 非中 0  cmd/migrate/main.go
+    22 行  中 1 非中 1  internal/platform/model/users.go
+    18 行  中 1 非中 1  internal/platform/model/comments.go
+    18 行  中 1 非中 1  internal/platform/model/attachments.go
+    17 行  中 1 非中 1  internal/platform/model/site_settings.go
+    17 行  中 1 非中 1  internal/platform/model/categories.go
+    17 行  中 1 非中 1  internal/platform/model/notifications.go
+    16 行  中 2 非中 0  internal/platform/database/transaction.go
+    15 行  中 1 非中 1  internal/platform/model/refresh_tokens.go
+    14 行  中 1 非中 1  internal/platform/model/view_history.go
+    14 行  中 1 非中 1  internal/platform/model/wechat_identities.go
+    14 行  中 1 非中 1  internal/platform/model/tags.go
+    13 行  中 1 非中 1  internal/platform/model/likes.go
+    13 行  中 1 非中 1  internal/platform/model/favorites.go
+    13 行  中 1 非中 1  internal/platform/model/article_view_dedup.go
+    13 行  中 1 非中 1  internal/platform/model/article_tags.go
+    11 行  中 3 非中 0  internal/platform/database/scopes.go
+     6 行  中 0 非中 0  internal/platform/database/fs.go
+     3 行  中 1 非中 0  internal/config/doc.go
+     3 行  中 1 非中 0  internal/platform/database/doc.go
+     3 行  中 1 非中 0  cmd/seed/doc.go
+     3 行  中 1 非中 0  cmd/data/doc.go
+     3 行  中 1 非中 0  internal/testutil/doc.go
+     3 行  中 1 非中 0  cmd/migrate/doc.go
+     3 行  中 1 非中 0  cmd/server/doc.go
