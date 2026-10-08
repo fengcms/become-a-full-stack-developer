@@ -28,6 +28,31 @@ GATES = [
 # 复盘/批次总结类文章：按内容组织，代码量天然少于技术篇
 REVIEW_EXEMPT = {'M4-28'}
 
+# M1 增补篇（微信登录三连）的代码真实性探针
+PROBES_EXTRA = {
+    'M1-32': [('migrations/0001_wechat_credentials.sql', 'credentials_configured INTEGER NOT NULL DEFAULT 1'),
+              ('migrations/0001_wechat_credentials.sql', 'CREATE UNIQUE INDEX uniq_wechat_user'),
+              ('src/services/wechat.ts', "redirect: 'manual'"),
+              ('src/services/wechat.ts', 'AbortSignal.timeout(8000)'),
+              ('src/services/wechat.ts', 'credentials_configured,role,email'),
+              ('src/services/user.ts', '!user.credentialsConfigured'),
+              ('src/services/user.ts', 'canSetCredentials: !u.credentialsConfigured')],
+    'M1-33': [('src/db/atomic.ts', "'batch' in client"),
+              ('src/db/atomic.ts', 'client.transaction('),
+              ('src/db/atomic.ts', 'r.meta.changes'),
+              ('src/services/wechat.ts', 'isUniqueConstraintError'),
+              ('src/services/wechat.ts', 'ACCOUNT_DISABLED'),
+              ('src/services/wechat.ts', 'SELECT ?, ?, id, ? FROM users'),
+              ('src/services/setup-account.ts', 'changes()=1'),
+              ('src/services/setup-account.ts', 'EXISTS (SELECT 1 FROM wechat_identities'),
+              ('test/routes/wechat.test.ts', '并发首次登录只建一人')],
+    'M1-34': [('src/services/wechat.ts', "redirect: 'manual'"),
+              ('src/services/wechat.ts', "reason: 'transport_or_invalid_response'"),
+              ('test/routes/wechat.test.ts', 'toHaveBeenCalledTimes(1)'),
+              ('test/routes/wechat.test.ts', "redirect: 'manual'")],
+}
+BACKEND = os.path.join(ROOT, 'node-backend')
+
 
 def find(pattern):
     hits = glob.glob(os.path.join(ART, pattern))
@@ -181,6 +206,25 @@ def verify_code(key):
     return ok
 
 
+def verify_backend_code(key):
+    """核验 M1 增补篇引用的代码在 node-backend/ 中真实存在。"""
+    items = PROBES_EXTRA.get(key)
+    if not items:
+        return True
+    print(f'\n  --- 代码真实性核验 ({key}) ---')
+    ok = True
+    for rel, frag in items:
+        fp = os.path.join(BACKEND, rel)
+        try:
+            src = open(fp, encoding='utf-8').read()
+            hit = _norm(frag) in _norm(src)
+        except FileNotFoundError:
+            hit = False
+        ok &= hit
+        print(f'    {"PASS" if hit else "FAIL"}  {rel.split("/")[-1]:<24} {frag[:44]}')
+    return ok
+
+
 def verify_links(key):
     """核验文章里所有硬编码的 CSDN 外链真实存在于发布索引中（防编造 URL）。"""
     idx = '/Users/fungleo/Documents/Blogs/materials/csdn-已发布链接.md'
@@ -209,6 +253,7 @@ if __name__ == '__main__':
     for k in keys:
         allok &= check(k)
         allok &= verify_code(k)
+        allok &= verify_backend_code(k)
         allok &= verify_links(k)
     print('\n' + ('=' * 46))
     print('总判定: ' + ('全部 PASS' if allok else '存在 FAIL，需修'))

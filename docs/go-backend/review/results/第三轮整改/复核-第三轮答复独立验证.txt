@@ -1,0 +1,84 @@
+======================================================================================
+M6 Go 后端 · 第三轮答复的独立复核（评审方自取证，不采信自陈）
+日期：2026-10-08　对象：go-backend @ ceac4e0（HEAD 67a6fac，工作区干净）
+======================================================================================
+
+--------------------------------------------------------------------------------------
+A) 新增 doccheck 在真实代码上运行
+--------------------------------------------------------------------------------------
+包说明检查通过：每包一份说明，说明包含中文。
+exit=0
+
+--------------------------------------------------------------------------------------
+B) 包说明唯一性 + 中文口径  —— 评审方 Python 词法尺（独立于作者 Go AST 尺）
+--------------------------------------------------------------------------------------
+文件总数(含测试)=96  非测试=72
+包组数(目录:包名)=25
+含包说明的组=25  中文=25  纯英文/无中文=0
+违反『每包恰好一份包说明』的组：
+  （无）
+
+---- 全部包组（25 组，每组须恰好 1 份说明）----
+cmd/data:main  (2 文件)
+cmd/migrate:main  (2 文件)
+cmd/seed:main  (2 文件)
+cmd/server:main  (2 文件)
+internal/administration:administration  (2 文件)
+internal/article:article  (5 文件)
+internal/attachment:attachment  (1 文件)
+internal/auth:auth  (3 文件)
+internal/bootstrap:bootstrap  (1 文件)
+internal/comment:comment  (1 文件)
+internal/config:config  (2 文件)
+internal/contract:contract  (2 文件)
+internal/fault:fault  (1 文件)
+internal/member:member  (3 文件)
+internal/notification:notification  (1 文件)
+internal/platform/database:database  (6 文件)
+internal/platform/model:model  (16 文件)
+internal/platform/storage:storage  (2 文件)
+internal/taxonomy:taxonomy  (2 文件)
+internal/testutil:testutil  (2 文件)
+internal/transfer:transfer  (3 文件)
+internal/transport/httpapi:httpapi  (8 文件)
+internal/values:values  (1 文件)
+scripts/doccheck:main  (1 文件)
+test/clientserver:main  (1 文件)
+组数= 25
+
+--------------------------------------------------------------------------------------
+C) 生产代码纯英文注释残留 —— 评审方 Python 扫描
+--------------------------------------------------------------------------------------
+生产代码中不含汉字的注释行：0 条
+
+--------------------------------------------------------------------------------------
+D) 【核心分歧】多份包注释在 go/doc 中的真实呈现 —— 第二把尺（go doc CLI）
+   作者 §3.1 称：go/doc 会拼接，而非只取一处。评审方独立复现：
+--------------------------------------------------------------------------------------
+$ go doc ./pkg   #（两份完全相同）
+package pkg // import "example.com/dup/pkg"
+
+Package example 甲说明。
+
+Package example 甲说明。
+
+$ go doc ./pkg2  #（两份不同）
+package pkg2 // import "example.com/dup/pkg2"
+
+Package example 乙说明。
+
+Package example 丙说明。
+
+
+结论：go/doc（及 go doc / pkg.go.dev）对同包多份说明【换行拼接】，不会丢弃。
+      → 第三轮报告 §5-1 的『只取一处 / 其余为无效文档』为【错误判据】，特此订正。
+      → 但『收敛为一份』的建议依然成立，依据应改为【可维护性】而非【不可见性】。
+
+--------------------------------------------------------------------------------------
+E) 冻结面与评审工具未被触碰
+--------------------------------------------------------------------------------------
+$ git diff --stat d08bf0d ceac4e0 -- docs/go-backend/review/check_go_quality.go check_go_ast.go
+(空 = 原评审工具未改)
+
+$ git diff --stat d08bf0d ceac4e0 -- docs/api/ go.mod go.sum migrations/
+(空 = 契约产物 / 依赖 / 迁移未改；internal/contract/contract.go 仅包说明改中文)
