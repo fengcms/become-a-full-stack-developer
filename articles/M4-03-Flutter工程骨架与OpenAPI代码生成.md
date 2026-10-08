@@ -265,7 +265,7 @@ OpenAPI 有能力生成**完整客户端**——连 endpoint 方法、带类型�
 
 ## 延伸阅读
 
-- [契约先行：设计一套被六个端复用的 API](https://blog.csdn.net/fungleo/article/details/164140515)
+- [契约先行：设计一套被七个端复用的 API](https://blog.csdn.net/fungleo/article/details/164140515)
 - [Dio + Repository：统一响应信封与模型适配]({{LINK:M4-07}})
 - [前端 OpenAPI 生成类型为什么请求函数仍然手写](https://blog.csdn.net/fungleo/article/details/165721265)
 

@@ -111,20 +111,20 @@
 | 成为全栈·Next.js 网站前台篇·搜索页：实时查询、URL 状态与“没有结果”不是“请求失败” | — | `articles/M3-17-搜索页-实时查询URL状态与没有结果不是请求失败.md` | https://blog.csdn.net/fungleo/article/details/167080343 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·会员公开主页与通知中心：公开身份和私有消息如何分界 | — | `articles/M3-18-会员公开主页与通知中心-公开身份和私有消息如何分界.md` | https://blog.csdn.net/fungleo/article/details/167121410 | 🟢 已发布 |
 | 成为全栈·Next.js 网站前台篇·站点设置如何驱动页头、页脚与 SEO | — | `articles/M3-19-站点设置如何驱动页头页脚与SEO.md` | https://blog.csdn.net/fungleo/article/details/167121971 | 🟢 已发布 |
-| 成为全栈·Next.js 网站前台篇·响应式、可访问性与错误状态：内容站不能只验桌面首页 | — | `articles/M3-20-响应式可访问性与错误状态-内容站不能只验桌面首页.md` | [167172856](https://blog.csdn.net/fungleo/article/details/167172856) | 🟢 已发布 |
-| 成为全栈·Next.js 网站前台篇·Core Web Vitals 与前台性能：先保护正文，再优化装饰模块 | — | `articles/M3-21-Core-Web-Vitals与前台性能-先保护正文再优化装饰模块.md` | [167172892](https://blog.csdn.net/fungleo/article/details/167172892) | 🟢 已发布 |
-| 成为全栈·Next.js 网站前台篇·质量门禁：契约测试、会话竞态、双运行时与浏览器验收 | — | `articles/M3-22-质量门禁-契约测试会话竞态双运行时与浏览器验收.md` | [167218692](https://blog.csdn.net/fungleo/article/details/167218692) | 🟢 已发布 |
-| 成为全栈·Next.js 网站前台篇·OpenNext 部署 Cloudflare：构建成功不等于缓存正确 | — | `articles/M3-23-OpenNext部署Cloudflare-构建成功不等于缓存正确.md` | [167218828](https://blog.csdn.net/fungleo/article/details/167218828) | 🟢 已发布 |
-| 成为全栈·Next.js 网站前台篇·总复盘：做一个公开内容站的真实成本 | — | `articles/M3-24-总复盘-做一个公开内容站的真实成本.md` | [167218879](https://blog.csdn.net/fungleo/article/details/167218879) | 🟢 已发布 |
+| 成为全栈·Next.js 网站前台篇·响应式、可访问性与错误状态：内容站不能只验桌面首页 | — | `articles/M3-20-响应式可访问性与错误状态-内容站不能只验桌面首页.md` | https://blog.csdn.net/fungleo/article/details/167172856 | 🟢 已发布 |
+| 成为全栈·Next.js 网站前台篇·Core Web Vitals 与前台性能：先保护正文，再优化装饰模块 | — | `articles/M3-21-Core-Web-Vitals与前台性能-先保护正文再优化装饰模块.md` | https://blog.csdn.net/fungleo/article/details/167172892 | 🟢 已发布 |
+| 成为全栈·Next.js 网站前台篇·质量门禁：契约测试、会话竞态、双运行时与浏览器验收 | — | `articles/M3-22-质量门禁-契约测试会话竞态双运行时与浏览器验收.md` | https://blog.csdn.net/fungleo/article/details/167218692 | 🟢 已发布 |
+| 成为全栈·Next.js 网站前台篇·OpenNext 部署 Cloudflare：构建成功不等于缓存正确 | — | `articles/M3-23-OpenNext部署Cloudflare-构建成功不等于缓存正确.md` | https://blog.csdn.net/fungleo/article/details/167218828 | 🟢 已发布 |
+| 成为全栈·Next.js 网站前台篇·总复盘：做一个公开内容站的真实成本 | — | `articles/M3-24-总复盘-做一个公开内容站的真实成本.md` | https://blog.csdn.net/fungleo/article/details/167218879 | 🟢 已发布 |
 
 ---
 
-## M4 · Flutter App（28 篇正文完成，待发布）
+## M4 · Flutter App（28 篇，发布进行中）
 
 | 文章标题 | tag | 代码 / 草稿位置 | CSDN 链接 | 状态 |
 |---|---|---|---|---|
-| 成为全栈·Flutter App 篇·从 React 到 Flutter：声明式 UI 相似，状态与布局模型哪里不同 | — | `articles/M4-01-从React到Flutter-声明式UI相似状态与布局模型哪里不同.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Flutter App 篇·给 TypeScript 开发者的 Dart：空安全、Future 与异步错误 | — | `articles/M4-02-给TypeScript开发者的Dart-空安全Future与异步错误.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·从 React 到 Flutter：声明式 UI 相似，状态与布局模型哪里不同 | — | `articles/M4-01-从React到Flutter-声明式UI相似状态与布局模型哪里不同.md` | https://blog.csdn.net/fungleo/article/details/167266219 | 🟢 已发布 |
+| 成为全栈·Flutter App 篇·给 TypeScript 开发者的 Dart：空安全、Future 与异步错误 | — | `articles/M4-02-给TypeScript开发者的Dart-空安全Future与异步错误.md` | https://blog.csdn.net/fungleo/article/details/167266845 | 🟢 已发布 |
 | 成为全栈·Flutter App 篇·Flutter 工程骨架与 OpenAPI 代码生成 | — | `articles/M4-03-Flutter工程骨架与OpenAPI代码生成.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Flutter App 篇·把高保真原型落成 Design Token 与 Flutter 组件 | — | `articles/M4-04-把高保真原型落成DesignToken与Flutter组件.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Flutter App 篇·go_router 与四 Tab App Shell：保留导航状态、深链和登录回跳 | — | `articles/M4-05-go_router与四TabAppShell-保留导航状态深链和登录回跳.md` | — | 🟡 草稿中（正文完成，待发布） |

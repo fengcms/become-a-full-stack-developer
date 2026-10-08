@@ -133,7 +133,7 @@ HTTP 边界的代码并非零成本。项目需要自己维护公共流程，也
 
 - [用 Go 重写分层架构：领域包、装配根与最小抽象]({{LINK:M6-03}})
 - [Go 后端实际架构与关键决策]({{LINK:GO-05}})
-- [Node 后端框架选型：Express、Koa、Fastify 与 Hono]({{LINK:M1-02}})
+- [Node 后端框架选型：Express、Koa、Fastify 与 Hono](https://blog.csdn.net/fungleo/article/details/164187017)
 - [契约一致性与差分测试：两套实现如何互相校验]({{LINK:M6-09}})
 
 ---
