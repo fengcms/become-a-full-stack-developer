@@ -1,0 +1,80 @@
+======================================================================================
+专题取证：`github.com/fengcms/become-a-full-stack-developer/go-backend` 是否为「绕一层」
+审查人：审阅方（第三轮）   对象：go-backend @ HEAD 4ace8cf（代码提交 d08bf0d）
+======================================================================================
+
+【命题】用户提出：代码 import 里出现 github.com/fengcms/... 这种「引用自己」的路径，
+        为什么要到 GitHub 绕一层？是不是没必要？
+
+--------------------------------------------------------------------------------------
+1) 它是什么：模块路径 = 模块身份标识，不是下载地址
+--------------------------------------------------------------------------------------
+$ cat go.mod
+module github.com/fengcms/become-a-full-stack-developer/go-backend
+go 1.26.6
+
+$ git remote -v
+origin  git@github.com:fengcms/become-a-full-stack-developer.git (fetch)
+origin  git@github.com:fengcms/become-a-full-stack-developer.git (push)
+
+→ 模块路径与仓库真实地址**逐段一致**（host=github.com, owner=fengcms, repo=become-a-full-stack-developer,
+  子目录=go-backend）。它是对「这份代码在哪」的**命名**，不是「去那里取」的指令。
+
+--------------------------------------------------------------------------------------
+2) 关键实证：构建时**不联网**也能解析「自我引用」
+--------------------------------------------------------------------------------------
+$ GOPROXY=off GOFLAGS=-mod=mod go build ./...
+build_exit=0                              ← 全程无网络，构建通过
+$ GOPROXY=off go build ./internal/transport/httpapi/
+httpapi_exit=0
+$ go mod verify
+all modules verified
+
+→ 若真「绕到 GitHub 去取自己」，关闭代理（GOPROXY=off）必然失败。实测通过 ⇒ 自我引用在**本地模块树**内解析。
+
+--------------------------------------------------------------------------------------
+3) 佐证：主模块从不出现在 go.sum，也从不进入 require
+--------------------------------------------------------------------------------------
+$ grep -c "become-a-full-stack-developer" go.sum
+0                                        ← 主模块绝不会被当作外部依赖写入校验和
+$ grep -n "become-a-full-stack-developer" go.mod
+1:module github.com/fengcms/become-a-full-stack-developer/go-backend   ← 只出现在 module 声明行
+
+$ go list -m github.com/fengcms/become-a-full-stack-developer/go-backend
+github.com/fengcms/become-a-full-stack-developer/go-backend
+$ go list -m
+github.com/fengcms/become-a-full-stack-developer/go-backend
+→ 二者逐字相同 ⇒ 该路径解析到的就是**主模块自己**，不是远端包。
+
+--------------------------------------------------------------------------------------
+4) 全仓引用面：只在 go.mod 声明 + .go 的 import 里出现，且全部指向本模块
+--------------------------------------------------------------------------------------
+$ grep -rn "become-a-full-stack-developer" --include="*.md" --include="Makefile" --include="*.yml" \
+      --include="*.yaml" --include="*.json" . | grep -v openapi.json
+./go.mod:1:module github.com/fengcms/become-a-full-stack-developer/go-backend
+→ 文档/脚本/CI 里**没有任何** go get / go install / 依赖该远程路径的引用。
+→ 生产 import 用到的 19 个内部包（internal/... 前缀）全部落在本模块内：
+     administration article attachment auth bootstrap comment config contract fault
+     member notification platform/database platform/model platform/storage taxonomy
+     testutil transfer transport/httpapi values
+→ 涉及自我引用的 .go 文件 51 个，import 行 179 处，**无一处**指向模块外。
+
+--------------------------------------------------------------------------------------
+5) 结论
+--------------------------------------------------------------------------------------
+- 「到 GitHub 绕一层」在本项目**不存在**：Go 对同一模块内的 import 一律从本地目录树解析，
+  自 Go 1.11 modules 起就是如此；模块路径里的域名只是让路径**全球唯一**的命名约定。
+- 现状是**正确且惯用**的做法：路径与真实远端一致，任何人 clone 后 go build 都能就地编译。
+- 不构成缺陷，**无需修改**。
+
+【若要改会付出什么（供 owner 决策，不做推荐）】
+- 改为无语点路径（如 become-a-full-stack-developer/go-backend）：Go 允许本地构建，
+  但该模块**不可被 go get**（首段无 . 的路径无法从 proxy 取得），且偏离 Go 社区惯例。
+- 改动成本：go.mod 1 行 + 全部 import（51 文件 / 179 行）同步替换；无功能收益。
+- 唯一真实的关联点：本模块位于仓库**子目录** go-backend/。若将来真要让外部 go get，
+  语义化版本 tag 必须写成 `go-backend/vX.Y.Z`（子目录模块规则）。这属**发布约定**，
+  对当前「clone 即用」的交付方式无影响，可在发布文档里补一句说明。
+
+【诚实边界】
+- 沙箱无外网，无法探测该 GitHub 仓库是否 public；但这**不影响**上述结论——
+  本地构建不需要它可达。可达性只关系「外部消费者能否 go get」，与「自我引用」无关。

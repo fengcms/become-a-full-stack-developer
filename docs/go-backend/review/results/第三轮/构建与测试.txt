@@ -1,0 +1,31 @@
+=== gofmt -l ===
+=== go vet ./... ===
+vet_exit=0
+=== go build ./... ===
+build_exit=0
+=== go test ./... -count=1 ===
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/cmd/data	[no test files]
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/cmd/migrate	[no test files]
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/cmd/seed	[no test files]
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/cmd/server	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/administration	0.688s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/article	1.059s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/attachment	1.559s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/auth	6.464s
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/bootstrap	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/comment	2.501s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/config	2.907s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/contract	3.351s
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/fault	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/member	3.865s
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/notification	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/database	4.328s
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/model	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/platform/storage	4.428s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/taxonomy	4.912s
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/testutil	[no test files]
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/transfer	4.793s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/transport/httpapi	4.798s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/internal/values	4.249s
+ok  	github.com/fengcms/become-a-full-stack-developer/go-backend/test	7.144s
+?   	github.com/fengcms/become-a-full-stack-developer/go-backend/test/clientserver	[no test files]

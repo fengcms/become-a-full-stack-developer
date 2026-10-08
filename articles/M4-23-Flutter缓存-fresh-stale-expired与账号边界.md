@@ -1,185 +1,406 @@
 # 成为全栈·Flutter App 篇·Flutter 缓存：fresh、stale、expired 与账号边界
 
-用户在地铁里打开一篇之前读过的文章，网络刚好断了。缓存能让这次阅读继续，但不能因此承诺整本专栏都可离线，也不能把会员草稿当作公开内容落盘。
+讲缓存之前，先说一个我一开始的定义错误。
 
-这篇直接读 `DataCache.get()` 和 `CachePolicyTable`，解释 fresh、stale、maxAge、磁盘策略及请求代次，并说明当前缓存真正能覆盖的场景。
+我以为缓存就是"存下来，过期就删"。所以我的策略只有两个数：存多久（`maxAge`）、什么时候更新（`fresh`）。
+
+改数据的时候我发现这样不对。设想用户打开一篇缓存的文章，此时网络很差：
+
+**如果等它过期才去刷新，用户会盯着骨架屏转十秒。** 而他其实已经能看到内容了。
+
+**如果永远不等过期，用户永远看不到新版本。**
+
+所以必须承认一件事：**"能不能用这份缓存"和"要不要更新这份缓存"，是两个独立的问题。**
+
+这个拆分就是 fresh / stale / expired 三态的由来。
 
 {{IMG:M4-23-封面}}
 
-## 新鲜、陈旧、过期不是三个颜色
+## 三态的判定
 
-新鲜（fresh）意味着在资源策略 TTL 内可直接复用；陈旧（stale）意味着可先显示同时后台校验；硬过期（expired）则不能无限当作有效数据，具体行为取决于资源重要性和错误类型。用户主动强刷应尝试最新值，但失败时可保留仍有阅读价值的旧内容。
-
-```text
-fresh → 直接返回
-stale → 返回旧值 + 后台 revalidate
-expired → 请求服务端；按策略决定是否保留旧画面
-```
-
-这套语义不等同于浏览器默认 HTTP cache；项目 Cache-Control 解析还尊重 no-store/no-cache、private 和更短 max-age。
-
-{{IMG:M4-23-缓存层}}
-
-## 公开与私有缓存不能混用
-
-匿名公开文章、分类和标签可按预算保存内存/磁盘；会员展示数据只在当前会话内存短时复用；稿件编辑和私有预览实时读取。公开正文与服务端 TOC 需要成组版本校验，防止正文更新而目录仍旧。
-
-```text
-public GET → bounded memory + disk
-private member data → account/session scoped memory
-draft/editor/private preview → live request
-```
-
-## 请求合并与代次保护
-
-相同资源同时被多个 Widget 请求时，DataCache 合并相同 in-flight 请求，避免重复访问。强刷或写操作开始后，缓存代次前进；旧请求即使迟到，也不能覆盖新结果。网络失败保留有用 stale 内容；权限拒绝或 404 应移除旧内容，防止已撤下资源无限显示。
-
-## 有限离线体验不等于完整离线功能
-
-首次访问需要联网填充。缓存只允许复用曾访问、仍在可用策略范围内的公开内容；没有下载中心、离线写操作队列，也没有冲突同步。服务端撤下文章后，客户端离线期间无法瞬时获知撤回。
-
-公开 JSON 文件预算 30MB、正文最多 100 篇等上限记录于项目文档；这些是缓存子系统预算，不代表整个 APP 内存上限。系统可随时清理缓存目录，不能拿来存放用户原创数据。
-
-## 缓存策略表比页面里的 if 更容易审计
-
-将资源分类、TTL、落盘许可和写后失效集中表达，能避免页面自己猜数据是否安全缓存：
-
-```text
-resource       ttl       disk   identity       invalidated by
-categories     short     yes    public         category write
-article        bounded   yes    public         article update/delete
-memberOverview short     no     account+epoch  profile/session change
-privatePreview none      no     account+epoch  always fetch
-```
-
-这是设计表的示例，具体 TTL 和上限应以 `CachePolicyTable`、`CacheLimits` 与验收文档为准。API 响应的 `private`/`no-store` 必须压低客户端复用级别，客户端不能因自己的策略想缓存就覆盖服务端约束。
-
-## 读取缓存时服务端响应头可以收紧策略
-
-客户端策略表决定允许缓存哪些资源；服务端 Cache-Control/Age 再限制数据的复用。`no-store` 不落盘也不保留为复用项；`private` 不进入公共磁盘；更短 `max-age` 覆盖更长客户端 fresh 窗口。响应头处理在数据入口集中完成，避免每个页面忘记尊重服务器策略。
-
-当前实测中某一个生产分类响应没有观察到 ETag、Last-Modified 或 Cache-Control，所以工程不宣称实现 ETag/304 条件请求。没有观察到一个端点的 header，不能推断所有路径永远都没有；因此缓存仍有自己的 TTL 和写后失效保护。
-
-## 请求合并和磁盘恢复要遵循同一代次
-
-DataCache 对同 key 的并发网络读取共享 `_flights` Future；命中 stale 数据时立即返回旧值并启动后台更新。若中途强刷、写后 fence、清理缓存或切换会话，资源 version/全局 epoch 更新；磁盘读取完成后也必须再次核对，否则清理后旧文件可能重新进内存。
-
-```text
-cache key + current version
-→ disk/memory lookup
-→ fetch future shared by key
-→ before install compare epoch and version
-→ stale result throws CacheSuperseded
-```
-
-这是并发正确性机制，不单是速度优化。`CacheSuperseded` 对页面不应当作网络错误提示；它表示另一个更新已获胜，页面可等待新状态或忽略该响应。
-
-
-## 贴着工程代码读实现
-
-下面这段节选自 `flutter-app/lib/core/cache/data_cache.dart 第 130–202 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：将时间推进到 fresh、stale、expired 三段，观察前台响应和后台刷新。这里关注的是它如何改变数据流，而不只是记住一个 API 名称。
+先看判定代码，这是全项目的核心：
 
 ```dart
-  Future<dynamic> get(
-    String key,
-    CachePolicy policy,
-    Future<CacheReply> Function() fetch, {
-    bool force = false,
-    Set<String> tags = const {},
-    bool Function(Object)? forbidden,
-  }) async {
-    _keyTags[key] = tags;
-    if (_keyTags.length > CacheLimits.trackedKeys) {
-      for (final old in _keyTags.keys.toList()) {
-        if (_keyTags.length <= CacheLimits.trackedKeys) break;
-        if (old != key &&
-            !_entries.containsKey(old) &&
-            !_flights.containsKey(old)) {
-          _keyTags.remove(old);
-          _versions.remove(old);
-        }
-      }
-    }
-    if (force && _flights.containsKey(key) && !_forced.contains(key)) {
-      _versions[key] = Object();
-      _flights.remove(key);
-    }
-    if (force) _forced.add(key);
-    // 磁盘读取也必须检查代际，否则清理完成后旧磁盘读会重新填回内存。
-    final startEpoch = _epoch, version = _version(key);
-    var entry = _entries[key];
-    if (!force && entry == null && policy.disk) {
-      final bytes = await disk.read(key);
-      if (_epoch != startEpoch || (_version(key)) != version) {
-        throw CacheSuperseded();
-      }
-      if (bytes != null) {
-        try {
-          entry = CacheEntry.fromJson(
-            Map<String, dynamic>.from(jsonDecode(utf8.decode(bytes)) as Map),
-          );
-          _put(key, entry);
-          count('diskHit');
-        } catch (_) {
-          unawaited(disk.removeWhere((k, _) => k == key));
-        }
-      }
-    }
-    entry = _entries[key] ?? entry;
-    if (!force &&
-        entry != null &&
-        now().difference(entry.saved) < entry.maxAge) {
-      _put(key, entry);
-      if (now().difference(entry.saved) < entry.fresh) {
-        count('freshHit');
-        return entry.value;
-      }
-      // 返回可用旧值并启动后台更新；后台失败通过事件通知页面。
-      count('staleHit');
-      unawaited(
-        _fetch(
-          key,
-          policy,
-          fetch,
-          tags,
-          forbidden,
-        ).catchError((Object _) => null),
-      );
-      return entry.value;
-    }
-    if (entry != null && now().difference(entry.saved) >= entry.maxAge) {
-      _entries.remove(key);
-    }
-    count('miss');
-    return _fetch(key, policy, fetch, tags, forbidden);
+if (!force &&
+    entry != null &&
+    now().difference(entry.saved) < entry.maxAge) {
+  _put(key, entry);                                  // 续期，标记为"刚被用到"
+  if (now().difference(entry.saved) < entry.fresh) {
+    count('freshHit');
+    return entry.value;                              // ← fresh：直接返回
   }
+  // 返回可用旧值并启动后台更新；后台失败通过事件通知页面。
+  count('staleHit');
+  unawaited(
+    _fetch(key, policy, fetch, tags, forbidden).catchError((Object _) => null),
+  );
+  return entry.value;                                // ← stale：先返回旧的，后台更新
+}
+if (entry != null && now().difference(entry.saved) >= entry.maxAge) {
+  _entries.remove(key);
+}
 ```
 
-## 把容易出错的路径走一遍
+三态的实际行为：
 
-我会用这个场景做一次可复现排查：**把 stale 数据当作 fresh 返回，用户长期看不到服务端更新**。先将时间推进到 fresh、stale、expired 三段，观察前台响应和后台刷新；如果把问题定位在“单一 TTL”，修正方向是“按策略区分立即返回、后台 revalidate 与必须联网读取”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
-
-| 方案比较 | 简化做法 | 当前实现/推荐做法 |
+| 状态 | 条件 | 行为 |
 |---|---|---|
-| 本文核心选择 | 单一 TTL | 三级新鲜度 |
-| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
-| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+| **fresh** | 未超过 `fresh` | 直接返回，**不发请求** |
+| **stale** | 超过 `fresh` 但未超过 `maxAge` | **立刻返回旧值**，同时后台悄悄更新 |
+| **expired** | 超过 `maxAge` | 删掉，必须等网络 |
 
-| 排错步骤 | 要观察什么 | 通过条件 |
+**stale 这一档是用户体验的关键。** 用户点击 → 立刻看到内容（虽然是旧的）→ 后台在更新 → 更新完成发事件 → 页面刷新出新内容。
+
+用户感知到的是"打开很快"，而不是"等很久"。
+
+而 stale 命中时那个 `catchError((Object _) => null)` 很重要：**后台更新失败不能影响用户。** 用户已经看到内容了，后台刷新失败对他不可见——顶多是下次进页面时内容还是旧的。
+
+这个错误被吞掉，但**失败会通过 `CacheEvent(kind: 'failed')` 通知页面**（M4-10 的 `AsyncPane` 处理了这个事件）。所以用户如果关心，可以在下拉刷新时看到"更新失败，当前显示上次内容"。
+
+**吞掉异常和报告失败是两件事**：前者防止后台任务崩溃，后者让界面有机会提示。
+
+## maxAge 和 fresh 分别回答什么
+
+两个参数很容易被混淆，但它们回答的问题完全不同：
+
+**`fresh` 回答："我现在有多相信这份数据？"**
+
+值越小，客户端越经常去问服务器。比如通知列表 15 秒——因为用户可能刚在别处操作过。
+
+**`maxAge` 回答："最坏情况下我能拿多旧的数据来用？"**
+
+值越大，离线可用性越好。比如已发布文章的正文 24 小时——反正内容不会突变，断网也能读。
+
+看几个实际的配置：
+
+```dart
+ResourceFamily.dictionaries: _ReadRule(
+  CachePolicy(Duration(minutes: 30), _day, disk: true),
+  _Shape.list,
+),
+ResourceFamily.notifications: _ReadRule(
+  CachePolicy(Duration(seconds: 15), Duration(minutes: 1)),
+  _Shape.page,
+  tags: {'private', 'notifications'},
+),
+ResourceFamily.article: ...  // 正文：10 分钟 fresh，24 小时 maxAge
+```
+
+分类和标签是 `30 分钟 / 1 天`——**变化极慢，可以放心用旧的**。
+通知是 `15 秒 / 1 分钟`——**用户刚操作过的地方，必须立刻反映**。
+
+| 端点 | fresh | maxAge | 为什么 |
+|---|---|---|---|
+| 分类、标签 | 30 分钟 | 1 天 | 运营配置，几乎不变 |
+| 站点统计 | 5 分钟 | 1 天 | 数字变化慢 |
+| 文章列表 | 2 分钟 | 1 天 | 有新文章，但旧几小时也无妨 |
+| 热门列表 | 5 分钟 | 1 天 | 榜单变动比最新列表快 |
+| 文章正文 | 10 分钟 | 24 小时 | 同上，但要能离线读 |
+| 评论 | 30 秒 | 5 分钟 | 别人随时可能在评论 |
+| 通知 | 15 秒 | 1 分钟 | 刚操作过 |
+| 私信草稿 | 15 秒 | 1 分钟 | 同上 |
+
+**`fresh < maxAge` 是所有配置的共同特征。** 如果 `fresh >= maxAge`，那 stale 那一档就不存在了，缓存退化成"要么最新、要么没有"，等于放弃了 stale-while-revalidate 带来的好处。
+
+## 读缓存会续期，这是有意的
+
+注意 `if` 块里那句：
+
+```dart
+_put(key, entry);    // 重新放进去
+```
+
+它更新了什么？**`saved` 时间戳。** 也就是说：**每次读到缓存，都会把它变成"刚保存的"。**
+
+这叫 **LRU（最近最少使用）语义**，它带来一个重要后果：
+
+**用户经常看的文章，会一直保持"看起来很新鲜"，即使它已经过了原本的 fresh 期。**
+
+这是好还是坏？取决于场景。
+
+对文章正文来说，这是**好的**——用户天天看的那几篇，缓存一直有效，不用每次都请求。
+
+对通知来说，这可能是**坏的**——用户频繁打开会员中心，导致通知的 `saved` 一直刷新，**结果它永远不会进入 stale 状态，也就永远不会后台更新**。
+
+而后台更新恰恰是通知列表最需要的（用户刚在别处操作过）。
+
+**这是 LRU 续期的一个已知副作用，我没有解。**
+
+可能的解法是"续期但不延长 fresh 期"——即 `saved` 用于 maxAge 判断，但 fresh 用另一个字段记录"这份数据实际的获取时间"。**现在两者是同一个字段，所以无法区分。**
+
+我记录这个问题是因为：**它属于"看起来是 bug，其实是被选择的性质"**。将来如果有人报"通知不更新了"，答案在这里。
+
+## 服务端的 cache-control：只能收紧不能放宽
+
+现在讲一个我在对接后端时才发现的机制。
+
+HTTP 响应头里有 `Cache-Control`，服务端可以告诉客户端"这份数据能缓存多久"。我们的 ApiClient 会把这些头收集起来：
+
+```dart
+// 把服务端缓存头与数据一起传给缓存层，网络层本身不决定是否复用。
+Future<CacheReply> fetchCacheReply(ApiClient api, String path, {...}) async {
+  String control = '';
+  Duration age = Duration.zero;
+  final data = await api.request(
+    path,
+    query: query,
+    anonymous: anonymous,
+    onHeaders: (headers) {
+      control = headers.value('cache-control') ?? '';
+      age = Duration(seconds: int.tryParse(headers.value('age') ?? '') ?? 0);
+    },
+  );
+  return CacheReply(data, control: control, age: age);
+}
+```
+
+**注意这个注释的最后一句："网络层本身不决定是否复用"。** 网络层只负责"把头带回来"，判断留给缓存层。这是很干净的职责划分——Dio 不该知道缓存策略。
+
+缓存层拿到头之后：
+
+```dart
+// 缓存策略只允许收紧服务端限制；Age 扣减保存时间，不重置存活期。
+var fresh = policy.fresh, max = policy.maxAge;
+final seconds = int.tryParse(
+  RegExp(r'(?:^|,)\s*max-age\s*=\s*"?(\d+)')
+          .firstMatch(control)?.group(1) ?? '',
+);
+if (seconds != null) {
+  final age = Duration(seconds: seconds);
+  if (age < fresh) fresh = age;      // ← 只在更短时才生效
+  if (age < max) max = age;
+}
+if (control.contains('no-cache')) {
+  fresh = Duration.zero;
+  max = Duration.zero;
+}
+if (control.contains('must-revalidate') && fresh < max) max = fresh;
+```
+
+**四个 `if` 全是"收紧"方向，没有一个是"放宽"。**
+
+`if (age < fresh) fresh = age;` 这行是关键：**服务端说要缓存 10 分钟，而我们的策略是 2 分钟，取更短的 2 分钟。** 反过来如果服务端说 1 小时而策略是 2 分钟，**不会变成 1 小时**。
+
+**为什么只能收紧？** 因为客户端的策略是基于这个 App 的需求定的，而服务端的 `Cache-Control` 可能是针对中间代理（CDN、网关）设的。**客户端没有理由因为服务端给了一个长值就放宽自己的策略**——那意味着用户可能看到一小时前的通知，而 App 本该一分钟就更新。
+
+`no-cache` 是最严格的那个：直接把 fresh 和 max 都设成 0，**等于每次都重新请求**。用于"这份数据绝对不能缓存"的响应。
+
+`must-revalidate` 则是"过期后必须验证"：它把 maxAge 收紧到和 fresh 一样。**效果是取消 stale 那一档**——因为 max 等于 fresh，不存在"过 fresh 但没过 max"的窗口。
+
+`Age` 头那个处理很精确：
+
+```dart
+entry: CacheEntry(
+  response.value,
+  now().subtract(response.age),    // ← 扣掉 Age
+  fresh, max, tags,
+),
+```
+
+**`Age` 是 HTTP 响应在 CDN 或者代理上停留的时间。** 一个响应在 CDN 上待了 30 秒才到客户端，那它的实际年龄不是 0，而是 30 秒。
+
+`now().subtract(response.age)` 让 `saved` 变成 30 秒前，**这样 fresh/maxAge 的判断会自动把这段路途算进去。**
+
+而注释里那句"**Age 扣减保存时间，不重置存活期**"是关键区别：不能用 `saved = now() - age` 然后又重新开始计时，那会把在 CDN 待的时间"补回来"。
+
+## fence：用对象哨兵隔断在途请求
+
+现在讲写操作和缓存的交互，这是最微妙的一块。
+
+问题：用户点收藏 → 缓存失效 → 同时还有一个**之前发出的**列表请求在路上 → 那个请求带着旧数据回来 → **把旧数据写进缓存**。
+
+这就是 M4-07 提过的时序 bug。现在的解法是 `fence`：
+
+```dart
+/// Fence reads at mutation start; preserve visible data until its outcome.
+void fence(Set<String> tags) {
+  for (final key in _keyTags.keys.toList()) {
+    if (_keyTags[key]!.intersection(tags).isNotEmpty) {
+      _versions[key] = Object();      // ← 换一个新对象当哨兵
+      _flights.remove(key);           // ← 取消在途请求的复用
+    }
+  }
+}
+```
+
+`_versions[key]` 是一个 `Object`。**每次 fence 就换一个新对象**。而在途请求完成时会检查"我的那个哨兵还在不在"——不在了，就说明中途发生过 fence，**结果丢弃**。
+
+用 `Object()` 而不是自增的整数，是因为 Dart 的对象恒等比较（`identical`）是 O(1) 的，而且不会溢出、不需要考虑线程安全。
+
+而 `_flights.remove(key)` 是另一件事：**它取消"同键请求复用"**。原本如果有两个相同键的请求，第二个会等第一个的结果（就像 M4-09 的单飞刷新）。但写操作发生之后，那个等待中的请求**等的是一个可能过时的结果**，所以要踢掉让它自己重新发。
+
+`invalidate` 则是 fence 加上真正删除：
+
+```dart
+// 依赖标签同时清理内存和磁盘；旧网络响应已被 fence 隔断。
+void invalidate(Set<String> tags) {
+  fence(tags);
+  for (final key in _keyTags.keys.toList()) {
+    if (_keyTags[key]!.intersection(tags).isNotEmpty) {
+      _entries.remove(key);
+      emit(CacheEvent(key, 'invalidated'));
+    }
+  }
+  unawaited(disk.removeWhere((_, m) => (m['tags'] as List? ?? []).any(tags.contains)));
+}
+```
+
+**为什么 fence 和 remove 要分开？** 因为 M4-07 讲的那个场景：写操作**开始时**要先 fence（隔断在途请求），但**此时不能删数据**——因为写可能失败，而用户正在看那份数据。
+
+只有确认要失效了（写成功，或者明确要刷新），才调 `invalidate`。M4-07 的 `_mutation` 里就是这个顺序：
+
+```dart
+if (started) {
+  cache.fence(affected);     // 开始：只隔断，不删
+  return;
+}
+if (error is SessionChanged) return;
+cache.invalidate(affected);  // 结束：真的删
+```
+
+**这个"先围栏、后拆墙"的两步设计，是缓存和写操作正确协作的关键。**
+
+## 账号边界：私有缓存的键
+
+最后一个话题，也是安全相关的。
+
+M4-07 讲过缓存键的构造：
+
+```dart
+String key(String path, Map<String, dynamic> query, {bool private = false}) {
+  return CacheKey(
+    api.baseUrl,
+    private ? 'session:${api.userId}:${api.epoch}' : 'public',
+    path, query,
+  ).encode();
+}
+```
+
+**私有键里有 `userId` 和 `epoch` 两个字段。** M4-09 解释过 `epoch` 的作用（会话代次，防止同一用户重新登录后读到旧会话的数据）。
+
+而**公开键里什么都没有**——只有 `baseUrl` 加路径和查询。
+
+这个不对称是有意的：
+
+| 类型 | 键包含 | 效果 |
 |---|---|---|
-| 复现 | 把 stale 数据当作 fresh 返回，用户长期看不到服务端更新 | 可以稳定触发或明确构造该输入 |
-| 定位 | 将时间推进到 fresh、stale、expired 三段，观察前台响应和后台刷新 | 找到责任层和状态归属 |
-| 修正 | 按策略区分立即返回、后台 revalidate 与必须联网读取 | 失败不污染后续页面或账号 |
+| 公开 | baseUrl + path + query | **不同用户共享**（公开数据本来就一样） |
+| 私有 | baseUrl + userId + epoch + path + query | **每个会话独占** |
+
+公开数据共享是缓存命中率高的大前提——如果每个用户的文章列表各存一份，那缓存的效率会非常低。
+
+而私有数据必须隔离，否则就是 M4-18 讲的那个隐私问题。
+
+**判断某个端点是不是私有的，规则只有两条**：
+
+```dart
+final private =
+    path.startsWith(Endpoints.privatePrefix) ||
+    path.endsWith(Endpoints.likeStatusSuffix);
+```
+
+`privatePrefix` 覆盖了所有 `/me/*` 端点；`likeStatusSuffix` 是因为点赞状态虽然路径不含 `/me`，但它的内容是私有的。
+
+**这个判断出错的后果是双向的**：
+
+| 误判 | 后果 |
+|---|---|
+| 私有当成公开 | **数据泄露**（B 看到 A 的收藏） |
+| 公开当成私有 | 缓存效率降低（同一份数据存多份） |
+
+所以判断规则要用**白名单式的路径前缀**，而不是"看起来像私有的就当私有"。后者太模糊——`/articles?liked=true` 这种查询参数很难归类。
+
+## 容量：限额集中在一个文件
+
+最后一个实现细节。缓存有十几个限额，全放在一个地方：
+
+```dart
+/// 可重建缓存的容量预算；本地投稿草稿不在这些清理范围内。
+abstract final class CacheLimits {
+  static const memoryEntries = 300;
+  static const memoryBytes = 20 * mib;
+  static const dataDiskBytes = 30 * mib;
+  static const dataDiskEntries = 300;
+  static const articleBodies = 100;
+  static const searches = 20;
+  static const diskEntryBytes = 2 * mib;
+  static const imageMemoryEntries = 100;
+  static const imageMemoryBytes = 20 * mib;
+  static const imageEntryBytes = 10 * mib;
+  static const imageDiskBytes = 150 * mib;
+  static const decodedImageBytes = 64 * mib;
+  static const highlightEntries = 64;
+  static const highlightCharacters = 500000;
+  ...
+}
+```
+
+三个观察：
+
+**一、限额按"条目数 + 字节数"双维度限制。** M4-13 讲代码高亮缓存时说过这个——只限条目数，一个超长条目就能撑爆内存。
+
+**二、那个 `decodedImageBytes = 64 * mib` 值得注意。** 它限制的是**解码后**的内存占用，而 `imageDiskBytes` 限制的是磁盘上压缩文件的大小。
+
+这两个数差很多，因为**一张 2MB 的 JPEG 解码成位图可能是 20MB**（取决于分辨率）。如果只按文件大小限制内存，用户打开几张高清图就会 OOM。
+
+**三、注释说"本地投稿草稿不在这些清理范围内"。** 这句话很重要——**草稿是用户唯一的数据备份，不能被缓存清理策略误删。**
+
+M4-22 讲过草稿的存储，它用 `SharedPreferences` 而不是这个缓存层，正是因为**缓存是可丢弃的，草稿不是**。
+
+**这个区分是缓存设计里最容易搞错的地方**：把用户数据和可重建数据放在同一个存储里，然后写一个"满了就清"的逻辑——**清的时候可能把用户数据一起清了。**
+
+## 一条我一开始想省掉的事
+
+`Age` 头的处理，我第一版完全没做。
+
+那时候我以为 `saved = now()` 就够了。问题出现在有 CDN 之后：一个响应在 CDN 上待了 40 秒，到客户端时它已经 40 秒老了，但我记成 0 秒。
+
+**后果是每份缓存数据都"年轻"了它在路上花掉的时间。** 对新闻列表这种 2 分钟 fresh 的影响是 33%——三分之一的窗口被白送了。
+
+而这类 bug 极难发现，因为**它不报错，只是让缓存的实际新鲜度低于配置值**。
+
+发现它是因为我顺手把两个时间戳打了日志对比，发现 `saved` 和响应头的 `Age` 差着 40 秒。
+
+**教训是：实现 HTTP 缓存时，`Age` 不是可选的头。** 任何中间层（CDN、反向代理）都会引入它，而忽略它的后果是静默的。
+
+顺带说 `max-age` 的解析用的是正则：
+
+```dart
+RegExp(r'(?:^|,)\s*max-age\s*=\s*"?(\d+)')
+```
+
+**手写正则而不是简单 split，是因为 `Cache-Control` 是逗号分隔的多指令串**，值里还可能有引号：
+
+```text
+Cache-Control: public, max-age=300, must-revalidate
+Cache-Control: max-age="600"
+```
+
+这两种都要能解析。而 `(?:^|,)` 这个前置断言保证了**不会把 `s-maxage` 误匹配成 `max-age`**——那个前缀边界看起来多余，实际上少了它就会命中另一个指令。
 
 ## 小结
 
-Flutter 缓存需要明确定义新鲜度、失效行为、身份范围和容量预算。公开内容可以有限落盘，私有数据按会话内存隔离，编辑数据走实时请求；陈旧显示是产品承诺，完整离线同步则是另一类功能，当前并未实现。
+这一篇是整个系列里最"底层"的一篇，但它的结论被后面所有功能依赖：
+
+1. **fresh 和 maxAge 回答两个不同问题** —— "多相信"和"最坏能多旧"。`fresh < maxAge` 才有效用 stale 那一档。
+2. **stale 命中返回旧值 + 后台更新** —— 这是"打开快"体验的来源，而且后台失败必须吞掉。
+3. **服务端的 cache-control 只能收紧** —— 客户端的策略基于自己的需求，不因为服务端给得宽松就放宽。
+4. **`Age` 要算进数据年龄** —— 否则在 CDN 上走的时间被白送，而且不报错。
+5. **`fence` 和 `invalidate` 是两步** —— 写操作开始时只围栏（隔断在途），结束时才拆墙（删数据）。
+6. **私有键带 userId + epoch，公开键不带** —— 判断错的方向决定了是泄露还是低效。
+
+其中第 5 条是我认为最值得记住的：**"隔断"和"删除"必须是两个动作**，因为写操作可能失败，而失败时用户还需要看到那份数据。
+
+第 3 条则是一个通用原则：**当多个来源给出同一个参数的约束时，取最严格的那个。** 这不只适用于缓存——超时、权限、校验规则都是同样的合并逻辑。
+
+下一篇讲写操作之后怎么让缓存失效——也就是 `mutationTags` 那张表，以及图片缓存的治理，它的逻辑和 JSON 缓存完全不一样。
 
 ## 延伸阅读
 
-- [列表分页与下拉刷新]({{LINK:M4-12}})
+- [Dio + Repository：统一响应信封与模型适配]({{LINK:M4-07}})
 - [写后缓存失效与图片缓存治理]({{LINK:M4-24}})
-- [数据获取与缓存：60 秒再验证背后发生了什么](https://blog.csdn.net/fungleo/article/details/166784128)
+- [点赞、收藏与阅读历史：乐观更新和失败回退]({{LINK:M4-16}})
+- [本机稿件恢复：账号隔离、冲突判断与恢复决策]({{LINK:M4-22}})
 
 ---
 

@@ -1,0 +1,86 @@
+======================================================================================
+第三轮 · 文档一致性独立复核（门禁盲区）
+对象：go-backend @ d08bf0d（HEAD 4ace8cf）
+方法：自写扫描器 + go/doc 真语法树（go/parser + go/doc.NewFromFiles）
+======================================================================================
+
+--------------------------------------------------------------------------------------
+A) 第二轮 §5-1 / §5-2「文档与实现不符」是否已修复  —— 已修复 ✅
+--------------------------------------------------------------------------------------
+$ git diff 9590cb1 d08bf0d -- internal/values/values.go internal/article/query.go
+- // Text 将字符串转换为指针，可空输入返回 nil。
++ // Text 读取已校验的字符串字段；字段缺失或值为 NULL 时返回 nil。      (Fields.Text 方法)
++ // Text 返回字符串的非 nil 指针；空字符串也保留为指向空串的指针。     (包级 Text 函数)
+- // Get 按 ID 或 slug 获取未删除文章；服务方法还检查访问者可见性。       (两条逐字相同)
++ // Get 按 ID 或 slug 查询未软删除文章，不判断发布状态或访问者权限。    (包级 Get)
++ // Get 返回访问者可见的文章详情；未发布文章仅作者或管理员可读取。      (Service.Get 方法)
+
+逐条核对实现：
+  values.go:40  Fields.Text  → 有 `if f[k]==nil { return nil }` 分支 → 新注释成立
+  values.go:74  Text(s string) → 直接 `return &s`，永不 nil     → 新注释成立
+  query.go:28   Get(包级)     → 仅 ActiveArticles + Where     → 新注释成立
+  query.go:53   Service.Get   → 有 `status!=published && id!=AuthorID && role!=admin → 404`
+                                → 「仅作者或管理员可读取」成立
+→ 「同一份说明复用到行为不同的两个符号」这一根因已被消除。
+
+【重复符号文档复查】全生产代码中「同一注释文本挂到多个符号」仅剩 3 对，且都为**接口 + 实现**：
+  internal/platform/storage/storage.go:33 (Local.Put)   ↔ r2.go:41 (R2.Put)
+  internal/platform/storage/storage.go:61 (Local.Get)   ↔ r2.go:52 (R2.Get)
+  internal/platform/storage/storage.go:77 (Local.Delete)↔ r2.go:67 (R2.Delete)
+→ 二者实现同一 Provider 契约，文档相同**属正当**；说明作者「不把重复文本一律判失败」的
+  立场在这一处恰好成立（机械门禁会误报）。
+
+--------------------------------------------------------------------------------------
+B) 英文散文残留 —— 生产代码已清零 ✅（仅测试夹具剩 1 条）
+--------------------------------------------------------------------------------------
+扫描规则：非 //go: 指令、非 Package 说明，按「后接符号声明=符号文档 / 其余=内联」分类；
+          非中文且非豁免 → 计入。
+命中 1 条（测试夹具，非生产）：
+  test/clientserver/main.go:2  // temporary SQLite database. It is never assembled by cmd/server.
+→ 第二轮 §5-3 的 9 条生产英文内联注释已全部中文化。回复自陈属实。
+
+--------------------------------------------------------------------------------------
+C) 新发现 1：**同包存在多处「包注释」**（go/doc 只呈现一处，其余为无效文档）
+--------------------------------------------------------------------------------------
+自写工具（go/parser + go/doc.NewFromFiles 真语法树）：
+  [cmd/seed] 带包注释文件 2 个 [doc.go main.go]
+      go/doc 呈现 = "Package main 显式初始化本地账号和演示文章，拒绝覆盖已有账号。"
+  [internal/platform/model] 带包注释文件 15 个 [article_tags.go ... wechat_identities.go]
+      go/doc 呈现 = "Package model contains persistence rows, never HTTP responses."
+
+含义：Go 的 go/doc（go doc / pkg.go.dev 的来源）对每个包**只取一处**包注释，
+      其余同名注释不会出现在文档里 → 是「写了但读者看不到」的**无效文档**，且会误导改注释的人。
+溯源：
+  - `internal/platform/model/*.go`（15 处）自原始基线 043fda2 即存在，**非本轮引入**。
+  - `cmd/seed`：043fda2 时只有 main.go 的英文包注释（`// Seed is explicit and refuses to
+    overwrite existing accounts.`），**没有** doc.go；doc.go 于第一轮整改（9590cb1）为
+    「补齐包文档」而新增（中文），与 main.go 既有的包注释**从此并存**；第二轮整改
+    又把 main.go 注释译成中文，使两处**语义重叠**（都讲「拒绝覆盖已有账号」）而彻底显形。
+→ 属第一轮 A-9「补齐包文档」的**副作用**，落在第二轮同一「文档正确性」维度里。
+
+--------------------------------------------------------------------------------------
+D) 新发现 2：包注释语言**未统一**（9 中文 / 30 英文），且与本轮新写的口径**不完全自洽**
+--------------------------------------------------------------------------------------
+本轮在 docs/go-backend/01-Go工程最佳实践.md §8 新增口径：
+  「函数、类型及业务规则的散文注释使用中文，导出符号说明以符号名开头。包级说明允许保留英文 Go 惯例；
+    编译器指令、协议名、标识符和引用的原文不翻译。」
+
+实测包注释语言分布（生产，按 package 子句前的注释块判定）：
+  中文 9 个：cmd/seed cmd/server cmd/migrate cmd/data（各 doc.go）、internal/config/doc.go、
+             internal/platform/database/doc.go、internal/testutil/doc.go、
+             internal/transfer/snapshot.go、cmd/seed/main.go
+  英文 30 个：article auth comment attachment taxonomy administration member notification fault
+             values storage platform/model(×15) contract httpapi bootstrap test/clientserver ...
+→ 口径写的是「包级说明**允许**保留英文」——「允许」不等于「统一」。
+  结果：第一轮为「补缺失包文档」新加的 doc.go 用了**中文**，而原有领域包注释仍是**英文**，
+  同一个仓库里两套并存，读者无法预期。对一个**中文教学**仓库，这更接近于「口径没写完」。
+→ 需要一次明确拍板：统一中文（翻译 30 处英文）或统一英文（翻译 9 处中文）。
+  考虑到「教学可读性」本维度的目标读者是中文学习者，建议**统一为中文**更贴题。
+
+--------------------------------------------------------------------------------------
+E) 附：接口方法文档（门禁盲区，供参考）
+--------------------------------------------------------------------------------------
+internal/platform/storage/storage.go:14 `type Provider interface { Put/Get/Delete }`
+→ 接口类型本身有文档（「Provider 定义对象的写、读、删能力…」），但三个方法**无各自文档**。
+  门禁 A-3「顶层导出符号缺文档=0」查的是 FuncDecl（含方法），**接口内方法规格不是 FuncDecl**，
+  属该断言的盲区——因此「缺文档=0」并不覆盖接口方法。

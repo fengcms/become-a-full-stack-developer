@@ -1,198 +1,359 @@
 # 成为全栈·Flutter App 篇·Dio + Repository：统一响应信封与模型适配
 
-把所有接口都包成 `getList<T>()`，代码看上去统一了，真实数据却未必如此：搜索结果在 `articles` 字段里，互动端点可能返回裸数组，阅读历史又会包一层文章对象。
+上一篇我们把模型生成链路走通了，`ApiArticle` 那批类有了。但真正连上后端的第一天，我就想抄一个最省事的写法：
 
-这篇沿着 Dio、ApiClient、Repository 到 Widget 的一次完整请求，给出每层该处理的规则，并把代码生成、接口联调和响应适配串成可以复现的工作流。
+```dart
+Future<List<T>> getList<T>(String path) async { /* ... */ }
+```
+
+——所有接口都走一个泛型函数，页面只管传 `Article` 或 `Comment`。
+
+我写完盯着这个函数看了五分钟，然后删了。
+
+因为它骗了我。它让"统一"这件事在代码上成立，但服务端返回的东西**根本不是同一个形状**：文章列表是 `{list, pagination}`，搜索结果藏在 `articles` 字段里，点赞记录是裸数组，阅读历史的每条外面还套一层 `article` 和 `progress`。一个 `getList<T>` 要吃下这四种形状，只能在函数里写满 `if`。
+
+**这篇讲的就是我删掉它之后，换成了什么。**
 
 {{IMG:M4-07-封面}}
 
-## 传输层统一横切规则
+## 先说清楚：我确实造过一个"统一 API"
 
-Dio client 集中设置 base URL、超时、认证头和响应处理。API Client 负责把 HTTP 与业务 envelope 解码、将状态码映射为可识别错误、按规则处理 401 刷新和 429 限流。它不应知道首页页面的卡片如何排列。
+上面那个 `getList<T>` 不是 strawman，是我真写过的。它的问题不是不好用，是**它把差异藏起来了**。
 
-```text
-GET /articles
- → Dio 建立请求
- → Authorization / 超时等通用规则
- → HTTP 与业务信封分类
- → 返回 payload 或 ApiException
-```
+用一个真实端点对照。这是 `flutter-app/lib/core/network/endpoints.dart` 之后，四个接口在 Repository 里的实际取法：
 
-端点路径集中在 `Endpoints`，环境通过 `API_BASE_URL` 配置；不要在每个 Widget 里拼 `/api/v1`，也不要将生产域名散落源码。
+| 端点 | 服务端返回 | 分页信息 |
+|---|---|---|
+| `GET /articles` | `{list: [...], pagination: {...}}` | 服务端给 |
+| `GET /articles/search` | `{articles: [...], total: n}` | 只有 total，**无 totalPages** |
+| `GET /me/likes` | `[...]` 裸数组 | **完全没有** |
+| `GET /me/history` | `{list: [{article, progress}, ...]}` | 服务端给 |
 
-{{IMG:M4-07-数据流}}
+这四种在契约里**都是合法的**——不是后端实现不规范，是它们本就该不同：点赞列表本来就有限且不需要翻页，阅读历史需要携带进度，搜索有 total 就够了。
 
-## 统一 envelope，但不要假设数据字段永远同形
-
-后端常见响应是 `{code, message, data}`。成功时业务值在 `data`；失败既可能是 HTTP 非 2xx，也可能 HTTP 成功但 `code` 表示业务错误。只判断 `response.statusCode == 200` 会把业务错误当成功。
-
-但数据字段内部仍受 operation 约束。项目验收记录了：搜索列表位于 `articles`，收藏记录可能为裸数组，阅读历史 item 包含嵌套 article。统一 envelope 不等于“每个 data 都是 `List<Article>`”。
+`getList<T>` 面对这张表，只能在内部写成这样：
 
 ```dart
-final payload = unwrapEnvelope(response.data);
-final articles = parseSearchArticles(payload['articles']);
-```
-
-这里是展示分层的伪接口；生产代码应引用项目解析器，文章示例不要复制成新手写的第二个解码器。
-
-## Repository 让 UI 模型稳定
-
-Repository 组合 API 调用、响应解析、生成 DTO 到领域模型的转换和缓存策略。比如 UI 需要稳定文章标题、摘要、封面和分类展示，不应该依赖服务端是 `article` 嵌套还是 `data.articles`。
-
-```dart
-final result = await repository.search(query);
-// 页面拿到稳定的 ReaderArticle 列表和分页信息
-```
-
-映射层也不能擅自补业务含义。缺少 `total` 时不伪造总数；接口没有收藏单篇状态时不能只查前几页就回答“不收藏”；点赞记录没有分页时不能声称后端已分页。
-
-## 错误模型要保留恢复线索
-
-超时、断网、401、403、404、字段校验失败和 429 的用户动作不同。ApiClient 把它们映射成类型化异常，页面决定是登录、显示不可见、保留缓存内容还是提供重试。吞成 `Exception('error')` 会丢掉 Retry-After、业务码和可恢复性。
-
-写请求尤其不能因为“网络错误”就自动再发。客户端不知道上次请求是否已在服务端完成。创建稿件在第一次响应拿到 ID 后，后续失败应复用这个 ID；非幂等操作要由业务流程决定重试，而不是拦截器盲目重放。
-
-## 测试契约与真实行为
-
-三类检查互补：生成脚本检查 OpenAPI 到 Dart 类型；单元测试检查解析器与错误映射；隔离后端集成测试验证真实请求、认证和写流程。线上只读验证能证明指定公开接口在当时可访问，不能验证生产写操作安全，更不能覆盖所有接口。
-
-```bash
-node tool/generate_contract.mjs
-flutter analyze
-flutter test
-node tool/verify_backend.mjs
-```
-
-实际验收命令须从 `flutter-app/README.md` 核对；集成测试写入的是隔离本地 11002 后端。
-
-## 业务错误映射不应丢掉原始诊断
-
-给用户看的 message 要简洁，但日志和测试需要保留可诊断字段：HTTP status、业务 code、endpoint、trace/request ID、是否可重试。任何日志都必须剔除 Authorization、refresh token、密码、验证码和投稿正文。
-
-```text
-ApiException {
-  kind: rateLimited
-  businessCode: 5001
-  retryAfter: 12
-  requestId: <safe identifier>
+// 伪代码：示意"统一封装"要付出什么，不是项目代码
+Future<List<T>> getList<T>(String path) async {
+  final data = await api.request(path);
+  if (path == search) return (data['articles'] as List).cast<T>();   // 搜索换个字段
+  if (data is List) return data.cast<T>();                          // 裸数组
+  final list = data['list'] as List;                                 // 分页对象
+  return list.map((j) => decode<T>(j)).toList();
 }
 ```
 
-上面是概念模型。Repository 可把“资源不可见”转为特定页面状态，但不应把所有 `403` 都映射成文章不存在；权限错误、业务错误和网络错误要保留区分，以便 UI 给出正确恢复入口。
+问题就在这：**四个分支、三种解码路径，全塞进一个"通用"函数里**。而任何一个新端点，只要它的形状是第五种，你都得回去改这个函数——它并没有真的统一，只是把分叉集中了。更糟的是 `cast<T>()` 是编译期骗人的，`data['articles']` 里少一个字段，它照样返回，只是元素全成了 `null`。
 
-## 请求路径的审查清单
+所以现在项目里**没有任何泛型请求封装**。`grep` 整个 `lib/` 只会找到两个 `Future<T>`，都是 `force` 和 `track` 这类 Zone 包装，跟请求封装无关。
 
-评审一个新端点时，逐项检查它经过统一 ApiClient、是否可匿名、是否允许 token refresh、响应 data 是对象/分页/列表哪一种、是否进入显式缓存白名单、写入影响哪些资源。未列入缓存策略的 endpoint 默认联网，避免登录、上传或稿件正文因“GET”而意外落盘。
+取而代之的做法是：**每个资源一个显式方法，形状差异留在方法内部**。
 
-```text
-endpoint → auth mode → response shape → repository mapping
-         → cache policy → mutation invalidation → tests
-```
+## 差异留在 Repository 里，不外泄到页面
 
-这里最容易漏掉的是子资源路由匹配顺序：`/articles/{id}/comments` 要先识别为评论，不能因前缀 `/articles` 被归为文章正文。项目 `CachePolicyTable.family()` 对更具体子资源优先判断，读策略和 mutation tag 共用资源分类。
-
-
-## 贴着工程代码读实现
-
-下面这段节选自 `flutter-app/lib/features/repository.dart 第 119–193 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：用一份成功响应和一份错误响应追踪 ApiClient 到模型转换。这里关注的是它如何改变数据流，而不只是记住一个 API 名称。
+`flutter-app/lib/features/repository.dart` 的 `articles()` 就是这个思路的成品——它一个方法同时吃下上表的前三行：
 
 ```dart
-  Future<CacheReply> fetch(
-    String path, {
-    Map<String, dynamic> query = const {},
-    bool anonymous = false,
-  }) => fetchCacheReply(api, path, query: query, anonymous: anonymous);
-
-  // 先查显式白名单；未列入策略的端点保留原始联网行为。
-  Future<dynamic> read(
-    String path, {
-    Map<String, dynamic> query = const {},
-    bool force = false,
-  }) {
-    var p = policy(path);
-    if (p == null) return api.request(path, query: query);
-    p = policies.forQuery(path, query, p);
-    final private =
-        path.startsWith(Endpoints.privatePrefix) ||
-        path.endsWith(Endpoints.likeStatusSuffix);
-    final k = key(path, query, private: private);
-    (Zone.current[_tracking] as Set<String>?)?.add(k);
-    return cache.get(
-      k,
-      p,
-      () async {
-        final result = await fetch(path, query: query, anonymous: !private);
-        policies.validate(path, result.value);
-        return result;
-      },
-      force: force || forced,
-      tags: {
-        ...resourceTags(path),
-        if (query.containsKey('page')) feedTag(path, query),
-      },
-      forbidden: forbidden,
-    );
+// 兼容分页对象和点赞裸数组两种协议，历史条目额外携带阅读进度。
+Future<PageResult<Article>> articles({
+  int page = 1,
+  String path = Endpoints.articles,
+  Map<String, dynamic> query = const {},
+  bool force = false,
+}) async {
+  var data = await read(
+    path,
+    query: {'page': page, 'pageSize': 12, ...query},
+    force: force,
+  );
+  if (path == Endpoints.search) data = data['articles'];      // ① 搜索换字段
+  if (data is List) {                                          // ② 裸数组
+    final list = data.map((j) => Article.fromJson(jsonMap(j))).toList();
+    final size = query['pageSize'] as int? ?? 12;
+    return PageResult(list, page, list.length == size ? page + 1 : page, 0);
   }
-
-  // 本人预览走鉴权请求并绕过公开正文缓存。
-  Future<Article> article(String id, {bool private = false}) async =>
-      Article.fromJson(
-        private
-            ? jsonMap(await api.request(Endpoints.article(id)))
-            : jsonMap((await bundle(id))['article']),
-      );
-  Future<List<ApiTocItem>> toc(int id) async =>
-      ((await bundle('$id'))['toc'] as List)
-          .map((j) => ApiTocItem.fromJson(jsonMap(j)))
-          .toList();
-
-  // 兼容分页对象和点赞裸数组两种协议，历史条目额外携带阅读进度。
-  Future<PageResult<Article>> articles({
-    int page = 1,
-    String path = Endpoints.articles,
-    Map<String, dynamic> query = const {},
-    bool force = false,
-  }) async {
-    var data = await read(
-      path,
-      query: {'page': page, 'pageSize': 12, ...query},
-      force: force,
-    );
-    if (path == Endpoints.search) data = data['articles'];
-    if (data is List) {
-      final list = data.map((j) => Article.fromJson(jsonMap(j))).toList();
-      final size = query['pageSize'] as int? ?? 12;
-      return PageResult(list, page, list.length == size ? page + 1 : page, 0);
-    }
-    return PageResult.fromJson(
-      data,
-      (j) => Article.fromJson(
-        j['article'] is Map ? jsonMap(j['article']) : j,
-        progress: j['progress'] as num?,
-      ),
-    );
-  }
+  return PageResult.fromJson(                                  // ③ 分页对象
+    data,
+    (j) => Article.fromJson(
+      j['article'] is Map ? jsonMap(j['article']) : j,         // ④ 历史带嵌套
+      progress: j['progress'] as num?,
+    ),
+  );
+}
 ```
 
-## 把容易出错的路径走一遍
+四个注释标出的就是四种形状。**注意分支 ② 里的 `list.length == size ? page + 1 : page`**：裸数组没有分页信息，"还有没有下一页"只能靠"这次拿满了吗"推断。返回的 `total` 是 `0`——**这是明知故填的**。
 
-我会用这个场景做一次可复现排查：**页面直接解析响应信封导致接口形状变化散落全站**。先用一份成功响应和一份错误响应追踪 ApiClient 到模型转换；如果把问题定位在“页面直连 Dio”，修正方向是“在 Repository 统一 envelope、分页与模型适配，页面消费领域对象”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+这里有个我想专门强调的点：**适配层不能伪造它不知道的东西。** 裸数组情况下我不知道总数，那就给 0，不编一个 `999`；我没拿到 `totalPages`，就按满页推断，绝不声称"服务端已分页"。同理，收藏接口如果没有单篇收藏状态，不能只查前几页就回答"没收藏"；点赞列表没有分页，也不能对外说它有。
 
-| 方案比较 | 简化做法 | 当前实现/推荐做法 |
-|---|---|---|
-| 本文核心选择 | 页面直连 Dio | Repository 边界 |
-| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
-| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+**假的默认值比缺字段危险得多**——缺字段会报错，假的会让页面显示出错误结论且没人发现。
 
-| 排错步骤 | 要观察什么 | 通过条件 |
-|---|---|---|
-| 复现 | 页面直接解析响应信封导致接口形状变化散落全站 | 可以稳定触发或明确构造该输入 |
-| 定位 | 用一份成功响应和一份错误响应追踪 ApiClient 到模型转换 | 找到责任层和状态归属 |
-| 修正 | 在 Repository 统一 envelope、分页与模型适配，页面消费领域对象 | 失败不污染后续页面或账号 |
+至于分支 ④ 那个 `j['article'] is Map ? jsonMap(j['article']) : j`，看着啰嗦，但它正是 M4-03 说的那件事的延续：生成模型给的是契约形状，领域模型要的是页面能用的东西。阅读历史要的是"文章 + 我读到哪了"，所以它从嵌套里把两者拆出来组合。
+
+## 私有预览：同一个方法，两条完全不同的路
+
+`repository.dart` 里还有个 `article()`，看着不起眼，但它是"私有数据不该进公开缓存"这条规则的落点：
+
+```dart
+// 本人预览走鉴权请求并绕过公开正文缓存。
+Future<Article> article(String id, {bool private = false}) async =>
+    Article.fromJson(
+      private
+          ? jsonMap(await api.request(Endpoints.article(id)))
+          : jsonMap((await bundle(id))['article']),
+    );
+```
+
+`private: true` 时走 `api.request` 直连，**不经过 `read()`，因此完全绕过缓存**；`false` 时走 `bundle()` 走正常缓存路径。
+
+为什么要这样区分，作者自己的注释就写着"绕过公开正文缓存"。设想一下如果偷懒走同一条路：一个待审核的稿件会被写进公开文章缓存，随后**任何用户都可能读到它**——这是个安全事故，不只是体验问题。
+
+判断一条读取是不是私有的，仓库里有统一口径：
+
+```dart
+final private =
+    path.startsWith(Endpoints.privatePrefix) ||
+    path.endsWith(Endpoints.likeStatusSuffix);
+final k = key(path, query, private: private);
+```
+
+而缓存键把私有身份编码进了键里：
+
+```dart
+String key(String path, Map<String, dynamic> query, {bool private = false}) {
+  return CacheKey(
+    api.baseUrl,
+    private ? 'session:${api.userId}:${api.epoch}' : 'public',
+    path, query,
+  ).encode();
+}
+```
+
+`session:${userId}:${epoch}` ——**`epoch` 是会话代次**。同一个用户登录两次（会话换代）或退出再登，键就不同，旧数据永远不会被误读。这一点下一篇（M4-09）会展开。
+
+## 缓存策略用一张表管住，不靠 if 散落
+
+既然读要走 `read()`，那"这个端点能不能缓存"必须有唯一答案。项目里是 `features/data/cache_policy_table.dart`。
+
+先看它最反直觉、也最重要的一条设计——**白名单而不是黑名单**：
+
+```dart
+/// 没有显式读规则的端点直接联网，避免误缓存登录、上传和私有稿件正文。
+class CachePolicyTable {
+  /// 互动状态可读缓存，点赞写端点本身不进入 GET 缓存规则。
+  CachePolicy? policy(String path) =>
+      path.endsWith(Endpoints.likeSuffix) ? null : _rules[family(path)]?.policy;
+```
+
+`policy()` 返回 `null` 就意味着**直接联网，永不缓存**。这是刻意的方向选择：如果用"默认全部缓存"，一个新增的 `POST /articles/upload` 只要返回 GET 就可能被缓存，稿件正文、验证码、登录响应都可能落盘。反过来白名单下，新端点默认不进缓存，代价是可能"忘记缓存"——但那个代价只是慢，而另一种方向的代价是泄露。
+
+注意 `path.endsWith(Endpoints.likeSuffix) ? null` 这个特判：**点赞的 GET 状态可缓存，但点赞的写端点本身不进 GET 缓存规则**。读和写用同一个 URL 段，这是很容易踩的坑。
+
+再看端点分类，17 个家族：
+
+```dart
+enum ResourceFamily {
+  dictionaries, statistics, articleList, search, member, adjacent,
+  comments, reaction, favorites, likes, history, notifications,
+  manuscripts, article, comment, profile, unknown,
+}
+```
+
+分类函数 `family()` 有个必须注意的顺序问题：
+
+```dart
+/// 更具体的子资源优先匹配，不能先把 /articles/id/comments 归为正文。
+if (path.endsWith(Endpoints.commentsSuffix)) return ResourceFamily.comments;
+...
+if (path.startsWith(Endpoints.articles)) return ResourceFamily.article;
+```
+
+`/articles/123/comments` 如果先命中 `startsWith('/articles')`，就会被当成文章正文去缓存——**评论和正文共用一个键**，写评论会污染文章。这个 bug 在开发时几乎不会显形，只会在"改了评论，文章内容居然变了"时怀疑人生。所以 `endsWith` 的判断必须排在 `startsWith` 前面。
+
+**这个 `family()` 只判一次，读策略、响应校验、写后失效三处共用**——这是整张表的核心价值，下面两节就是它的三个用途。
+
+## 写入缓存之前，先校验响应形状
+
+第二个用途：`validate()`。它决定了一次响应**能不能落盘**：
+
+```dart
+/// 校验后才允许写入缓存，拒绝把错误响应长期当成有效页面。
+void validate(String path, dynamic value) {
+  final shape = switch (path) {
+    Endpoints.siteSettings || Endpoints.unreadCount => _Shape.object,
+    _ => _rules[family(path)]?.shape ?? _Shape.object,
+  };
+  final valid = switch (shape) {
+    _Shape.list => value is List,
+    _Shape.object => value is Map,
+    _Shape.page =>
+      value is List ||
+          (value is Map && value['list'] is List && value['pagination'] is Map),
+  };
+  if (!valid) throw const FormatException('响应格式不正确');
+}
+```
+
+每个家族在规则表里登记了预期形状（`_Shape.list` / `object` / `page`）。注意 `_Shape.page` 的判定同时接受 `List`——因为上一节说的裸数组协议。
+
+这个校验挡的是一个具体事故：**服务端的 `data` 是 null（业务失败但 HTTP 200）时，如果直接缓存，null 会占住这个键，接下来几分钟内用户看到的是空页面，而且刷新也没用**——因为缓存命中了。校验不通过就抛 `FormatException`，让这一次读取失败，而不是把错误缓存下来。
+
+`_Shape.page` 同时接受 `List` 和分页对象，这里有个容易被误读的细节：它看起来"放宽了校验"，实际是因为**协议本来就允许裸数组**（点赞端点），而不是校验不严。
+
+## 写操作：成功要失效，失败也要失效
+
+第三个用途是 `mutationTags()`，也是我认为整个数据层最反直觉的一段：
+
+```dart
+/// 写操作开始先隔断旧请求，结束后按相同分类失效关联摘要与会员统计。
+Set<String> mutationTags(String path, Object? data) => switch (family(path)) {
+  ResourceFamily.reaction => {
+    'reactions:${Endpoints.articleId(path)}',
+    Endpoints.meLikes,
+    'overview',
+  },
+  ResourceFamily.article || ResourceFamily.articleList => {
+    CacheTags.articleBodies,
+    'articleLists',
+    Endpoints.meArticles,
+    'overview',
+    Endpoints.tags,
+    Endpoints.categoriesStats,
+  },
+  ...
+};
+```
+
+注意 `reaction` 分支里除了文章自己的反应键，还失效了 `meLikes`（我的点赞列表）和 `overview`（会员中心的统计数字）。**点赞一篇文章，你的"我赞过的"列表和资料页上的累计数都得变**——这层关联如果漏了，用户会看到自己点赞了但列表里没有。
+
+调用方更能说明"失败也要处理"这件事：
+
+```dart
+// 写操作失败也会使相关读取失效，因为请求可能已被服务器接收。
+void _mutation(String path, String method, Object? data, bool started,
+               dynamic result, Object? error) {
+  final affected = policies.mutationTags(path, data);
+  if (started) {
+    cache.fence(affected);     // 请求开始：先隔断，防止旧的在途响应回写
+    return;
+  }
+  if (error is SessionChanged) return;
+  cache.invalidate(affected);  // 无论成功失败，都失效
+  if (error != null) return;   // 失败到这里就结束
+  // 成功才做这些精细同步……
+}
+```
+
+**为什么失败也要 invalidate？** 因为客户端看到失败，不代表服务端没执行。请求发出去、服务器写成功、响应在回程丢了——客户端拿到的是超时，但数据已经变了。这种情况下不清缓存，页面会一直显示旧值。
+
+而 `started` 那一支的 `cache.fence()` 是另一件事：**写操作开始时就把相关键"围栏"掉**，让此刻还在路上的旧读取无法把旧值写回。否则就有个经典的时序 bug：用户点刷新（触发 GET）→ 同时点了收藏（触发 POST + invalidate）→ 那个 GET 晚回来一步，把收藏前的旧数据重新写进缓存。
+
+顺带一提，成功之后还有几段精细同步，比如从写操作的返回值里直接取回新的 `liked` 和 `likeCount` 更新本地状态，而不是等下一次重新拉取。这是**乐观更新**的基础，M4-16 会专门讲。
+
+## 三类验证各自证明什么
+
+这套分层要真的可靠，靠三类检查，它们**互相不能替代**：
+
+| 检查 | 命令 | 能证明什么 | **不能**证明什么 |
+|---|---|---|---|
+| 契约生成 | `node tool/generate_contract.mjs` | 契约能产出 Dart 类型 | 服务端真的按契约返回 |
+| 解析单测 | `flutter test` | 解析器按预期处理形状差异 | 真实响应形状符合预期 |
+| 隔离后端联调 | `node tool/verify_backend.mjs` | 真实请求 + 认证 + 写流程可用 | 生产环境行为一致 |
+
+（集成测试打的是隔离的本地 11002 后端，不是线上。）
+
+第二类最容易糊弄。如果单测里构造的 JSON 是自己写的，它证明的只是"我的解析器能解析我想象的响应"。**真正有价值的那条用例是拿服务端真实响应样本喂进去**——比如 `GET /me/likes` 到底回裸数组还是包装对象，这事不该由写测试的人拍脑袋决定。
+
+同理，线上只读接口能验证"此刻这个公开接口可访问"，它验证不了写操作的安全性，也覆盖不了全部端点。
+
+## 日志与脱敏：错误要能诊断，不能能泄露
+
+`ApiFailure` 保留了完整诊断信息：
+
+```dart
+class ApiFailure implements Exception {
+  const ApiFailure(this.message, {
+    this.code = 0, this.status = 0, this.retryAfter, this.fields = const {},
+  });
+  final String message;
+  final int code, status;
+  final int? retryAfter;
+  final Map<String, String> fields;
+  @override
+  String toString() => message;
+}
+```
+
+`message` 给用户看，可以简洁；`code` / `status` / `retryAfter` / `fields` 留给日志和测试。这里有个刻意为之的分离——`toString()` 只返回 `message`，所以不小心把异常打进日志时，`fields` 里那些字段校验详情不会跟着泄露。
+
+但要主动**剔除**的东西更多：Authorization、refresh token、密码、验证码、投稿正文。日志脱敏不靠"记得别打"，得靠字段白名单或专门的脱敏函数。
+
+还有一条容易做错的映射：**不要把所有 403 都映射成"文章不存在"。** 权限不足、账号被封、资源不可见，在 HTTP 上可能都是 403 或 404，但用户的下一步动作完全不同——一个要重新登录，一个要联系管理员，一个只能放弃。仓库里 `forbidden()` 把这些码集中列了出来：
+
+```dart
+bool forbidden(Object e) =>
+    e is ApiFailure &&
+    ([401, 403, 404].contains(e.status) ||
+     [1003, 1004, 1005, 2001, 3001].contains(e.code));
+```
+
+它的用途是决定**要不要把这次失败写进缓存**（属于"重试也不会变"的错误，可以放心缓存失败态，避免反复打服务端），而不是决定 UI 怎么显示。
+
+## 新增一个端点时的检查清单
+
+把这套规则的落地顺序固定下来：
+
+```text
+端点 → 归类 family() → 定 shape 与缓存策略 → 写显式 Repository 方法
+     → 决定私有还是公开 → 接 mutationTags → 补单测与联调
+```
+
+几个最容易漏的点：
+
+1. **`family()` 里新端点的判断位置**。放在 `startsWith('/articles')` 这类前缀判断**之后**，就会被归错类——顺序错了缓存键就冲突。
+2. **响应形状要登记 `_Shape`**。不登记默认按 `object` 校验，`page` 类型的数据会被校验函数拦下（或者更糟，绕过了校验）。
+3. **私有还是公开**。默认走 `public` 的话，待审核稿件可能进公开缓存。这一条建议在 code review 时单独问一句。
+4. **`mutationTags` 要覆盖关联资源**。新写操作除了自己的键，还要想"谁的显示会因此变"。
+
+## 一条我一开始想省掉的事
+
+`read()` 里这段我本来想抽掉：
+
+```dart
+final private =
+    path.startsWith(Endpoints.privatePrefix) ||
+    path.endsWith(Endpoints.likeStatusSuffix);
+final k = key(path, query, private: private);
+(Zone.current[_tracking] as Set<String>?)?.add(k);
+```
+
+尤其最后那行——从 `Zone` 里取一个 `Set` 然后往里塞个字符串，看起来毫无意义，像是调试代码漏出来了。
+
+它不是。`Zone` 在这里是**传递"读取意图"的载体**。页面调 `track(keys, ...)` 时包一层 `runZoned`，仓库里任何深层的缓存 `get` 都会自动把实际读到的键登记进去。有了这份登记，后台事件才能精确唤醒"依赖这些键的页面"，而不是粗暴广播。
+
+省掉它的后果是：要正确实现依赖追踪，每一层函数都得手工往下传 `Set<String>` 参数——而漏传一层，整个优化就失效，而且**失效时不会报错**，只是性能悄悄变差。这种 bug 极难排查，所以我宁可保留这两行看起来多余的代码。
+
+顺便，`forced` 也是同一个机制：
+
+```dart
+// Zone 将主动刷新意图传递给组合读取，避免每一层手工传参漏掉子请求。
+Future<T> force<T>(Future<T> Function() task) =>
+    runZoned(task, zoneValues: {_force: true});
+bool get forced => Zone.current[_force] == true;
+```
+
+用户下拉刷新时，首页为了组装数据会请求文章列表 + 分类 + 站点配置七八个端点。"忽略缓存"这个意图必须传到每一个子请求去，靠传参的话，中间任何一层漏了，那个子请求就会读到旧缓存——表现是"刷新了但有一块没变"。`Zone` 让它自动成立。
 
 ## 小结
 
-Dio 处理传输横切规则，Repository 处理资源读取与模型适配，Widget 管呈现和用户动作。生成类型、契约检查、解析测试与真实联调共同降低漂移；“统一 API”不等于“响应细节完全同构”，更不等于可以丢弃服务器约束。
+这篇真正想留下的判断只有一个：**"统一 API"是个陷阱，但"统一"本身不是。**
+
+统一的是**位置**——所有响应形状的差异都在 Repository 里消化完，页面只消费领域模型。放弃统一的是**签名**——不给 `getList<T>` 那种"看起来很美"的通用封装，因为四种形状进一个函数就等于四个分支进一个函数。
+
+具体到判断标准：`getList<T>` 只有在**所有端点响应形状真的相同**时才成立。一旦项目里有任何一个端点特殊，它就会开始积累分支、积累 `if`，最终变成一个谁都不敢改的函数。
+
+下一篇讲 `429` 和错误重试——那时候我们会看到，`ApiClient` 里那些看起来啰嗦的条件判断（只对 GET 重试、最多等 3 秒），每一个都是为了不把事情做错。
 
 ## 延伸阅读
 

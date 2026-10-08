@@ -1,89 +1,22 @@
 # 成为全栈·Flutter App 篇·把高保真原型落成 Design Token 与 Flutter 组件
 
-我拿到高保真原型时，页面看起来已经很完整；真正开始实现后，颜色、间距、字体和按钮状态却很快分叉。逐页复制像素会让第一屏接近，之后每次调整都越来越难。
+这一篇是从"设计"跨到"实现"的桥梁，也是这个项目里**返工最多的一批**。
 
-这篇从项目已有原型和主题令牌出发，展示如何把视觉决策变成可复用语义，再通过组件和多状态验收收敛差异。读者需要熟悉 Flutter ThemeData 与基础布局。
+原因不是原型做得不好——原型是做得很好的。返工的原因是：**原型里的每一个视觉决策，在代码里都需要一个"对应物"，而这个对应物不是我凭空想的。**
+
+举个具体的。原型上那张焦点卡片右上角有个淡淡的 `{ API }` 水印，实现的时候我发现：它不是"一段文字加一点灰色"，它依赖三件事——渐变背景（水印要在它上面才看得见）、`withValues(alpha: .08)` 的透明度、以及**当前是深色还是浅色**。
+
+少任何一件，那个水印就不对。而在深色模式下，`.08` 的黑色水印会完全看不见。
+
+这篇讲怎么把原型翻译成代码，以及为什么这件事的难点**不在实现，在约束的传递**。
 
 {{IMG:M4-04-封面}}
 
-## 从截图找规则，而不是逐页抄像素
+## 从间距开始：先定住最不可能出错的
 
-如果每个页面分别写 `Color(0xff...)`、`EdgeInsets.all(16)`，首屏或许很像原型，第二十个页面却会出现一串近似蓝色、相近圆角和不一致的按钮高度。令牌把视觉决策命名：品牌色、文本层级、间距、圆角、页面背景、卡片表面和分隔线。
-
-```dart
-abstract final class AppSpace {
-  static const page = 20.0;
-  static const section = 24.0;
-  static const item = 12.0;
-}
-```
-
-项目实际令牌集中在 `app/theme/design_tokens.dart` 与 `app_colors.dart`，上面代码示意命名方式；编写文章前应以文件当前常量为准，不把示例值误称为代码实值。
-
-{{IMG:M4-04-令牌}}
-
-## ThemeExtension 管可扩展的产品语义
-
-Flutter `ThemeData` 已有基础色彩和文字样式，但产品通常还需要骨架色、正文表面、品牌浅底和状态色等语义。项目将这些值放入主题扩展，并分别构造 Light、Dark 配色。深色模式不是对浅色截图做反色：输入框、代码块、表格、评论回复和空态都要有明确表面与对比度。
+翻译原型的第一步不是画界面，是**把那些"到处都会用到"的量定下来**。
 
 ```dart
-final theme = ThemeData(
-  colorScheme: colorScheme,
-  extensions: <ThemeExtension<dynamic>>[
-    AppColors.light,
-  ],
-);
-```
-
-从上下文取主题语义，让 Widget 不知道“这个颜色的十六进制是什么”。主题切换改变视觉而不应清空文章数据或正在编辑的草稿。
-
-## 组件提取看复用和所有权
-
-项目的共享组件包括 `PageFrame`、`AsyncPane`、`StateMessage`、`SubmitButton` 和文章列表组件。它们复用的是明确稳定的结构：页面边距、加载/空/错状态、按钮禁用与提交中反馈。只在一个页面出现、且和页面状态紧密相连的组件，则可作为页面私有组件拆到 `part` 文件，不必为了“组件化”对外公开。
-
-```text
-跨页面稳定视觉/行为 → shared/widgets
-单页面展示细节 → 页面私有组件
-主题语义 → ThemeExtension / token
-```
-
-组件边界由复用和状态所有权决定，不是文件行数超过某个数字就必须抽象。过度抽象会让原型一个 2dp 边框的调整穿过许多间接层。
-
-## 还原要覆盖状态，不只看正常态
-
-原型为页面提供正常、加载、空、错误、登录态与主题状态。验收至少要比较典型设备宽度下的首页、列表、正文、表单，以及浅色/深色。颜色肉眼接近还不够：标题换行会移动整张卡片，字体放大后不能裁掉关键操作，触控目标也要足够大。
-
-本项目记录了 320–430dp 的大字体布局检查，Android Pixel 8 模拟器有实际界面验收；这不是所有厂商设备和辅助技术都通过的证明。发布前仍需真机检查系统选择器、读屏和相机/相册权限。
-
-## 视觉验收可以记录差异而非凭记忆调参
-
-给每个重点页面固定设备尺寸、系统字体倍率和主题，保存原型与 Flutter 截图。比较时先处理结构差异：容器宽度、首屏焦点高度、文本换行、滚动起点；然后才微调颜色和阴影。把所有偏差记录为令牌问题、组件问题或内容差异，可以避免一处补丁破坏别的页面。
-
-原型里的假图片和数字需由真实接口数据替代，比较时要区分“布局偏差”和“真实内容不同”。项目明确没有把演示统计带进线上页面，这种内容真实性也属于还原验收。
-
-## Token 命名描述用途，不描述页面位置
-
-`brand`、`textSecondary`、`surfaceElevated` 比 `homeBlue`、`detailGray` 更适合共享，因为多个页面可能使用同一种语义，页面也可能改版。组件依赖语义 token 后，切换主题只替换语义映射；若颜色名字包含页面位置，复用时就会产生新的近似 token。
-
-```dart
-final colors = Theme.of(context).extension<AppColors>()!;
-Container(color: colors.surfaceElevated);
-```
-
-示例展示语义读取方式；实际项目通过 `context.colors` 扩展访问。生产代码需避免在构建路径中用 `!` 绕过 ThemeExtension 配置遗漏；主题构建入口应保证 light/dark 都装配扩展，测试可断言两个主题的语义字段完整。
-
-## 组件设计考虑状态组合
-
-按钮不是一个颜色和圆角，而是默认、按下、禁用、提交中状态；卡片也需覆盖图片缺失、摘要很长和深色主题。把状态在共享组件里统一呈现，页面只传动作和数据，能减少视觉漂移，但不应抽象各页面仅有一次的特殊交互。
-
-
-## 贴着工程代码读实现
-
-下面这段节选自 `flutter-app/lib/app/theme/design_tokens.dart 第 1–69 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：切换 Brightness 后逐个检查语义色、间距和字号的调用来源。沿着调用链读下去，才能看清这个选择如何影响实际页面。
-
-```dart
-import 'package:flutter/material.dart';
-
 /// 4 基准间距刻度。移动端页面左右边距统一 [s4]（16dp）。
 abstract final class AppSpacing {
   static const double s1 = 4;
@@ -94,90 +27,292 @@ abstract final class AppSpacing {
   static const double s6 = 24;
   static const double s8 = 32;
   static const double s10 = 40;
-
-  /// 页面左右边距
   static const double page = s4;
-
   /// 触控目标下限（docs/flutter-app/02 §1 硬要求）
   static const double minTapTarget = 44;
 }
+```
 
+**只有八个值。** 而原型里那些"看起来差不多"的间距，现在必须归到这八个里的某一个。
+
+这个"归类"的过程本身就是有价值的——**它会暴露原型里的不一致**。比如原型里同一个层级的标题，上面间距 24 下面 12，而另一个地方是上面 20 下面 12——**归类时必须决定统一成哪个**，而这个决定会暴露"原来它们不一样"。
+
+**令牌的作用不只是省事，更是强制做决定。**
+
+而 `minTapTarget = 44` 那个注释很关键——它标注了出处（设计规范 §1）。**凡是有硬性要求的令牌，都要写清楚它的来源**，这样将来有人想改的时候，会知道自己改的不只是一个数字。
+
+圆角、动效同理：
+
+```dart
 abstract final class AppRadius {
   static const double xs = 4; // 徽章、标签、小缩略图
   static const double sm = 6; // 输入框、次级按钮
   static const double md = 8; // 卡片、图片、按钮（默认）
   static const double lg = 12; // 底部面板、抽屉顶部
   static const double full = 999; // 头像、胶囊标签
-
-  static const BorderRadius rXs = BorderRadius.all(Radius.circular(xs));
-  static const BorderRadius rSm = BorderRadius.all(Radius.circular(sm));
-  static const BorderRadius rMd = BorderRadius.all(Radius.circular(md));
-  static const BorderRadius rLg = BorderRadius.all(Radius.circular(lg));
-  static const BorderRadius rFull = BorderRadius.all(Radius.circular(full));
-}
-
-abstract final class AppDuration {
-  static const Duration fast = Duration(milliseconds: 120); // 按下态
-  static const Duration base = Duration(milliseconds: 200); // 淡入、展开
-  static const Duration page = Duration(milliseconds: 250); // 页面转场
-  static const Curve curve = Curves.easeOutCubic;
-}
-
-// ---------------------------------------------------------------------------
-// 布局与系统字体缩放
-// ---------------------------------------------------------------------------
-
-/// 06 §3：字号单位是 sp，Flutter 侧的缩放由 `MediaQuery.textScaler` 承担。
-/// 放大到 1.3 倍时正文（`AppType.reading`）不得横向溢出——
-/// 这里夹紧上限，配合文本组件的 `maxLines` / `TextOverflow.ellipsis` 兜底；
-/// 正文若被截断，应改为整体放大字号而非省略号截断。
-abstract final class AppLayout {
-  /// 允许的最大系统文本缩放倍数（06 §3 验收值）。
-  static const double maxTextScale = 1.3;
-
-  /// 挂在 `MaterialApp.builder` 上：
-  /// `MaterialApp(builder: AppLayout.clampTextScale, ...)`
-  static Widget clampTextScale(BuildContext context, Widget? child) =>
-      MediaQuery.withClampedTextScaling(
-        maxScaleFactor: maxTextScale,
-        child: child ?? const SizedBox.shrink(),
-      );
-
-  /// 需要按缩放自适应间距时使用（缩放越大，留白同步放宽）。
-  static double scaledSpace(BuildContext context, double space) {
-    final s = MediaQuery.textScalerOf(context)
-        .scale(1.0)
-        .clamp(1.0, maxTextScale);
-    return space * s;
-  }
 }
 ```
 
-## 把容易出错的路径走一遍
+**每个值后面都写了"用在哪"。** 这不是注释洁癖——半年后有人想用 `md` 做输入框，他能在这一行看出"输入框应该是 `sm`"。
 
-我会用这个场景做一次可复现排查：**同一语义颜色在页面里各写一个导致深色主题漂移**。先切换 Brightness 后逐个检查语义色、间距和字号的调用来源；如果把问题定位在“散落魔法数”，修正方向是“由语义 token 和 ThemeExtension 集中定义，再做对比度验证”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+## 颜色：语义名，不是色值
 
-| 方案比较 | 简化做法 | 当前实现/推荐做法 |
-|---|---|---|
-| 本文核心选择 | 散落魔法数 | 语义令牌 |
-| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
-| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+颜色的翻译比间距难，因为**颜色在深浅色下要变成另一个颜色**，而这在原型上通常只画了一遍。
 
-| 排错步骤 | 要观察什么 | 通过条件 |
-|---|---|---|
-| 复现 | 同一语义颜色在页面里各写一个导致深色主题漂移 | 可以稳定触发或明确构造该输入 |
-| 定位 | 切换 Brightness 后逐个检查语义色、间距和字号的调用来源 | 找到责任层和状态归属 |
-| 修正 | 由语义 token 和 ThemeExtension 集中定义，再做对比度验证 | 失败不污染后续页面或账号 |
+现在的做法是自定义一套语义：
+
+```dart
+class AppColors extends ThemeExtension<AppColors> {
+  static const AppColors light = AppPalettes.light;
+  static const AppColors dark = AppPalettes.dark;
+  ...
+  @override
+  AppColors lerp(ThemeExtension<AppColors>? other, double t) { ... }
+}
+```
+
+而组件里这样用：
+
+```dart
+Text(
+  'API',
+  style: TextStyle(
+    color: context.colors.textTitle.withValues(alpha: .08),
+  ),
+)
+```
+
+**注意这里没有出现任何具体的色值。** 它写的是"标题色 + 8% 透明度"，而不是"灰色 8% 不透明度"。
+
+这个差别的意义在深色模式下才显现：
+
+| 如果写 | 深色下 |
+|---|---|
+| `Colors.grey.withOpacity(0.08)` | 固定灰，永远不变 |
+| `context.colors.textTitle.withValues(alpha: .08)` | 跟随主题，深色下是浅色的 8% |
+
+**这就是为什么不能让业务代码碰颜色**——不是因为"不优雅"，是因为**一旦碰到，深浅色就一定会漏。**
+
+而 `withValues(alpha:)` 而不是 `withOpacity()` 也有讲究：Flutter 新版本推荐前者，因为它在透明度无效值（比如大于 1）时行为更明确。
+
+## 渐变：ThemeExtension 的一个限制
+
+那个水印依赖卡片背景的渐变：
+
+```dart
+child: Ink(
+  decoration: BoxDecoration(
+    gradient: context.colors.heroWash,
+    borderRadius: AppRadius.rMd,
+  ),
+```
+
+`heroWash` 在 `AppColors` 里，但它**不是 `Color` 类型**——`ThemeExtension` 不能直接持有渐变对象，因为框架要求扩展类型可以比较相等、可以实现 `lerp`，而渐变的相等语义不明确。
+
+现在的解法是 `AppColors` 里存两个端点色，需要渐变的地方现算：
+
+```dart
+// 焦点区渐变（06 §2.1 `color.bg.wash`）
+LinearGradient(
+  colors: [context.colors.bgWash, context.colors.surface],
+)
+```
+
+**代价是：渐变的构造散落在各个组件里。** 而散落意味着**改渐变定义时要改很多处**。
+
+另一个选择是单独做一个 `AppGradients extends ThemeExtension<AppGradients>`，把渐变集中管理。**这个我最终没做**——理由是渐变只用在三四个地方，散落的成本还能接受，而多一个扩展类的复杂度更高。
+
+**这是一个我知道有争议的取舍。** 如果后面渐变用到十几处，就应该收回来。
+
+## ThemeBuilder：把令牌接到 Flutter 的主题系统
+
+令牌定义完了，但 Flutter 的组件（`Card`、`ListTile`、`FilledButton`）读的是 `ThemeData` 里的配置，不是我们的令牌。
+
+所以需要一个"翻译层"：
+
+```dart
+ThemeData buildAppTheme(Brightness brightness) {
+  final c = brightness == Brightness.light ? AppColors.light : AppColors.dark;
+  final base = brightness == Brightness.dark
+      ? ThemeData.dark(useMaterial3: true)
+      : ThemeData.light(useMaterial3: true);
+  return base.copyWith(
+    extensions: <ThemeExtension<dynamic>>[c],
+    iconTheme: IconThemeData(color: c.textBody, size: 20),
+    dividerTheme: DividerThemeData(color: c.line, thickness: 1, space: 1),
+    ...
+  );
+}
+```
+
+而这个文件有三百多行，因为 Material 的组件主题非常多：
+
+```
+_colorScheme   _cardTheme   _bottomNavigationBarTheme
+_bottomSheetTheme   _chipTheme   _listTileTheme   _filledButtonTheme
+```
+
+**每一个都是"把这个 Material 组件的默认外观换成我们令牌里的值"。**
+
+这层的必要性在于：**如果不管它，`Card` 组件会用 Material 默认的圆角（4dp）和阴影**，而原型上要的是 `AppRadius.md`（8dp）且无阴影。
+
+而 `_cardTheme(bool isDark, AppColors c)` 这个签名里的 `isDark` 参数值得注意——**有些样式在深浅色下是不同的**，不只是颜色值不同（比如阴影的强度、卡片的表面色）。所以那些地方需要分支。
+
+**"只是颜色不同"和"样式结构就不同"，是这一层最需要小心的区别。** 前者靠 `AppColors` 的两套调色板解决，后者得在 ThemeBuilder 里显式判断。
+
+## 组件怎么从原型里拆出来
+
+原型上那个焦点卡片，实现时是这样：
+
+```dart
+/// 焦点卡片保持原型渐变、标题截断与文章入口。
+class _StoryCard extends StatelessWidget {
+  const _StoryCard({required this.a});
+  final Article a;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: AppInsets.pageTop,
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push('/articles/${a.route}'),
+        borderRadius: AppRadius.rMd,
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: context.colors.heroWash,
+            borderRadius: AppRadius.rMd,
+          ),
+```
+
+**三层嵌套不是代码风格问题，是功能要求。**
+
+`Material` + `InkWell` + `Ink` 这三件套是 Flutter 实现"带背景的点击区域 + 水波纹动画"的标准结构：
+
+- `Material` 提供水波纹绘制的表面
+- `InkWell` 提供点击区域和手势
+- `Ink` 提供实际的背景绘制（渐变、边框）
+
+少任何一个，水波纹就不生效或者背景画不出来。
+
+而 `color: Colors.transparent` 是必需的——因为默认的 `Material` 会画一个默认背景色，和我们的 `Ink` 渐变叠在一起。
+
+**`onTap: () => context.push('/articles/${a.route}')` 这一行接上了 M4-14 讲的 `route`**（有 slug 用 slug，没有用 id）。
+
+而注释说的"标题截断"，在下面几行的 `Text` 里：
+
+```dart
+Text(
+  ...,
+  maxLines: 2,
+  overflow: TextOverflow.ellipsis,
+)
+```
+
+**"截断"是原型上的一个明确要求**（"标题最多两行"），而实现时容易漏——因为在测试数据下标题都很短。
+
+这条经验：**原型上所有"最多几行""最小多大"的限制，都要在实现时显式写出来**，哪怕测试数据看不出差别。因为真实数据的标题会长得多。
+
+## 从原型到代码，最容易丢的三样东西
+
+翻译过程中我总结出三类最容易丢失的：
+
+| 丢失的 | 原型上 | 代码里 | 怎么发现 |
+|---|---|---|---|
+| **状态** | 加载中/空/错误/有内容 | 只画了"有内容" | 连点两次会看到 |
+| **极端数据** | 长标题、空头像 | 用正常数据测 | 换成真实数据 |
+| **交互反馈** | 按下变色、水波纹 | 静态按钮 | 真机点一下 |
+
+第一类最严重。原型通常只画"理想状态"，而代码必须处理所有状态。M4-10 讲的 `AsyncPane` 那段 `build` 就是在补原型上没有的三层：
+
+```dart
+if (value == null) {
+  return error != null
+      ? StateMessage(error: error, onRetry: () => load(force: true))
+      : const ArticleSkeleton(count: 2);
+}
+```
+
+**骨架屏是原型上通常不画的东西**——因为画出来不好看，设计稿往往只给内容态。
+
+但它是必须的，否则用户等待时看到的是空白屏幕，而空白屏幕会被理解成"App 卡了"。
+
+第二类的例子是**图片加载失败**。原型上永远是那张图，而真实环境会有 404、会有网络问题。
+
+第三类最隐蔽：**按下态的视觉反馈**在原型上通常是一个标注，而实现时容易用默认的水波纹代替——而默认水波纹的颜色可能和我们的主题不搭。
+
+## 零色值这条纪律怎么守住
+
+M4-25 讲过"代码里不允许写色值"，这里说怎么在实际工作中守住。
+
+**靠自觉肯定守不住**，所以有两个机制。
+
+**一、代码评审时检查。** 但人工检查不可靠——因为 `Color(0xFF...)` 在几十行里可能只出现一次，而人的注意力会集中在"逻辑对不对"上。
+
+**二、脚本扫描。** 这才是有效的：
+
+```python
+# 检查逻辑（示意）
+if re.search(r'Color\(0x[0-9A-Fa-f]+\)', dart_source):
+    print('发现硬编码色值')
+```
+
+**而且要扫得更宽**：不只是 `Color(0x...)`，还有 `Colors.red` 这类命名颜色（Material 的静态调色板）。
+
+而脚本的价值在于**它不会有注意力问题**——它每次都扫全文。
+
+**但脚本只能抓"存在"，抓不到"用对了"。** 比如有人写 `context.colors.textTitle`（存在）但用在了一个应该用 `textBody` 的地方（用错了），脚本抓不到。
+
+**这类语义正确性只能靠 review，而 review 的时候需要知道"哪些选择是有意的"**——所以设计规范文档里要写清楚每个语义色的用途。
+
+顺带说一个我踩过的坑：**M4-25 提到有个 `color.info` 令牌悬空**——设计规范里写了它，但 `AppColors` 里没有实现。这导致实现时有人找不到对应的语义色，就用了最接近的那个（`textMuted`），**结果"提示信息"的颜色变成了普通灰**。
+
+**令牌定义和实现必须一一对应**，而这条也只能靠检查发现——只不过检查的是"规范里有的，代码里有没有"。
+
+## 一条我一开始想省掉的事
+
+那个水印，我第一版写的是固定颜色：
+
+```dart
+// 第一版
+color: Colors.black.withValues(alpha: .08),
+```
+
+在浅色模式下完全正常。**切到深色模式它就消失了**——因为深色背景上画深色水印，等于没有。
+
+我是在深色模式下对比原型才发现的。而这个 bug 的恶劣之处在于：**它不是"少了一个效果"，而是"效果在深色下反着来"**——如果你没看原型，可能根本不会觉得少了什么。
+
+改成 `context.colors.textTitle.withValues(alpha: .08)` 之后，两个模式都对。
+
+**这个 bug 让我明白了一件事：一个视觉元素在两种主题下的表现，是两个独立的实现，不是"同一个实现的两种配色"。**
+
+而如果当初把它写成固定颜色，它就只有一个实现——**而那个实现在一个主题下是对的**。
+
+顺带说，这个教训和 M4-24 讲的那个"图片请求带鉴权头"是同一类：**一个在开发环境（只有一个配置）下完全正确的东西，在多配置场景下会出错。** 开发的时候只有浅色模式、只有一个 API 环境，所以这些 bug 完全不会暴露。
 
 ## 小结
 
-视觉还原的稳定路径是：原型确认规则，令牌固化语义，主题装配明暗模式，共享组件承载重复交互，页面私有组件保留局部所有权，最后用多状态截图和设备尺寸验证。组件越多并不自动越一致；一致性来自单一事实源和覆盖真实状态的验收。
+这一篇讲的其实不是组件怎么写，是**约束怎么传递**：
+
+1. **先定令牌，再写组件** —— 而且令牌要覆盖"到处都会用到"的量。
+2. **语义名代替色值** —— 因为深浅色下"什么是对的颜色"会变。
+3. **ThemeBuilder 是翻译层** —— 它把令牌接到 Material 组件的默认外观上。
+4. **原型的状态、极端数据、交互反馈最容易丢** —— 三类都要显式补。
+5. **纪律靠脚本，不靠自觉** —— 人不会有意识地每次都找色值。
+
+第 4 条我觉得最重要。**原型是静态的，而代码必须处理所有状态**——这个差距不是靠"更仔细地看原型"能补上的，因为原型上根本没有那些状态。
+
+而第 5 条是这一篇的方法论核心：**凡是能用机器检查的纪律，就不要交给人。** 这和 M4-25 讲的那个"触控目标 ≥ 44"是同一个思路。
+
+**而"在单一配置下正确的东西"这个类别，是我做这一批最大的收获**——它解释了为什么很多 bug 偏偏在生产环境出现：开发时只有一个环境、一个主题，而生产有两个。
+
+下一篇讲 Riverpod 的状态边界——那是这个 App 里状态类型最多的一层。
 
 ## 延伸阅读
 
-- [Flutter 工程骨架与 OpenAPI 代码生成]({{LINK:M4-03}})
+- [Riverpod 状态边界：会话、服务端数据和表单草稿]({{LINK:M4-06}})
 - [主题与可访问性：深浅色、大字号和触控体验]({{LINK:M4-25}})
-- [响应式、可访问性与错误状态](https://blog.csdn.net/fungleo/article/details/167172856)
+- [用真实 API 构建首页：焦点、最新与热门内容]({{LINK:M4-10}})
+- [写后缓存失效与图片缓存治理]({{LINK:M4-24}})
 
 ---
 

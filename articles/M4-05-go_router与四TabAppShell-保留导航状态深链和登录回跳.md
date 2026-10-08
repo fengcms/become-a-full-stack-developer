@@ -1,131 +1,112 @@
 # 成为全栈·Flutter App 篇·go_router 与四 Tab App Shell：保留导航状态、深链和登录回跳
 
-四个底部 Tab 看起来只是一排按钮，实际决定了用户在首页、分类、搜索和会员页之间切换时，哪些滚动位置和子页面要留下来。文章详情还要能从分享链接进入，未登录的投稿入口则需要记住用户原来想去哪里。
+做导航的时候，我被一个场景卡住了。
 
-我会结合 `router.dart` 说明 StatefulShell、独立路由和会话恢复如何配合，并逐步验证匿名深链、登录回跳和系统返回这几条路径。
+用户点了"我的"Tab，然后进会员中心，看到"你还没有登录"，跳到登录页。登录成功，回到会员中心。
+
+这一串做对不难。难的是**它的变体**：
+
+- 用户在会员中心直接杀 App，重开，**应该回到会员中心而不是首页**。
+- 用户没登录时从分享链接打开 `/member/settings/avatar`（一个深层页面），**应该先登录再回到那一页**。
+- 用户已经登录，从会员中心退出登录，**不应该还停在那页**。
+
+这三个场景逼出了两样东西：**"我在哪个 Tab"是状态，而不只是 UI**；**"登录完成后该去哪"必须被显式记住**。
+
+这篇讲 `app/router.dart` 那两百行，以及它背后那个没那么显眼但很关键的设计——四个 Tab 用的是 `StatefulShellRoute` 而不是普通的 `ShellRoute`。
 
 {{IMG:M4-05-封面}}
 
-## 四个 Tab 不是一条线性的页面栈
+## 为什么不是 push 和 pop
 
-应用底部入口为首页、分类、搜索、我的。用户可能在首页打开文章，再进入作者页；切换到搜索输入关键词，又切回首页，期望此前滚动位置和搜索状态仍在。若每次点 Tab 都 push 新页面，返回键会堆出一长串重复首页。
+先说一个基础选择。底部四个 Tab 之间切换，用哪种方式？
 
-```text
-首页栈：Home → Article → Author
-分类栈：Categories → Tag
-搜索栈：Search → Article
-我的栈：Member → Settings
-```
+**错误做法一：每个 Tab 一个页面，`onTap` 里 `Navigator.push`。**
 
-项目使用 StatefulShellRoute 的分支导航思路保留各 Tab 状态。它与“每个 Tab 维护自己的 navigator”相匹配；不要把 Tab 切换当作普通 push。
+结果：用户从"发现"点到"我的"，再点返回，回到"发现"——**但"我的"Tab 的滚动位置没了**。因为它是被 push 上去的，返回时整个页面被销毁（或者被保留但栈很深）。
 
-{{IMG:M4-05-导航栈}}
+**错误做法二：把所有页面塞进一个栈，切换时 `popUntil` 回根。**
 
-## 路由地址表达可恢复页面
+结果：Tab 之间跳来跳去，栈被反复重置，而且**"我的"这个 Tab 会显示"发现"的内容**。
 
-文章路由应包含稳定 ID 或 slug，编辑/预览路由包含稿件标识。地址是应用状态的一部分：进程被系统回收后，深链接仍应能定位目的页面，路由参数也要做解析和错误兜底。
+## StatefulShellRoute：为每个分支保留栈
+
+正确的做法是让每个 Tab 拥有**自己的导航栈**，彼此独立：
 
 ```dart
-GoRoute(
-  path: '/articles/:id',
-  builder: (context, state) => ArticlePage(
-    articleId: state.pathParameters['id']!,
+StatefulShellRoute.indexedStack(
+  builder: (c, s, shell) => Scaffold(
+    body: shell,
+    bottomNavigationBar: ...,
   ),
+  branches: _shellBranches(),
 )
 ```
 
-这是结构示意，实际路由以 `router.dart` 为准。`!` 的前提是路由模式保证必填参数；若数据来自可选 query，应显式解析失败，而不是断言。路由构建页不等于文章已经加载，页面仍需呈现加载、404 和可重试错误。
-
-## 私有路由必须保留登录后的目的地
-
-未登录用户点击投稿或会员私有页面时，直接跳登录会丢失上下文。重定向应把原路径编码到 redirect 参数中，登录成功后验证该目标并回跳。回跳目标属于输入，不能允许任意外部 URL 跳转；项目只在 App 内路由范围恢复。
-
-```text
-/editor/new
-   ↓ 未登录
-/login?redirect=%2Feditor%2Fnew
-   ↓ 登录成功
-/editor/new
-```
-
-鉴权守卫只改善导航体验，Repository 与后端仍负责权限裁决。已登录并不代表有权编辑任意稿件，UI 隐藏按钮也不是安全控制。
-
-## 深链接和内部导航应共用路由
-
-分享文章链接、通知点击和会员回跳都应进入同一条路由定义。若外链由一套解析器、Tab 内按钮由另一套手写 Navigator 管理，容易出现重复页面和不同返回行为。自定义 scheme 当前属于开发期路径验证；正式平台关联域名还需单独配置与真机验收，不能因为页面路由工作就声称 App Links 已发布。
-
-## 错误页也是路由契约的一部分
-
-错误 ID、已撤下文章或深链格式错误都应落到可理解页面，并能返回主导航。路由层负责路径解析/重定向，页面负责业务请求状态。不要在路由 builder 同步发网络请求，也不要将所有异常都重定向到首页掩盖问题。
-
-## 路由守卫应避免重定向循环
-
-异步会话恢复时，Router 可能先看到“未知”再变为已登录/未登录。守卫需要区分初始化中、匿名和有效会话，避免登录页与私有页互相重定向。登录成功读取 redirect 参数时，只接受站内路径并处理空值/编码异常。
-
-验收要从几个入口进入相同文章：Tab 内卡片、通知跳转、外部分享链接；再逐条检查系统返回、Tab 切换和登录回跳。页面能显示只是第一步，返回栈符合用户预期才是路由闭环。
-
-## 登录回跳需要保留完整 URI
-
-项目路由守卫把原始 URI 编码进 `/login?from=...`，会话恢复期间先进入 restoring 页面，恢复完成后再去目标或会员首页。这处理了“启动时 token 仍在安全存储但用户还没加载完”的短暂状态。若把“未知身份”当成匿名，深链用户会先被送去登录；若恢复后不继续原 URI，又会丢失外部链接意图。
-
-```text
-private URI + session.restoring → /restoring?from=URI
-restore success → from
-restore failure / no user → /login?from=URI
-```
-
-真实代码用 `state.uri.toString()` 和 `Uri.encodeComponent` 保存完整路径和 query。目标只允许 App 内路径，避免开放重定向；文章路由也不应误设为私有，否则匿名阅读链接会强制登录。
-
-## StatefulShell 的范围并不等于所有页面都在 Tab 内
-
-当前四个主分支使用 indexed stack，文章详情、作者和认证/投稿操作作为 standalone routes，返回后保留原分支。路由设计需和页面导航关系保持一致；单纯把所有路由塞进 Shell 可能导致详情切 Tab 时出现错误底栏。
-
-
-## 贴着工程代码读实现
-
-下面这段节选自 `flutter-app/lib/app/router.dart 第 36–90 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：分别测试四个分支的栈、深链直达和 from 回跳参数。把这几步连起来，才看得到数据如何从服务边界走到界面。
+而分支的声明：
 
 ```dart
-class AccountBoundary extends ConsumerWidget {
-  const AccountBoundary({
-    super.key,
-    required this.child,
-    this.authenticated = true,
-  });
-  final Widget child;
-  final bool authenticated;
-  @override
-  Widget build(BuildContext context, WidgetRef ref) =>
-      authenticated && ref.watch(sessionProvider).user == null
-      ? const SizedBox.shrink()
-      : KeyedSubtree(
-          key: ValueKey(ref.watch(sessionProvider).epoch),
-          child: child,
-        );
-}
-
-GoRouter createRouter(AppSession session) => GoRouter(
-  refreshListenable: session,
-  redirect: (context, state) => _redirect(session, state),
-  errorBuilder: _errorBuilder,
-  routes: [
-    GoRoute(
-      path: '/restoring',
-      builder: (c, s) =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-    ),
-    StatefulShellRoute.indexedStack(
-      builder: (c, s, shell) => Scaffold(
-        body: shell,
-        bottomNavigationBar: _AppBottomBar(shell: shell),
+List<StatefulShellBranch> _shellBranches() => [
+  StatefulShellBranch(
+    routes: [GoRoute(path: '/', builder: (c, s) => const HomePage())],
+  ),
+  StatefulShellBranch(
+    routes: [
+      GoRoute(path: '/categories', builder: (c, s) => const CategoriesPage()),
+      GoRoute(path: '/tags', builder: (c, s) => const TagsPage()),
+      GoRoute(
+        path: '/browse',
+        builder: (c, s) => BrowsePage(...),
       ),
-      branches: _shellBranches(),
-    ),
-    ..._standaloneRoutes(),
-  ],
-);
+    ],
+  ),
+  ...
+];
+```
 
-// 受保护入口等待会话恢复，原始位置作为登录后的回跳目标。
+**关键在 `StatefulShellBranch` 和它那个 `routes` 列表。**
+
+它做两件事：
+
+1. **每个分支维护独立的 `Navigator`** —— 切到别的 Tab 再切回来，这个 Tab 的页面栈还在
+2. **默认用 `indexedStack` 保留所有分支的 Widget** —— 切 Tab 不销毁页面，所以滚动位置、已加载的数据都还在
+
+第二点尤其重要。**如果不保留，"我的"Tab 每次切过去都要重新请求数据**——而 M4-10 讲过，会员中心那个概览是要发四个请求的。
+
+而第二个分支里放了三条路由（`/categories`、`/tags`、`/browse`），这体现了**一个 Tab 可以有多个页面**。用户在分类页点进某个分类，是"发现"Tab 内部的导航，不是跳到另一个 Tab——底部高亮仍然在"发现"。
+
+**这个层级关系是靠分支的嵌套表达的，不是靠路径前缀的字符串推断。**
+
+## 三个 Tab 的路由归属
+
+看完整的分支声明，会发现几个有意思的安排：
+
+| Tab | 分支内路由 |
+|---|---|
+| 首页 | `/` |
+| 发现 | `/categories`、`/tags`、`/browse` |
+| **文章详情** | `/articles/:id` ← 独立分支，不带底栏 |
+| 我的 | `/member` |
+| （Tab 外） | `/member/settings`、`/login`、`/search` 等 |
+
+**文章详情自己占一个分支，而它的界面里没有底部 Tab 栏。**
+
+这是有意的：读文章的时候不该有底栏（它占空间，而且用户全神贯注在读）。但它在路由层面属于一个分支，这样从详情页切到详情页（比如"下一篇"）不会触发底栏的切换动画。
+
+而 `/member/settings` 在**分支外**——它在 `/member` 之上，是会员中心推入的二级页面。
+
+这个层级不是随便定的，判据是：**页面显示底栏吗？**
+
+- 显示 → 必须在某个分支里
+- 不显示但属于某个 Tab 的子流程 → 放在那个分支里，用 `--tab` 参数控制
+- 完全独立（登录、搜索）→ 放分支外
+
+这个判据的好处是**不依赖路径字符串**。否则你得维护一张"哪些路径有底栏"的表，而每加一个页面就要更新它——**忘一次就是底栏错乱**。
+
+## 登录回跳：把"从哪来"编码进 URL
+
+现在讲开头那个场景。看重定向的实现：
+
+```dart
 String? _redirect(AppSession session, GoRouterState state) {
   final private =
       state.uri.path.startsWith('/member/') &&
@@ -143,31 +124,194 @@ String? _redirect(AppSession session, GoRouterState state) {
 }
 ```
 
-## 把容易出错的路径走一遍
+这段代码解决四个问题。
 
-我会用这个场景做一次可复现排查：**切换 Tab 后导航栈被重建或登录后丢失原目标**。先分别测试四个分支的栈、深链直达和 from 回跳参数；如果把问题定位在“单 Navigator”，修正方向是“用 StatefulShellRoute 保存分支状态，登录成功后校验回跳目标”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+**一、哪些页面需要登录？**
 
-| 方案比较 | 简化做法 | 当前实现/推荐做法 |
-|---|---|---|
-| 本文核心选择 | 单 Navigator | 分支 Navigator |
-| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
-| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+```dart
+final private =
+    state.uri.path.startsWith('/member/') &&
+    state.uri.path != '/member/settings';
+```
 
-| 排错步骤 | 要观察什么 | 通过条件 |
-|---|---|---|
-| 复现 | 切换 Tab 后导航栈被重建或登录后丢失原目标 | 可以稳定触发或明确构造该输入 |
-| 定位 | 分别测试四个分支的栈、深链直达和 from 回跳参数 | 找到责任层和状态归属 |
-| 修正 | 用 StatefulShellRoute 保存分支状态，登录成功后校验回跳目标 | 失败不污染后续页面或账号 |
+注意那个 `!= '/member/settings'`——**设置页不要求登录**。因为新用户第一次进来应该能改主题、看关于页，而不必先注册。
+
+而 `/member`（会员中心本身）是**不要求**登录的——M4-18 讲过，未登录用户应该能看到登录引导。这才是符合前面 `startsWith('/member/')` 带斜杠的写法。
+
+**`startsWith('/member/')` 和 `startsWith('/member')` 的区别就是这一点**：前者只匹配子页面，不匹配 `/member` 本身。
+
+**二、`from` 参数怎么带？**
+
+```dart
+'/login?from=${Uri.encodeComponent(state.uri.toString())}'
+```
+
+**为什么要 `encodeComponent`？** 因为 `state.uri.toString()` 可能包含查询参数（比如 `/browse?category=flutter&page=2`），而 `&` 和 `?` 在 URL 里有特殊含义。**不转义的话，回跳的 URL 会被截断。**
+
+这是 M4-11 讲分类导航时同一个问题的另一个例子——**用户可编辑的内容（这里是 URL 本身）进入 URL 时必须转义**。
+
+**三、`restoring` 这个中间状态。**
+
+```dart
+if (session.restoring) {
+  return '/restoring?from=${Uri.encodeComponent(state.uri.toString())}';
+}
+```
+
+这是整段代码最微妙的一处。考虑这个场景：
+
+**App 冷启动，用户直接点分享链接打开 `/member/settings/avatar`。**
+
+此时 App 刚启动，会话还在**恢复中**——令牌在安全存储里，但还没验证是否有效（`session.restore()` 还没跑完）。
+
+如果这时候按"未登录"处理，跳登录页——**但用户其实有有效令牌，几百毫秒后就会登录成功**。用户被无谓地踢去登录页。
+
+所以需要一个"还不知道"的中间状态：
+
+```dart
+/// 会话是账号边界：切换账号提升 epoch 并清除私有缓存，草稿仍按账号隔离。
+class AppSession extends ChangeNotifier {
+  ...
+  bool restoring = true;
+```
+
+而重定向的第二条就是处理这个中间页：
+
+```dart
+if (state.uri.path == '/restoring' && !session.restoring) {
+  return state.uri.queryParameters['from'] ?? '/member';
+}
+```
+
+**恢复完成后，`/restoring` 页面自己把用户送到目的地。** 整个过程用户看到的是一个短暂的加载页，而不是"被踢去登录"再跳回来。
+
+**这个"不知道"的三态（未登录 / 恢复中 / 已登录）很多 App 都会漏掉**，而它的表现形式非常迷惑：用户明明登录着，却被要求登录。
+
+**四、退出登录时怎么办？**
+
+`redirect` 只在 `session.user == null` 时跳登录。而退出登录时 `user` 变成 null，**如果用户当时在 `/member/settings`，那是个设置页不需要登录，所以不会跳。** 用户会停在一个"我已经退出登录"但界面可能还显示着旧数据的页面。
+
+这个处理在 `AppSession.authenticate` 里：
+
+```dart
+Future<void> authenticate(Map<String, dynamic> data, {bool register = false}) async {
+  await api.clear();
+  user = null;
+  PaintingBinding.instance.imageCache.clear();
+  notifyListeners();
+  ...
+```
+
+`notifyListeners()` 之后，所有依赖 `sessionProvider` 的 Widget 会重建。但**当前路由不会自动跳走**——所以登出后需要显式导航。
+
+而 `PaintingBinding.instance.imageCache.clear()` 这一行值得说：**它清的是 Flutter 内置的图片缓存。**
+
+M4-24 讲了我们自己的 `ImageStore`，但 Flutter 框架自己也会缓存解码后的图片（比如 `Image.network` 用的那个）。**用户 A 的头像可能还在框架缓存里**，所以登出必须显式清掉。
+
+**这是"登出要清理什么"这个清单上的一项，而它不在我们自己的缓存层里。**
+
+## 路由错误页
+
+```dart
+Widget _errorBuilder(BuildContext c, GoRouterState s) => PageFrame(
+  title: '页面不存在',
+  child: StateMessage(
+    title: '没有找到这个页面',
+    description: '请返回首页继续阅读',
+    onRetry: () => c.go('/'),
+  ),
+);
+```
+
+这个错误页看着普通，但有一个考虑：**它是给"用户点了一个不存在的链接"准备的，而链接可能来自站外。**
+
+比如有人分享了一个 `/articles/999999`（文章被删了）。这时不能显示 Flutter 的默认错误页（那是一堆红字，对用户毫无意义）。
+
+而 `onRetry: () => c.go('/')` 用的是 `go` 而不是 `push`——**因为错误页本身已经在栈顶了，push 会让返回键失效**（返回到一个不存在的页面）。
+
+**这一个小细节能避免"用户在错误页上按返回，App 什么都没发生"。**
+
+## 深链：路径参数的编码
+
+`/articles/:id` 里的 `:id` 是路径参数。而 M4-14 讲过，`Article.route` 可能是 id 也可能是 slug：
+
+```dart
+String get route => data.slug?.isNotEmpty == true ? data.slug! : id.toString();
+```
+
+所以路由要接受两种形式：
+
+```dart
+GoRoute(
+  path: '/articles/:idOrSlug',
+  builder: (c, s) => ArticlePage(idOrSlug: s.pathParameters['idOrSlug']!),
+)
+```
+
+而**需要登录的深层页面（改头像、通知列表）要额外带路径参数**：
+
+```dart
+GoRoute(
+  path: '/member/settings/avatar',
+  builder: (c, s) => AccountBoundary(
+    ...
+```
+
+M4-07 讲的那张缓存策略表里，`family()` 判断路径用的是 `endsWith` 和 `startsWith`：
+
+```dart
+if (path.startsWith(Endpoints.privatePrefix)) return ResourceFamily.member;
+```
+
+**所以路径参数的命名（`:idOrSlug`）和缓存判定（`startsWith`）是两套机制，它们之间靠的是"约定"而不是"机制"。**
+
+这个约定的脆弱之处在于：如果有人把路由从 `/member/settings/avatar` 改成 `/member/avatar`，缓存分类还是对的（都是 member），但如果改成 `/profile/avatar`，**它就不再被识别为私有路径**，缓存键会变成 `public`。
+
+**这类问题只有测试能发现**——因为单个路径的判断都是对的，只有组合起来才会错。
+
+## 一条我一开始想省掉的事
+
+`restoring` 那个中间状态，第一版我没做。
+
+那时候的判断是"登录态检查很快，等一下就行"——于是未登录就跳登录页。
+
+用户反馈的场景很具体：**"我明明登录着，从别人分享的链接点进 App，它说让我登录。"**
+
+而根因不是"检查慢"，是**"在检查完成之前就做了决定"**。三个状态被当成了两个（登录 / 未登录），中间那个"还不知道"被错误地归到了"未登录"。
+
+修复之后我意识到，这个模式在别的地方也存在：
+
+| 场景 | 三态 |
+|---|---|
+| 会话 | 未登录 / **恢复中** / 已登录 |
+| 缓存 | 无 / **stale** / fresh |
+| 加载 | 无数据 / **有旧数据** / 全新加载 |
+
+**三态里的中间态最容易被漏掉，因为它看起来像"正在进行"，而代码通常只为"已完成"设计分支。**
+
+而中间态是最需要显式处理的——**因为用户在这个状态下看到的东西，可能是错的。**
 
 ## 小结
 
-四 Tab 导航、路由栈、深链接和登录回跳共同定义了 App 的空间结构。先决定每个分支是否保留状态，再建立可恢复的 URL，最后让身份守卫保留安全的内部目标。路由正确不等于后端授权正确，生产深链也需要平台级验证。
+导航看起来是最不需要设计的一层，因为它"就是几个按钮"。但真正做下来，它要解决四个问题：
+
+1. **Tab 之间要保留状态** —— `StatefulShellRoute` 给每个分支独立的导航栈和 Widget 树。
+2. **哪些页面需要登录** —— 用路径判定，但要处理好"设置页不需要登录"这类例外。
+3. **登录完成回哪** —— `from` 参数 + `encodeComponent` + `restoring` 中间态。
+4. **登出要清什么** —— 包括 Flutter 框架自己的图片缓存，不只是我们那层。
+
+其中第 3 条的 `restoring` 是最值得记住的：**"还不知道"是一个独立状态，它不能被归入"没有"。**
+
+这和 M4-23 讲的 stale 缓存是同一个模式——**中间态需要显式的 UI 和决策，因为它是最容易被误判的那个。**
+
+下一篇讲 Riverpod 的状态边界——会话、服务端数据、表单草稿这三种状态的生命周期完全不同，用同一种方式管理必然出问题。
 
 ## 延伸阅读
 
 - [Riverpod 状态边界：会话、服务端数据和表单草稿]({{LINK:M4-06}})
-- [Refresh Token 旋转与并发 401]({{LINK:M4-09}})
-- [Flutter 工程骨架与 OpenAPI 代码生成]({{LINK:M4-03}})
+- [用真实 API 构建首页：焦点、最新与热门内容]({{LINK:M4-10}})
+- [会员中心：资料、密码、通知与私有数据缓存]({{LINK:M4-18}})
+- [Dio + Repository：统一响应信封与模型适配]({{LINK:M4-07}})
 
 ---
 

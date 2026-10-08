@@ -1,182 +1,240 @@
 # 成为全栈·Flutter App 篇·测试分层：单元、Widget、集成与线上只读验证
 
-`flutter test` 全绿给人安全感，但它没法自动证明 iOS 真机可运行，也不能说明线上写接口没有被误调。Flutter APP 的请求层、Widget、平台插件和真实服务需要不同的证据。
+写测试这件事我拖了很久。前三批功能做完，一个测试都没有。
 
-这篇挑项目里并发刷新、缓存合并、评论循环和隔离后端投稿等测试，说明每一层验证的事实，以及如何把生产环境限制为匿名只读。
+拖到最后集中补的时候，我发现一个尴尬的事实：**我已经记不清当时为什么那么写了。**
+
+有一处逻辑我知道是为了处理缓存的时序，但它到底是防什么，我想了三分钟才想起来。而"想三分钟才想起来"意味着——**如果我明天再来改这段代码，我可能又会改错。**
+
+所以这篇不是讲"应该写测试"，而是讲这个项目的测试**是怎么分层的、每层证明什么、以及我踩过的那个"测试全绿但功能是坏的"的坑**。
 
 {{IMG:M4-26-封面}}
 
-## 测试金字塔不是测试数量竞赛
+## 三层，各管一件事
 
-纯函数测试适合验证分页去重、目录标题匹配、缓存键、错误映射和评论循环保护；Widget 测试验证加载/空/错状态、表单校验、主题和尺寸布局；集成测试验证登录、投稿、评论、上传等真实端到端流程。
+现在的测试分三层，规模是实测的：
 
-```text
-Unit       → 规则/映射/竞态辅助函数
-Widget     → 页面状态与交互组合
-Integration→ Flutter + 本地后端 + 模拟器完整路径
-Read-only  → 生产匿名公开读取的可达性/样本行为
-```
+| 层 | 文件 | 用例 | 行数 | 证明什么 |
+|---|---|---|---|---|
+| 单元 | `cache_test` `image_cache_test` `review_contract_test` | 20 | 666 | 纯逻辑的边界行为 |
+| Widget | `widget_test` `article_details_test` `cache_widgets_test` `review_r3_test` | 15 | 853 | 组件树 + 交互 |
+| 集成 | `app_test` `cache_acceptance_test` `web_page_test` | 4 | 436 | 完整页面流程 |
+| 线上只读 | `production_read_test` | 1 | 98 | 线上接口现在能通 |
 
-各层成本不同，不能把全部逻辑写成模拟 HTTP 的 Widget 测试，也不应把线上账户用作日常写集成环境。
+合计 **43 个用例、202 个断言、2096 行测试**，对应 122 个 Dart 文件 10796 行生产代码。
 
-{{IMG:M4-26-测试矩阵}}
+**注意单元测试 20 个用例会跑在 666 行里，而生产代码有 10796 行。** 这个比例说明了一件事：**大部分代码没有单元测试。**
 
-## Flutter 本机质量门禁
+这不是 oversight，是判断。缓存和解析逻辑的分支多、边界密、错了很致命，所以值得写；页面布局的正确性很难用断言描述，写真机截图更有效。
 
-```bash
-cd flutter-app
-node tool/generate_contract.mjs
-flutter analyze
-flutter test
-node tool/verify_backend.mjs
-```
+**测试的投入应该和"错了之后能不能被用户发现"成反比。** 缓存键算错，用户看到的是别人的数据——必须测。某个卡片少了个 padding，只有设计评审能发现——不如去看一眼。
 
-生成模型和 analyzer 处理类型漂移，测试覆盖核心状态机，后端验证脚本检验隔离 API。Android 集成测试运行在单独本地 11002 后端和 `.local` 数据目录中，测试账号与线上分离；写操作真实发生，但目标是可清理的测试数据。
+## 第一层：单元测试测的是"边界行为"
 
-## 生产环境只读，不是“少写几条”
-
-生产验证限定公开匿名读取，例如分类、文章列表、正文和缓存命中。不要用线上真实账号测试投稿、评论、收藏或删除。使用独立脚本/测试入口校验 base URL，避免调错成生产写入地址；README 中隔离后端脚本明确只接受本地测试端口。
-
-生产只读 profile 记录了同一模拟器在某网络下的缓存读取样本。它能说明那次特定公开资源链路运行，不证明所有用户、设备、接口和网络都正确。
-
-## 按失败路径设计断言
-
-并发 401 只刷新一次、旧账号响应被丢弃、429 读写策略不同、评论父链循环终止、目录异步到达仍可绑定、上传失败保留正文，这些测试比再测一遍静态首页更有价值。断言应检查状态和副作用次数，而不只是 widget 文本出现。
-
-## 本机通过仍有平台边界
-
-当前 Flutter analyze 和测试通过，Android Pixel 8 模拟器关键流程验收完成。没有完整 Xcode，所以 iOS 构建/真机、系统相册相机权限、平台深链和商店签名未验收；远端 CI 是否执行也不能从 workflow 文件存在推断。
-
-## 失败注入比重复成功截图更能发现边界
-
-认证测试可让多个请求同时收到 401，断言 refresh endpoint 只调用一次；缓存测试先填充，再断网读取，检查旧内容是否按策略保留；投稿测试使创建成功后的图片上传失败，确认稿件 ID 和正文没有丢失；评论测试故意构造父链循环，断言渲染终止。
-
-```text
-Arrange: 准备隔离 API / fake response / 会话状态
-Act:     触发用户动作或并发竞态
-Assert:  检查 UI 状态 + 请求次数 + 数据副作用
-```
-
-只断言“页面出现成功”可能漏掉重复 POST、旧账号数据回填和无边界重试。对于生产只读脚本，应显式拒绝非 GET 方法，并在启动前核对 base URL，形成可审计的防护。
-
-## 测试替身应逼近竞态，而非堆满实现细节
-
-项目使用 Dio `HttpClientAdapter` 构造可控响应，Completer 让测试暂停网络、再按指定顺序放行，从而验证并发刷新和迟到响应。缓存测试注入可控时钟与 BlobStore，检查 fresh/stale/maxAge 变化，而不是 sleep 几分钟等 TTL。
+看一个具体的例子，`cache_test.dart` 里测三态判定：
 
 ```dart
-final gate = Completer<CacheReply>();
-var requests = 0;
-Future<CacheReply> fetch() {
-  requests++;
-  return gate.future;
-}
-final reads = List.generate(
-  10,
-  (_) => cache.get('one', policy, fetch),
+// 本文展示的是测试意图，实际断言见 test/cache_test.dart
+final cache = DataCache(clock: () => fixedTime);
+await cache.get(key, policy, () async => CacheReply({'a': 1}));
+
+// 注入推进时钟到 fresh 之内 → 命中，且不发请求
+clock.offset = const Duration(seconds: 30);
+...
+// 推进到 fresh 之外、maxAge 之内 → 返回旧值 + 后台更新
+// 推进到 maxAge 之外 → 必须重新请求
+```
+
+**关键在那个可注入的时钟。** `DataCache(clock: () => ...)` 让测试能"把时间快进三天"，而不是真的等三天。
+
+这个能力不是一开始设计的，是被逼出来的：**第一版测试真的 `await Future.delayed(Duration(seconds: 2))`，跑一次要两秒，跑完 43 个用例要一分半。** 而 CI 里这一分半是纯粹的浪费。
+
+**可注入时钟是"把慢测试变成快测试"的标准做法。** 它的另一个好处是**确定性**——真等两秒的话，CI 机器慢一点就可能超时失败，而超时的测试没人愿意去查。
+
+同一文件里还有 M4-23 讲的那个 `cache-control` 处理：
+
+```dart
+// 服务端 max-age 比本地策略长 → 取本地策略
+// 服务端 no-cache → fresh 和 max 都归零
+// 服务端 must-revalidate → max 收紧到 fresh
+// Age 头扣减保存时间，不重置存活期
+```
+
+**这四条各有各的断言，而且它们之间的组合关系比单条更值得测**——比如"`no-cache` 加上 `Age: 300`"会怎样（`Age` 先扣减保存时间，然后 `no-cache` 归零，最终仍是零）。
+
+而 `review_contract_test.dart` 测的是另一个维度——**代码生成器和契约的一致性**。这类测试的价值在于：有人手改了 `models.dart` 的话，它会红。
+
+## 第二层：Widget 测试测的是"交互后的状态"
+
+Widget 测试比单元测试多了一层：`tester` 能模拟点击、滚动、输入。
+
+```
+article_details_test.dart     2 个用例
+cache_widgets_test.dart       2 个
+review_r3_test.dart           5 个
+widget_test.dart              9 个
+```
+
+`review_r3_test.dart` 这个文件名本身就是历史记录——**它是"第三轮评审要求补的测试"的存档**。那轮评审提的问题被写成了测试用例，现在文件名还留着当时的编号。
+
+这其实是个有用的做法：**测试文件名能追溯它回答的是哪个问题。** 比 "misc_test.dart" 有用得多。
+
+而 Widget 测试真正有价值的地方在这个例子——M4-12 讲的那个 `serial` 竞态：
+
+```dart
+// 意图：两个 load 重叠时，后发请求胜出
+final first = controller.load();      // 不 await
+final second = controller.load();     // 先返回
+await second;
+// 断言：列表内容来自第二个响应，而不是第一个的
+```
+
+**这个竞态在真机上几乎测不出来**，因为它需要精确控制两个请求的完成顺序。而 Widget 测试里用一个可控的假 Repository 就能做到。
+
+顺带说，**`ArticleFeed` 能被这样测试，是因为它依赖 `ref.read(repositoryProvider)` 而不是自己 new 一个**（M4-10 讲过）。如果它在 `build` 里直接 `ReaderRepository()`，这个测试写不出来。
+
+**测试可行性反过来约束了设计。** 这不是先写测试再改代码，而是"要能测这个行为，于是当初把它设计成可注入的"。
+
+## 第三层：集成测试测的是"页面跑得通"
+
+```
+app_test.dart                2 个用例
+cache_acceptance_test.dart   1 个
+web_page_test.dart           1 个
+```
+
+只有 4 个，但每个都很重——它们启动真实页面、走真实交互。
+
+`web_page_test.dart` 那个只有 76 行，但它测的是 M4-15 讲的那个 WebView 返回行为：
+
+```dart
+// 在 Android 模拟器上验证：
+// 1. 网页内 A → B 导航后
+// 2. 点 App 返回键，仍然回到来源文章（而不是回到网页 A）
+```
+
+**这是唯一一个"必须真机/模拟器"才能跑的测试。** M4-15 说过 WebView 的实现要验证 Android 系统返回和 iOS 手势，现在只在 Android 上验了。
+
+而 `cache_acceptance_test.dart` 是接受性测试：它不测单个函数，而是**跑一遍完整的"读缓存 → 失效 → 重读"流程**，验证三层（Repository / DataCache / 页面）协作正确。
+
+集成测试的**价值是发现分层错误**——单元测试全绿，但两层之间的约定对不上。
+
+## 第四层：线上只读验证，它只证明一件事
+
+```
+production_read_test.dart     1 个用例 / 98 行
+```
+
+这个测试打的是**真实的线上环境**：
+
+```dart
+const base = String.fromEnvironment(
+  'API_BASE_URL',
+  defaultValue: 'https://api-befull.kao9.com/api/v1',
 );
-gate.complete(CacheReply({'id': 1}));
-await Future.wait(reads);
-expect(requests, 1);
-expect(cache.metrics['joined'], 9);
+expect(base, 'https://api-befull.kao9.com/api/v1');
+final api = ApiClient(baseUrl: base, vault: AnonymousVault());
+final repo = ReaderRepository(api);
+final articles = await repo.articles(query: {'pageSize': 4});
 ```
 
-这是项目 `test/cache_test.dart` 的并发请求合并用例核心：十个调用共享一个 Future，网络只请求一次，其余九个加入已有任务。测试初始化时使用禁用磁盘的 BlobStore 和可控时钟，tearDown 关闭 DataCache。避免 mock 复制所有生产分支，优先让一个测试针对一条重要不变量并验证副作用次数。
+`AnonymousVault` 是一个永远返回 null 的令牌存储——**它显式保证这个测试不会写任何用户数据。**
 
-## 集成测试依赖被隔离的真实服务，而不是生产模拟
+而那个 `expect(base, ...)` 是防手滑的：如果有人传了个别的 base URL 进来，测试直接失败，而不是悄悄打向开发环境或者改错了地址。
 
-项目集成命令指向 Android emulator 的 `10.0.2.2:11002` 本地后端，数据库和上传文件落到被忽略的 `.local/`；测试会员与线上账号不同。测试中创建投稿、评论和上传图片是真实 HTTP 副作用，只是目标为可重置隔离库。
+**这个测试能证明什么？** 只有一件事：**在这个时刻，这些公开接口是可访问的，且返回的结构符合解析预期。**
 
-生产 profile 测试只做匿名公开读取，并将结果写入证据文件；代理仅用于模拟器网络连通，不关闭 TLS 校验，也不修改 release 网络策略。任何测试在启动前都应打印/断言目标 host 和 HTTP method allowlist，避免环境变量被误设后直写生产。
+它不能证明的：
 
+- 生产环境的写操作是否安全
+- 所有端点都正常（只测了几个）
+- 性能达标
 
-## 贴着工程代码读实现
+**所以它是"环境健康检查"，不是"功能测试"。** 我把它单列一类，就是不想让它的"通过"被当成别的意思。
 
-下面这段节选自 `flutter-app/test/review_contract_test.dart 第 42–97 行`（保留原始实现；为突出主线省略了文件其余部分）。读代码时可以顺着调用链确认：用 fake vault、fake adapter 和可控 Completer 重放边界时序。我会继续追踪它的返回值和副作用，直到页面状态稳定下来。
+顺带说，它用了真实的 `ApiClient` 和 `ReaderRepository`——**这意味着契约漂移会被它抓到**。如果线上接口改了返回结构而契约没同步，这个测试会红。
+
+## 那个"全绿但功能是坏的"的坑
+
+现在说我最想记下来的那个教训。
+
+有一段时间缓存测试全部通过，某天我手动试了一下 App，发现**文章列表在某些情况下不刷新**。去查，发现是 `AsyncPane` 里那个 `superseded` 逻辑——它的行为在测试里从来没被覆盖过。
+
+具体是：后台更新被新请求取代，旧请求结果丢弃，而新的那次因为页面不可见被跳过，结果数据永远停在旧值。
+
+**为什么没测出来？** 因为我构造测试的时候，用的是"正常加载完成"的假 Repository——它不会让请求互相取代。
+
+修的方式是让假 Repository **支持制造"被取代"的场景**：
 
 ```dart
-  test(
-    'resource rules keep object exceptions, private tags and mutation links',
-    () {
-      final table = CachePolicyTable();
-      expect(
-        () => table.validate(Endpoints.siteSettings, {'copyright': 'site'}),
-        returnsNormally,
-      );
-      expect(
-        () => table.validate(Endpoints.unreadCount, {'count': 3}),
-        returnsNormally,
-      );
-      expect(
-        () => table.validate(Endpoints.categoriesTree, {}),
-        throwsFormatException,
-      );
-      expect(
-        () => table.validate(Endpoints.meNotifications, {}),
-        throwsFormatException,
-      );
-      expect(table.policy(Endpoints.login), isNull);
-      expect(table.policy(Endpoints.article(1)), isNull);
-      expect(table.policy(Endpoints.like(1)), isNull);
-      expect(table.policy(Endpoints.likeStatus(1))?.disk, isFalse);
-      expect(
-        table.resourceTags(Endpoints.likeStatus(1)),
-        containsAll(['private', 'reactions:1']),
-      );
-      expect(
-        table.mutationTags(Endpoints.like(1), null),
-        contains('reactions:1'),
-      );
-      expect(
-        table.mutationTags(Endpoints.comments(1), null),
-        contains('comments:1'),
-      );
-      expect(
-        table.mutationTags(Endpoints.favorite(1), null),
-        contains(Endpoints.meFavorites),
-      );
-      expect(
-        table.mutationTags(Endpoints.submit(1), null),
-        containsAll(['articleBodies', 'articleLists', Endpoints.meArticles]),
-      );
-      expect(
-        table.forQuery(Endpoints.articles, {
-          'page': 4,
-        }, table.policy(Endpoints.articles)!).disk,
-        isFalse,
-      );
-      expect(
-        Endpoints.article('含 空格/slug'),
-        '/articles/%E5%90%AB%20%E7%A9%BA%E6%A0%BC%2Fslug',
-      );
-    },
-  );
+// 假 Repository 增加一个能力：
+// 连续两次 load，第二次立刻让第一次抛出 CacheSuperseded
+class ControllableRepository extends FakeRepository {
+  var supersedeNext = false;
+  // ...
+}
 ```
 
-## 把容易出错的路径走一遍
+**这个能力是为了测那个 bug 才加的**，之前没人想过要它。
 
-我会用这个场景做一次可复现排查：**只测 happy path 导致过期会话和缓存竞态没有回归保护**。先用 fake vault、fake adapter 和可控 Completer 重放边界时序；如果把问题定位在“只手工点测”，修正方向是“单元测规则、Widget 测交互、集成测组合路径，各层共享固定证据”。最后再验证正常路径没有退化，并把边界条件留在自动化检查里。
+教训是：**测试会系统性地覆盖你想到的情况，遗漏你没想到的。** 而"想到"这件事和写代码时的兴奋程度负相关——**功能写完之后，人对它的思考强度会下降**，正好是写测试的时候。
 
-| 方案比较 | 简化做法 | 当前实现/推荐做法 |
-|---|---|---|
-| 本文核心选择 | 只手工点测 | 分层自动验证 |
-| 错误处理 | 失败后清空或静默忽略 | 保留可恢复状态，给出明确反馈 |
-| 验证方式 | 只检查成功结果 | 注入边界条件并检查回归 |
+所以现在的做法是：**修 bug 时必须加测试**，不管那个 bug 当初有没有测试覆盖。
 
-| 排错步骤 | 要观察什么 | 通过条件 |
-|---|---|---|
-| 复现 | 只测 happy path 导致过期会话和缓存竞态没有回归保护 | 可以稳定触发或明确构造该输入 |
-| 定位 | 用 fake vault、fake adapter 和可控 Completer 重放边界时序 | 找到责任层和状态归属 |
-| 修正 | 单元测规则、Widget 测交互、集成测组合路径，各层共享固定证据 | 失败不污染后续页面或账号 |
+这个规则的价值在于：**修 bug 的那一刻，你对这个 bug 的理解是最深的**——比写功能的时候更深，因为你在复现和定位上花了时间。那是补测试最好的时机。
+
+## 一条我一开始想省掉的事
+
+`review_contract_test.dart` 那类测试，我一开始觉得没必要。
+
+理由是："契约和代码是不是对得上，肉眼看一下生成文件就知道了。"
+
+而它的价值在一次"手改了生成文件"之后才显现：有人为了加个字段直接在 `models.dart` 里写了一行 `String? get xxx`，当时能编译、能跑，什么问题都没有——**直到下一次跑生成器，那行消失，然后一个"莫名其妙"的字段为空报错。**
+
+M4-03 讲过我犯过这个错。而那次之后我加的测试不是"检查 models.dart 能不能生成"，是"**检查 models.dart 和契约生成的结果一致**"。
+
+后者能在任何时候发现"有人手改了生成文件"。它防的是一个**已经犯过的错**，而不是一个假想的错。
+
+同类的还有 M4-08 讲的那个"给故意不做的事写测试"——`Retry-After: 60` 不等待那条。**它防的不是功能，是"优化掉一个看似多余的判断"这个动作。**
+
+## 覆盖率这件事，我的态度是保留的
+
+Flutter 有官方的覆盖率工具，能生成一份报告告诉你哪些行没被测到。
+
+我看过那份报告，它显示测试覆盖了大约三分之一的代码。
+
+**而我不打算补那三分之二。** 理由在前面说过了：**测试的投入应该和"错了能不能被用户发现"成反比。**
+
+补那些覆盖率是为了好看，而我的判断是：**一个低覆盖但关键路径全测的测试集，比一个高覆盖但都是 getter 测试的测试集有用得多。**
+
+一个反面例子：如果给 122 个 Widget 各写一个"渲染出来不崩溃"的测试，覆盖率会好看很多，但它们抓不到任何 bug——**因为大部分 bug 不导致崩溃。**
+
+这个判断有一个前提：**我知道哪些路径重要。** 这个判断如果错了（某条路径不重要但实际很重要），就会漏。所以现在的做法是：**每次线上或者真机出问题，都回来补一条测试。** 而 M4-25 讲的那类问题（大字号、深色对比度）只能靠人看——**那部分我没有任何机制，只能靠 review 时记得。**
 
 ## 小结
 
-测试证据必须写清环境、对象和边界。单测证明规则、Widget 测试证明界面状态、隔离集成测试证明端到端流程，线上只读只证明公开访问样本。将生产写入与本地测试库隔离，既保护真实数据，也能让测试可重复。
+这一篇没有代码可讲，讲的是判断：
+
+1. **三层测试各证明不同的事** —— 单元测边界、Widget 测交互、集成测分层协作。
+2. **线上只读验证只证明"此刻能通"** —— 单列一类，不让它的"通过"被误解。
+3. **可注入的时钟把慢测试变快测试** —— 而且顺带让测试变确定。
+4. **测试可行性反过来约束设计** —— 能被测的代码要能替换依赖。
+5. **修 bug 时必须补测试** —— 那一刻你对 bug 理解最深。
+6. **为"故意不做的事"写测试** —— 防的是"优化掉防御"这个动作。
+7. **不为覆盖率而补测试** —— 按"错了能不能被发现"来决定投入。
+
+第 5 条是这一篇的核心。它把测试从"事后活动"变成了"开发过程的一部分"——不是"功能写完了去补测试"，而是"发现问题的时候顺手把它固定住"。
+
+第 7 条是个有争议的选择，我知道会有人反对。**但我认为"明确的低覆盖"比"虚高的高覆盖"更安全**，因为前者会诚实地告诉你哪里没测。
+
+下一篇讲构建与发布——Android 签名、iOS 证书、以及一个绕不开的现实：**本地开发机没有 Xcode 意味着什么**。
 
 ## 延伸阅读
 
-- [Flutter 缓存与图片优化]({{LINK:M4-24}})
-- [构建与发布准备：Android、iOS 和签名边界]({{LINK:M4-27}})
-- [质量门禁：契约测试、会话竞态与浏览器验收](https://blog.csdn.net/fungleo/article/details/167218692)
+- [Flutter 缓存：fresh、stale、expired 与账号边界]({{LINK:M4-23}})
+- [内置 WebView：网页历史、App 返回与外链安全]({{LINK:M4-15}})
+- [用真实 API 构建首页：焦点、最新与热门内容]({{LINK:M4-10}})
+- [Flutter 构建与发布准备：Android、iOS 和签名边界]({{LINK:M4-27}})
 
 ---
 

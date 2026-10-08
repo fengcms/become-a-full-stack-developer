@@ -51,7 +51,7 @@
   - **作者自陈可信度判据**：✅ 加分 = 主动标注证据边界、主动纠正我报告的错前提、**拒绝用有缺陷的数字宣布满分**；⚠️ 扣分 = 察觉量具局限却只写免责声明、没换尺子补量一次。
   - 工具坑：`git diff <中文路径>` 因 macOS **NFD/NFC** 不匹配**静默返回空**（改用 glob）。
 
-## M6 Go 后端（`go-backend/`，已交付；**代码审阅 73 → 94/100**）
+## M6 Go 后端（`go-backend/`，已交付；**代码审阅 73 → 94 → 96/100**）
 - **Go 1.26.6 + net/http + GORM v2 + goose**，实现冻结 **OpenAPI 1.12.0 / 68 操作**（内嵌 JSON 快照 68=68 一致）。分层 `cmd{server,migrate,seed,data}` + `internal{领域包}` + `test`。定位**教学代码**（评分权重重押「注释与教学可读性 25 分」）。
 - 门禁 `review/check_go_quality.go`（Go AST，13 断言 + `--selftest`）；量化探针 `review/check_go_ast.go`。**默认排除 `_test.go`**（否则 159 行的 `TestAllOperations` 带偏「最大函数」口径）。`make verify` = gofmt + vet + `sync-contract.cjs --check` + test。
 - **第一轮（`043fda2`）73/100**：架构 19 / 抽离 17 / 去重 13 / **注释与教学 10** / 整洁 14。门禁 `PASS=3/FAIL=10`。P0 = 中文注释 0 行 + `e` 899 vs `err` 39；P1 = 软删除谓词手写 15 处、`pathID(r,` 25 处、>120 行 103 行（最差 443 字符）、`Normalize` 99 行、`contract.Load` 嵌套 7 层。12 条工单 A-1~A-12。定性：**工程判断力强，缺「面向人的表达」**。
@@ -59,6 +59,10 @@
 - **第二轮唯一未满分原因 = 门禁盲区**：`check_go_quality.go` 的「中文注释 ≥ 120」只数**含 CJK 的行数**，**不判注释是否正确**。实测抓到 `values.go:73 func Text(s string) *string` 的文档「可空输入返回 nil」是从同文件方法**复制**的错文档（该函数永不返回 nil）；`article/query.go` 两个 `Get` 文档逐字重复且包级那条失实。→ **属「为达成指标牺牲正确性」的最小样本**；作者自己在回复 §5.5 写了「统计不是教学质量的充分条件」，其代码里恰好有反例。另残留 9 条英文内联注释、3 处固定查表每调用重建。
 - **对作者回复 §5（6 条边界声明）的裁定：全部接受**。其中**我撤回自己第一轮的一个论据**——「`e` 会让 errcheck 格格不入」不成立（errcheck 查的是未处理错误，与变量拼写无关）；改名依据只能是清晰与一致性。
 - **独立性核验**：`git diff --stat 043fda2 9590cb1 -- scripts/ ../docs/api/` 为空 → 差分脚本与冻结契约未被放宽；作者未改评审工具、未宣称新评分。
+- **第三轮（`d08bf0d`）96/100**：架构 20 / 抽离 19 / 去重 19 / **注释与教学 23** / 整洁 15。**上轮 4 条建议 4/4 达成**（两处错文档按各自实现改对；9 条英文内联注释中文化；3 处固定查表提为包级只读映射；含测试证据改用 `git archive` 重采、两次 `cmp` 逐字节一致，漂移消除）。**门禁盲区新发现**：① **同包多处「包注释」**（`internal/platform/model` 15 处逐字重复、`cmd/seed` doc.go+main.go 两处）→ **`go/doc` 每包只取一处，其余是「写了但看不到」的无效文档**（model 处自 `043fda2` 即存在；cmd/seed 处是第一轮补 doc.go 的副作用）。② 包注释语言未统一（9 中 / 30 英），新口径写的是「**允许**保留英文」→ 未收口。③ 接口方法（`storage.Provider`）无文档：`go/parser` 里接口方法是 `*ast.Field` 非 `FuncDecl` → A-3「缺文档=0」的另一盲区。报告 `review/M6-Go后端代码第三轮审阅报告.md`。
+- **用户提问「`github.com/fengcms/become-a-full-stack-developer/go-backend` 自引用为何绕 GitHub」→ 实测非缺陷，无需改**：模块路径是**身份标识而非下载地址**；`GOPROXY=off go build ./...` 断网仍 exit 0、`go.sum` 对自身路径 0 命中、`go list -m` 返回主模块自身、非 .go 文件（md/Makefile/CI）零引用。唯一真实关联点：模块在仓库**子目录**，若对外发版 tag 须写 `go-backend/vX.Y.Z`。
+- **裁定作者「不把重复文本做成硬门禁」→ 接受，且本轮反向佐证**：`storage` 的 `Local/R2` 接口实现三对文档逐字相同却**正当** → 硬门禁会误报。**正确性对应需人工核对；字符串相等既非充分也非必要。**
+- **跨项目可复用（第三轮）**：**「文档唯一性」不止于符号级**——`go/doc` 对每包**只取一处** package 注释，包内重复＝无效文档；检测须用 `go/parser`+`go/doc.NewFromFiles` 真语法树（词法扫不出来）。
 
 ## M2 前端（React 管理后台）
 目录 `manage-frontend/`，Vite8 + React19 + TS6 + Tailwind4 + shadcn/ui + TanStack Query5 + Zustand5 + RHF7/Zod4 + Biome2.5，`strict`，dev 12000。取数：分页一律 `data.list` + `data.pagination.{page,pageSize,total,totalPages}`；信封 `{code,message,data,requestId,timestamp}`，`code:0` 成功；base `/api/v1`；token 内存不落 localStorage；附件 `ORIGIN + /files/<key>`。CORS 方案 B（owner 暂定）：dev 走 Vite 同源代理，Cookie 分支上线前须验证。
@@ -70,6 +74,6 @@
 - 沙箱：Bash 单次读约 10~20 文件即 SIGTERM(137)，需分片。
 
 ## 待 owner 裁定 / 待办
-- **教学代码注释用中文还是英文**（决定 M6 的 A-1/A-3 口径）——第二轮实际已按中文整改，建议补进 `01-Go工程最佳实践.md` 成文。
+- **M6 包注释口径未收口**：第三轮已在 `01-Go工程最佳实践.md §8` 写成「散文注释用中文；包级说明**允许**保留英文；指令/协议名/标识符/原文不翻译」——但「允许」≠「统一」（实测 9 中 / 30 英）。建议二选一写死（按中文教学**建议统一中文**），并收口「同包多包注释」（`model` 15 处只留 1、`cmd/seed` 并入 `doc.go`）。
 - M4 设计侧 13 项口径（见上）；`M4-设计AI原型第四轮评审回复.md` 等 owner 通知。
 - 收官「全量重发」覆盖累积清单（含所有发布后被回填/修正的篇）。
