@@ -70,7 +70,7 @@ async function bulkDelete() {
     <PageHeader title="文章管理" description="管理稿件、审核投稿并维护已发布内容"><template #actions><RouterLink to="/articles/new"><NButton type="primary">新建文章</NButton></RouterLink></template></PageHeader>
     <section class="content-card card-padding">
       <div class="toolbar"><NInput v-model:value="keyword" clearable placeholder="搜索文章标题或关键词" style="max-width: 320px" @keyup.enter="articles.refetch()" /><NSelect v-model:value="status" :options="statusOptions" style="width: 150px" /><span class="grow" /><NButton v-if="selected.length" type="error" secondary @click="bulkDelete">删除所选（{{ selected.length }}）</NButton><NButton @click="articles.refetch()">刷新</NButton></div>
-      <NDataTable :columns="columns" :data="articles.data.value?.list ?? []" :loading="articles.isPending.value" :row-key="(row: ArticleSummary) => row.id" :checked-row-keys="selected" :on-update:checked-row-keys="(keys) => selected = keys" :scroll-x="1120" :pagination="{ page: page, pageSize, itemCount: articles.data.value?.pagination.total ?? 0, showSizePicker: false, onUpdatePage: (value: number) => page = value }" />
+      <NDataTable remote :columns="columns" :data="articles.data.value?.list ?? []" :loading="articles.isPending.value" :row-key="(row: ArticleSummary) => row.id" :checked-row-keys="selected" :on-update:checked-row-keys="(keys) => selected = keys" :scroll-x="1120" :pagination="{ page: page, pageSize, itemCount: articles.data.value?.pagination.total ?? 0, showSizePicker: false, onUpdatePage: (value: number) => page = value }" />
     </section>
   </section>
 </template>
