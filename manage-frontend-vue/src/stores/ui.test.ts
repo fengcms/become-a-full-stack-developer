@@ -30,4 +30,15 @@ describe('ui theme preference', () => {
     expect(ui.resolvedTheme).toBe('light')
     expect(document.documentElement.classList.contains('dark')).toBe(false)
   })
+
+  it('persists the sidebar state using the React admin storage format', () => {
+    const ui = useUiStore()
+    ui.toggleSidebar()
+
+    expect(ui.sidebarCollapsed).toBe(true)
+    expect(JSON.parse(localStorage.getItem('befull-admin-ui') || '{}')).toEqual({
+      state: { sidebarCollapsed: true },
+      version: 0,
+    })
+  })
 })
