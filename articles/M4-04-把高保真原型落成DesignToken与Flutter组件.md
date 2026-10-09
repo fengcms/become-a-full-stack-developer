@@ -10,7 +10,7 @@
 
 这篇讲怎么把原型翻译成代码，以及为什么这件事的难点**不在实现，在约束的传递**。
 
-{{IMG:M4-04-封面}}
+![成为全栈·Flutter App 篇·把高保真原型落成 Design Token 与 Flutter 组件](https://i-blog.csdnimg.cn/direct/fe9da5ea69ae44fd9bd4019056647efa.png)
 
 ## 从间距开始：先定住最不可能出错的
 
@@ -123,6 +123,8 @@ LinearGradient(
 另一个选择是单独做一个 `AppGradients extends ThemeExtension<AppGradients>`，把渐变集中管理。**这个我最终没做**——理由是渐变只用在三四个地方，散落的成本还能接受，而多一个扩展类的复杂度更高。
 
 **这是一个我知道有争议的取舍。** 如果后面渐变用到十几处，就应该收回来。
+
+![把令牌接到 Flutter 的主题系统](https://i-blog.csdnimg.cn/direct/b974b45790344d5fb9321f0d71706d44.png)
 
 ## ThemeBuilder：把令牌接到 Flutter 的主题系统
 

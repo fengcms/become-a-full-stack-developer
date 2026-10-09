@@ -8,7 +8,7 @@
 
 这篇就讲这件事：一个 OpenAPI 契约，怎么变成 Flutter App 里能真正跑起来的那条数据管线；那 24 行生成器里做了哪些取舍，以及为什么我在几个地方**故意不**做得更"通用"。
 
-{{IMG:M4-03-封面}}
+![成为全栈·Flutter App 篇·Flutter 工程骨架与 OpenAPI 代码生成](https://i-blog.csdnimg.cn/direct/8d28cbf7744444bab1b1d15f2c2e6553.png)
 
 ## 目录不是画出来的，是撞出来的
 
@@ -35,7 +35,7 @@ flutter-app/lib/                    # 122 个 .dart 文件
 
 真正定下这棵树的顺序也不是先设计后实现，而是被三个具体问题逼出来的：生成代码放哪不被误改、Repository 和 Widget 谁负责缓存策略、跨账号的私有数据放哪个目录——第一个问题直接决定了 `core/generated` 要独立出来，因为它是**唯一不允许手改**的目录。
 
-{{IMG:M4-03-目录}}
+![目录](https://i-blog.csdnimg.cn/direct/c93d4b46fd8e4f8c8c6a4179b5fbe91a.png)
 
 ## 那 24 行生成器，做了什么取舍
 
