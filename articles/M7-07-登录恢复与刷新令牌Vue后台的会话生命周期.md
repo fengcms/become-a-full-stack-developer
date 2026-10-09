@@ -134,7 +134,7 @@ Vue 后台的会话生命周期是：登录建立内存态，启动时用 Cookie
 
 - [用 fetch 建一层可控的请求内核]({{LINK:M7-06}})
 - [Vue Router 如何守住多角色后台边界]({{LINK:M7-08}})
-- [API 契约：刷新令牌与令牌轮换](../api/openapi.v1.yaml)
+- [API 契约：刷新令牌与令牌轮换](../docs/api/openapi.v1.yaml)
 - [MDN：Set-Cookie](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie)
 
 ---

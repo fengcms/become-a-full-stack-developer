@@ -103,7 +103,7 @@ Biome 负责格式与 lint，`vue-tsc` 检查模板和 TS，Vitest 验证已覆�
 
 - [Vue 后台测试怎么分层：从纯函数到真实页面路径]({{LINK:M7-22}})
 - [同一管理后台的 React/Vue 对照与重写复盘]({{LINK:M7-24}})
-- [Vue 管理后台工程说明](../vue-manage-frontend/README.md)
+- [Vue 管理后台工程说明](../docs/vue-manage-frontend/README.md)
 - [API 契约与兼容性：接口文档怎样约束前后端]({{LINK:B-16}})
 
 ---
