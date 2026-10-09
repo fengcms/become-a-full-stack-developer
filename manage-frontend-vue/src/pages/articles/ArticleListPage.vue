@@ -75,4 +75,4 @@ async function bulkDelete() {
   </section>
 </template>
 
-<style scoped>.table-link{color:#365f91;font-weight:550}.row-actions{display:flex;gap:2px}</style>
+<style scoped>.table-link{color:var(--accent);font-weight:550}.row-actions{display:flex;gap:2px}</style>

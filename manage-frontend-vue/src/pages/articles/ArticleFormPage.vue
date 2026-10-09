@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { MdEditor } from 'md-editor-v3'
+import { storeToRefs } from 'pinia'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import 'md-editor-v3/lib/style.css'
 import { NAlert, NButton, NForm, NFormItem, NInput, NSelect, NTabPane, NTabs, useDialog, useMessage } from 'naive-ui'
@@ -9,11 +10,15 @@ import { createArticle, getArticle, setArticleStatus, updateArticle } from '@/ap
 import { uploadFile } from '@/api/attachments'
 import { listCategoryTree } from '@/api/categories'
 import { listTags } from '@/api/tags'
+import { pinia } from '@/app/pinia'
 import { fileUrl } from '@/lib/fileUrl'
+import { useUiStore } from '@/stores/ui'
 import type { Article, ArticleCreate, ArticleStatus, CategoryNode } from '@/types/common'
 
 const route = useRoute()
 const router = useRouter()
+const ui = useUiStore(pinia)
+const { resolvedTheme } = storeToRefs(ui)
 const message = useMessage()
 const dialog = useDialog()
 const qc = useQueryClient()
@@ -126,7 +131,7 @@ async function uploadCover(event: Event) {
     <NAlert v-else-if="editing && articleQuery.isPending.value" type="info">正在加载文章…</NAlert>
     <NTabs v-else v-model:value="activeTab" type="line" animated>
       <NTabPane name="content" tab="内容">
-        <div class="md-editor"><MdEditor v-model="content" language="zh-CN" :disabled="busy" :on-upload-img="uploadImages" :toolbars="['bold','underline','italic','strikeThrough','title','sub','sup','quote','unorderedList','orderedList','task','codeRow','code','link','image','table','mermaid','katex','revoke','next','save','pageFullscreen','fullscreen']" /></div>
+        <div class="md-editor"><MdEditor v-model="content" :theme="resolvedTheme" language="zh-CN" :disabled="busy" :on-upload-img="uploadImages" :toolbars="['bold','underline','italic','strikeThrough','title','sub','sup','quote','unorderedList','orderedList','task','codeRow','code','link','image','table','mermaid','katex','revoke','next','save','pageFullscreen','fullscreen']" /></div>
       </NTabPane>
       <NTabPane name="settings" tab="发布设置">
         <NForm label-placement="top" class="article-settings-grid">

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { MoonOutline, SunnyOutline } from '@vicons/ionicons5'
 import { NAvatar, NButton, NDropdown, NIcon, useMessage } from 'naive-ui'
 import { computed } from 'vue'
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
@@ -7,8 +8,10 @@ import { pinia } from '@/app/pinia'
 import { visibleMenuGroups } from '@/config/menu'
 import { ROLE_LABELS } from '@/config/roles'
 import { useAuthStore } from '@/stores/auth'
+import { useUiStore } from '@/stores/ui'
 
 const auth = useAuthStore(pinia)
+const ui = useUiStore(pinia)
 const route = useRoute()
 const router = useRouter()
 const message = useMessage()
@@ -40,12 +43,15 @@ async function choose(key: string) {
     <main class="admin-main">
       <header class="topbar">
         <div class="topbar-title">内容运营 · 管理控制台</div>
-        <NDropdown :options="options" @select="choose">
-          <NButton text class="topbar-user">
-            <NAvatar round size="small" :src="auth.user?.avatar || undefined">{{ (auth.user?.nickname || auth.user?.username || 'U').slice(0, 1) }}</NAvatar>
-            <span class="user-copy"><span class="user-name">{{ auth.user?.nickname || auth.user?.username }}</span><span class="user-role">{{ auth.user ? ROLE_LABELS[auth.user.role] : '' }}</span></span>
-          </NButton>
-        </NDropdown>
+        <div class="topbar-actions">
+          <NButton quaternary circle :aria-label="ui.resolvedTheme === 'dark' ? '切换浅色模式' : '切换深色模式'" @click="ui.toggleTheme()"><template #icon><NIcon><component :is="ui.resolvedTheme === 'dark' ? SunnyOutline : MoonOutline" /></NIcon></template></NButton>
+          <NDropdown :options="options" @select="choose">
+            <NButton text class="topbar-user">
+              <NAvatar round size="small" :src="auth.user?.avatar || undefined">{{ (auth.user?.nickname || auth.user?.username || 'U').slice(0, 1) }}</NAvatar>
+              <span class="user-copy"><span class="user-name">{{ auth.user?.nickname || auth.user?.username }}</span><span class="user-role">{{ auth.user ? ROLE_LABELS[auth.user.role] : '' }}</span></span>
+            </NButton>
+          </NDropdown>
+        </div>
       </header>
       <RouterView />
     </main>
