@@ -16,8 +16,10 @@ FLUTTER = os.path.join(ROOT, 'flutter-app')
 # 免责话术特征词：只收「自我免责」类表述。
 # 注意排除纯技术术语：'边界'（信任边界/凭证边界）、'无法'（技术上确实做不到时）单独判定，
 # 否则会把讲安全边界的正常技术表述误判为免责腔。
+# 注意：'声明' 已移出——在契约类文章里它是术语（「契约里声明了 x-authz」），
+# 不是自我免责。同理排除 '边界'（信任边界）、'无法'（技术上做不到）。
 HEDGE = ['不能替代', '不是唯一', '以实际为准', '不得', '并不', '不等于', '需要核对',
-         '必须核对', '示意', '不要假设', '未实现', '不能靠', '不应', '避免', '声明',
+         '必须核对', '示意', '不要假设', '未实现', '不能靠', '不应', '避免',
          '宣称', '不能写成', '不承诺', '不要把', '尚未', '只能由', '需自行']
 
 GATES = [
@@ -50,8 +52,51 @@ PROBES_EXTRA = {
               ('src/services/wechat.ts', "reason: 'transport_or_invalid_response'"),
               ('test/routes/wechat.test.ts', 'toHaveBeenCalledTimes(1)'),
               ('test/routes/wechat.test.ts', "redirect: 'manual'")],
+    # B 系列基础补充篇：同样回 node-backend 核真实性
+    'B-16': [('src/config/env.ts', 'JWT_SECRET'),
+             ('src/shared/response.ts', 'requestId')],
+    'B-17': [('src/middleware/error.ts', 'AppError'),
+             ('src/shared/response.ts', 'failResponse')],
+    'B-18': [('migrations/0001_wechat_credentials.sql', 'credentials_configured INTEGER NOT NULL DEFAULT 1'),
+             ('migrations/0000_windy_songbird.sql', 'CREATE TABLE `articles`'),
+             ('src/db/atomic.ts', 'client.batch('),
+             ('src/db/migrate-wechat.ts', 'PRAGMA table_info(users)')],
+    'B-19': [('src/config/env.ts', "z.enum(['local', 'r2'])"),
+             ('src/config/env.ts', 'getActiveEnv'),
+             ('src/shared/response.ts', 'globalThis.crypto?.randomUUID'),
+             ('src/services/wechat.ts', 'missing_configuration')],
+    'B-20': [('src/services/wechat.ts', 'isUniqueConstraintError'),
+             ('src/services/setup-account.ts', 'credentials_configured=0'),
+             ('src/services/setup-account.ts', 'EXISTS (SELECT 1 FROM wechat_identities'),
+             ('src/services/setup-account.ts', 'changes()=1'),
+             ('src/db/atomic.ts', 'r.meta.changes')],
+    'B-06': [('migrations/0000_windy_songbird.sql', 'uniq_like'),
+             ('migrations/0000_windy_songbird.sql', 'uniq_token_hash')],
+    'B-11': [('src/shared/pagination.ts', 'SORT_COLUMNS'),
+             ('src/shared/pagination.ts', 'bare in SORT_COLUMNS'),
+             ('src/middleware/error.ts', '[unhandled]'),
+             ('src/services/user.ts', '不暴露账号是否存在')],
+    'B-12': [('src/middleware/auth.ts', 'ROLE_RANK'),
+             ('src/middleware/auth.ts', 'resolveOwner'),
+             ('src/middleware/auth.ts', 'ErrCode.NOT_FOUND, 404'),
+             ('src/middleware/auth.ts', 'optionalAuthMiddleware'),
+             ('src/middleware/auth.ts', "startsWith('Bearer ')")],
+    'B-13': [('flutter:lib/core/cache/data_cache.dart', 'staleHit'),
+             ('flutter:lib/core/cache/data_cache.dart', 'void fence'),
+             ('flutter:lib/features/repository.dart', 'mutationTags'),
+             ('flutter:lib/features/repository.dart', 'cache.fence')],
+    'B-14': [('src/db/atomic.ts', "'batch' in client"),
+             ('src/db/atomic.ts', 'client.transaction('),
+             ('src/middleware/error.ts', '[unhandled]')],
+    'B-15': [('src/app.ts', 'corsMiddleware'),
+             ('src/app.ts', 'onError'),
+             ('src/config/env.ts', 'readEnv'),
+             ('src/worker.ts', 'readEnv'),
+             ('src/shared/pagination.ts', 'Math.min(100')],
 }
 BACKEND = os.path.join(ROOT, 'node-backend')
+FLUTTER_ROOT = FLUTTER
+CONTRACT = os.path.join(ROOT, 'docs', 'api', 'openapi.v1.yaml')
 
 
 def find(pattern):
@@ -82,7 +127,9 @@ def check(key):
     lines = body.split('\n')
     first = next((l.strip() for l in lines[1:] if l.strip()), '')
     fail_narr = 1 if re.search(
-        r'我一开始|我曾|结果下一次|真踩到|我真的踩过|我错了|第一反应是|最初.{0,6}(以为|写|做)|改成了|写错过|我数错|我一开始的判断是错|以为.{0,8}失败',
+        r'我一开始|我曾|结果下一次|真踩到|我真的踩过|我错了|第一反应是|最初.{0,6}(以为|写|做)'
+        r'|改成了|写错过|我数错|我一开始的判断是错|以为.{0,8}失败'
+        r'|差点.{0,6}(漏|忘|没)|当时没想通|回头看.{0,10}发现|花了.{0,4}小时|花了半天',
         body) else 0
     img = len(re.findall(r'\{\{IMG', body))
     link = len(re.findall(r'\{\{LINK', body))
@@ -114,13 +161,19 @@ def check(key):
     ok &= good
     print(f'  {"辅助区":<9}{"保留" if good else "缺失":>8}                '
           f'{"PASS" if good else "FAIL"}')
+    # 辅助区标记必须唯一（正文里若提及该标记字面量会误增计数 → 误判正文边界）
+    marks = t.count('PUBLISH_ASSIST_START')
+    ok &= marks == 1
+    print(f'  {"辅助区标记":<9}{marks:>8}  (须为 1)        {"PASS" if marks == 1 else "FAIL"}')
     # 乱码/替换字符检查
     bad = body.count('\ufffd')
     ok &= bad == 0
     print(f'  {"替换字符":<9}{bad:>8}                {"PASS" if bad == 0 else "FAIL"}')
     # 标题格式：必须以「# 成为全栈·…篇·」开头（副标题可无冒号）
     title = body.lstrip().split('\n')[0]
-    title_ok = title.startswith('# 成为全栈·') and '篇·' in title
+    # 兼容主线「M0~M5 · <段名>篇·」与支线「基础补充·」两种前缀
+    title_ok = (title.startswith('# 成为全栈·')
+                and ('篇·' in title or '基础补充·' in title))
     ok &= title_ok
     print(f'  {"标题格式":<9}{"规范" if title_ok else "异常":>8}                '
           f'{"PASS" if title_ok else "FAIL"}')
@@ -214,7 +267,10 @@ def verify_backend_code(key):
     print(f'\n  --- 代码真实性核验 ({key}) ---')
     ok = True
     for rel, frag in items:
-        fp = os.path.join(BACKEND, rel)
+        if rel.startswith('flutter:'):
+            fp = os.path.join(FLUTTER, rel.split(':', 1)[1])
+        else:
+            fp = os.path.join(BACKEND, rel)
         try:
             src = open(fp, encoding='utf-8').read()
             hit = _norm(frag) in _norm(src)
@@ -222,6 +278,38 @@ def verify_backend_code(key):
             hit = False
         ok &= hit
         print(f'    {"PASS" if hit else "FAIL"}  {rel.split("/")[-1]:<24} {frag[:44]}')
+    return ok
+
+
+def verify_contract_claims(key):
+    """核验文章对契约/规模的具体断言（paths 数、用例数、x-idempotent 数量）。"""
+    import glob as _g
+    spec = open(CONTRACT, encoding='utf-8').read() if os.path.exists(CONTRACT) else ''
+    tfiles = list(_g.glob(os.path.join(BACKEND, 'test', '**', '*.test.ts'), recursive=True))
+    n_files = len(tfiles)
+    n_cases = sum(len(re.findall(r'(?m)^\s*(?:it|test)\(',
+                            open(f, encoding='utf-8').read())) for f in tfiles)
+    n_paths = len(re.findall(r'^  /', spec, re.M))
+    n_ops = len(re.findall(r'operationId:', spec))
+    n_idem = len(re.findall(r'x-idempotent: true', spec))
+    n_authz = len(re.findall(r'x-authz:', spec))
+
+    table = {
+        'B-16': [('契约 paths', n_paths, 54), ('契约 operations', n_ops, 68),
+                 ('x-authz 声明', n_authz, None)],
+        'B-17': [('测试文件数', n_files, 22), ('用例总数', n_cases, 155)],
+        'B-20': [('x-idempotent', n_idem, 4)],
+    }
+    items = table.get(key)
+    if not items:
+        return True
+    print(f'\n  --- 契约/规模断言核验 ({key}) ---')
+    ok = True
+    for name, actual, expect in items:
+        hit = actual > 0 if expect is None else actual == expect
+        ok &= hit
+        detail = f'实测 {actual}' + (f' / 文章称 {expect}' if expect else ' (仅需存在)')
+        print(f'    {"PASS" if hit else "FAIL"}  {name:<20} {detail}')
     return ok
 
 
@@ -254,6 +342,7 @@ if __name__ == '__main__':
         allok &= check(k)
         allok &= verify_code(k)
         allok &= verify_backend_code(k)
+        allok &= verify_contract_claims(k)
         allok &= verify_links(k)
     print('\n' + ('=' * 46))
     print('总判定: ' + ('全部 PASS' if allok else '存在 FAIL，需修'))
