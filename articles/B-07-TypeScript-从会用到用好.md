@@ -39,6 +39,8 @@ if (!user) throw new AppError(ErrCode.USERNAME_OR_PASSWORD_ERROR, 401);
 
 **——而这行断言其实不是为了测试，是为了让类型检查通过。**
 
+{{IMG:B-07-封面}}
+
 ## noUncheckedIndexedAccess：最值钱的一行
 
 先说这一行，因为它抓到的 bug 最多。
@@ -111,6 +113,8 @@ if (!user) throw new AppError(ErrCode.INTERNAL, 500);
 
 **两种语言在"索引越界"这件事上的默认选择相反**：Go 返回零值（可能是个 nil 指针），TS 编译期报错。**而这个项目的选择是"用类型系统挡住"。**
 
+{{IMG:B-07-联合类型}}
+
 ## 其余几行各管什么
 
 | 配置 | 防什么 | 例子 |
@@ -180,6 +184,8 @@ export type { AuthUser, AuthVars } from '@/types/auth';
 **"上提为单一事实源"是重点** ——**原本它定义在中间件文件里，但很多地方要引用，于是搬到一个专门的地方，然后从原位置再导出一次。**
 
 **这个"定义一处、多处导出"的做法在大型项目里很常见**，而它的价值是：**移动定义位置时，不用改所有 import。**
+
+{{IMG:B-07-类型来源}}
 
 ## 类型从哪来：生成 vs 手写
 
@@ -317,10 +323,9 @@ TypeScript 这章，真正让代码质量提升的不是"类型系统多强"，�
 
 ## 延伸阅读
 
-- [TypeScript：从会用到用好]({{LINK:B-07}})
 - [契约先行：设计一套被七个端复用的 API](https://blog.csdn.net/fungleo/article/details/164140515)
 - [接口文档自动化：让 OpenAPI 与代码不脱节](https://blog.csdn.net/fungleo/article/details/164584149)
-- [Node.js 运行时：事件循环与异步]({{LINK:B-14}})
+- [后端工程从零搭建：TypeScript、目录与热更新](https://blog.csdn.net/fungleo/article/details/164186950)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -354,6 +359,7 @@ TypeScript 可以在开发阶段发现许多错误，却不能保证网络响应
 
 1. B-07-封面：TypeScript 编译器检查开发代码，运行时 API 数据另经过 schema 验证，两个边界明确分开。
 2. B-07-联合类型：请求状态 idle/loading/success/error 的合法状态图。
+3. B-07-类型来源：放在正文同名占位处，类型来源示意：从契约生成与手写类型各自的适用范围。
 
 ### 发布前核对
 

@@ -152,6 +152,8 @@ local provider 的几个关键行为可以汇总成表：
 
 本地存储的原子 rename 只解决文件系统内的可见性，不等于数据库 transaction。对象和附件行之间仍有跨资源失败窗口，下一篇会讨论补偿。
 
+{{IMG:M6-26-provider}}
+
 ## 三、R2 用 S3 兼容 API 但保留明确配置
 
 R2 provider 使用 AWS SDK 的 S3 client，按 Cloudflare R2 endpoint、bucket、access key、secret 创建客户端。配置不完整时拒绝构造。SDK 区域配置为 auto，启用 path-style endpoint，HTTP client 设定 15 秒超时，并在必要时进行 checksum 处理。
@@ -244,6 +246,8 @@ Provider key 是内部对象寻址，URL 是客户端 HTTP 路由，Attachment �
 
 对象归属也不由 URL 决定。删除附件时，服务验证当前用户或管理角色，再处理数据库记录和共享对象引用。知道 key 不代表获得删除权限。
 
+{{IMG:M6-26-对象与引用}}
+
 ## 六、测试抽象的边界
 
 storage.Provider 单测可覆盖：危险 key 拒绝、本地原子写入、取消上下文、对象不存在、文件权限或 IO 错误、R2 缺失码映射、R2 HTTP timeout 与读取上限。attachment 层另覆盖引用共享、权限、内容摘要 key 和元数据故障补偿。
@@ -258,10 +262,10 @@ M6 的 Provider 仅承担对象 Put/Get/Delete；本地 provider 防路径穿越
 
 ## 延伸阅读
 
-- [文件与数据库没有共同事务：共享附件怎样补偿]({{LINK:M6-27}})
-- [从 Go 重写分层架构：领域包、装配根与最小抽象]({{LINK:M6-03}})
-- [Go HTTP 边界怎么守：鉴权、业务错误、限流与上传解析]({{LINK:M6-15}})
-- [文件上传：R2 / 本地磁盘双实现与签名直传](https://blog.csdn.net/fungleo/article/details/164453365)
+- [文件上传：R2 与本地磁盘双实现与签名直传](https://blog.csdn.net/fungleo/article/details/164453365)
+- [配置管理：环境变量、多环境与密钥安全](https://blog.csdn.net/fungleo/article/details/164288947)
+- [Node 后端分层架构：Controller、Service、Repository 的边界](https://blog.csdn.net/fungleo/article/details/164209137)
+- [异步交互的一致性：上传、批量操作与部分失败](https://blog.csdn.net/fungleo/article/details/166354291)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -295,6 +299,8 @@ M6 如何让同一附件服务读写本地磁盘或 Cloudflare R2？本文介绍
 
 1. M6-26-封面：attachment service 连接数据库元数据和小型 Provider 接口，Provider 分别有 Local 与 R2 两个实现；责任边界用浅蓝白技术图表达。
 2. M6-26-对象与引用：对象字节独立存储，多个 attachment 行可引用同一 key；API URL 不暴露 bucket 或密钥。
+3. `M6-26-provider`：放在正文同名占位处，local 与 R2 两个存储 provider：接口只声明对象能力，不负责在故障时偷偷切换，切换是部署期的显式配置。
+
 
 ### 发布前核对
 

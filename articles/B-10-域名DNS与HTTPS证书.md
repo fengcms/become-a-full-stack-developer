@@ -36,6 +36,8 @@ routes = [{ pattern = "api-befull.kao9.com", custom_domain = true }]
 
 **而最容易混的是前两层**，因为它们都由 Cloudflare 自动管理——**用户看到的是"打不开"，而你去 Worker 日志里查，什么都没有。**
 
+{{IMG:B-10-记录类型}}
+
 ## DNS：TTL 是"最长可能陈旧时间"
 
 DNS 的作用是把名字解析成地址。而这个专栏的实际配置里，**DNS 甚至不是自己管的**：
@@ -133,6 +135,8 @@ const site = String.fromEnvironment('SITE_URL', defaultValue: '');
 **如果它配错了，分享出去的链接就是错的**——而这和证书不同，**它不会报错，只会让用户点到一个错地址。**
 
 **所以这类"拼错的配置"需要专门检查**，而不能指望运行时发现。
+
+{{IMG:B-10-四层定位}}
 
 ## 四层的问题，怎么定位
 
@@ -255,7 +259,7 @@ Cloudflare 的自动续期本来是有邮件通知的，**但我当时没配置�
 ## 延伸阅读
 
 - [Nginx 入门：反向代理与静态托管]({{LINK:B-09}})
-- [配置与运行观测：服务怎样安全启动和排障]({{LINK:B-19}})
+- [部署上线：从本地起服到真正对外服务](https://blog.csdn.net/fungleo/article/details/164815866)
 - [一篇后端双部署：适配层如何让一份代码跑在两套运行时](https://blog.csdn.net/fungleo/article/details/164816647)
 
 ---
@@ -290,6 +294,7 @@ Cloudflare 的自动续期本来是有邮件通知的，**但我当时没配置�
 
 1. B-10-封面：浏览器访问域名，DNS 解析到入口，TLS 证书验证后通过反向代理到应用。
 2. B-10-记录类型：A、AAAA、CNAME、TXT、MX 的用途对照图。
+3. B-10-四层定位：放在正文同名占位处，DNS 记录类型示意：A、AAAA、CNAME 与 TTL 的作用。
 
 ### 发布前核对
 

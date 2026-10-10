@@ -109,6 +109,8 @@ func Export(ctx context.Context, db *gorm.DB, source string) (*Snapshot, error) 
 
 Repeatable read 的实际能力依赖数据库驱动和隔离级别。SQLite 源快照及 PostgreSQL/MySQL 读事务要按目标数据库实测；导出文件创建本身不是加密备份。文件应该有访问权限、校验和、保留时限及安全删除方式。
 
+{{IMG:M6-28-导出快照}}
+
 ## 三、规范化兼容历史字段并检查拓扑顺序
 
 Snapshot.Normalize 校验版本必须等于 1，且只接受声明的 13 张表和模型列。不认识的列或额外表会拒绝；这样能阻止快照偷偷带入 session/dedup 等本次不迁移数据。
@@ -247,6 +249,8 @@ PostgreSQL 导入成功后会重置各表自增序列到现有最大 ID，避免
 
 一次真实导入之后要再次独立运行行数和关键关系核对，并启动新后端执行接口 smoke。不能只凭工具输出 imported counts 宣布迁移完成。
 
+{{IMG:M6-28-导入校验}}
+
 ## 六、离线命令示例与敏感数据
 
 概念上的导出命令如下：
@@ -289,10 +293,10 @@ M6 的 Snapshot 白名单覆盖 13 张业务表，排除活跃会话、阅读去
 
 ## 延伸阅读
 
-- [版本迁移与模型设计：为什么启动不执行 AutoMigrate]({{LINK:M6-17}})
-- [local 与 R2 存储抽象：接口应该小到什么程度]({{LINK:M6-26}})
-- [文件与数据库没有共同事务：共享附件怎样补偿]({{LINK:M6-27}})
-- [从 Node SQLite 到 PostgreSQL：迁移数据的停写边界](https://blog.csdn.net/fungleo/article/details/165111053)
+- [数据迁移：schema 变更如何不弄脏线上数据](https://blog.csdn.net/fungleo/article/details/164254868)
+- [文件上传：R2 与本地磁盘双实现与签名直传](https://blog.csdn.net/fungleo/article/details/164453365)
+- [Node 后端分层架构：Controller、Service、Repository 的边界](https://blog.csdn.net/fungleo/article/details/164209137)
+- [部署上线：从本地起服到真正对外服务](https://blog.csdn.net/fungleo/article/details/164815866)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -326,6 +330,8 @@ M6 的离线迁移工具如何把 Node SQLite 数据带到 Go PostgreSQL？本�
 
 1. M6-28-封面：Node SQLite 只读导出快照，规范化 13 张业务表后导入 PostgreSQL；附件对象通过独立迁移路径复制；以浅蓝白风格呈现。
 2. M6-28-导入校验：目标空库、parents-first、关系/计数审计、dry-run rollback、真实导入序列校正的步骤图。
+3. `M6-28-导出快照`：放在正文同名占位处，导入校验清单：目标库必须为空、parents-first 顺序、关系与计数审计，dry-run 走完整路径但不落库。
+
 
 ### 发布前核对
 

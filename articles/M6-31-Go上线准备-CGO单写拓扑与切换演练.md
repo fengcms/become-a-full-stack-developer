@@ -22,6 +22,8 @@ M6 Go 服务已经在本地 PostgreSQL 环境运行，三个数据库通过真�
 
 一个保守拓扑可以是单个 Go 写服务实例 + PostgreSQL + R2 + 反向代理/TLS。是否需要多实例，依据可用性目标和负载决定；教学工程当前的实现范围不应被写成高可用集群。
 
+{{IMG:M6-31-拓扑}}
+
 ## 二、四个程序与镜像职责
 
 make build 输出 server、migrate、data、seed。运行中的容器常驻只需要 server；发布/运维流程使用独立的一次性 migrate job；data 用于人工批准的数据搬迁；seed 只为开发环境创建样例，生产环境不应随服务启动自动跑它。
@@ -74,6 +76,8 @@ R2 配置由 endpoint/bucket/access key/secret 等组成，密钥只通过运行
 
 每项结果都记录环境、版本、日期、命令、日志位置和异常处理。尚未执行的保持 TODO，不用 Dockerfile 代码或本地 smoke 充数。
 
+{{IMG:M6-31-切换}}
+
 ## 小结：部署准备和生产上线是两个阶段
 
 M6 提供 Go 1.26.6 多阶段 CGO Dockerfile、四个命令、PostgreSQL 主库和三数据库测试；当前实现按单写实例拓扑，并通过本地与真实测试数据库验证业务。完整 Linux 镜像构建运行、线上真实微信/R2、反向代理和数据切换仍需在目标环境验收。
@@ -82,10 +86,10 @@ M6 提供 Go 1.26.6 多阶段 CGO Dockerfile、四个命令、PostgreSQL 主库�
 
 ## 延伸阅读
 
-- [Go 工程如何运行：模块、四个命令与退出生命周期]({{LINK:M6-12}})
-- [从 Node SQLite 到 PostgreSQL：把迁移做成独立交付物]({{LINK:M6-28}})
-- [Go 后端怎么测试：从成功响应到故障后置状态]({{LINK:M6-29}})
-- [Go 后端开发交付与验收]({{LINK:GO-09}})
+- [部署上线：从本地起服到真正对外服务](https://blog.csdn.net/fungleo/article/details/164815866)
+- [一套后端双部署：适配层如何让一份代码跑在两套运行时](https://blog.csdn.net/fungleo/article/details/164816647)
+- [容器化：给 Node 应用写一个像样的 Dockerfile](https://blog.csdn.net/fungleo/article/details/164721321)
+- [后端测试策略：单元、集成与测试数据库](https://blog.csdn.net/fungleo/article/details/164720486)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -119,6 +123,8 @@ Go 服务准备上线要验证什么？本文对照 M6 的 Dockerfile 和交付�
 
 1. M6-31-封面：Go 多阶段构建，CGO SQLite 与 Debian/glibc，非 root 容器；再连接单写 Go 服务、PostgreSQL、R2、TLS 反代，强调验收边界。
 2. M6-31-切换：停写、备份、导出、空库迁移、数据/对象导入、核查、切流、观察、回退分阶段流程图。
+3. `M6-31-拓扑`：放在正文同名占位处，生产切换是独立发布事件：停写、备份、导出、空库迁移、数据与对象导入、核查、切流，每一步都可回退。
+
 
 ### 发布前核对
 

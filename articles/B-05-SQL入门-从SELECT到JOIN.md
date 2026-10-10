@@ -14,6 +14,8 @@
 
 {{IMG:B-05-封面}}
 
+{{IMG:B-05-SQL结构}}
+
 ## WHERE 的三个坑
 
 ### 一、NULL 不是等于 NULL
@@ -83,6 +85,8 @@ SELECT COUNT(*) FROM articles WHERE deleted_at IS NULL;
 ```
 
 **这两句话的区别就是那个 bug 的全部。** 而它属于一类更隐蔽的错误：**语法对、结果"看起来合理"、只有特定数据下才错。**
+
+{{IMG:B-05-JOIN}}
 
 ## JOIN：左连接和内连接的差别
 
@@ -303,9 +307,9 @@ SQL 这一章，沉淀下来的是四件事：
 
 ## 延伸阅读
 
-- [数据库索引：为什么加了索引还是慢]({{LINK:B-06}})
-- [数据库迁移与事务：数据结构怎样安全演进]({{LINK:B-18}})
-- [列表分页与下拉刷新：去重、失败保留和返回位置]({{LINK:M4-12}})
+- [数据库选型：关系型还是文档型](https://blog.csdn.net/fungleo/article/details/164209279)
+- [数据迁移：schema 变更如何不弄脏线上数据](https://blog.csdn.net/fungleo/article/details/164254868)
+- [列表接口三件套：分页、筛选、排序](https://blog.csdn.net/fungleo/article/details/164425686)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -339,6 +343,7 @@ SQL、数据库、SELECT、JOIN、数据建模、后端开发
 
 1. B-05-封面：文章、用户、分类、标签四张关系表通过主键外键相连，旁边展示一条清晰的 JOIN 查询。
 2. B-05-SQL结构：SELECT、FROM、WHERE、JOIN、GROUP BY、ORDER BY、LIMIT 的查询流程图。
+3. B-05-JOIN：放在正文同名占位处，SQL 查询结构示意：SELECT、WHERE、JOIN 与 ORDER BY 的执行顺序。
 
 ### 发布前核对
 

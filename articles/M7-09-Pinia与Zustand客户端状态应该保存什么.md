@@ -14,6 +14,8 @@
 
 本文不把 Pinia 与 Zustand 做 API 名称对照表，而是比较项目里的真实边界：认证会话存内存，主题和侧栏偏好写入 localStorage，服务器文章数据交给 TanStack Vue Query。三者的生命周期和失效规则完全不同。
 
+{{IMG:M7-09-状态分类}}
+
 ## Zustand 与 Pinia 的表达差异
 
 React 管理后台使用 Zustand 的 `create` 建立 store，组件通过 selector 订阅所需字段；无需把应用包在 Context Provider 中，非组件代码也可以用 `getState()` 读取或更新。Vue 后台使用 Pinia `defineStore`，组合式 store 返回响应式 state、computed 和 action，组件内可直接组合使用，非组件代码则通过显式传入项目 Pinia 实例访问。
@@ -63,6 +65,8 @@ React 版通过 Zustand `persist` 持久化侧栏状态，并沿用既有 key/�
 
 主题选项还支持 `system`，这是用户设置与当前系统媒体查询的组合结果。偏好值是 `system`，解析后的主题可能是 `dark` 或 `light`；不要把“用户选择”与“最终呈现”混成一个字段。
 
+{{IMG:M7-09-服务端数据}}
+
 ## 服务端数据：不要再复制一份进 Pinia
 
 文章列表、详情、评论和站点配置由 API 返回，会有 loading、error、stale 和 mutation 后失效等生命周期。Vue 工程用 TanStack Vue Query 管理这些服务端状态，query key 标识查询参数，mutation 成功后失效相关缓存。
@@ -109,7 +113,7 @@ Pinia 和 Zustand 都能保存共享客户端状态；Vue Query/React Query 管�
 ## 延伸阅读
 
 - [Vue Router 如何守住多角色后台边界]({{LINK:M7-08}})
-- [Vue Query：服务端数据缓存、query key 与变更失效]({{LINK:M7-10}})
+- [TanStack Query 不只是缓存：失效、派生与失败恢复](https://blog.csdn.net/fungleo/article/details/165847415)
 - [Zustand 官方文档](https://zustand.docs.pmnd.rs/)
 - [Pinia 官方文档](https://pinia.vuejs.org/)
 
@@ -145,12 +149,13 @@ Pinia、Zustand、Vue.js、React、状态管理、前端安全
 
 1. M7-09-封面：Pinia/Zustand 作为共享客户端状态、Vue Query 作为服务器缓存、URL 作为可分享筛选状态、localStorage 作为 UI 偏好存储的分层示意；认证 token 标注“内存”，避免画入 localStorage。
 2. M7-09-状态分类：用不同生命周期容器展示页面局部状态、共享会话、服务器缓存和持久 UI 偏好，指出每种数据由不同事实源负责。
+3. M7-09-服务端数据：放在正文同名占位处，状态归属示意：服务端数据交给查询缓存，客户端状态才留在 Pinia。
 
 ### 发布前核对
 
 - [ ] 对照 React auth/ui store 与 Vue auth/ui store 当前实现。
 - [ ] 验证文章中本地存储 key 和 sidebar JSON 格式。
 - [ ] 确认没有将 Vue Query 服务器状态建议复制进 Pinia。
-- [ ] 补齐 M7-08、M7-10 内链。
+- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
 - [ ] 发布时删除本段辅助信息，检查存储图没有误示 token 持久化。
 <!-- PUBLISH_ASSIST_END -->

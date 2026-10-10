@@ -33,6 +33,8 @@ export const jsonLd = (value: unknown): string =>
 
 {{IMG:B-11-封面}}
 
+{{IMG:B-11-防护映射}}
+
 ## 先分清：三个攻击打的是不同东西
 
 XSS、CSRF、SQL 注入经常被混为一谈，但它们**打的不是同一个目标**：
@@ -317,6 +319,8 @@ if (!user) throw new AppError(ErrCode.USERNAME_OR_PASSWORD_ERROR, 401);
 
 `webview_flutter` 本身没问题，问题是"如果我给它注入 Authorization 会怎样"——那是 M4-15 那个决定。
 
+{{IMG:B-11-防护边界}}
+
 ## 怎样测试安全边界
 
 最后讲测试，因为这一章的东西最容易变成"看起来对"。
@@ -417,9 +421,9 @@ await web.setJavaScriptMode(JavaScriptMode.unrestricted);
 
 ## 延伸阅读
 
-- [认证与授权：两个总被混淆的概念]({{LINK:B-12}})
-- [内置 WebView：网页历史、App 返回与外链安全]({{LINK:M4-15}})
-- [冻结契约如何兼容增补：为微信登录补齐最小能力]({{LINK:M1-32}})
+- [权限模型：从认证到 RBAC](https://blog.csdn.net/fungleo/article/details/164396910)
+- [参数校验：为什么必须在最外层做](https://blog.csdn.net/fungleo/article/details/164327423)
+- [评论内容安全：敏感词过滤、三态审核与级联删除](https://blog.csdn.net/fungleo/article/details/165110811)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -453,6 +457,7 @@ Web安全、XSS、CSRF、SQL注入、网络安全、后端开发
 
 1. B-11-封面：用户输入进入网页 HTML、浏览器 Cookie 请求和 SQL 查询三条路径，各自有对应防护边界。
 2. B-11-防护映射：XSS 输出编码、CSRF 来源/token 校验、SQL 参数化查询的对应关系。
+3. B-11-防护边界：放在正文同名占位处，三类攻击防护映射：SQL 注入、XSS、CSRF 各自打在不同位置。
 
 ### 发布前核对
 

@@ -15,6 +15,8 @@ routes = [{ pattern = "api-befull.kao9.com", custom_domain = true }]
 
 {{IMG:B-09-封面}}
 
+{{IMG:B-09-代理链路}}
+
 ## 反向代理：解决"浏览器不能直接访问后端"
 
 先说清楚它解决的问题。
@@ -41,6 +43,8 @@ routes = [{ pattern = "api-befull.kao9.com", custom_domain = true }]
 | 多个后端服务 | 按路径分发（`/api/*` → A，`/admin/*` → B） |
 | HTTPS | 在代理这一层终止，前端不需要知道 |
 | 隐藏内部结构 | 外部看不到有几个服务、端口是多少 |
+
+{{IMG:B-09-静态托管}}
 
 ## 静态托管：Nginx 最常见的用法
 
@@ -255,7 +259,7 @@ Nginx 这一章，沉淀下来的是四件事：
 
 ## 延伸阅读
 
-- [域名、DNS 与 HTTPS 证书]({{LINK:B-10}})
+- [部署上线：从本地起服到真正对外服务](https://blog.csdn.net/fungleo/article/details/164815866)
 - [Docker 入门]({{LINK:B-08}})
 - [Next.js 网站前台篇·OpenNext 部署 Cloudflare：构建成功不等于缓存正确](https://blog.csdn.net/fungleo/article/details/167218828)
 
@@ -291,6 +295,7 @@ Linux / 网站部署
 
 1. B-09-封面：HTTPS 请求到达 Nginx，由路径规则分别返回静态资源或转发到内部 API 服务。
 2. B-09-代理链路：展示 Host、客户端 IP、原始协议和请求路径在代理转发中的关系。
+3. B-09-静态托管：放在正文同名占位处，反向代理链路示意：浏览器、Nginx 与后端服务之间的转发关系。
 
 ### 发布前核对
 

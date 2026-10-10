@@ -16,6 +16,8 @@ compatibility_flags = ["nodejs_compat"]
 
 {{IMG:B-04-封面}}
 
+{{IMG:B-04-文件系统}}
+
 ## 服务器和本地最大的不同：文件系统
 
 先讲一条最容易踩、也最难查的差异。
@@ -102,6 +104,8 @@ CORS_ORIGINS = "https://befull.kao9.com,https://manage-befull.kao9.com"
 **"留空或 `'*'` 将被拒"** ——这说明这个项目的 CORS 配置**在代码层面就拒绝通配符**，而不是"允许但不推荐"。
 
 **这是一个值得学的做法**：把"不安全但常见"的做法直接禁掉，代价是配起来麻烦一点，收益是不需要每次 review 都检查 CORS。
+
+{{IMG:B-04-权限}}
 
 ## 权限：文件权限位那三个数字
 
@@ -260,8 +264,8 @@ systemctl restart <service>
 
 ## 延伸阅读
 
-- [配置与运行观测：服务怎样安全启动和排障]({{LINK:B-19}})
-- [Docker 入门]({{LINK:B-08}})
+- [部署上线：从本地起服到真正对外服务](https://blog.csdn.net/fungleo/article/details/164815866)
+- [容器化：给 Node 应用写一个像样的 Dockerfile](https://blog.csdn.net/fungleo/article/details/164721321)
 - [一套后端双部署：适配层如何让一份代码跑在两套运行时](https://blog.csdn.net/fungleo/article/details/164816647)
 
 ---
@@ -296,6 +300,7 @@ Linux / 服务器运维
 
 1. B-04-封面：开发者通过 SSH 连接 Linux 服务器，服务器内部展示应用进程、代理、数据库、日志与备份。
 2. B-04-权限：程序只读、上传目录有限写、数据库端口不公开的服务器权限示意图。
+3. B-04-文件系统：放在正文同名占位处，Linux 文件系统与权限位示意：rwx 三个数字如何映射到权限。
 
 ### 发布前核对
 

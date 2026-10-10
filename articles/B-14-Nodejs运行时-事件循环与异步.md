@@ -28,6 +28,8 @@ export async function atomic(db: Db, statements: Statement[]): Promise<number[]>
 
 {{IMG:B-14-封面}}
 
+{{IMG:B-14-事件循环}}
+
 ## 单线程意味着：await 之间的代码会被插队
 
 先把最关键的前提说清楚，因为它解释了后面所有的复杂度。
@@ -179,6 +181,8 @@ Future<void> refresh() {
 - 读操作 → 安全（记身份即可）
 - 切换语义的操作 → **不安全**（必须共享）
 - 创建操作 → 不安全（会重复创建，M4-20 讲的那个）
+
+{{IMG:B-14-并发和并行}}
 
 ## 并行不是并行：async 只是"不阻塞"
 
@@ -339,9 +343,9 @@ Node 运行时在这个项目里沉淀下来的判断：
 
 ## 延伸阅读
 
-- [Refresh Token 旋转与并发 401：安全存储与会话代次]({{LINK:M4-09}})
-- [并发幂等与重复请求：怎样避免业务状态被改坏]({{LINK:B-20}})
-- [服务端心智模型：一个请求从浏览器到数据库发生了什么]({{LINK:B-15}})
+- [后端工程从零搭建：TypeScript、目录与热更新](https://blog.csdn.net/fungleo/article/details/164186950)
+- [点赞系统：幂等点赞与计数原子增减](https://blog.csdn.net/fungleo/article/details/165292499)
+- [结构化日志与请求链路追踪](https://blog.csdn.net/fungleo/article/details/164363025)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -375,6 +379,7 @@ Node.js 如何在一个主 JavaScript 执行线程上处理大量网络请求？
 
 1. B-14-封面：Node.js 主线程处理 JavaScript 回调，网络 I/O 等待期间事件循环处理其他就绪事件。
 2. B-14-并发和并行：多任务交错等待与多核心同时计算的图示对比。
+3. B-14-事件循环：放在正文同名占位处，事件循环示意图：单线程下 await 前后的执行顺序。
 
 ### 发布前核对
 

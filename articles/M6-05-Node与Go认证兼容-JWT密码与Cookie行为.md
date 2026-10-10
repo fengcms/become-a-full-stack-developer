@@ -92,6 +92,8 @@ func Verify(s, hash string) bool {
 
 准备多字节测试样本时，最实用的做法是先把候选项的字节长度算出来再放进用例：一个纯 ASCII 的 60 字符密码是 60 字节，一个 20 字的纯中文密码约 60 字节，20 个 emoji 可能就超过 72 字节。先知道输入落在边界的哪一侧，测试结论才有意义。
 
+{{IMG:M6-05-bcrypt}}
+
 ## 三、刷新令牌和访问令牌职责不同
 
 Access Token 是一小时有效的 HS256 JWT；Refresh Token 是随机生成的高熵值，使用 SHA-256 摘要存入 refresh_tokens 表，过期时间为七天。数据库不保存刷新令牌明文。刷新成功会撤销旧令牌并发放新的一枚，属于旋转协议。
@@ -121,6 +123,8 @@ token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 两种凭据因此具有不同风险和生命周期。Access Token 可在有效期内离线验证，登出或重置密码通常无法立刻让已签发 JWT 失效；Refresh Token 有数据库状态，可以逐个或按用户撤销。不要把“刷新令牌已撤销”误写成“所有访问 JWT 即刻无效”。
 
 刷新 endpoint 同时支持 Cookie 与请求体 token。Node 路由约定 Cookie 优先，缺少 Cookie 时再读 body；Go httpapi.auth 也遵循相同优先级。网站 BFF 通常依赖 HttpOnly Cookie，Flutter 等客户端可能使用 body token。若优先级不一致，浏览器携带旧 Cookie 时会忽略客户端刚提交的新 body token，产生很难理解的错误。
+
+{{IMG:M6-05-令牌职责}}
 
 ## 四、Cookie 属性也是协议的一部分
 
@@ -181,10 +185,10 @@ Node 与 Go 都使用 HS256 和 bcrypt cost 12，但兼容还要求相同的 cla
 
 ## 延伸阅读
 
-- [重写之前先锁基线：契约、Node 版本与行为清单]({{LINK:M6-11}})
-- [刷新令牌旋转：为什么返回错误反而要提交事务]({{LINK:M6-18}})
-- [微信身份在 Go 中复刻：建号、首次设密与并发冲突]({{LINK:M6-19}})
 - [注册登录全流程实现](https://blog.csdn.net/fungleo/article/details/164396193)
+- [认证方案：JWT 还是 Session](https://blog.csdn.net/fungleo/article/details/164363240)
+- [前端鉴权闭环：内存令牌、刷新旋转与路由守卫](https://blog.csdn.net/fungleo/article/details/165848076)
+- [权限模型：从认证到 RBAC](https://blog.csdn.net/fungleo/article/details/164396910)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -218,6 +222,8 @@ Node 与 Go 都使用 HS256、bcrypt，为什么还要专门做认证兼容？�
 
 1. M6-05-封面：浅蓝白技术图，Node 与 Go 两列共享同一个 JWT/bcrypt 协议，标注 HS256、字符串 sub、exp、72 bytes、refresh rotation 和 Cookie precedence；中文清晰。
 2. M6-05-bcrypt：用 UTF-8 字节格展示 ASCII、汉字与 emoji 在 bcrypt 72 字节边界的区别，不显示真实凭据。
+3. `M6-05-令牌职责`：放在正文同名占位处，访问令牌与刷新令牌的职责分离：短寿命访问、一次性刷新、重放即撤销，两者不能混用。
+
 
 ### 发布前核对
 

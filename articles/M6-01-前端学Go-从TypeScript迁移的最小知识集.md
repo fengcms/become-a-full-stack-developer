@@ -90,6 +90,8 @@ M6 把业务错误集中在 `internal/fault`。领域服务返回业务错误，
 
 错误信息还有不同受众：内部日志可以保留排查原因，API 响应只返回契约允许的安全文案。错误被返回，不等于已经被记录；错误被记录，也不等于应该把内部细节发给用户。看到 return err，继续沿调用链确认错误最终在哪里映射和处理。
 
+{{IMG:M6-01-错误控制流}}
+
 ## 三、`struct` 组合数据，方法贴近类型，但没有继承
 
 Go 的 `struct` 组合字段，方法通过接收者声明：
@@ -176,6 +178,8 @@ func (f Fields) Text(k string) *string {
 
 读代码时不妨先问：它代表请求生命周期的哪一步？哪些信息已经丢失？
 
+{{IMG:M6-01-字段存在性}}
+
 ## 六、`slice` 与 `map` 的空值会影响响应
 
 Go 的 `slice` 是动态长度序列，`map` 是键值映射：
@@ -258,10 +262,10 @@ module github.com/fengcms/become-a-full-stack-developer/go-backend
 
 ## 延伸阅读
 
-- [Node 后端分层架构：Controller、Service、`Repository` 的边界](https://blog.csdn.net/fungleo/article/details/164209137)
-- [Go 后端实际架构与关键决策]({{LINK:GO-05}})
-- [冻结契约与字段存在性]({{LINK:M6-14}})
+- [Node 后端分层架构：Controller、Service、Repository 的边界](https://blog.csdn.net/fungleo/article/details/164209137)
 - [从前端 state 到数据库 schema 的建模手艺](https://blog.csdn.net/fungleo/article/details/165445806)
+- [契约先行：设计一套被七个端复用的 API](https://blog.csdn.net/fungleo/article/details/164140515)
+- [统一响应结构：HTTP 状态码与业务码如何分工](https://blog.csdn.net/fungleo/article/details/164289071)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -295,6 +299,8 @@ Go、Golang、TypeScript、后端开发、编程语言、全栈工程师
 
 1. M6-01-封面：16:9 技术专栏封面，白色和极浅蓝底，深蓝灰文字，蓝色重点。主题“前端开发者学 Go：从换语法到换默认假设”。将 TypeScript 请求数据流转换到 Go 的 `struct`、`error`、interface 和数据库边界；突出“字段缺失不等于空字符串”。留白充分，中文清楚，不出现不可读伪代码或未经授权的品牌标识。
 2. M6-01-字段存在性：三列信息图分别展示键缺失、显式 null、空字符串；下方标出 Go 中 `Has`、`Text` 的可观察结果和部分更新影响。白底、深色文字、蓝色强调，中文准确，不暗示所有 API 字段都允许 null。
+3. `M6-01-错误控制流`：放在正文同名占位处，Go 中变量声明、错误返回与切片空值三条最常见差异并排对照，突出"换默认假设"而非"换语法"。
+
 
 ### 发布前核对
 

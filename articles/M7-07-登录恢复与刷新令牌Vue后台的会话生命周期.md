@@ -30,6 +30,8 @@ export const login = async (payload: LoginRequest) => {
 
 登录请求不应先附带旧 access token，也不应遇到 401 再触发刷新，所以它明确跳过认证、自动跳转和 refresh 分支。登录成功后，页面依据角色和原始访问地址决定进入控制台、个人中心或 no-access 页面。认证状态由 API 层更新，页面负责用户反馈和路由选择。
 
+{{IMG:M7-07-启动恢复}}
+
 ## 启动恢复：先建立会话，再挂载应用
 
 `main.ts` 在 `app.mount('#app')` 前等待 `bootstrapSession()`：
@@ -53,6 +55,8 @@ app.mount('#app')
 access token 会被放到受保护 API 的 `Authorization: Bearer ...` header 中。它需要在当前页面运行期间可用，但不必为了重载页面写入浏览器可读的持久存储。浏览器刷新后，通过 Cookie refresh 换一个新的 access token。
 
 内存存储不能消除所有 XSS 风险；若恶意脚本已能在页面中执行，仍可能借当前会话发请求。它的意义是减少长期凭证的持久暴露面，并把刷新职责交给 HttpOnly Cookie 与服务端令牌体系。Cookie 的 `Secure`、`HttpOnly`、`SameSite`、域和 CORS 配置需和部署拓扑匹配，前端的 `credentials: include` 本身不构成安全保障。
+
+{{IMG:M7-07-并发刷新}}
 
 ## 并发刷新：只让一个请求更新令牌
 
@@ -133,7 +137,7 @@ Vue 后台的会话生命周期是：登录建立内存态，启动时用 Cookie
 ## 延伸阅读
 
 - [用 fetch 建一层可控的请求内核]({{LINK:M7-06}})
-- [Vue Router 如何守住多角色后台边界]({{LINK:M7-08}})
+- [按钮级权限：能力映射、菜单过滤与自锁保护](https://blog.csdn.net/fungleo/article/details/166233264)
 - [API 契约：刷新令牌与令牌轮换](../docs/api/openapi.v1.yaml)
 - [MDN：Set-Cookie](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie)
 
@@ -169,12 +173,13 @@ Vue.js、身份认证、JWT、Cookie、令牌刷新、前端安全
 
 1. M7-07-封面：登录、内存 access token、HttpOnly refresh cookie、并发刷新合并、单次重放、退出撤销构成完整环形流程图；白色浅蓝底、深色文字，简洁安全工程风格。
 2. M7-07-并发刷新：多个过期 API 请求汇聚到单个 refresh promise，成功后各自携新 access token 重放一次；失败进入统一清理和登录跳转。明确标注“同一页面执行上下文”。
+3. M7-07-启动恢复：放在正文同名占位处，会话恢复时序：应用启动先建立会话、再挂载路由，避免未认证闪烁。
 
 ### 发布前核对
 
 - [ ] 对照 auth store、bootstrapSession、refreshOnce、forceLogout 和 logout 的实现核对流程。
 - [ ] 核对 OpenAPI 浏览器 Cookie 与移动端请求体凭证差异。
 - [ ] 不把本地代码测试描述成生产 Cookie/CORS 验收。
-- [ ] 补齐 M7-06、M7-08 内链。
+- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
 - [ ] 发布时删除本段辅助信息，勿在截图或日志中泄露凭证。
 <!-- PUBLISH_ASSIST_END -->

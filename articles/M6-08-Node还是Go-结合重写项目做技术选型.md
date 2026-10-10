@@ -34,6 +34,8 @@ M6 开始时，Node 后端已经为网站、管理后台、Flutter 和小程序�
 
 若没有契约与消费者测试，重写容易变成凭感觉复刻，最后以 API 返回相似 JSON 宣布完成。M6 通过 operation coverage、差分 trace 和数据库状态核验，把这个工作量显式化。
 
+{{IMG:M6-08-契约相同}}
+
 ## 二、Node 的优势与边界
 
 Node 使用 TypeScript、Hono 和 Drizzle，原团队已有运行代码与部署经验。小团队可以复用 npm 生态、类型和现有 Cloudflare Workers/D1/R2 方案；边缘运行时适合与 Cloudflare 平台集成，避免另建 Linux 服务。Drizzle schema 和 query builder 与 TypeScript 开发流程自然衔接。
@@ -101,6 +103,8 @@ M6 的本地实验在一台 arm64 Mac、相同 500 篇 SQLite fixture 上观测�
 
 这三种方向并不互相排斥。一个团队完全可以先继续用 Node 维护线上，同时用一个小服务试点 Go；也可以在 Go 试点里先只迁移权限与上传，把最难兼容的部分提前暴露。
 
+{{IMG:M6-08-决策}}
+
 ## 七、本次重写的真实收益与代价
 
 收益包括：得到一套结构清楚的 Go 领域工程；复用冻结 API 和四客户端；通过 PostgreSQL/MySQL/SQLite 门禁；发现 Node 源码与历史文档/契约差异；准备了离线快照工具和跨语言证据。教学上能从“语言语法”继续理解数据库、事务、测试和上线边界。
@@ -117,10 +121,10 @@ M6 的本地实验在一台 arm64 Mac、相同 500 篇 SQLite fixture 上观测�
 
 ## 延伸阅读
 
-- [同一套接口的性能对比：先把实验做公平]({{LINK:M6-07}})
-- [契约一致性与差分测试：两套实现如何互相校验]({{LINK:M6-09}})
-- [Go 工程如何运行：模块、四个命令与退出生命周期]({{LINK:M6-12}})
-- [第六批复盘：从换一种语言到证明系统等价]({{LINK:M6-10}})
+- [Node 后端框架选型：Express、Koa、Fastify 与 Hono](https://blog.csdn.net/fungleo/article/details/164187017)
+- [技术选型不是投票：七个子项目技术栈的定法](https://blog.csdn.net/fungleo/article/details/164121738)
+- [一套后端双部署：适配层如何让一份代码跑在两套运行时](https://blog.csdn.net/fungleo/article/details/164816647)
+- [总复盘：从“接口能调通”到“后台值得使用”](https://blog.csdn.net/fungleo/article/details/166690803)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -154,6 +158,8 @@ Node 还是 Go？本文不做语言排行榜，而是对照 M6 的 Node Hono/Dri
 
 1. M6-08-封面：Node/TypeScript 与 Go 双列对照，比较运行平台、数据库、团队、迁移和运维，不画速度排行榜。
 2. M6-08-决策：团队能力、部署生态、数据目标、可验证收益与迁移成本组成选择流程，最后可能选继续 Node 或转 Go。
+3. `M6-08-契约相同`：放在正文同名占位处，两种实现都遵守同一份契约：无论选哪种语言，对外行为由契约约束，语言只改变内部实现方式。
+
 
 ### 发布前核对
 

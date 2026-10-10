@@ -55,6 +55,8 @@ export type ArticleStatus = Article['status']
 
 这里的别名仍然溯源到生成类型，没有复制一份相互独立的 `Article` interface。页面可以用熟悉的 `ArticleSummary`，契约字段变化时类型检查则会沿着引用关系暴露影响。
 
+{{IMG:M7-05-业务别名}}
+
 ## 业务别名不是第二份契约
 
 并非每个 OpenAPI schema 都适合原封不动进入页面。页面需要的类型名称、通用分页泛型、表单态与返回态可能各有差异。工程可以在 `common.ts` 定义有意的领域别名或组合类型，但要守住几个边界：
@@ -73,6 +75,8 @@ const content = ref('')
 ```
 
 `activeTab` 是 UI 状态，`title`、`content` 在提交时组成契约请求体。它们在同一页面中使用，不代表应该塞进同一个接口类型。
+
+{{IMG:M7-05-分层图}}
 
 ## API 模块：把路径变成有类型的业务函数
 
@@ -161,8 +165,8 @@ pnpm typecheck
 ## 延伸阅读
 
 - [Vue 响应式与 React Hooks：同一交互的两种运行模型]({{LINK:M7-04}})
-- [用 fetch 建一层可控的请求内核]({{LINK:M7-06}})
-- [API 契约与兼容性：接口文档怎样约束前后端]({{LINK:B-16}})
+- [请求层封装：统一信封、业务错误与并发 401](https://blog.csdn.net/fungleo/article/details/165590548)
+- [契约先行：设计一套被七个端复用的 API](https://blog.csdn.net/fungleo/article/details/164140515)
 - [OpenAPI TypeScript 官方文档](https://openapi-ts.dev/introduction)
 - [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
 
@@ -198,13 +202,13 @@ OpenAPI 到 Vue 类型
 
 1. M7-05-封面：以 OpenAPI YAML 契约为起点，经过 TypeScript 生成类型、业务类型别名、API 函数，最终到 Vue 页面表格的清晰管线图；白底浅蓝、深色文字、少量蓝紫色强调，适合作为严肃技术文章封面。
 2. M7-05-分层图：并排显示“编译期”类型链与“运行时”请求链；生成类型只提供静态约束，fetch 内核负责真正的认证、网络、错误处理，明确两条链路在 API 函数处汇合。
+3. M7-05-业务别名：放在正文同名占位处，类型分层示意：契约生成类型与业务别名各自负责，别名不是第二份契约。
 
 ### 发布前核对
 
 - [ ] 确认 `docs/api/openapi.v1.yaml` 当前冻结版本及文章引用的一致性。
-- [ ] 补齐 M7-04 内链。
+- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
 - [ ] 对照 `package.json` 的 `gen:types` 脚本和 `src/types/common.ts` 的实际别名。
 - [ ] 检查文章没有声称泛型会自动验证运行时响应。
-- [ ] 补齐 M7-06 与 B-16 内链。
 - [ ] 发布时删除本段辅助信息，检查代码块与表格排版。
 <!-- PUBLISH_ASSIST_END -->

@@ -32,6 +32,8 @@ const queryClient = new QueryClient({
 
 这些值是本项目的选择，不是所有业务的最佳常量。数据更新频率、请求成本、用户对实时性的要求都会影响 staleTime。站点设置和标签比高频评论审核更稳定，页面可以局部覆盖为五分钟；大多数页面继续使用全局 30 秒。
 
+{{IMG:M7-10-缓存 key}}
+
 ## Query key 是缓存身份
 
 一个 query key 应包含决定服务器响应内容的参数。文章列表按页码、页大小、排序、状态和关键字查询，因此 key 中使用完整 query 对象：
@@ -73,6 +75,8 @@ Vue Query 识别 Vue 的响应式查询选项，key 可随 `computed` 更新。�
 把 `staleTime` 设成五分钟，不等于缓存五分钟后马上删除；把一个 query 标记 stale，也不等于立刻从 UI 清空数据。正确使用这些术语，才能解释切页、返回列表和刷新按钮的行为。
 
 分类树和标签相对稳定，页面显式设置 `staleTime: 300_000`。文章审核、用户资料或通知等频繁变化数据沿用全局策略，并在写操作后主动失效。
+
+{{IMG:M7-10-变更失效}}
 
 ## Mutation 后如何让缓存重新变得可信
 
@@ -122,7 +126,7 @@ Vue Query 通过 query key 建立服务器数据身份，staleTime 决定 fresh 
 ## 延伸阅读
 
 - [Pinia 与 Zustand：客户端状态应该保存什么]({{LINK:M7-09}})
-- [分页只显示第一页：从接口 total 定位到前端修复]({{LINK:M7-11}})
+- [列表页范式：让分页、筛选和返回位置进入 URL](https://blog.csdn.net/fungleo/article/details/165984930)
 - [TanStack Query 官方 Vue 文档](https://tanstack.com/query/latest/docs/framework/vue/overview)
 
 ---
@@ -157,12 +161,13 @@ Vue Query 缓存体系
 
 1. M7-10-封面：Vue 页面、queryKey、服务端查询缓存、mutation 成功失效、活跃查询刷新构成清晰闭环；fresh/stale/inactive 区域用时间线表示，白底浅蓝、深色技术风格。
 2. M7-10-缓存 key：文章列表 key 包含 page、status、keyword；文章详情 key 包含 id；文章修改后按 articles 前缀失效。图示避免把服务器缓存画进 Pinia。
+3. M7-10-变更失效：放在正文同名占位处，缓存失效流程：Mutation 成功如何按 query key 精确失效并触发重取。
 
 ### 发布前核对
 
 - [ ] 对照 `main.ts` 默认查询策略及页面 staleTime。
 - [ ] 对照 mutation 成功回调，核实各 query 前缀和实际行为。
 - [ ] 核实 Vue Query 对 fresh/stale/inactive/gc 的官方定义。
-- [ ] 补齐 M7-09、M7-11 内链。
+- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
 - [ ] 发布时删除本段辅助信息，确保示例 query key 与代码一致。
 <!-- PUBLISH_ASSIST_END -->

@@ -43,6 +43,8 @@ pnpm install --frozen-lockfile
 
 `--frozen-lockfile` 的价值是：如果 `package.json` 已变化、锁文件却没有同步，安装应该明确失败，而不是临时解析一套新的版本继续跑。依赖升级是一个需要审阅的改动，不应该悄悄发生在每个人第一次安装项目时。
 
+{{IMG:M7-02-目录}}
+
 ## 目录不是越多越清楚，关键是能沿用户任务找到代码
 
 技术方案曾提出 `features/` 与 `shared/` 作为一种可选的组织方向；当前项目实际采用的是较直接的分层目录：
@@ -124,6 +126,8 @@ server: {
 
 前端公开环境变量与后端秘密也要分开。Vite 的 `VITE_` 前缀变量会进入浏览器可见的构建结果，因此不能把数据库密码、API 私钥或管理凭证放进去。`API_TARGET` 是 Vite 开发服务器读取的配置，不需要暴露给浏览器端代码；登录名、密码也不应硬编码在项目里。
 
+{{IMG:M7-02-质量门禁}}
+
 ## 工具门禁要各自负责一件事
 
 当前脚本把日常检查明确列在 `package.json` 中：
@@ -169,8 +173,8 @@ Vue 后台的工程基座由几部分共同组成：Vite 负责开发与打包�
 - [为什么把 React 管理后台再用 Vue 实现一遍]({{LINK:M7-01}})
 - [Vue 管理后台技术方案与工程边界](../docs/vue-manage-frontend/01-技术方案与工程边界.md)
 - [Vue 管理后台实施记录](../docs/vue-manage-frontend/03-实施记录.md)
-- [`<script setup>`：把页面拆成可读、可测的 Vue 组件]({{LINK:M7-03}})
-- [从冻结 OpenAPI 生成类型，并组织 Vue API 模块]({{LINK:M7-05}})
+- [后台骨架：布局、数据路由与分层守卫](https://blog.csdn.net/fungleo/article/details/165589276)
+- [OpenAPI 生成类型，为什么请求函数仍然手写](https://blog.csdn.net/fungleo/article/details/165721265)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -204,12 +208,13 @@ Vue.js、Vite、Naive UI、TypeScript、Biome、前端工程化
 
 1. M7-02-封面：16:9 中文技术文章封面，浅白与极浅蓝背景，深蓝灰文字和靛蓝重点。中心展示一个整洁的 Vue 管理后台工程模块图，包含 Vite、TypeScript、Naive UI、Router、Pinia、Vue Query、Biome、Vitest 等标签，分成应用层、状态/请求层、验证层。中文排版正确，留白充足，不出现伪代码和未经授权的品牌图标。
 2. M7-02-质量门禁：流程图表现 `pnpm check`、`pnpm typecheck`、`pnpm test`、`pnpm build` 各自检查格式、SFC 类型、行为和生产打包；旁注“通过不等于线上写操作已验收”。白底、清晰中文、专业技术信息图。
+3. M7-02-目录：放在正文同名占位处，后台工程目录示意：沿“登录→列表→详情→编辑”的用户任务路径组织模块。
 
 ### 发布前核对
 
 - [ ] 对照 `package.json` 和锁文件复核所有版本，不把安装快照说成当前市场最新版本。
 - [ ] 确认 `main.ts`、`vite.config.ts`、Biome 配置和项目目录仍与文章代码快照一致。
 - [ ] 核对 API 与 `/files` 两条代理规则、`API_TARGET` 默认值和 `.env.example` 的说明。
-- [ ] 补齐 M7-01、M7-03、M7-05 的正式文章链接。
+- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
 - [ ] 发布时删除本段辅助信息，检查表格、代码块和图片排版。
 <!-- PUBLISH_ASSIST_END -->

@@ -59,6 +59,8 @@ owner override 不能仅凭 URL 中的数字确认。契约记录资源参数以
 
 业务服务也应检查重要不变量，尤其当 service 会被多个入口调用时。传输层负责依据 operation 作通用身份边界，领域层负责资源真实归属和状态转移。两层互补，不能为了少写一次判断而把授权全部放到前端。
 
+{{IMG:M6-15-认证分级}}
+
 ## 三、公开限流与客户端身份
 
 契约规定公开端点每个 operation 独立每分钟 60 次，超过返回 429、Retry-After 和业务码 5001；鉴权端点不套用这项公开限流。M6 在 httpapi 中用进程内 Limiter 按 operation 加访问者 key 记录固定窗口，并限制 key map 的规模；匿名 key 取客户端 IP，已登录访问者可用 user ID。
@@ -150,6 +152,8 @@ func pathID(r Request, key string) (int64, error) {
 
 上传内容的真实类型识别、对象 key、摘要去重、元数据原子性和存储失败补偿由 attachment 领域能力负责。transport 只管 HTTP body 形状和传输上限；附件生命周期属于领域，塞进 handler 只会让协议代码承担它无法可靠保证的责任。
 
+{{IMG:M6-15-上传}}
+
 ## 五、统一错误信封不是把错误都变成 500
 
 领域服务可能返回 not found、forbidden、validation、conflict 或内部错误。fault.Resolve 将已知错误转换为稳定业务码，再由 fault.Status 选择 HTTP 状态，写入包含 code、message、data、requestId、timestamp 的统一 JSON 信封。
@@ -186,10 +190,10 @@ M6 的 Register 以 OpenAPI operation 为入口，统一执行身份、角色、
 
 ## 延伸阅读
 
-- [冻结 OpenAPI 3.1 怎么接入 Go：生成器之外的选择]({{LINK:M6-13}})
-- [跨语言认证兼容：Node 与 Go 如何互认 JWT 和密码]({{LINK:M6-05}})
-- [文件与数据库没有共同事务：共享附件怎样补偿]({{LINK:M6-27}})
-- [Go Web 框架怎么选：本项目为什么使用标准库]({{LINK:M6-02}})
+- [统一响应结构：HTTP 状态码与业务码如何分工](https://blog.csdn.net/fungleo/article/details/164289071)
+- [错误处理：异常分层与全局捕获](https://blog.csdn.net/fungleo/article/details/164327333)
+- [认证方案：JWT 还是 Session](https://blog.csdn.net/fungleo/article/details/164363240)
+- [文件上传：R2 与本地磁盘双实现与签名直传](https://blog.csdn.net/fungleo/article/details/164453365)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -223,6 +227,8 @@ M6 的 68 个 API 操作如何共享一条可审阅的 HTTP 边界？本文跟�
 
 1. M6-15-封面：技术流程图风格，浅蓝白底，表现 HTTP 请求经过认证授权、公开限流、body 限制、schema 校验、领域 service 和统一错误信封；强调权限取自 operation 元数据。
 2. M6-15-上传：multipart 请求先经大小/MIME/单文件检查，再交附件领域服务；区分 transport 边界和对象存储生命周期。
+3. `M6-15-认证分级`：放在正文同名占位处，认证分三级：必需认证、可选认证与作者越权放宽（owner override），三者由契约声明、不问具体 handler。
+
 
 ### 发布前核对
 

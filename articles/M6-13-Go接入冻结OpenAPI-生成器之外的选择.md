@@ -38,6 +38,8 @@ internal/contract/openapi.json（生成快照，受门禁比较）
 
 这条链有两个容易混淆的“生成”：同步 JSON 快照是确定性的格式转换；生成 Go 类型则是把契约某一部分映射为代码模型。前者解决运行时读取，后者可以减少手写结构，但不能自动保证权限、业务规则或与旧服务等价。
 
+{{IMG:M6-13-事实源}}
+
 ## 二、为什么不让生成器拥有整个服务器骨架
 
 代码生成器在适配良好时很有价值：它可以生成类型、客户端、接口骨架、参数绑定或文档。M6 对生成器的考察重点不是它能不能打印 Go 代码，而是锁定版本下能否真实编译、如何表达 3.1 schema、扩展字段被保留还是丢弃、生成结果是否符合现有 transport 分层。
@@ -135,6 +137,8 @@ func normalize(v any) {
 
 对 OpenAPI 3.1 的兼容不能只看 nullable。编译器还要解析 $ref、requestBody、response、format、数组、组合 schema 等。项目启用了请求格式断言，同时有特殊结构需要局部处理。例如站点设置相关响应的 schema 与统一信封的实际包裹关系历史上存在局部差异，CheckResponse 对指定 operation 从 envelope.data 取出 payload 再校验，而没有修改契约文件；相对 URL 等语义也要结合已有 API 行为理解。局部兼容代码应该有明确 operation 名称、回归用例和理由，不能变成“验证失败就跳过”。
 
+{{IMG:M6-13-nullable}}
+
 ## 五、单一事实源不等于所有实现都完全相同
 
 契约负责约定可观察 HTTP 行为，但实现仍需要解释业务。Operation 中记录 method、path、role 和 owner 等元数据，给传输层做边界判断；文章可见性、分类树变更或附件清理则需领域服务表达。
@@ -173,10 +177,10 @@ M6 将唯一 YAML 转成受门禁检查的 JSON 快照，并嵌入 Go 二进制�
 
 ## 延伸阅读
 
-- [重写之前先锁基线：契约、Node 版本与行为清单]({{LINK:M6-11}})
-- [Go 零值为什么会改坏接口：缺失、null、0 与空字符串]({{LINK:M6-14}})
-- [HTTP 边界怎么守：鉴权、业务错误、限流与上传解析]({{LINK:M6-15}})
-- [Go 后端接口与行为对照清单]({{LINK:GO-03}})
+- [接口文档自动化：让 OpenAPI 与代码不脱节](https://blog.csdn.net/fungleo/article/details/164584149)
+- [契约先行：设计一套被七个端复用的 API](https://blog.csdn.net/fungleo/article/details/164140515)
+- [统一响应结构：HTTP 状态码与业务码如何分工](https://blog.csdn.net/fungleo/article/details/164289071)
+- [Node 后端框架选型：Express、Koa、Fastify 与 Hono](https://blog.csdn.net/fungleo/article/details/164187017)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -210,6 +214,8 @@ Go 重写如何消费一份冻结的 OpenAPI 3.1 契约？本文介绍 M6 从 YA
 
 1. M6-13-封面：16:9 浅蓝白底，深蓝文字和少量青色。主题“冻结 OpenAPI 如何接入 Go”。展示唯一 YAML 源、同步 JSON、嵌入二进制、运行时 schema 校验链路；强调不能反向编辑或生成第二个事实源，中文标签准确。
 2. M6-13-nullable：图示 OpenAPI nullable 约束在内存转换成 JSON Schema union 的过程，区分“字段未出现”和“值为 null”；不要暗示两者相同。
+3. `M6-13-事实源`：放在正文同名占位处，OpenAPI 是事实源、JSON 快照是运行时产物：契约先行、代码与文档同源，生成器不接管服务器骨架。
+
 
 ### 发布前核对
 

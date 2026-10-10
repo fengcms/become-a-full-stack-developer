@@ -42,6 +42,8 @@ M6 使用明确 DTO 与映射。查询端按列表所需投影选择字段，响
 
 这条原则对两种 ORM 都成立：数据库 schema、查询结果和 API Contract 是三个相关但不相同的模型。Drizzle 的推导不会让 DTO 设计消失；GORM 的 struct 标签也不应该直接决定 HTTP 响应内容。
 
+{{IMG:M6-04-模型分层}}
+
 ## 三、文章列表的筛选与排序要可审阅
 
 文章列表可能按状态、分类、标签、关键词、作者和发布时间组合筛选，并支持分页和排序。Node 服务使用 Drizzle 表达查询谓词和 join；Go 服务通过 GORM 的 Where、Joins、Select、Order、Limit、Offset 等方法组合条件。
@@ -86,6 +88,8 @@ if len(updates) > 0 {
 这段是概念示意，字段名与调用位置发布前要按绑定快照核对。关键点是“有没有提交”和“值是什么”是两个问题。数据库模型的 bool、int、string 零值无法独自表达字段是否存在；ORM 自动化也不会替 API 设计者猜这个语义。
 
 Drizzle 侧的 TypeScript 类型有时会让输入对象的字段可选，但可选属性与 null 仍是两种语义。一个值可以不存在、为 null、为 false、为 0 或为空字符串；服务层和数据库更新都需要按契约明确解释。跨语言复刻正好暴露了这个隐含假设。
+
+{{IMG:M6-04-字段语义}}
 
 ## 五、事务由业务用例组合，不由 ORM 猜测
 
@@ -204,9 +208,9 @@ M6 继续使用 Node 侧的 Drizzle 和 Go 侧的 GORM，以各自语言生态�
 ## 延伸阅读
 
 - [用 Go 重写分层架构：领域包、装配根与最小抽象]({{LINK:M6-03}})
-- [文章查询与展示投影：安全分页、排序和软删除]({{LINK:M6-21}})
-- [数据类型跨数据库：时间、布尔、排序规则与空值]({{LINK:M6-16}})
 - [Node 后端为什么选择 Drizzle ORM](https://blog.csdn.net/fungleo/article/details/164254717)
+- [列表接口三件套：分页、筛选、排序](https://blog.csdn.net/fungleo/article/details/164425686)
+- [数据库选型：关系型还是文档型](https://blog.csdn.net/fungleo/article/details/164209279)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -240,6 +244,8 @@ ORM 不替你做决定
 
 1. M6-04-封面：16:9 浅蓝白底、深色文字、蓝色强调的技术封面。主题“从 Drizzle 到 GORM”。左右展示 TypeScript schema/query builder 与 Go struct/query chain，最终汇入同一 API 契约和数据库行为；重点突出 ORM 表达不同、业务规则相同，不做优劣榜。
 2. M6-04-字段语义：简洁数据流示意，区分字段缺失、null、false、0、空字符串，经过输入存在性、更新映射、数据库行，最终由 DTO 映射到 HTTP 响应。标签简短，避免小字堆叠。
+3. `M6-04-模型分层`：放在正文同名占位处，从表结构到查询结果存在多个模型：数据库行、领域对象、API DTO 各司其职，不能共用一个 struct。
+
 
 ### 发布前核对
 

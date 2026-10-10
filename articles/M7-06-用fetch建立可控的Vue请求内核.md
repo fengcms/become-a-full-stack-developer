@@ -73,6 +73,8 @@ if (!skipAuth && auth.accessToken) {
 
 请求配置统一使用 `credentials: 'include'`，使浏览器可以随跨域请求携带符合策略的 Cookie，例如刷新会话所需的 HttpOnly refresh cookie。能否实际跨域成功还取决于后端 CORS 与 Cookie 属性，前端设置 credentials 不能替代服务端配置。
 
+{{IMG:M7-06-上传}}
+
 ## FormData 上传：不要手动设置 multipart Content-Type
 
 图片上传是最容易被错误统一处理的地方。`FormData` 必须让浏览器生成 multipart boundary，例如 `multipart/form-data; boundary=----WebKitFormBoundary...`。如果代码手工设置只有 `multipart/form-data` 的 header，边界值没有包含在请求头里，服务端可能无法解析内容。
@@ -107,6 +109,8 @@ body: formData
 7. 成功时返回 `data`；失败时根据错误码处理 refresh/force logout，再抛出 `ApiError`。
 
 提供 `http.get/post/put/patch/delete` 是为了让调用端更容易表达 HTTP 方法，最后它们仍然走同一个 `request`。这个薄 API 不会隐藏底层 fetch 太多，也避免页面重复分支。
+
+{{IMG:M7-06-错误模型}}
 
 ## 错误模型：把网络失败、HTTP 状态与业务码讲清楚
 
@@ -143,7 +147,7 @@ Vue 后台的请求内核统一处理 URL、query、凭证、JSON/FormData、信
 ## 延伸阅读
 
 - [从冻结 OpenAPI 生成类型，并组织 Vue API 模块]({{LINK:M7-05}})
-- [登录恢复与刷新令牌：Vue 后台的会话生命周期]({{LINK:M7-07}})
+- [前端鉴权闭环：内存令牌、刷新旋转与路由守卫](https://blog.csdn.net/fungleo/article/details/165848076)
 - [MDN：Using FormData Objects](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest_API/Using_FormData_Objects)
 - [MDN：Using Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)
 
@@ -179,12 +183,13 @@ Fetch 请求内核
 
 1. M7-06-封面：从 Vue 页面到 API 业务函数，再到 fetch 请求内核、HTTP API 的分层流程图；请求内核旁标注 URL/query、认证、JSON/FormData、信封/错误，白色浅蓝底与深色文字。
 2. M7-06-上传：展示浏览器生成 multipart boundary 的过程，FormData 原样进入 fetch，Content-Type 由浏览器自动补齐 boundary；对比错误的手动 header 写法，以清晰技术信息图呈现。
+3. M7-06-错误模型：放在正文同名占位处，错误模型分层示意：网络失败、HTTP 状态与业务码三类错误分别归属与处理。
 
 ### 发布前核对
 
 - [ ] 对照当前 request/index.ts、errors.ts、session.ts 核实刷新分支和错误映射。
 - [ ] 检查 FormData 测试确实断言无 Content-Type 且 body 原样传递。
 - [ ] 核实 API_BASE、credentials 与部署 CORS/Cookie 配置的关系，不将前端配置描述成线上已验收。
-- [ ] 补齐 M7-05、M7-07 内链。
+- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
 - [ ] 发布时删除本段辅助信息，检查代码块与流程图排版。
 <!-- PUBLISH_ASSIST_END -->

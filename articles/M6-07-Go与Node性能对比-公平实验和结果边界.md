@@ -50,6 +50,8 @@ DATABASE_URL="$scratch/go.db" HTTP_ADDR=127.0.0.1:18081 DB_METRICS_FILE="$scratc
 | 顺序 | 固定 Go 先、Node 后 | **未交替，无法消除顺序效应** |
 | 计时 | 本地 performance.now | 只覆盖客户端观测 |
 
+{{IMG:M6-07-实验控制}}
+
 ## 二、实际观察到的延迟与吞吐
 
 | 场景 | Go p50 / p95 / p99 ms | Node p50 / p95 / p99 ms | Go / Node 操作每秒 |
@@ -99,6 +101,8 @@ Go 数据库统计记录 667 次 GORM 调用，总计 260.86 ms，最大 5.31 ms
 
 把这三类统计放在一起看，容易犯的错误是拿一个指标去解释另一个。RSS 高未必说明处理慢，数据库调用次数多也未必说明查询慢，客户端延迟低也未必说明服务端没做额外工作。要判断一个数字说明了什么，先确认它的采集位置、包含范围和单位，再决定它能支持哪一类结论。
 
+{{IMG:M6-07-指标}}
+
 ## 四、为什么没有拿 PostgreSQL 和 D1 比速度
 
 Node 线上方案会使用 Cloudflare D1，Go 主要验证 PostgreSQL。若把 Node+D1 和 Go+PostgreSQL 放在一次端到端测试里，网络往返、数据库位置、连接协议、托管限额和查询计划都会影响结果，无法归因为语言。
@@ -144,10 +148,10 @@ M6 本地样本显示 Go 在多数读取与登录场景的观测延迟较低，�
 
 ## 延伸阅读
 
-- [Node 还是 Go：用这次重写回答选型问题]({{LINK:M6-08}})
-- [契约一致性与差分测试：两套实现如何互相校验]({{LINK:M6-09}})
-- [GORM 支持三数据库：三个 DSN 远远不够]({{LINK:M6-16}})
-- [Go 后端性能对照与教学总结]({{LINK:GO-08}})
+- [Core Web Vitals 与前台性能：先保护正文，再优化装饰模块](https://blog.csdn.net/fungleo/article/details/167172892)
+- [后端测试策略：单元、集成与测试数据库](https://blog.csdn.net/fungleo/article/details/164720486)
+- [数据库选型：关系型还是文档型](https://blog.csdn.net/fungleo/article/details/164209279)
+- [Vite 构建优化：先测体积，再决定怎么拆](https://blog.csdn.net/fungleo/article/details/166582771)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -181,6 +185,8 @@ M6 在同一 arm64 Mac、相同 500 篇 SQLite 数据副本上比较 Node Hono �
 
 1. M6-07-封面：Node 与 Go 在同机、同一 SQLite fixture、相同 HTTP 场景的实验台，旁边标注“观测不是语言排名”。
 2. M6-07-指标：将 p50/p95/p99、吞吐、RSS、数据库调用口径分成独立区域，避免混成单一赢家榜。
+3. `M6-07-实验控制`：放在正文同名占位处，实验控制了哪些变量、保留了什么差异：同一接口、同一数据、同一并发模型，只有实现语言不同，据此标出可比的边界。
+
 
 ### 发布前核对
 

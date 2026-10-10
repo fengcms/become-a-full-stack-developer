@@ -113,6 +113,8 @@ if len(patch) > 0 {
 
 代码是示意，字段名和 mapper 位置须按绑定快照复核。资料、阅读进度、站点配置、文章修改的允许字段和 null 规则不同，应在各自领域包中表达。
 
+{{IMG:M6-14-更新白名单}}
+
 ## 四、GORM Updates(struct) 的零值陷阱
 
 GORM 的 Updates(struct) 默认通常跳过零值字段。把文章 IsFeatured 设为 false，或 SortOrder 设为 0，直接把 struct 传给 Updates 可能不会写入数据库。表面上 SQL 成功，实际更新集合不含这些字段。
@@ -122,6 +124,8 @@ GORM 的 Updates(struct) 默认通常跳过零值字段。把文章 IsFeatured �
 也不要对所有操作无差别使用 Select("*")。完整 PUT 和部分 PATCH 的语义不同：PUT 可以要求全部字段存在；PATCH 则只更新出现的字段。具体规则由契约 schema 和领域动作共同决定。
 
 这里有一个反直觉的点：GORM 用 map 更新时，零值会被当作明确值写入。这既是我们想要的行为（提交 false 就写 false），也是风险来源（把整个请求 body 无条件转成 map，就会把未提交的字段一起写成零值）。所以“用 map 就不用担心零值”只对了一半——它解决了“零值写不进去”的问题，却没有解决“哪些字段应该被写”的问题。后者只能由字段存在性和白名单回答。
+
+{{IMG:M6-14-字段语义}}
 
 ## 五、NULL、空字符串和可空数据库列
 
@@ -205,10 +209,10 @@ Go 的零值简洁，却不携带客户端是否提交的历史。M6 先经过 s
 
 ## 延伸阅读
 
-- [冻结 OpenAPI 3.1 怎么接入 Go：生成器之外的选择]({{LINK:M6-13}})
-- [从 Drizzle 到 GORM：同一套业务的 ORM 取舍]({{LINK:M6-04}})
-- [点赞收藏与会员记录：关系表如何守住计数不变量]({{LINK:M6-25}})
-- [契约先行：设计一套被多个客户端复用的 API](https://blog.csdn.net/fungleo/article/details/164140515)
+- [契约先行：设计一套被七个端复用的 API](https://blog.csdn.net/fungleo/article/details/164140515)
+- [统一响应结构：HTTP 状态码与业务码如何分工](https://blog.csdn.net/fungleo/article/details/164289071)
+- [Node 后端为什么选择 Drizzle ORM](https://blog.csdn.net/fungleo/article/details/164254717)
+- [点赞系统：幂等点赞与计数原子增减](https://blog.csdn.net/fungleo/article/details/165292499)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -242,6 +246,8 @@ Go 的零值与 GORM 更新容易把字段缺失、null、false、0 和空字符
 
 1. M6-14-封面：浅蓝白技术插画，表现 JSON 字段缺失、null、false、0、空字符串经过 Go Fields 识别、白名单 mapper 和数据库更新的流程，强调五种状态不同。
 2. M6-14-字段语义：用视觉表格对照“缺失保持、null 清空或拒绝、false/0/空串明确写入”，连接到数据库后置状态测试。
+3. `M6-14-更新白名单`：放在正文同名占位处，用白名单构造更新 map：只把请求里真实出现的字段放进更新集合，避免用 struct 零值覆盖数据库。
+
 
 ### 发布前核对
 

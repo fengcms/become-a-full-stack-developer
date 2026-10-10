@@ -27,6 +27,8 @@ pnpm build
 
 `pnpm build` 运行 `vue-tsc --noEmit -p tsconfig.app.json`，通过后才执行 `vite build`。这意味着 production build 本身也包含 Vue-aware 类型检查，但开发期间仍可单独运行 typecheck 快速反馈。
 
+{{IMG:M7-23-Biome}}
+
 ## Biome：格式和 lint 一个工具负责
 
 `biome.json` 固定两空格缩进、100 列宽、单引号、无分号，并启用 recommended lint 规则及未使用 import/变量错误。`pnpm check` 同时运行 Biome 的格式、lint 和 import 检查；`pnpm lint` 与 `pnpm format:check` 可以分别聚焦某一部分。
@@ -46,6 +48,8 @@ pnpm build
 `pnpm test` 运行 Vitest。项目当前覆盖权限函数、请求信封/刷新/FormData、UI store 和 Router 守卫。运行结果证明这些测试用例断言通过，不能直接推导所有页面和线上网络环境全部正确。
 
 若改了文章分页、上传、主题或路由，先运行相邻测试，再跑完整 test/build。没有对应测试的行为应通过页面验收或后续补测覆盖，而不是把“Vitest 通过”作为未测试路径的证明。
+
+{{IMG:M7-23-代理}}
 
 ## Vite 代理：本地开发可切换 Node 与 Go
 
@@ -102,9 +106,9 @@ Biome 负责格式与 lint，`vue-tsc` 检查模板和 TS，Vitest 验证已覆�
 ## 延伸阅读
 
 - [Vue 后台测试怎么分层：从纯函数到真实页面路径]({{LINK:M7-22}})
-- [同一管理后台的 React/Vue 对照与重写复盘]({{LINK:M7-24}})
+- [总复盘：从“接口能调通”到“后台值得使用”](https://blog.csdn.net/fungleo/article/details/166690803)
 - [Vue 管理后台工程说明](../docs/vue-manage-frontend/README.md)
-- [API 契约与兼容性：接口文档怎样约束前后端]({{LINK:B-16}})
+- [契约先行：设计一套被七个端复用的 API](https://blog.csdn.net/fungleo/article/details/164140515)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
@@ -138,12 +142,13 @@ Vue 后台质量门禁
 
 1. M7-23-封面：Biome、vue-tsc、Vitest、Vite build 四道门禁串联，之后连浏览器 smoke 和生产环境验收；白底浅蓝，标注每道门禁的验证范围。
 2. M7-23-代理：Vite dev server 将 `/api/v1` 与 `/files` 代理到 `API_TARGET`，可指向 Node/Go；旁边强调这是开发代理，生产由部署层实现。
+3. M7-23-Biome：放在正文同名占位处，本地门禁链：Biome、vue-tsc、Vitest 与构建各自负责一件事。
 
 ### 发布前核对
 
 - [ ] 对照 package.json 脚本、Biome includes 与 Vite proxy 配置。
 - [ ] 确认 API_TARGET 与 VITE_API_BASE 的开发/直连差异。
 - [ ] 更新实际门禁执行结果，不把配置存在写成线上验收完成。
-- [ ] 补齐 M7-22、M7-24、B-16 内链。
+- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
 - [ ] 发布时删除本段辅助信息，检查所有命令可运行。
 <!-- PUBLISH_ASSIST_END -->
