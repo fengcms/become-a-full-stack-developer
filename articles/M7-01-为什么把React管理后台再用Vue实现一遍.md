@@ -146,7 +146,7 @@ Vue 管理后台的价值，不在于又多了一套页面，而在于它让我�
 
 ## 延伸阅读
 
-- [Vite + React + TypeScript：搭起一个有门禁的后台工程]({{LINK:M2-01}})
+- [Vite + React + TypeScript：搭起一个有门禁的后台工程](https://blog.csdn.net/fungleo/article/details/165447601)
 - [Vue 管理后台技术方案与工程边界](../docs/vue-manage-frontend/01-技术方案与工程边界.md)
 - [Vue 管理后台实施记录](../docs/vue-manage-frontend/03-实施记录.md)
 - [Vue3 + Vite + Naive UI：后台工程基座怎么搭]({{LINK:M7-02}})

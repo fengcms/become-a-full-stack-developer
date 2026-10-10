@@ -113,6 +113,8 @@ CachePolicy forQuery(String path, Map<String, dynamic> query, CachePolicy p) {
 
 顺便说第二行的 `page > 3` 降级：前 3 页可以落盘，第 4 页开始只留内存。这是为了防止用户一路翻到底把磁盘缓存塞满。
 
+{{IMG:M4-10-首页状态}}
+
 ## AsyncPane：需要自己造的那一层
 
 三个区块各自独立加载，第一版我写的是这样的：
@@ -202,6 +204,8 @@ void showLoadError(Object e, ReaderRepository repo, Set<String> nextKeys) {
 **和 M4-12 那条"失败清不清取决于重试会不会变"是同一个原则。** 超时、网络抖动、429 这些 → 保留旧内容；401/403/404（`forbidden`）→ 清空，因为那意味着这条数据用户根本无权看，继续显示旧内容是欺骗。
 
 那个 `constraints.hasBoundedHeight` 判断也不是多余的：`AsyncPane` 有时放在固定高度的容器里，有时是自适应高度。前者需要 `Expanded` 才能在有限高度里分配空间，后者加了 `Expanded` 会崩（无界约束下 `Expanded` 不允许）。
+
+{{IMG:M4-10-并发隔离}}
 
 ## 关键设计二：serial 隔离 + 被取代后自动重试
 
@@ -328,8 +332,8 @@ void onCacheEvent(CacheEvent e) {
 ## 延伸阅读
 
 - [Dio + Repository：统一响应信封与模型适配]({{LINK:M4-07}})
-- [列表分页与下拉刷新：去重、失败保留和返回位置]({{LINK:M4-12}})
 - [移动端错误与限流：429、重试和写请求边界]({{LINK:M4-08}})
+- [go_router 与四 Tab App Shell：保留导航状态、深链和登录回跳]({{LINK:M4-05}})
 - [内容门户首页：焦点、最新、文章流与侧栏如何组织](https://blog.csdn.net/fungleo/article/details/166784376)
 
 ---
@@ -366,10 +370,11 @@ Flutter 首页由焦点故事、最新文章和热门内容构成，但不同模
 
 1. `M4-10-封面`：16:9 中文移动首页技术封面，焦点故事、最新文章流、热门列表三个独立数据模块共享清晰页面布局，某一模块故障时其它模块仍展示，真实内容而非假数据。
 2. `M4-10-首页状态`：16:9 手机首页线框图，展示每块各自的 loading、empty、error、cached content 状态，中文标签整齐。
+3. `M4-10-并发隔离`：16:9 中文时序图，首页三区块并发加载，serial 票据标识最新请求、被取代后自动重试，标出 loadKey 随身份变化，深蓝底亮蓝。
 
 ### 发布前核对
 
-- [ ] 替换 2 处配图占位符
+- [ ] 替换 3 处配图占位符
 - [ ] M4-07、M4-12、M3-05 发布后回填站内链接
 - [ ] 热门排序描述与 API 字段语义核对
 - [ ] 已删除本辅助区

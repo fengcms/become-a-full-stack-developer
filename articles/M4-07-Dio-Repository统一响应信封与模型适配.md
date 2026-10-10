@@ -132,6 +132,8 @@ String key(String path, Map<String, dynamic> query, {bool private = false}) {
 
 `session:${userId}:${epoch}` ——**`epoch` 是会话代次**。同一个用户登录两次（会话换代）或退出再登，键就不同，旧数据永远不会被误读。这一点下一篇（M4-09）会展开。
 
+{{IMG:M4-07-数据流}}
+
 ## 缓存策略用一张表管住，不靠 if 散落
 
 既然读要走 `read()`，那"这个端点能不能缓存"必须有唯一答案。项目里是 `features/data/cache_policy_table.dart`。
@@ -267,6 +269,8 @@ void _mutation(String path, String method, Object? data, bool started,
 
 同理，线上只读接口能验证"此刻这个公开接口可访问"，它验证不了写操作的安全性，也覆盖不了全部端点。
 
+{{IMG:M4-07-验证分层}}
+
 ## 日志与脱敏：错误要能诊断，不能能泄露
 
 `ApiFailure` 保留了完整诊断信息：
@@ -358,8 +362,9 @@ bool get forced => Zone.current[_force] == true;
 ## 延伸阅读
 
 - [Flutter 工程骨架与 OpenAPI 代码生成]({{LINK:M4-03}})
-- [移动端错误与限流：429、重试和写请求边界]({{LINK:M4-08}})
+- [给 TypeScript 开发者的 Dart：空安全、Future 与异步错误]({{LINK:M4-02}})
 - [统一响应结构：HTTP 状态码与业务码如何分工](https://blog.csdn.net/fungleo/article/details/164289071)
+- [React 请求层封装：统一信封、业务错误与并发 401](https://blog.csdn.net/fungleo/article/details/165590548)
 
 ---
 
@@ -395,10 +400,11 @@ bool get forced => Zone.current[_force] == true;
 
 1. `M4-07-封面`：16:9 中文技术封面，Dio → ApiClient → Repository → Flutter UI 四层数据流，侧边显示统一 envelope 内仍有 articles、裸数组、嵌套 article 等响应形状，深蓝青绿色。
 2. `M4-07-数据流`：16:9 分层图，标注端点配置、Bearer、信封解析、错误分类、DTO映射、领域模型与可重试 UI，准确中文。
+3. `M4-07-验证分层`：16:9 中文分层图，三类验证各自证明什么——契约测试证明形状、单元测试证明映射、联调证明端到端；标出各自覆盖与不覆盖的范围，深蓝青绿。
 
 ### 发布前核对
 
-- [ ] 替换 2 处配图占位符
+- [ ] 替换 3 处配图占位符
 - [ ] M4-03、M4-08、M1-08 发布后回填站内链接
 - [ ] 与 ApiClient / Repository 当前实现核对示例
 - [ ] 已删除本辅助区

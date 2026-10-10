@@ -93,6 +93,8 @@ while (_nodes.length > CacheLimits.highlightEntries ||
 
 至于原始 HTML——**无条件不执行**。`flutter_markdown` 默认不解析 raw HTML，这是正确的默认值。因为一旦执行了 `<script>` 或 `<iframe>`，就等于在 App 里开了一个不受控的浏览器。
 
+{{IMG:M4-13-渲染组件}}
+
 ## 目录锚点：整个模块最难的地方
 
 现在说那个我一开始完全没想到的问题。
@@ -257,6 +259,8 @@ class _ReaderMarkdownState extends State<ReaderMarkdown> {
 
 这也解释了 M4-10 里 `AsyncPane` 那个 `loadKey` 为什么存在——同一个道理：**Widget 复用但输入变了，必须能识别。**
 
+{{IMG:M4-13-渲染边界}}
+
 ## 私有预览要关掉的东西
 
 最后回到安全。`ReaderMarkdown` 有个 `publicImages` 参数：
@@ -344,8 +348,7 @@ Markdown 阅读器这个模块，技术上不难，但它把三个别的模块�
 ## 延伸阅读
 
 - [Dio + Repository：统一响应信封与模型适配]({{LINK:M4-07}})
-- [服务端目录与文章辅助阅读：锚点、上下篇、浏览量和阅读历史]({{LINK:M4-14}})
-- [内置 WebView：网页历史、App 返回与外链安全]({{LINK:M4-15}})
+- [文章详情：Markdown、代码高亮与目录必须共享](https://blog.csdn.net/fungleo/article/details/166885283)
 - [多级分类、标签与 URL：让内容导航既可读又可索引](https://blog.csdn.net/fungleo/article/details/166835906)
 
 ---
@@ -382,10 +385,11 @@ Markdown 在手机上如何阅读
 
 1. `M4-13-封面`：16:9 中文技术封面，一篇 Markdown 文章在手机上呈现代码横滑、表格横向滚动、图片和深色主题，阅读体验优先，蓝白配色。
 2. `M4-13-渲染组件`：16:9 组件分解图，Markdown 文本解析为段落、代码块、表格、图片与链接 Widget，突出安全与移动视口约束。
+3. `M4-13-渲染边界`：16:9 中文边界图，公开正文与私有预览的渲染差异，标出公开图片与词法缓存两个开关同时关闭的目的，深蓝底亮蓝。
 
 ### 发布前核对
 
-- [ ] 替换 2 处配图占位符
+- [ ] 替换 3 处配图占位符
 - [ ] M4-14、M4-15、M3-08 发布后回填站内链接
 - [ ] 核实 GFM 渲染器当前依赖版本与支持语法
 - [ ] 已删除本辅助区

@@ -1,3 +1,4 @@
+
 # 成为全栈·Flutter App 篇·go_router 与四 Tab App Shell：保留导航状态、深链和登录回跳
 
 做导航的时候，我被一个场景卡住了。
@@ -14,7 +15,7 @@
 
 这篇讲 `app/router.dart` 那两百行，以及它背后那个没那么显眼但很关键的设计——四个 Tab 用的是 `StatefulShellRoute` 而不是普通的 `ShellRoute`。
 
-{{IMG:M4-05-封面}}
+![成为全栈·Flutter App 篇·go_router 与四 Tab App Shell：保留导航状态、深链和登录回跳](https://i-blog.csdnimg.cn/direct/c97bc702ea184da59b35b1f709818c24.png)
 
 ## 为什么不是 push 和 pop
 
@@ -75,6 +76,8 @@ List<StatefulShellBranch> _shellBranches() => [
 而第二个分支里放了三条路由（`/categories`、`/tags`、`/browse`），这体现了**一个 Tab 可以有多个页面**。用户在分类页点进某个分类，是"发现"Tab 内部的导航，不是跳到另一个 Tab——底部高亮仍然在"发现"。
 
 **这个层级关系是靠分支的嵌套表达的，不是靠路径前缀的字符串推断。**
+
+![三个 Tab 的路由归属](https://i-blog.csdnimg.cn/direct/2b226126e767463d89e95235cb923064.png)
 
 ## 三个 Tab 的路由归属
 
@@ -210,6 +213,9 @@ M4-24 讲了我们自己的 `ImageStore`，但 Flutter 框架自己也会缓存�
 
 **这是"登出要清理什么"这个清单上的一项，而它不在我们自己的缓存层里。**
 
+![登录回跳](https://i-blog.csdnimg.cn/direct/75598e3c7d9f4f739e61123e554eb39d.png)
+
+
 ## 路由错误页
 
 ```dart
@@ -308,10 +314,10 @@ if (path.startsWith(Endpoints.privatePrefix)) return ResourceFamily.member;
 
 ## 延伸阅读
 
-- [Riverpod 状态边界：会话、服务端数据和表单草稿]({{LINK:M4-06}})
-- [用真实 API 构建首页：焦点、最新与热门内容]({{LINK:M4-10}})
-- [会员中心：资料、密码、通知与私有数据缓存]({{LINK:M4-18}})
-- [Dio + Repository：统一响应信封与模型适配]({{LINK:M4-07}})
+- [Flutter 工程骨架与 OpenAPI 代码生成]({{https://blog.csdn.net/FungLeo/article/details/167370472}})
+- [把高保真原型落成 Design Token 与 Flutter 组件]({{https://blog.csdn.net/FungLeo/article/details/167371366}})
+- [前端鉴权闭环：内存令牌、刷新旋转与路由守卫](https://blog.csdn.net/fungleo/article/details/165848076)
+- [App Router 与 CSR 时代的思维差异](https://blog.csdn.net/fungleo/article/details/166690841)
 
 ---
 
@@ -347,10 +353,11 @@ Tab、路由与登录回跳
 
 1. `M4-05-封面`：16:9 中文移动端架构图，四个底部 Tab 各自拥有独立页面栈，文章深链进入详情，私有编辑页经登录后回跳，深蓝底、亮蓝路径箭头、简体中文准确。
 2. `M4-05-导航栈`：16:9 四列导航栈示意，首页、分类、搜索、我的分别保留堆栈；标出底部切换不 push、登录 redirect 回到原页面。
+3. `M4-05-登录回跳`：16:9 中文流程图，redirect 判定三态——未登录→登录页并带 from 参数、恢复中→/restoring 中间页、已恢复→回原页面；标出 Uri 编码与退出登录时的缓存清理，深蓝底、亮蓝箭头。
 
 ### 发布前核对
 
-- [ ] 替换 2 处配图占位符
+- [ ] 替换 3 处配图占位符（封面、内图 1 已完成）
 - [ ] M4-03、06、09 发布后回填站内链接
 - [ ] 与 router.dart 当前实际路由路径核对代码
 - [ ] 已删除本辅助区

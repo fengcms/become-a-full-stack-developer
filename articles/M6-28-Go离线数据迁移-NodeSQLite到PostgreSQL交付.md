@@ -292,7 +292,7 @@ M6 的 Snapshot 白名单覆盖 13 张业务表，排除活跃会话、阅读去
 - [版本迁移与模型设计：为什么启动不执行 AutoMigrate]({{LINK:M6-17}})
 - [local 与 R2 存储抽象：接口应该小到什么程度]({{LINK:M6-26}})
 - [文件与数据库没有共同事务：共享附件怎样补偿]({{LINK:M6-27}})
-- [从 Node SQLite 到 PostgreSQL：迁移数据的停写边界]({{LINK:M1-28}})
+- [从 Node SQLite 到 PostgreSQL：迁移数据的停写边界](https://blog.csdn.net/fungleo/article/details/165111053)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：

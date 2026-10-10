@@ -195,7 +195,7 @@ Dart 空安全促使代码明确“值可能不存在”，Future 让异步成�
 
 ## 延伸阅读
 
-- [Flutter 工程骨架与 OpenAPI 代码生成]({{LINK:M4-03}})
+- [Flutter 工程骨架与 OpenAPI 代码生成](https://blog.csdn.net/fungleo/article/details/167370472)
 - [Dio + Repository：统一响应信封与模型适配]({{LINK:M4-07}})
 - [React 请求层封装：统一信封、业务错误与并发 401](https://blog.csdn.net/fungleo/article/details/165590548)
 

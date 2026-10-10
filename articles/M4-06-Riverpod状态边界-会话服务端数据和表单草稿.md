@@ -16,7 +16,7 @@
 
 这篇讲 `app/session.dart` 那两百行里的状态划分，以及一个 Riverpod 特有的东西：**依赖选择器（select）**，它解决的是"我要监听这个对象的一部分，而不是整个对象"。
 
-{{IMG:M4-06-封面}}
+![成为全栈·Flutter App 篇·Riverpod 状态边界：会话、服务端数据和表单草稿](https://i-blog.csdnimg.cn/direct/5538b49b22af48c29d6592652105a76d.png)
 
 ## 会话：唯一真正全局的状态
 
@@ -222,6 +222,8 @@ M4-20 讲过一个相关的坑：**在 `build` 里创建 controller 会导致每
 
 这个区分听起来基础，但它解释了一类常见做法：**很多项目把表单字段全放进全局 store，然后被"其他页面改了什么"莫名其妙地清空。** 因为全局状态变化会触发重建，而重建时如果 controller 处理不当就会丢内容。
 
+![状态所有权](https://i-blog.csdnimg.cn/direct/e74c4bc80645464e9ee23eb8d01c24aa.png)
+
 ## 服务端数据：用 Provider，不用 Notifier
 
 第三类：服务端数据。它的特点是**有生命周期、有缓存、会失效**。
@@ -302,6 +304,8 @@ final repositoryProvider = Provider(
 
 **这张表的价值在于它是"选择"而不是"所有都用 FutureProvider"。** 我见过太多项目只有一个 Provider 类型，所有东西都塞进去，然后靠各种 `select` 和 `autoDispose` 勉强维持。
 
+![依赖订阅](https://i-blog.csdnimg.cn/direct/43a0060e4e6a4ebfafc2d70f431113b3.png)
+
 ## 一条我一开始想省掉的事
 
 `select` 那部分，第一版我是这么写的：
@@ -352,9 +356,8 @@ if (user.user == null) return 0;
 
 ## 延伸阅读
 
-- [go_router 与四 Tab App Shell：保留导航状态、深链和登录回跳]({{LINK:M4-05}})
-- [Dio + Repository：统一响应信封与模型适配]({{LINK:M4-07}})
-- [点赞、收藏与阅读历史：乐观更新和失败回退]({{LINK:M4-16}})
+- [go_router 与四 Tab App Shell：保留导航状态、深链和登录回跳]({{https://blog.csdn.net/FungLeo/article/details/167473845}})
+- [服务端状态、会话状态、界面状态：不要都塞进 Zustand](https://blog.csdn.net/fungleo/article/details/165722061)
 - [React 请求层封装：统一信封、业务错误与并发 401](https://blog.csdn.net/fungleo/article/details/165590548)
 
 ---
@@ -391,10 +394,11 @@ Riverpod 是状态与依赖管理工具，不会替应用自动划分状态边�
 
 1. `M4-06-封面`：16:9 中文架构封面，Riverpod 状态分为会话、服务端内容、页面表单、本机稿件四个边界，使用不同生命周期色带，标题“状态应该由谁拥有”，简洁深蓝风格。
 2. `M4-06-状态所有权`：16:9 四泳道状态所有权图，标出退出登录、TTL过期、页面离开、投稿保存成功等清理事件，中文精准。
+3. `M4-06-依赖订阅`：16:9 中文关系图，画出 session / repository / unreadCount / reactionRevision 四个 Provider 的依赖与订阅关系，标出 watch、read、select 三种连接方式，深蓝底、亮蓝连线。
 
 ### 发布前核对
 
-- [ ] 替换 2 处配图占位符
+- [ ] 替换 3 处配图占位符（封面、内图 1 已完成）
 - [ ] M4-03、M4-09、M2-05 发布后回填站内链接
 - [ ] 示例 Provider 与当前实际声明核对
 - [ ] 已删除本辅助区

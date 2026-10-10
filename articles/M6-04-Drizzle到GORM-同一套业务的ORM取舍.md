@@ -206,7 +206,7 @@ M6 继续使用 Node 侧的 Drizzle 和 Go 侧的 GORM，以各自语言生态�
 - [用 Go 重写分层架构：领域包、装配根与最小抽象]({{LINK:M6-03}})
 - [文章查询与展示投影：安全分页、排序和软删除]({{LINK:M6-21}})
 - [数据类型跨数据库：时间、布尔、排序规则与空值]({{LINK:M6-16}})
-- [Node 后端为什么选择 Drizzle ORM]({{LINK:M1-05}})
+- [Node 后端为什么选择 Drizzle ORM](https://blog.csdn.net/fungleo/article/details/164254717)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
