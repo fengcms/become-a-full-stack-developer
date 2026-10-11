@@ -127,8 +127,8 @@
 | 成为全栈·Flutter App 篇·给 TypeScript 开发者的 Dart：空安全、Future 与异步错误 | — | `articles/M4-02-给TypeScript开发者的Dart-空安全Future与异步错误.md` | https://blog.csdn.net/fungleo/article/details/167266845 | 🟢 已发布 |
 | 成为全栈·Flutter App 篇·Flutter 工程骨架与 OpenAPI 代码生成 | — | `articles/M4-03-Flutter工程骨架与OpenAPI代码生成.md` | https://blog.csdn.net/fungleo/article/details/167370472 | 🟢 已发布 |
 | 成为全栈·Flutter App 篇·把高保真原型落成 Design Token 与 Flutter 组件 | — | `articles/M4-04-把高保真原型落成DesignToken与Flutter组件.md` | https://blog.csdn.net/fungleo/article/details/167371366 | 🟢 已发布 |
-| 成为全栈·Flutter App 篇·go_router 与四 Tab App Shell：保留导航状态、深链和登录回跳 | — | `articles/M4-05-go_router与四TabAppShell-保留导航状态深链和登录回跳.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Flutter App 篇·Riverpod 状态边界：会话、服务端数据和表单草稿 | — | `articles/M4-06-Riverpod状态边界-会话服务端数据和表单草稿.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·go_router 与四 Tab App Shell：保留导航状态、深链和登录回跳 | — | `articles/M4-05-go_router与四TabAppShell-保留导航状态深链和登录回跳.md` | https://blog.csdn.net/fungleo/article/details/167473845 | 🟢 已发布 |
+| 成为全栈·Flutter App 篇·Riverpod 状态边界：会话、服务端数据和表单草稿 | — | `articles/M4-06-Riverpod状态边界-会话服务端数据和表单草稿.md` | https://blog.csdn.net/fungleo/article/details/167476932 | 🟢 已发布 |
 | 成为全栈·Flutter App 篇·Dio + Repository：统一响应信封与模型适配 | — | `articles/M4-07-Dio-Repository统一响应信封与模型适配.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Flutter App 篇·移动端错误与限流：429、重试和写请求边界 | — | `articles/M4-08-移动端错误与限流-429重试和写请求边界.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Flutter App 篇·Refresh Token 旋转与并发 401：安全存储与会话代次 | — | `articles/M4-09-Refresh-Token旋转与并发401-安全存储与会话代次.md` | — | 🟡 草稿中（正文完成，待发布） |

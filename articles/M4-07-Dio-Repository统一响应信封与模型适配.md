@@ -14,7 +14,7 @@ Future<List<T>> getList<T>(String path) async { /* ... */ }
 
 **这篇讲的就是我删掉它之后，换成了什么。**
 
-{{IMG:M4-07-封面}}
+![成为全栈·Flutter App 篇·Dio + Repository：统一响应信封与模型适配](https://i-blog.csdnimg.cn/direct/750c9aa40a79453e97cff87182e4d763.png)
 
 ## 先说清楚：我确实造过一个"统一 API"
 
@@ -132,7 +132,7 @@ String key(String path, Map<String, dynamic> query, {bool private = false}) {
 
 `session:${userId}:${epoch}` ——**`epoch` 是会话代次**。同一个用户登录两次（会话换代）或退出再登，键就不同，旧数据永远不会被误读。这一点下一篇（M4-09）会展开。
 
-{{IMG:M4-07-数据流}}
+![数据流](https://i-blog.csdnimg.cn/direct/d8f5745da336451f94459f665986d337.png)
 
 ## 缓存策略用一张表管住，不靠 if 散落
 
@@ -269,7 +269,7 @@ void _mutation(String path, String method, Object? data, bool started,
 
 同理，线上只读接口能验证"此刻这个公开接口可访问"，它验证不了写操作的安全性，也覆盖不了全部端点。
 
-{{IMG:M4-07-验证分层}}
+![验证分层](https://i-blog.csdnimg.cn/direct/bd574133d4ac4afa92b582e3dd8c0ac0.png)
 
 ## 日志与脱敏：错误要能诊断，不能能泄露
 
@@ -361,8 +361,8 @@ bool get forced => Zone.current[_force] == true;
 
 ## 延伸阅读
 
-- [Flutter 工程骨架与 OpenAPI 代码生成]({{LINK:M4-03}})
-- [给 TypeScript 开发者的 Dart：空安全、Future 与异步错误]({{LINK:M4-02}})
+- [Flutter 工程骨架与 OpenAPI 代码生成](https://blog.csdn.net/fungleo/article/details/167370472)
+- [给 TypeScript 开发者的 Dart：空安全、Future 与异步错误](https://blog.csdn.net/fungleo/article/details/167266845)
 - [统一响应结构：HTTP 状态码与业务码如何分工](https://blog.csdn.net/fungleo/article/details/164289071)
 - [React 请求层封装：统一信封、业务错误与并发 401](https://blog.csdn.net/fungleo/article/details/165590548)
 

@@ -333,7 +333,7 @@ void onCacheEvent(CacheEvent e) {
 
 - [Dio + Repository：统一响应信封与模型适配]({{LINK:M4-07}})
 - [移动端错误与限流：429、重试和写请求边界]({{LINK:M4-08}})
-- [go_router 与四 Tab App Shell：保留导航状态、深链和登录回跳]({{LINK:M4-05}})
+- [go_router 与四 Tab App Shell：保留导航状态、深链和登录回跳](https://blog.csdn.net/fungleo/article/details/167473845)
 - [内容门户首页：焦点、最新、文章流与侧栏如何组织](https://blog.csdn.net/fungleo/article/details/166784376)
 
 ---
