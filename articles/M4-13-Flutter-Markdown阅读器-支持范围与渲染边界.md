@@ -347,7 +347,7 @@ Markdown 阅读器这个模块，技术上不难，但它把三个别的模块�
 
 ## 延伸阅读
 
-- [Dio + Repository：统一响应信封与模型适配]({{LINK:M4-07}})
+- [Dio + Repository：统一响应信封与模型适配](https://blog.csdn.net/fungleo/article/details/167567832)
 - [文章详情：Markdown、代码高亮与目录必须共享](https://blog.csdn.net/fungleo/article/details/166885283)
 - [多级分类、标签与 URL：让内容导航既可读又可索引](https://blog.csdn.net/fungleo/article/details/166835906)
 

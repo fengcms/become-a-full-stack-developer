@@ -10,7 +10,7 @@
 
 这篇讲 `home_page.dart`（49 行）怎么把这三块拆开，以及一个我一开始完全没想到的中间层——`AsyncPane`。
 
-{{IMG:M4-10-封面}}
+![成为全栈·Flutter App 篇·用真实 API 构建首页：焦点、最新与热门内容](https://i-blog.csdnimg.cn/direct/fbdd69316a404125a3ab58d90570581c.png)
 
 ## 先看首页有多小
 
@@ -113,7 +113,7 @@ CachePolicy forQuery(String path, Map<String, dynamic> query, CachePolicy p) {
 
 顺便说第二行的 `page > 3` 降级：前 3 页可以落盘，第 4 页开始只留内存。这是为了防止用户一路翻到底把磁盘缓存塞满。
 
-{{IMG:M4-10-首页状态}}
+![首页状态](https://i-blog.csdnimg.cn/direct/c328896e0146449da7afbb3260ecf529.png)
 
 ## AsyncPane：需要自己造的那一层
 
@@ -205,7 +205,7 @@ void showLoadError(Object e, ReaderRepository repo, Set<String> nextKeys) {
 
 那个 `constraints.hasBoundedHeight` 判断也不是多余的：`AsyncPane` 有时放在固定高度的容器里，有时是自适应高度。前者需要 `Expanded` 才能在有限高度里分配空间，后者加了 `Expanded` 会崩（无界约束下 `Expanded` 不允许）。
 
-{{IMG:M4-10-并发隔离}}
+![并发隔离](https://i-blog.csdnimg.cn/direct/ddebcabf4b0f4e9fbec6d326bd5e3cab.png)
 
 ## 关键设计二：serial 隔离 + 被取代后自动重试
 
@@ -331,8 +331,8 @@ void onCacheEvent(CacheEvent e) {
 
 ## 延伸阅读
 
-- [Dio + Repository：统一响应信封与模型适配]({{LINK:M4-07}})
-- [移动端错误与限流：429、重试和写请求边界]({{LINK:M4-08}})
+- [Dio + Repository：统一响应信封与模型适配](https://blog.csdn.net/fungleo/article/details/167567832)
+- [移动端错误与限流：429、重试和写请求边界](https://blog.csdn.net/fungleo/article/details/167568424)
 - [go_router 与四 Tab App Shell：保留导航状态、深链和登录回跳](https://blog.csdn.net/fungleo/article/details/167473845)
 - [内容门户首页：焦点、最新、文章流与侧栏如何组织](https://blog.csdn.net/fungleo/article/details/166784376)
 

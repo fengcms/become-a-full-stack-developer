@@ -12,7 +12,7 @@
 
 这篇讲怎么在 Dart 里把这三道栅栏垒起来：**单飞刷新**、**迟到响应跨会话隔离**、**重放限制**。代码全部来自 `flutter-app/lib/core/network/api_client.dart`（344 行）。
 
-{{IMG:M4-09-封面}}
+![成为全栈·Flutter App 篇·Refresh Token 旋转与并发 401：安全存储与会话代次](https://i-blog.csdnimg.cn/direct/234db3a67f314ef9867f365bbf523641.png)
 
 ## 先划一条线：Flutter 不走 Cookie
 
@@ -71,7 +71,7 @@ class SecureTokenVault implements TokenVault {
 
 顺便注意 `write(null)` 被实现成 `delete` 而不是"写入空字符串"。这两种语义在后续的"是否已登出"判断里是等价的，但在存储层含义不同——**把登出表达成一个动作，而不是一个空值**，比每次调用点都判断一遍要可靠。
 
-{{IMG:M4-09-认证时序}}
+![认证时序](https://i-blog.csdnimg.cn/direct/09167c672a84428bb88e04a61f8cfb0f.png)
 
 ## 第一道栅栏：单飞刷新
 
@@ -235,7 +235,7 @@ data: data is FormData ? data.clone() : data,
 
 还有一个容易被忽略的约束：**重放只发生在 GET 上**。因为 `_shouldRefresh` 只对 `code == 1002` 响应生效，而写请求一旦真的到达服务端执行了，即使我们收到 401 再重放，也可能重复创建。文章后面聊 429 的时候会讲为什么写请求宁可失败也不自动重试——那是同一条原则的两面。
 
-{{IMG:M4-09-会话代次}}
+![会话代次](https://i-blog.csdnimg.cn/direct/566589c14fa14694b0fabebc877c0537.png)
 
 ## 会话隔离：缓存键里的那个 epoch
 
@@ -337,8 +337,8 @@ Refresh Token 轮换的实现难度不在轮换本身，在于**它是这个项�
 
 ## 延伸阅读
 
-- [Dio + Repository：统一响应信封与模型适配]({{LINK:M4-07}})
-- [移动端错误与限流：429、重试和写请求边界]({{LINK:M4-08}})
+- [Dio + Repository：统一响应信封与模型适配](https://blog.csdn.net/fungleo/article/details/167567832)
+- [移动端错误与限流：429、重试和写请求边界](https://blog.csdn.net/fungleo/article/details/167568424)
 - [注册登录全流程实现](https://blog.csdn.net/fungleo/article/details/164396193)
 
 ---
