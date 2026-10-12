@@ -131,8 +131,8 @@
 | 成为全栈·Flutter App 篇·Riverpod 状态边界：会话、服务端数据和表单草稿 | — | `articles/M4-06-Riverpod状态边界-会话服务端数据和表单草稿.md` | https://blog.csdn.net/fungleo/article/details/167476932 | 🟢 已发布 |
 | 成为全栈·Flutter App 篇·Dio + Repository：统一响应信封与模型适配 | — | `articles/M4-07-Dio-Repository统一响应信封与模型适配.md` | https://blog.csdn.net/fungleo/article/details/167567832 | 🟢 已发布 |
 | 成为全栈·Flutter App 篇·移动端错误与限流：429、重试和写请求边界 | — | `articles/M4-08-移动端错误与限流-429重试和写请求边界.md` | https://blog.csdn.net/fungleo/article/details/167568424 | 🟢 已发布 |
-| 成为全栈·Flutter App 篇·Refresh Token 旋转与并发 401：安全存储与会话代次 | — | `articles/M4-09-Refresh-Token旋转与并发401-安全存储与会话代次.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Flutter App 篇·用真实 API 构建首页：焦点、最新与热门内容 | — | `articles/M4-10-用真实API构建首页-焦点最新与热门内容.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·Refresh Token 旋转与并发 401：安全存储与会话代次 | — | `articles/M4-09-Refresh-Token旋转与并发401-安全存储与会话代次.md` | https://blog.csdn.net/fungleo/article/details/167694640 | 🟢 已发布 |
+| 成为全栈·Flutter App 篇·用真实 API 构建首页：焦点、最新与热门内容 | — | `articles/M4-10-用真实API构建首页-焦点最新与热门内容.md` | https://blog.csdn.net/fungleo/article/details/167695264 | 🟢 已发布 |
 | 成为全栈·Flutter App 篇·分类、标签与搜索：移动端内容发现 | — | `articles/M4-11-分类标签与搜索-移动端内容发现.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Flutter App 篇·列表分页与下拉刷新：去重、失败保留和返回位置 | — | `articles/M4-12-列表分页与下拉刷新-去重失败保留和返回位置.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Flutter App 篇·Flutter Markdown 阅读器：支持范围与渲染边界 | — | `articles/M4-13-Flutter-Markdown阅读器-支持范围与渲染边界.md` | — | 🟡 草稿中（正文完成，待发布） |
