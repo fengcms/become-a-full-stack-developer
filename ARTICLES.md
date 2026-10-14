@@ -135,8 +135,8 @@
 | 成为全栈·Flutter App 篇·用真实 API 构建首页：焦点、最新与热门内容 | — | `articles/M4-10-用真实API构建首页-焦点最新与热门内容.md` | https://blog.csdn.net/fungleo/article/details/167695264 | 🟢 已发布 |
 | 成为全栈·Flutter App 篇·分类、标签与搜索：移动端内容发现 | — | `articles/M4-11-分类标签与搜索-移动端内容发现.md` | https://blog.csdn.net/fungleo/article/details/167799336 | 🟢 已发布 |
 | 成为全栈·Flutter App 篇·列表分页与下拉刷新：去重、失败保留和返回位置 | — | `articles/M4-12-列表分页与下拉刷新-去重失败保留和返回位置.md` | https://blog.csdn.net/fungleo/article/details/167799740 | 🟢 已发布 |
-| 成为全栈·Flutter App 篇·Flutter Markdown 阅读器：支持范围与渲染边界 | — | `articles/M4-13-Flutter-Markdown阅读器-支持范围与渲染边界.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Flutter App 篇·服务端目录与文章辅助阅读：锚点、上下篇、浏览量和阅读历史 | — | `articles/M4-14-服务端目录与文章辅助阅读-锚点上下篇浏览量和阅读历史.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Flutter App 篇·Flutter Markdown 阅读器：支持范围与渲染边界 | — | `articles/M4-13-Flutter-Markdown阅读器-支持范围与渲染边界.md` | https://blog.csdn.net/fungleo/article/details/167892612 | 🟢 已发布 |
+| 成为全栈·Flutter App 篇·服务端目录与文章辅助阅读：锚点、上下篇、浏览量和阅读历史 | — | `articles/M4-14-服务端目录与文章辅助阅读-锚点上下篇浏览量和阅读历史.md` | https://blog.csdn.net/fungleo/article/details/167894547 | 🟢 已发布 |
 | 成为全栈·Flutter App 篇·内置 WebView：网页历史、App 返回与外链安全 | — | `articles/M4-15-内置WebView-网页历史App返回与外链安全.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Flutter App 篇·点赞、收藏与阅读历史：乐观更新和失败回退 | — | `articles/M4-16-点赞收藏与阅读历史-乐观更新和失败回退.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Flutter App 篇·叠楼评论：跨页重组与直接回复上下文 | — | `articles/M4-17-叠楼评论-跨页重组与直接回复上下文.md` | — | 🟡 草稿中（正文完成，待发布） |

@@ -10,7 +10,7 @@
 
 这篇讲 `core/markdown/` 那三百多行是怎么处理这些的，以及一个我一开始完全没意识到、后来变成整个模块最核心的问题：**目录锚点到底由谁定义。**
 
-{{IMG:M4-13-封面}}
+![成为全栈·Flutter App 篇·Flutter Markdown 阅读器：支持范围与渲染边界](https://i-blog.csdnimg.cn/direct/b86b2f284582402eb193f30ad2a7b2fe.png)
 
 ## 为什么不是同一个东西
 
@@ -93,7 +93,7 @@ while (_nodes.length > CacheLimits.highlightEntries ||
 
 至于原始 HTML——**无条件不执行**。`flutter_markdown` 默认不解析 raw HTML，这是正确的默认值。因为一旦执行了 `<script>` 或 `<iframe>`，就等于在 App 里开了一个不受控的浏览器。
 
-{{IMG:M4-13-渲染组件}}
+![渲染组件](https://i-blog.csdnimg.cn/direct/738d9b1c23024380adbbbe2deae9aa38.png)
 
 ## 目录锚点：整个模块最难的地方
 
@@ -259,7 +259,7 @@ class _ReaderMarkdownState extends State<ReaderMarkdown> {
 
 这也解释了 M4-10 里 `AsyncPane` 那个 `loadKey` 为什么存在——同一个道理：**Widget 复用但输入变了，必须能识别。**
 
-{{IMG:M4-13-渲染边界}}
+![渲染边界](https://i-blog.csdnimg.cn/direct/09f1f7a49b4c4bcba899425f68659e55.png)
 
 ## 私有预览要关掉的东西
 

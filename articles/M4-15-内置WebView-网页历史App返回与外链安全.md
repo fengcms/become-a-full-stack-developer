@@ -12,7 +12,8 @@
 
 这篇讲 `features/web_page.dart` 的选择，以及顺带发现的另一件事：**WebView 里不该带 App 的登录态。**
 
-{{IMG:M4-15-封面}}
+![成为全栈·Flutter App 篇·内置 WebView：网页历史、App 返回与外链安全](https://i-blog.csdnimg.cn/direct/8f6b494e9b9a473693cc483bda1bbc61.png)
+
 
 ## 明确：网页归网页，路由归路由
 
@@ -118,7 +119,8 @@ title: Text(
 
 真实标题 > 域名 > "网页"，三级降级。
 
-{{IMG:M4-15-返回模型}}
+![返回模型](https://i-blog.csdnimg.cn/direct/e19ea64ea74043f6886684c828ec5a17.png)
+
 
 ## 标题：每秒轮询一次
 
@@ -231,7 +233,8 @@ Future<void> retry() async {
 
 **用 `currentUrl` 而不是 `widget.url` 重试。** 因为用户可能已经跳转了——他加载失败的地方是 B，重试应该重试 B，不是重试最初那个 A。
 
-{{IMG:M4-15-外链安全}}
+![外链安全](https://i-blog.csdnimg.cn/direct/c62b679d0f4b4e06b996d48db76f6086.png)
+
 
 ## 协议白名单：不能只判断是不是链接
 
@@ -341,8 +344,8 @@ Markdown 正文里的图片 URL 也遵循同一条线——那些图片走的是
 
 ## 延伸阅读
 
-- [Flutter Markdown 阅读器：支持范围与渲染边界]({{LINK:M4-13}})
-- [服务端目录与文章辅助阅读：锚点、上下篇、浏览量和阅读历史]({{LINK:M4-14}})
+- [Flutter Markdown 阅读器：支持范围与渲染边界](https://blog.csdn.net/fungleo/article/details/167892612)
+- [服务端目录与文章辅助阅读：锚点、上下篇、浏览量和阅读历史](https://blog.csdn.net/fungleo/article/details/167894547)
 - [移动端错误与限流：429、重试和写请求边界](https://blog.csdn.net/fungleo/article/details/167568424)
 
 ---
