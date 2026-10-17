@@ -14,7 +14,8 @@
 
 这个拆分就是 fresh / stale / expired 三态的由来。
 
-{{IMG:M4-23-封面}}
+![成为全栈·Flutter App 篇·Flutter 缓存：fresh、stale、expired 与账号边界](https://i-blog.csdnimg.cn/direct/38a627cbb50849579ab748de4a8e743f.png)
+
 
 ## 三态的判定
 
@@ -130,7 +131,8 @@ _put(key, entry);    // 重新放进去
 
 我记录这个问题是因为：**它属于"看起来是 bug，其实是被选择的性质"**。将来如果有人报"通知不更新了"，答案在这里。
 
-{{IMG:M4-23-缓存层}}
+![缓存层](https://i-blog.csdnimg.cn/direct/2592e1d6a66749a5b3b3816e26759204.png)
+
 
 ## 服务端的 cache-control：只能收紧不能放宽
 
@@ -312,7 +314,8 @@ final private =
 
 所以判断规则要用**白名单式的路径前缀**，而不是"看起来像私有的就当私有"。后者太模糊——`/articles?liked=true` 这种查询参数很难归类。
 
-{{IMG:M4-23-账号边界}}
+![账号边界](https://i-blog.csdnimg.cn/direct/e607fdd5b6924640a761c0e537c9634f.png)
+
 
 ## 容量：限额集中在一个文件
 
