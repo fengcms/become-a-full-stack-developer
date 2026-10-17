@@ -312,7 +312,7 @@ color: Colors.black.withValues(alpha: .08),
 ## 延伸阅读
 
 - [Riverpod 状态边界：会话、服务端数据和表单草稿](https://blog.csdn.net/fungleo/article/details/167476932)
-- [主题与可访问性：深浅色、大字号和触控体验]({{LINK:M4-25}})
+- [主题与可访问性：深浅色、大字号和触控体验](https://blog.csdn.net/fungleo/article/details/168242252)
 - [用真实 API 构建首页：焦点、最新与热门内容](https://blog.csdn.net/fungleo/article/details/167695264)
 - [写后缓存失效与图片缓存治理](https://blog.csdn.net/fungleo/article/details/168121891)
 

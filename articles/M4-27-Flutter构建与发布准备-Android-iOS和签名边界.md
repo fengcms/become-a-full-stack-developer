@@ -289,7 +289,7 @@ M4-15 讲 WebView 时说"Android 有证据，iOS 未验收"，M4-26 讲测试时
 
 ## 延伸阅读
 
-- [测试分层：单元、Widget、集成与线上只读验证]({{LINK:M4-26}})
+- [测试分层：单元、Widget、集成与线上只读验证](https://blog.csdn.net/fungleo/article/details/168242318)
 - [内置 WebView：网页历史、App 返回与外链安全](https://blog.csdn.net/fungleo/article/details/167902211)
 - [Flutter 缓存：fresh、stale、expired 与账号边界](https://blog.csdn.net/fungleo/article/details/168121594)
 
