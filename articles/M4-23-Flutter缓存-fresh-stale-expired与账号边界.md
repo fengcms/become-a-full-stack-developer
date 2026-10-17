@@ -406,7 +406,7 @@ Cache-Control: max-age="600"
 
 - [Dio + Repository：统一响应信封与模型适配](https://blog.csdn.net/fungleo/article/details/167567832)
 - [点赞、收藏与阅读历史：乐观更新和失败回退](https://blog.csdn.net/fungleo/article/details/167914424)
-- [本机稿件恢复：账号隔离、冲突判断与恢复决策](https://blog.csdn.net/FungLeo/article/details/168121044)
+- [本机稿件恢复：账号隔离、冲突判断与恢复决策](https://blog.csdn.net/fungleo/article/details/168121044)
 
 ---
 

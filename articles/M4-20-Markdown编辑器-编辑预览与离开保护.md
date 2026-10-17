@@ -8,8 +8,7 @@
 
 这个 bug 让我意识到一件事——**编辑器里所有的状态必须活在同一个生命周期里**，而不是各自为政。M4-19 讲了投稿状态机，这一篇讲的是编辑器**界面**这一层。
 
-![成为全栈·Flutter App 篇·Markdown 编辑器：编辑、预览与离开保护](https://i-blog.csdnimg.cn/direct/fb329fc1055f46f0b3c118884da72093.png)
-
+![成为全栈·Flutter App 篇·Markdown 编辑器：编辑、预览与离开保护](https://i-blog.csdnimg.cn/direct/01defa9b04df432c8c9f879c2cb66e18.png)
 
 
 ## 编辑/预览切换：Controller 不能重建
@@ -75,7 +74,8 @@ AbsorbPointer(
 
 而 `65535` 这个数字**应该从契约来**，而不是写死在界面里。如果哪天服务端改成 65536，这里得跟着改。现在的做法是它写在设计稿里，改的时候记得两处一起改——**这是一个已知的不足，不是完美的方案。**
 
-![编辑流程](https://i-blog.csdnimg.cn/direct/6902ed1e438a4500a0a1dcb44a50ed2a.png)
+![编辑流程](https://i-blog.csdnimg.cn/direct/a20d886ffe6e4d7190ae199c287504cc.png)
+
 
 ## 忙碌期为什么要锁住整个表单
 
@@ -171,8 +171,8 @@ canPop: allowLeave || (!dirty && !busy),
 
 **为什么要分开？** 因为"内容没差异"和"用户刚保存过"是两种不同的状态。前者是事实，后者是意图。而离开保护拦的是**意图**——用户在保存成功后还想走，这本身没有问题，不该被拦。
 
-![离开保护](https://i-blog.csdnimg.cn/direct/74d1bd82a75b41c2961fbd7b84507d02.png)
 
+![离开保护](https://i-blog.csdnimg.cn/direct/50d6a65e9a884f898431a6204cda1a47.png)
 
 ## 上传失败：正文必须留着
 
@@ -303,7 +303,7 @@ saveBar,
 
 ## 延伸阅读
 
-- [投稿状态机：草稿、待审核与已发布]({{LINK:M4-19}})
+- [投稿状态机：草稿、待审核与已发布](https://blog.csdn.net/fungleo/article/details/168010725)
 - [Markdown 编辑器：预览、暗色主题与连续图片粘贴](https://blog.csdn.net/fungleo/article/details/166107729)
 - [表单页范式：校验、数据回填与未保存保护](https://blog.csdn.net/fungleo/article/details/165986069)
 
