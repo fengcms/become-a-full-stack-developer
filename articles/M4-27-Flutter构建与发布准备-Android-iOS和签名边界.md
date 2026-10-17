@@ -8,7 +8,8 @@
 
 原因是我这台 Mac 没有完整的 Xcode。所以这一篇会明确区分三件事——**已经验证过的、配置好但没验证的、根本没有的**——而不是含糊地说"支持双端"。
 
-{{IMG:M4-27-封面}}
+![成为全栈·Flutter App 篇·Flutter 构建与发布准备：Android、iOS 和签名边界](https://i-blog.csdnimg.cn/direct/77770093112e420d94e987b7537e59b7.png)
+
 
 ## 三个端点，三种 URL 注入
 
@@ -177,7 +178,8 @@ minSdk = 23      // Android 6.0
 
 现在还没验证 Release 的 Info.plist 里有没有这条。**这是我下一步要做的第一件事。**
 
-{{IMG:M4-27-发布清单}}
+![发布清单](https://i-blog.csdnimg.cn/direct/e468ac60bd6c4b6db5af9e526aa6f6bf.png)
+
 
 ## 构建产物验证：不只是"构建成功"
 
@@ -228,7 +230,7 @@ flutter build apk --build-number="$BUILD" --build-name="$VERSION"
 
 顺带说清楚一件事：**版本号和 git tag 不是一回事。** 前者是给商店看的（用户看到的），后者是给开发流程用的（代码快照标识）。它们可以不一致，但**不该长期不一致**。
 
-{{IMG:M4-27-签名边界}}
+![签名边界](https://i-blog.csdnimg.cn/direct/0c58f9c0918f429d8f0f00b883e1b179.png)
 
 ## 一条我一开始想省掉的事
 

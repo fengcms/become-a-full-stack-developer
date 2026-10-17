@@ -8,7 +8,8 @@
 
 所以这篇不是讲"应该写测试"，而是讲这个项目的测试**是怎么分层的、每层证明什么、以及我踩过的那个"测试全绿但功能是坏的"的坑**。
 
-{{IMG:M4-26-封面}}
+![成为全栈·Flutter App 篇·测试分层：单元、Widget、集成与线上只读验证](https://i-blog.csdnimg.cn/direct/7ed24e218bcb48cd9824d0ff24541ca9.png)
+
 
 ## 三层，各管一件事
 
@@ -95,7 +96,8 @@ await second;
 
 **测试可行性反过来约束了设计。** 这不是先写测试再改代码，而是"要能测这个行为，于是当初把它设计成可注入的"。
 
-{{IMG:M4-26-测试矩阵}}
+![测试矩阵](https://i-blog.csdnimg.cn/direct/a9fff6e12d484c01a55716c2840bd2d4.png)
+
 
 ## 第三层：集成测试测的是"页面跑得通"
 
@@ -185,7 +187,8 @@ class ControllableRepository extends FakeRepository {
 
 这个规则的价值在于：**修 bug 的那一刻，你对这个 bug 的理解是最深的**——比写功能的时候更深，因为你在复现和定位上花了时间。那是补测试最好的时机。
 
-{{IMG:M4-26-覆盖率盲区}}
+![覆盖率盲区](https://i-blog.csdnimg.cn/direct/78d32db14b8e49c99fde5f301c54eae6.png)
+
 
 ## 一条我一开始想省掉的事
 
