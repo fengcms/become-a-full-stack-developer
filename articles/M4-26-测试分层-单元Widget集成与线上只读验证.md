@@ -235,7 +235,7 @@ Flutter 有官方的覆盖率工具，能生成一份报告告诉你哪些行没
 
 ## 延伸阅读
 
-- [Flutter 缓存：fresh、stale、expired 与账号边界]({{LINK:M4-23}})
+- [Flutter 缓存：fresh、stale、expired 与账号边界](https://blog.csdn.net/fungleo/article/details/168121594)
 - [内置 WebView：网页历史、App 返回与外链安全](https://blog.csdn.net/fungleo/article/details/167902211)
 - [用真实 API 构建首页：焦点、最新与热门内容](https://blog.csdn.net/fungleo/article/details/167695264)
 - [前端质量门禁：契约守卫、纯函数测试与浏览器验收](https://blog.csdn.net/fungleo/article/details/166643861)
