@@ -10,7 +10,9 @@
 
 这篇讲一个只改了 3 行的 bug，是怎么穿过单测和部署检查的。
 
-{{IMG:M1-34-封面}}
+![成为全栈·Node 后端篇·Node 测试通过，Workers 登录为什么仍然 500](https://i-blog.csdnimg.cn/direct/e18205a7e25049949a17914dc2d8eca1.png)
+
+
 
 ## 先说为什么不能立刻怀疑密钥
 
@@ -90,6 +92,8 @@ const response = await fetch(url, {
 选它的意图完全正确：这个请求带着 AppSecret 和用户的临时 code，**绝对不能被 302 跟到别处去**——如果跟了，AppSecret 就发给了微信指定的任意地址。
 
 这个安全要求没有错。**错在"我以为目标运行时支持这个选项"。**
+
+![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/70906bf9f95a4707a91bfb762a1ef6a4.png)
 
 而这个错误为什么在本地测不出来？因为本机的 `fetch` 是 Node 的实现（undici），**它支持 `error`**，而且行为符合预期——你传一个 302 回来，它会抛错。
 
