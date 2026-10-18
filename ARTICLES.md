@@ -53,9 +53,9 @@
 | 成为全栈·Node 后端篇·点赞系统-幂等点赞与计数原子增减 | — | `articles/M1-29-点赞系统-幂等点赞与计数原子增减.md` | https://blog.csdn.net/fungleo/article/details/165292499 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·通知系统-事件消费与已读态管理 | — | `articles/M1-30-通知系统-事件消费与已读态管理.md` | https://blog.csdn.net/fungleo/article/details/165293002 | 🟢 已发布 |
 | 成为全栈·Node 后端篇·数据建模手艺-状态机-冗余计数与适配层的心法清单 | — | `articles/M1-31-数据建模手艺-状态机-冗余计数与适配层的心法清单.md` | https://blog.csdn.net/fungleo/article/details/165445806 | 🟢 已发布 |
-| 成为全栈·Node 后端篇·冻结契约如何兼容增补：为微信登录补齐最小能力 | `node-backend-v1.0.4` | `articles/M1-32-冻结契约如何兼容增补-为微信登录补齐最小能力.md` | — | 🟡 草稿中（已确认，待发布） |
-| 成为全栈·Node 后端篇·微信登录与首次账号设置：把平台身份接到自己的用户体系 | `node-backend-v1.0.4` | `articles/M1-33-微信登录与首次账号设置-把平台身份接到自己的用户体系.md` | — | 🟡 草稿中（已确认，待发布） |
-| 成为全栈·Node 后端篇·Node 测试通过，Workers 登录为什么仍然 500 | `node-backend-v1.0.4` | `articles/M1-34-Node测试通过-Workers登录为什么仍然500.md` | — | 🟡 草稿中（已确认，待发布） |
+| 成为全栈·Node 后端篇·冻结契约如何兼容增补：为微信登录补齐最小能力 | `node-backend-v1.0.4` | `articles/M1-32-冻结契约如何兼容增补-为微信登录补齐最小能力.md` | https://blog.csdn.net/fungleo/article/details/168327101 | 🟢 已发布 |
+| 成为全栈·Node 后端篇·微信登录与首次账号设置：把平台身份接到自己的用户体系 | `node-backend-v1.0.4` | `articles/M1-33-微信登录与首次账号设置-把平台身份接到自己的用户体系.md` | https://blog.csdn.net/fungleo/article/details/168327734 | 🟢 已发布 |
+| 成为全栈·Node 后端篇·Node 测试通过，Workers 登录为什么仍然 500 | `node-backend-v1.0.4` | `articles/M1-34-Node测试通过-Workers登录为什么仍然500.md` | https://blog.csdn.net/fungleo/article/details/168328056 | 🟢 已发布 |
 
 > M1-32～34 已获作者确认，等待发布；对应后端里程碑 `node-backend-v1.0.4` 已创建并推送。该 tag 保留微信兼容增补与 Workers 修复，不使用原 node-backend-v1.0 快照。
 

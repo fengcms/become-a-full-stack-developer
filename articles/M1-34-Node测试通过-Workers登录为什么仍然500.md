@@ -243,8 +243,8 @@ it('使用 Workers 支持的 manual 且拒绝重定向，不向跳转目标发�
 
 ## 延伸阅读
 
-- [冻结契约如何兼容增补：为微信登录补齐最小能力]({{LINK:M1-32}})
-- [微信登录与首次账号设置：把平台身份接到自己的用户体系]({{LINK:M1-33}})
+- [冻结契约如何兼容增补：为微信登录补齐最小能力](https://blog.csdn.net/fungleo/article/details/168327101)
+- [微信登录与首次账号设置：把平台身份接到自己的用户体系](https://blog.csdn.net/fungleo/article/details/168327734)
 - [一套后端双部署：适配层如何让一份代码跑在两套运行时](https://blog.csdn.net/fungleo/article/details/164816647)
 - [Cloudflare Workers Request API](https://developers.cloudflare.com/workers/runtime-apis/request/)
 
