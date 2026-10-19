@@ -228,20 +228,21 @@ export function applyTheme() {
 
 这样，原型不只是开工时展示一次的图片，而是能约束后续实现的参照。下一篇看四 Tab 与页面栈，设计语言会继续遇到平台生命周期的实际边界。
 
----
-如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
-
-🔗 专栏地址：[成为全栈](https://blog.csdn.net/fungleo/category_13204651.html)
-
-📦 本系列配套代码仓库：[fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
-
-![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
 ## 延伸阅读
 
 - [Taro 一套代码多端：这次究竟复用了什么](https://blog.csdn.net/fungleo/article/details/168432476)
 - [把高保真原型落成 Design Token 与 Flutter 组件](https://blog.csdn.net/fungleo/article/details/167371366)
 - [响应式、可访问性与错误状态：内容站不能只验桌面首页](https://blog.csdn.net/fungleo/article/details/167172856)
+
+---
+
+如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
+
+🔗 专栏地址：[https://blog.csdn.net/fungleo/category_13204651.html](https://blog.csdn.net/fungleo/category_13204651.html)
+
+📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
+
+![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
 
 <!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
 ## 发布辅助信息

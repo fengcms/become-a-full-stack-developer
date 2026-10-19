@@ -247,20 +247,21 @@ Hook 卸载时递增序号，计时器隐藏时取消，编辑器卸载时保存
 
 接着读请求与会话层和有界缓存。页面回来的速度，最终取决于导航、读取与身份边界能否配合。
 
----
-如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
-
-🔗 专栏地址：[成为全栈](https://blog.csdn.net/fungleo/category_13204651.html)
-
-📦 本系列配套代码仓库：[fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
-
-![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
 ## 延伸阅读
 
 - [把 APP 原型落到小程序：图标、Design Token 与深色模式]({{LINK:M5-10}})
 - [App Router 与 CSR 时代的思维差异](https://blog.csdn.net/fungleo/article/details/166690841)
 - [数据获取与缓存：60 秒再验证背后到底发生了什么](https://blog.csdn.net/fungleo/article/details/166784128)
+
+---
+
+如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
+
+🔗 专栏地址：[https://blog.csdn.net/fungleo/category_13204651.html](https://blog.csdn.net/fungleo/category_13204651.html)
+
+📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
+
+![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
 
 <!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
 ## 发布辅助信息

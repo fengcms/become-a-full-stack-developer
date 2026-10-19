@@ -269,22 +269,21 @@ assert.equal(highlight("<script>", "unknown"), "&lt;script&gt;");
 
 更多阅读行为见目录、上下篇与外链路由，编辑预览见 Markdown 投稿编辑器。解析与渲染边界清楚后，同一份内容才能在阅读和创作之间保持一致。
 
----
-如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
-
-🔗 专栏地址：[成为全栈](https://blog.csdn.net/fungleo/category_13204651.html)
-
-📦 本系列配套代码仓库：[fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
-
-![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
-
-
 ## 延伸阅读
 
 - [首页、分类与搜索：把内容发现做成可恢复的数据流]({{LINK:M5-14}})
 - [文章详情：Markdown、代码高亮与目录必须共享解析结果](https://blog.csdn.net/fungleo/article/details/166885283)
 - [Markdown 编辑器：预览、暗色主题与连续图片粘贴](https://blog.csdn.net/fungleo/article/details/166107729)
+
+---
+
+如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
+
+🔗 专栏地址：[https://blog.csdn.net/fungleo/category_13204651.html](https://blog.csdn.net/fungleo/category_13204651.html)
+
+📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
+
+![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
 
 <!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
 ## 发布辅助信息

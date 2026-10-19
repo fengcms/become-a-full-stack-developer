@@ -262,20 +262,21 @@ onBlur={(e) => {
 
 更多上传细节见图片选择与提交协调。移动编辑器不必拥有所有桌面能力，但它答应保留的输入与操作结果，必须能解释、能恢复。
 
----
-如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
-
-🔗 专栏地址：[成为全栈](https://blog.csdn.net/fungleo/category_13204651.html)
-
-📦 本系列配套代码仓库：[fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
-
-![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
 ## 延伸阅读
 
 - [会员投稿状态机：保存、提交、撤回与防重复创建]({{LINK:M5-20}})
 - [Markdown 编辑器：预览、暗色主题与连续图片粘贴](https://blog.csdn.net/fungleo/article/details/166107729)
 - [文章详情：Markdown、代码高亮与目录必须共享解析结果](https://blog.csdn.net/fungleo/article/details/166885283)
+
+---
+
+如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
+
+🔗 专栏地址：[https://blog.csdn.net/fungleo/category_13204651.html](https://blog.csdn.net/fungleo/category_13204651.html)
+
+📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
+
+![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
 
 <!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
 ## 发布辅助信息

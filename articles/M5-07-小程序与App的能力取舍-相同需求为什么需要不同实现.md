@@ -215,6 +215,16 @@ export const draftKey = (userId: number, id: string) =>
 - [从 React 到 Flutter：声明式 UI 相似，状态与布局模型哪里不同](https://blog.csdn.net/fungleo/article/details/167266219)
 - [C 端认证：内存令牌、HttpOnly Cookie 与会话代次](https://blog.csdn.net/fungleo/article/details/166945972)
 
+---
+
+如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
+
+🔗 专栏地址：[https://blog.csdn.net/fungleo/category_13204651.html](https://blog.csdn.net/fungleo/category_13204651.html)
+
+📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
+
+![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
+
 <!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
 ## 发布辅助信息
 

@@ -299,9 +299,9 @@ HTTP 这一章，真正需要记住的不是状态码列表（那个查表就行
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：
 
-🔗 专栏地址：[成为全栈](https://blog.csdn.net/fungleo/category_13204651.html)
+🔗 专栏地址：[https://blog.csdn.net/fungleo/category_13204651.html](https://blog.csdn.net/fungleo/category_13204651.html)
 
-📦 本系列配套代码仓库：[fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
+📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
 
