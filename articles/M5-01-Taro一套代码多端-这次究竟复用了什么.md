@@ -2,7 +2,7 @@
 
 > 接口已经有了，APP 也已经有了，小程序还需要开发什么？把复用的边界说清楚，才不会对"一套代码"抱错期待。
 
-{{IMG:M5-01-封面}}
+![成为全栈·Taro 小程序篇·Taro 一套代码多端：这次究竟复用了什么](https://i-blog.csdnimg.cn/direct/ccbd73dac687496f896b70f11770eda9.png)
 
 ## 前言：写完这句话当天，我就卡住了
 
@@ -76,7 +76,9 @@ export const draftKey = (userId: number, id: string) =>
 
 顺带说，临时测试账号与数据更不该进生产库 —— 联调结束我第一件事就是确认构建产物里的基址已经指回线上。
 
-{{IMG:M5-01-环境隔离}}
+![环境隔离](https://i-blog.csdnimg.cn/direct/268399c414474b87ab6199616470e943.png)
+
+
 
 ## 为什么选 Taro，而不是再写一种原生语言
 
@@ -261,7 +263,7 @@ export async function refreshSession() {
 技术上，**存储键必须包含环境标识**，否则本地测试会静默污染线上数据。
 习惯上，**"多端框架已配置"和"多端已交付"之间隔着一整套平台行为的验证**，前者一分钟完成，后者要一个个撞。
 
-{{IMG:M5-01-复用层次}}
+![复用层次](https://i-blog.csdnimg.cn/direct/ecae2e8321c8432b9edce932d9797a7e.png)
 
 下一步我会先撞最硬的那块：登录。它牵扯平台 code 换会话、首次凭据设置、以及"登录成功后回到用户原来的任务"这三件事，比页面布局更容易出错。
 
@@ -276,7 +278,7 @@ export async function refreshSession() {
 
 ### 文章 Tag（6 个）
 
-Taro、React、TypeScript、微信小程序、多端开发、接口复用
+Taro React TypeScript 微信小程序 多端开发 接口复用
 
 ### 文章简介（250 字以内）
 
