@@ -239,7 +239,7 @@ export function applyTheme() {
 
 ## 延伸阅读
 
-- [Taro 一套代码多端：这次究竟复用了什么]({{LINK:M5-01}})
+- [Taro 一套代码多端：这次究竟复用了什么](https://blog.csdn.net/fungleo/article/details/168432476)
 - [把高保真原型落成 Design Token 与 Flutter 组件](https://blog.csdn.net/fungleo/article/details/167371366)
 - [响应式、可访问性与错误状态：内容站不能只验桌面首页](https://blog.csdn.net/fungleo/article/details/167172856)
 

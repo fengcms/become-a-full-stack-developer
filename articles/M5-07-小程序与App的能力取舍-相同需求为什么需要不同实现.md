@@ -211,7 +211,7 @@ export const draftKey = (userId: number, id: string) =>
 
 ## 延伸阅读
 
-- [Taro 一套代码多端：这次究竟复用了什么]({{LINK:M5-01}})
+- [Taro 一套代码多端：这次究竟复用了什么](https://blog.csdn.net/fungleo/article/details/168432476)
 - [从 React 到 Flutter：声明式 UI 相似，状态与布局模型哪里不同](https://blog.csdn.net/fungleo/article/details/167266219)
 - [C 端认证：内存令牌、HttpOnly Cookie 与会话代次](https://blog.csdn.net/fungleo/article/details/166945972)
 
