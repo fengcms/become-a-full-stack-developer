@@ -2,7 +2,7 @@
 
 > 跨端一致性应该保护用户的目标。为了一张功能表全部打勾，把不适合的平台行为硬塞进去，反而会破坏体验。
 
-{{IMG:M5-07-封面}}
+![成为全栈·Taro 小程序篇·小程序与 App 的能力取舍：相同需求为什么需要不同实现](https://i-blog.csdnimg.cn/direct/b6d921619e13463e8920a50a72f7d5f1.png)
 
 ## 前言：既然参考 APP，为什么外链不能一样打开
 
@@ -62,7 +62,8 @@ if (r.confirm) await Taro.setClipboardData({ data: href });
 
 把两件事当成同一个功能，最后写出来的往往是一句没有条件的功能对照，而不是一份可执行的实现说明。
 
-{{IMG:M5-07-外链容器}}
+![外链容器](https://i-blog.csdnimg.cn/direct/15ebae36203f4a93ae699fb83546a293.png)
+
 
 ## 缓存：复用判断，不复制全部复杂度
 
@@ -121,8 +122,8 @@ while (this.entries.size > this.limit)
 
 所以这两个数字现在有了明确含义：**它们不是"能存多少"的答案，而是"在内存紧张的小程序环境里，我愿意为缓存花多少"的答案。** 换个环境（比如改成原生 App）这个数字就该重新算。
 
+![跨端能力取舍](https://i-blog.csdnimg.cn/direct/3044b15ca0aa4bcf8f344f1caf0686e5.png)
 
-{{IMG:M5-07-跨端能力取舍}}
 
 ## 编辑：共享内容格式，尊重输入控件
 
@@ -230,7 +231,7 @@ export const draftKey = (userId: number, id: string) =>
 
 ### 文章 Tag（6 个）
 
-Taro、Flutter、微信小程序、多端开发、能力取舍、缓存策略
+Taro Flutter 微信小程序 多端开发 能力取舍 缓存策略
 
 ### 文章简介（250 字以内）
 
