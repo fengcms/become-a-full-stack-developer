@@ -249,7 +249,7 @@ Hook 卸载时递增序号，计时器隐藏时取消，编辑器卸载时保存
 
 ## 延伸阅读
 
-- [把 APP 原型落到小程序：图标、Design Token 与深色模式]({{LINK:M5-10}})
+- [把 APP 原型落到小程序：图标、Design Token 与深色模式](https://blog.csdn.net/fungleo/article/details/168640544)
 - [App Router 与 CSR 时代的思维差异](https://blog.csdn.net/fungleo/article/details/166690841)
 - [数据获取与缓存：60 秒再验证背后到底发生了什么](https://blog.csdn.net/fungleo/article/details/166784128)
 
