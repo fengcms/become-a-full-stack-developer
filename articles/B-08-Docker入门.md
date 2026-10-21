@@ -181,7 +181,7 @@ database_name = "node-backend"
 database_id = "fe3d7e63-39e2-44f8-9218-0f6d9fe4dc16"
 
 # 3. 路由声明（Docker 的 EXPOSE + 反向代理规则）
-routes = [{ pattern = "api-befull.kao9.com", custom_domain = true }]
+routes = [{ pattern = "api.example.com", custom_domain = true }]
 ```
 
 **而第二段那个 `binding = "DB"` 有一个绑定关系值得说**——它必须和代码里的名字一致：

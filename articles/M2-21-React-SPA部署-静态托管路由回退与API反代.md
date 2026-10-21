@@ -45,12 +45,12 @@ location / {
 
 ```nginx
 location /api/v1/ {
-    proxy_pass https://api-befull.kao9.com/api/v1/;
+    proxy_pass https://api.example.com/api/v1/;
     proxy_pass_header Set-Cookie;
 }
 
 location /files/ {
-    proxy_pass https://api-befull.kao9.com/files/;
+    proxy_pass https://api.example.com/files/;
 }
 ```
 

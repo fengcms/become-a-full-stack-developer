@@ -129,14 +129,14 @@ web_page_test.dart           1 个
 production_read_test.dart     1 个用例 / 98 行
 ```
 
-这个测试打的是**真实的线上环境**：
+这个测试打的是**真实的线上环境**（文中用示例域名替代实际地址）：
 
 ```dart
 const base = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'https://api-befull.kao9.com/api/v1',
+  defaultValue: 'https://api.example.com/api/v1',
 );
-expect(base, 'https://api-befull.kao9.com/api/v1');
+expect(base, 'https://api.example.com/api/v1');
 final api = ApiClient(baseUrl: base, vault: AnonymousVault());
 final repo = ReaderRepository(api);
 final articles = await repo.articles(query: {'pageSize': 4});

@@ -75,7 +75,7 @@ wrangler secret put JWT_SECRET
 NODE_ENV = "production"
 DB_FILE = ":memory:"            # CF 下无意义（走 D1 binding），保留无害
 STORAGE_DRIVER = "r2"          # 生产必须 r2
-CORS_ORIGINS = "https://befull.kao9.com,https://manage-befull.kao9.com"
+CORS_ORIGINS = "https://www.example.com,https://manage.example.com"
 
 # JWT_SECRET 为敏感项，走加密 secret（不进 git / 不写本文件）：
 #   wrangler secret put JWT_SECRET
@@ -166,7 +166,7 @@ exec flutter run ...
 **网络：**
 
 ```bash
-curl -sS https://api-befull.kao9.com/api/v1/articles | jq '.code'
+curl -sS https://api.example.com/api/v1/articles | jq '.code'
 ```
 
 而这一条命令能区分三类问题（B-15 讲的那张排查表）：

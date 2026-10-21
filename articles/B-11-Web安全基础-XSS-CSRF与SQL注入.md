@@ -201,9 +201,9 @@ CSRF 的机制和前两个不同：**攻击者的代码从不在受害者页面�
 攻击过程是：
 
 ```text
-1. 用户登录了 api-befull.kao9.com，浏览器带着 Cookie
+1. 用户登录了 api.example.com，浏览器带着 Cookie
 2. 用户去攻击者的网站
-3. 那个网站放一个表单，target="https://api-befull.kao9.com/me/setup-account"
+3. 那个网站放一个表单，target="https://api.example.com/me/setup-account"
 4. 浏览器**自动**带上 Cookie 提交
 5. 服务端收到一个看起来合法的请求
 ```

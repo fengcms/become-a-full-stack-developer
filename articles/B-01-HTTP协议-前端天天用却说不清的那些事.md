@@ -227,15 +227,15 @@ HTTP 的知识点很多，但排查时用到的就这几个：
 
 ```bash
 # 1. DNS 层：名字解析对不对
-dig api-befull.kao9.com @1.1.1.1
+dig api.example.com @1.1.1.1
 # 失败 → DNS 层，与你的代码无关
 
 # 2. 传输层：服务在不在、证书对不对
-curl -sS https://api-befull.kao9.com/api/v1/health | jq '.data.status'
+curl -sS https://api.example.com/api/v1/health | jq '.data.status'
 # 连不上 → 路由或服务层；连上但报证书错 → TLS 层
 
 # 3. 业务层：返回的是不是成功信封
-curl -s https://api-befull.kao9.com/api/v1/articles | jq '.code'
+curl -s https://api.example.com/api/v1/articles | jq '.code'
 # 0 → 一切正常；非 0 → 是你的代码在按契约返回错误
 ```
 
@@ -258,7 +258,7 @@ healthRoute.get('/', () => ok({ status: 'ok' }));
 
 **然后部署到线上之后管理后台登不上了。**
 
-原因很简单：**管理后台（`manage-befull.kao9.com`）调用后端（`api-befull.kao9.com`）时是跨站请求**，而 `SameSite=Lax` 会在跨站 POST 时不带 Cookie。
+原因很简单：**管理后台（`manage.example.com`）调用后端（`api.example.com`）时是跨站请求**，而 `SameSite=Lax` 会在跨站 POST 时不带 Cookie。
 
 **而"我测试时能用"和"跨站能用"是两个场景**——这个 bug 的隐蔽之处在于**它只在部署后出现，而部署前的所有测试都通过**。
 

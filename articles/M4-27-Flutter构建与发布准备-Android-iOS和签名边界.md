@@ -17,7 +17,7 @@
 
 ```bash
 flutter run -d emulator-5554 \
-  --dart-define=API_BASE_URL="https://api-befull.kao9.com/api/v1" \
+  --dart-define=API_BASE_URL="https://api.example.com/api/v1" \
   --dart-define=DEV_HTTP_PROXY=""
 ```
 
@@ -28,7 +28,7 @@ flutter run -d emulator-5554 \
 ```dart
 final base = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'https://api-befull.kao9.com/api/v1',
+  defaultValue: 'https://api.example.com/api/v1',
 );
 ```
 
@@ -190,7 +190,7 @@ minSdk = 23      // Android 6.0
 | 检查 | 怎么做 |
 |---|---|
 | 架构覆盖 | `unzip -l app-release.apk \| grep lib/` 看有哪些 ABI |
-| baseUrl 正确 | `strings app-release.apk \| grep kao9` |
+| baseUrl 正确 | `strings app-release.apk \| grep example` |
 | 无 debug 代码 | 检查 `kDebugMode` 分支是否被裁掉 |
 | 体积 | 超过预期就去查是什么打进去了 |
 | 能装能跑 | 真机安装并走一遍主流程 |
@@ -253,7 +253,7 @@ const base = String.fromEnvironment('API_BASE_URL');   // 没有 defaultValue
 ```bash
 # run_android.sh 现在的形态
 exec flutter run -d "${1:-emulator-5554}" \
-  --dart-define=API_BASE_URL="${API_BASE_URL:-https://api-befull.kao9.com/api/v1}"
+  --dart-define=API_BASE_URL="${API_BASE_URL:-https://api.example.com/api/v1}"
 ```
 
 `${VAR:-default}` 这个写法让脚本层面也能兜一层。**三层防护**：脚本默认值、代码默认值、以及发布时的手动确认。

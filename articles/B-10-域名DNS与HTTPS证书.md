@@ -1,9 +1,9 @@
 # 成为全栈·基础补充·域名、DNS 与 HTTPS 证书
 
-这个专栏的 API 域名是 `api-befull.kao9.com`，而它的配置在仓库里只有一行：
+本文统一用示例域名 `api.example.com` 来讲（实际项目换成你自己的域名），而它的配置在仓库里只有一行：
 
 ```toml
-routes = [{ pattern = "api-befull.kao9.com", custom_domain = true }]
+routes = [{ pattern = "api.example.com", custom_domain = true }]
 ```
 
 **一行。** 而这行代码背后压着四层东西：DNS 解析、TLS 证书、Cloudflare 路由、Worker 绑定。
@@ -19,7 +19,7 @@ routes = [{ pattern = "api-befull.kao9.com", custom_domain = true }]
 先把职责分清，因为大部分排查困难都源于"不知道这一层负责什么"。
 
 ```text
-用户输入 api-befull.kao9.com
+用户输入 api.example.com
     ↓ ① DNS：这个名字对应哪个 IP / 哪个 Cloudflare 地址
     ↓ ② TLS 证书：证明这个域名确实是它，且加密传输
     ↓ ③ 边缘节点：Cloudflare 收到请求
@@ -44,7 +44,7 @@ DNS 的作用是把名字解析成地址。而这个专栏的实际配置里，*
 
 ```toml
 # ── 自定义域名（部署后需在 CF 配 DNS + SSL）──
-routes = [{ pattern = "api-befull.kao9.com", custom_domain = true }]
+routes = [{ pattern = "api.example.com", custom_domain = true }]
 ```
 
 **`custom_domain = true` 意味着 Cloudflare 帮你创建 DNS 记录和证书。**
@@ -67,15 +67,15 @@ routes = [{ pattern = "api-befull.kao9.com", custom_domain = true }]
 
 ```bash
 # 验证解析结果
-dig api-befull.kao9.com
-nslookup api-befull.kao9.com
+dig api.example.com
+nslookup api.example.com
 ```
 
 **而 `dig` 的价值在于它能指定解析器**，绕开本机缓存：
 
 ```bash
-dig api-befull.kao9.com @1.1.1.1      # 用 Cloudflare 的公共 DNS
-dig api-befull.kao9.com @8.8.8.8      # 用 Google 的
+dig api.example.com @1.1.1.1      # 用 Cloudflare 的公共 DNS
+dig api.example.com @8.8.8.8      # 用 Google 的
 ```
 
 **如果三者结果不同，说明公共解析器还没更新**——**而不是你的配置错了。**
@@ -146,16 +146,16 @@ const site = String.fromEnvironment('SITE_URL', defaultValue: '');
 
 ```bash
 # 1. DNS 通不通
-dig api-befull.kao9.com
+dig api.example.com
 # 失败 → DNS 层，检查域名是否在 CF、记录是否存在
 
 # 2. HTTP 通不通（跳过证书验证）
-curl -sk https://api-befull.kao9.com/api/v1/health
+curl -sk https://api.example.com/api/v1/health
 # 连不上 → 路由或 Worker 层
 # 通了但证书有问题 → TLS 层
 
 # 3. 业务对不对
-curl -s https://api-befull.kao9.com/api/v1/articles | jq '.code'
+curl -s https://api.example.com/api/v1/articles | jq '.code'
 # 0 → 一切正常
 # 其他 → 你的代码有问题
 ```

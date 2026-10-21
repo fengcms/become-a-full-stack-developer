@@ -53,7 +53,7 @@ export default defineConfig({
   projectName: "befull-miniprogram",
   defineConstants: {
     __API_BASE__: JSON.stringify(
-      process.env.TARO_APP_API_BASE || "https://api-befull.kao9.com/api/v1",
+      process.env.TARO_APP_API_BASE || "https://api.example.com/api/v1",
     ),
   },
   // …其余尺寸与输出配置

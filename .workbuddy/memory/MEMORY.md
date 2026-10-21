@@ -29,6 +29,13 @@
 - 延伸阅读判定铁律（文章优化线口径，供回填参考）：`{{LINK:Mx-yy}}` 同系列 `yy<xx`（向后）= 合规（发布即回填）；`yy>xx`/自引用/跨系列未发布 = 必改。
 - **「六个端 vs 七个端」双口径（10-08 收口）**：正文槽 `六个端`=M2–M7 消费端（正确，禁改）；标题/引用槽必须 `七个端`。判据 = 该处引用标题还是描述消费端数量；**禁止全仓无脑替换**。
 
+## 脱敏红线 · 真实域名（10-21 收口）
+- 文章（**仅 `articles/`**）中真实业务域名已全部替换为 IANA 保留示例域名（RFC 2606/6761）：`api-befull.kao9.com`→`api.example.com`、`manage-befull.kao9.com`→`manage.example.com`、`befull.kao9.com`→`www.example.com`。已落地 16 篇 40 处，**articles 零 kao9 残留**。
+- 🔴 **代码与 docs 里的 95 处是"真运行配置"（`flutter-app/lib/main.dart`、`taro-miniprogram/config/index.ts`、`node-backend/wrangler.toml`、`manage-frontend/vite.config.ts` 等），改了程序连不上后端——永不可改**。
+- **子串陷阱**：`befull.kao9.com` 是 `api-befull.kao9.com` 子串，替换顺序必须**长→短**，否则削成 `api-example.com`。
+- **转义形态要单独处理**：正则字面量 `befull\.kao9\.com`、`grep kao9` 这类不会被 `\.kao9\.com` 正则命中 → **扫指纹先按裸关键词宽口径扫，再分类**。
+- 语义冲突处理档位：示例域名与"真实线上环境"表述打架时，加括号说明（如"（文中用示例域名替代实际地址）"），不删原论断。
+
 ## 文末「专栏订阅」推广段规范（10-19 收口）
 - **标准形态（明文版，owner 指定）**：`---` → `如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：` → `🔗 专栏地址：[完整URL](完整URL)` → `📦 本系列配套代码仓库：[完整URL](完整URL)` → `![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)`。
 - **标准位置**：`## 延伸阅读` **之后**、`<!-- PUBLISH_ASSIST_START` **之前**（正文最后一块）。放在延伸阅读之前 = 错，读者在末尾看不到。

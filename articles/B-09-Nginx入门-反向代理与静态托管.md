@@ -4,7 +4,7 @@
 
 ```toml
 # ── 自定义域名（部署后需在 CF 配 DNS + SSL）──
-routes = [{ pattern = "api-befull.kao9.com", custom_domain = true }]
+routes = [{ pattern = "api.example.com", custom_domain = true }]
 ```
 
 **一行配置，Cloudflare 帮你做了 TLS 终止、域名路由、Worker 转发。**
@@ -53,7 +53,7 @@ routes = [{ pattern = "api-befull.kao9.com", custom_domain = true }]
 ```nginx
 server {
     listen 80;
-    server_name befull.kao9.com;
+    server_name www.example.com;
 
     # 静态资源
     location / {
