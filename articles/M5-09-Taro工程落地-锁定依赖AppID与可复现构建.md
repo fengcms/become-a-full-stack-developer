@@ -213,13 +213,13 @@ Taro 构建 → 项目导入 → code 获取 → 后端换码 → 用户创建 �
 
 这样分层，**避免一个登录 500 被当成 Taro 版本问题来回重装**。后面确实发生过 Workers 运行时差异，那件事已在 另一篇里单独复盘。
 
-工程搭好之后，进入 [多端代码组织]({{LINK:M5-06}})。
+工程搭好之后，进入 [多端代码组织](https://blog.csdn.net/fungleo/article/details/168538947)。
 
 回过头看，这次工程落地没有用到什么高深工具，无非是把版本、配置和证据三样东西各就各位。**但正是这三样，决定了第二位读者能不能在一小时内把一个陌生工程跑起来。**
 
 ## 延伸阅读
 
-- [多端代码如何组织：哪些属于业务哪些属于微信]({{LINK:M5-06}})
+- [多端代码如何组织：哪些属于业务哪些属于微信](https://blog.csdn.net/fungleo/article/details/168538947)
 - [Vite + React + TypeScript：搭起一个有门禁的后台工程](https://blog.csdn.net/fungleo/article/details/165447601)
 - [Vite 构建优化：先测体积，再决定怎么拆](https://blog.csdn.net/fungleo/article/details/166582771)
 
