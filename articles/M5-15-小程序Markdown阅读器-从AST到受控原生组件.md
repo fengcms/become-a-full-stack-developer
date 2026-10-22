@@ -2,7 +2,7 @@
 
 > “代码没有高亮，也没标语言。”APP 阅读器上线后收到的这条反馈，比任何设计评审都直接。
 
-{{IMG:M5-15-封面}}
+![成为全栈·Taro 小程序篇·小程序 Markdown 阅读器：从 AST 到受控原生组件](https://i-blog.csdnimg.cn/direct/b521bef9e6da46df9088beb56a7ed59d.png)
 
 ## 前言：读者反馈"代码没有高亮"，比设计评审更直接
 
@@ -111,7 +111,8 @@ if (token.type === "inline" && stack[stack.length - 1].type === "heading_open")
 
 当前正文组件与目录都调用同一个 parseMarkdown 函数，但各自解析一次，不是共享同一个内存结果对象。共同算法确保对应关系；如果长文性能测量显示重复解析成本明显，可以提升一次解析结果的所有权。
 
-{{IMG:M5-15-解析与渲染}}
+![解析与渲染](https://i-blog.csdnimg.cn/direct/920bcac9259a400b99a0e21cd91e9de9.png)
+
 
 ## 高亮只加载明确的语言集合
 
@@ -147,7 +148,8 @@ const language = n.info.trim().split(/\s+/)[0] || 'text';
 
 高亮输出的颜色目前是定义好的 token 映射。它与主题变量不完全同一套系统，深色可读性要在具体样本上观察。以后若扩展语言，应一起评估包体与长代码解析成本，不能无限注册整库然后用一次构建成功替代性能检查。
 
-{{IMG:M5-15-语言集合}}
+![语言集合](https://i-blog.csdnimg.cn/direct/44c53d3853bb4fadb83e859fedb13ffc.png)
+
 
 ## 受控 RichText，仍然要转义
 
@@ -271,7 +273,7 @@ assert.equal(highlight("<script>", "unknown"), "&lt;script&gt;");
 
 ## 延伸阅读
 
-- [首页、分类与搜索：把内容发现做成可恢复的数据流]({{LINK:M5-14}})
+- [首页、分类与搜索：把内容发现做成可恢复的数据流](https://blog.csdn.net/FungLeo/article/details/168747223)
 - [文章详情：Markdown、代码高亮与目录必须共享解析结果](https://blog.csdn.net/fungleo/article/details/166885283)
 - [Markdown 编辑器：预览、暗色主题与连续图片粘贴](https://blog.csdn.net/fungleo/article/details/166107729)
 
@@ -290,7 +292,7 @@ assert.equal(highlight("<script>", "unknown"), "&lt;script&gt;");
 
 ### 文章 Tag（6 个）
 
-Taro、Markdown、highlight.js、AST、微信小程序、技术文章阅读
+Taro  Markdown  highlight.js  AST  微信小程序  技术文章阅读
 
 ### 文章简介（250 字以内）
 
