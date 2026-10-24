@@ -8,6 +8,8 @@
 
 ## 前言：这次不是把 Node 框架换个名字
 
+选框架那晚，我把 Gin、Echo、Fiber 的文档各开了一个标签页，翻到中间才意识到自己在比较中间件写法，而这个项目最难的部分根本不在路由。
+
 在 Node 后端里，我们已经用 Hono 组织路由、中间件和请求处理。来到 Go，第一反应很可能是挑一个熟悉的 Web 框架：Gin、Echo、Fiber，或者一套更完整的工程框架。它们都能接 HTTP 请求，但“能接请求”并不足以决定本项目需要什么。
 
 M6 要在既有 OpenAPI 契约前实现 68 个操作，处理认证、角色、字段校验、错误信封、限流、上传、Cookie 和请求日志。选型要回答的问题是：路由和 HTTP 基础能力需要外部框架提供多少？契约与业务规则应该由谁掌握？加一套依赖，实际省掉了哪段代码？
@@ -37,16 +39,16 @@ Web 框架通常帮忙处理以下一部分工作：
 
 较新的 Go 标准库 ServeMux 支持按 HTTP 方法和路径模式注册 handler。文章系统里常见的路径可以写成：
 
-~~~go
+```go
 mux.HandleFunc("GET /api/v1/articles/{id}", getArticle)
 mux.HandleFunc("POST /api/v1/articles", createArticle)
-~~~
+```
 
 匹配之后，可以从请求中读取路径参数：
 
-~~~go
+```go
 id := r.PathValue("id")
-~~~
+```
 
 这让路由本身保持显式，不需要再引入一个 router 包才能表达“GET 某资源”和“POST 创建资源”。Go 1.22 起，标准库增强了 ServeMux 的 method、wildcard 和 PathValue 能力；本项目使用 Go 1.26.6，因此代码可以基于这些模式组织。
 
@@ -60,7 +62,7 @@ id := r.PathValue("id")
 
 看注册入口的关键部分。它没有在入口手写 68 行 HandleFunc，而是用契约里的操作元数据生成路由，并在同一个闭包里完成鉴权与限流：
 
-~~~go
+```go
 // internal/transport/httpapi/app.go（节选，省略请求体解码与业务调用）
 // Register 统一执行鉴权、限流、解码和契约校验，再调用业务适配器。
 func (a *App) Register(id string, h Handler) {
@@ -115,7 +117,7 @@ func (a *App) Register(id string, h Handler) {
 		// ...（此处解码请求体、校验契约 schema 并调用业务适配器）
 	})
 }
-~~~
+```
 
 这里有几处细节值得留意。`pattern` 由 `op.Method` 与 `op.Path` 拼出，来源是冻结契约而不是客户端输入；`recover` 放在 `defer` 里，panic 时先记日志再返回统一 500 信封；鉴权分支区分「无令牌」与「令牌无效」两种 401；公开操作走 `else` 分支做限流，受保护操作则不占公开额度。一行 `if !op.Owner && !actor.Allows(op.MinRole, 0)` 同时表达了「角色不够」和「本人例外」两种规则。这些判断挤在同一个闭包里，正因为它们必须按固定次序发生。
 

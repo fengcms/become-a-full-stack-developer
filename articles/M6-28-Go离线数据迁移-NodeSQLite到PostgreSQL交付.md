@@ -8,6 +8,8 @@
 
 ## 前言：跨数据库搬迁改变的是整组数据关系
 
+写迁移工具之前，我以为最难的是把那一批表的数据搬过去。真正难的是搬完之后：漏一张表、改一个 nullable、打乱父子顺序，系统照样能返回数据，只是不变量已经破了。
+
 从 Node 的 SQLite/D1 环境迁往 Go PostgreSQL，不仅要复制 users 和 articles。账号可能有微信身份映射，文章与标签有关系，评论有父子结构，附件记录指向外部对象 key，互动计数还应与关系表一致。漏一张表、改变一个 nullable 或打乱父子顺序，都可能让导入后的系统返回数据，却违反业务不变量。
 
 M6 提供独立 data 命令与版本化 JSON Snapshot。导出采用只读事务；快照只包含明确白名单的 13 张业务表，不包含有效 refresh token 和阅读去重行，也不复制 R2/local 文件内容。导入只接受已迁移的空目标，先规范化、检查再执行事务，并在提交前做关系审计。dry-run 完整执行导入路径后回滚。
@@ -20,7 +22,7 @@ Snapshot v1 包括 users、categories、tags、wechat_identities、articles、ar
 
 这份名单写死在代码里：
 
-~~~go
+```go
 // internal/transfer/snapshot.go（节选）
 // Snapshot 离线版本化业务快照，不包含有效会话和对象内容。
 type Snapshot struct {
@@ -42,7 +44,7 @@ var tables = []table{
 	{"view_history", model.History{}}, {"likes", model.Like{}},
 	{"notifications", model.Notification{}}, {"site_settings", model.SiteSetting{}},
 }
-~~~
+```
 
 `tables` 是一份编译进二进制的白名单。每个元素是表名加该表的模型零值，前者用于构造 SQL，后者用于校验列名。表名的唯一来源是这份列表，导入时构造的语句不会拼接任何来自快照的字符串，所以快照无法通过伪造表名让工具去操作别的表。
 
@@ -65,7 +67,7 @@ refresh_tokens 不搬迁，避免把活跃会话从旧后端延续到新后端�
 
 Export 在只读、repeatable read 事务中按固定表白名单和 ID 顺序读取所有记录。源端 SQLite 使用 read-only DSN，避免工具无意创建缺失文件或修改 journal mode；其它数据库采用只读事务选项。每张空表输出 []，不是 null，快照附带版本、来源 driver 与创建时间。
 
-~~~go
+```go
 // internal/transfer/snapshot.go（Export，节选）
 // Export 在只读一致性事务内导出白名单业务表，源数据库不被修改。
 func Export(ctx context.Context, db *gorm.DB, source string) (*Snapshot, error) {
@@ -97,7 +99,7 @@ func Export(ctx context.Context, db *gorm.DB, source string) (*Snapshot, error) 
 	}, &sql.TxOptions{Isolation: sql.LevelRepeatableRead, ReadOnly: true})
 	return out, txErr
 }
-~~~
+```
 
 所有读取都在一个事务里完成，事务选项是 `&sql.TxOptions{Isolation: sql.LevelRepeatableRead, ReadOnly: true}`。`ReadOnly` 声明这个事务不会写，`LevelRepeatableRead` 让同一事务内多次读取看到一致的数据快照。13 张表如果在没有事务的情况下依次读取，两张表之间可能有新写入落进来，导出的数据就会处在两个时刻的混合状态。
 
@@ -117,7 +119,7 @@ Snapshot.Normalize 校验版本必须等于 1，且只接受声明的 13 张表�
 
 值域校验分布在按表分发的函数里：
 
-~~~go
+```go
 // internal/transfer/snapshot.go（productValues，节选）
 func productValues(table string, row map[string]any) error {
 	allowed := func(key string, values ...string) error {
@@ -158,7 +160,7 @@ func productValues(table string, row map[string]any) error {
 	}
 	return nil
 }
-~~~
+```
 
 `allowed` 是个闭包，接收字段名和一组允许值。字段为 nil 时直接放过——可空列没有值就不做枚举校验；有值时逐个比对，命中任何一个就通过，全都不是就返回错误。
 
@@ -170,7 +172,7 @@ func productValues(table string, row map[string]any) error {
 
 categories 和 comments 都含 parent_id。导入使用 parentsFirst 逐层排列，父项先写、子项后写；若有缺失父节点或循环，无法推进时拒绝快照。分类还验证深度不超过四级。排序由关系拓扑决定，不能仅按 ID 顺序假设父项一定更早。
 
-~~~go
+```go
 // internal/transfer/snapshot.go（parentsFirst）
 func parentsFirst(rows []map[string]any) ([]map[string]any, error) {
 	pending := append([]map[string]any(nil), rows...)
@@ -196,7 +198,7 @@ func parentsFirst(rows []map[string]any) ([]map[string]any, error) {
 	}
 	return out, nil
 }
-~~~
+```
 
 算法是反复扫描的逐层剥离。`done` 记录已经排好的 ID，`pending` 装还没排的行。每轮遍历 `pending`：一行的 `parent_id` 为 nil（根节点），或者它的父已经排好（`done[pid]` 为真），就把这一行放进 `out` 并标记完成；否则留到 `next` 里下一轮再说。`pending` 换成 `next` 后继续，直到没有剩余。
 
@@ -208,7 +210,7 @@ func parentsFirst(rows []map[string]any) ([]map[string]any, error) {
 
 Import 首先 Normalize，再进入目标数据库事务。目标表必须为空；唯一例外是迁移初始化已创建的 site_settings 单例行，工具按 id=1 更新它。refresh_tokens 和 article_view_dedup 即使不在 Snapshot 里也会检查为空，避免在新目标中意外保留其它会话或旧去重数据。
 
-~~~go
+```go
 // internal/transfer/import.go（ensureEmptyTarget）
 // ensureEmptyTarget 拒绝覆盖或合并旧账号，站点初始化单例是唯一例外。
 func ensureEmptyTarget(tx *gorm.DB) error {
@@ -227,7 +229,7 @@ func ensureEmptyTarget(tx *gorm.DB) error {
 	}
 	return nil
 }
-~~~
+```
 
 循环的表名是 `append(tableNames(), "refresh_tokens", "article_view_dedup")`——13 张白名单表之外，额外把两张不在快照里的表也加进来检查。这样即使这两张表不会被导入，只要它们已经有数据，也会被拦下。原因是它们代表“新目标上已经发生过登录或阅读”，此时导入等于把两批状态混在一起。
 
@@ -255,17 +257,17 @@ PostgreSQL 导入成功后会重置各表自增序列到现有最大 ID，避免
 
 概念上的导出命令如下：
 
-~~~sh
+```sh
 TRANSFER_DATABASE_URL=/absolute/path/to/source-copy.db \
   go run ./cmd/data -mode export -driver sqlite -file /secure/path/snapshot.json
-~~~
+```
 
 导入预演则指定目标 DSN、驱动和 dry-run：
 
-~~~sh
+```sh
 TRANSFER_DATABASE_URL='postgres://USER:PASSWORD@HOST/EMPTY_DB?sslmode=require' \
   go run ./cmd/data -mode import -driver postgres -file /secure/path/snapshot.json -dry-run
-~~~
+```
 
 实际 DSN 格式按 database driver 文档和当前工具实现核对。命令行环境可能进入 shell history、进程列表或 CI 日志，不要把生产密码直接作为可见文本。snapshot 本身也要加密传输和限制访问，因为其中包含密码哈希和个人信息。
 

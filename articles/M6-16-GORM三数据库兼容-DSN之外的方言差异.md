@@ -8,6 +8,8 @@
 
 ## 前言：驱动列表不是兼容性报告
 
+三个 driver 配好、三个库都能连上的那天，我差点就在 README 里写上"支持三种数据库"。真按这句话去测，问题一个接一个冒出来——连接成功只说明 DSN 写对了，后面的语义差异一个都没解决。
+
 Go 服务通过 GORM 打开 PostgreSQL、MySQL 和 SQLite，代码里存在三个 dialector。很多项目看到这里就会写“支持三种数据库”。但一个成功建立的连接，并不能说明相同查询在三种方言下返回相同结果，也不能说明事务、唯一约束、时间和排序规则一致。
 
 M6 明确把 PostgreSQL 作为主数据库，同时验证 MySQL 与 SQLite。为了达到这个目标，工程不仅配置三个驱动，还为每个数据库维护显式 goose SQL migration、设置 SQLite 外键与 WAL、使用单写连接，并针对数据库特有行为测试。实现中仍有针对方言的适配，因为 GORM 抽象掉了部分 SQL 书写，却没有消除数据库本身的语义差异。
@@ -18,7 +20,7 @@ M6 明确把 PostgreSQL 作为主数据库，同时验证 MySQL 与 SQLite。为
 
 database.Open 根据 driver 选择 GORM PostgreSQL、MySQL 或 SQLite dialector，并启用错误翻译、静默 ORM logger 与 SkipDefaultTransaction。普通连接池允许最多 16 个打开连接、4 个空闲连接，连接最长复用 30 分钟；SQLite 则将 MaxOpenConns 限为 1。
 
-~~~go
+```go
 // internal/platform/database/database.go（节选）
 // Open 选择实际数据库驱动并配置连接池；SQLite 强制外键和单写连接。
 func Open(driver, dsn string) (*gorm.DB, error) {
@@ -59,7 +61,7 @@ func Open(driver, dsn string) (*gorm.DB, error) {
 	}
 	return db, nil
 }
-~~~
+```
 
 这段代码把方言差异收在一个函数里。`_foreign_keys=on` 由代码强制设置，注释写明“外键是业务不变量”，即使 DSN 里显式关闭也绕不过去；`_busy_timeout` 只在缺省时补 5000 毫秒，尊重调用方已有设置；`_journal_mode=WAL` 在只读模式下跳过。最后 SQLite 单独把最大打开连接压到 1，把并发写串行化。
 
@@ -79,7 +81,7 @@ M6 的业务时间以毫秒级 Unix 时间存储，再由 values.ISO 转换成�
 
 M6 把时间收敛到两个转换函数里。写入前由 `values.ISO` 把毫秒整数格式化成契约要求的 UTC 字符串，读取可空列时再由 `values.Date` 把 `*int64` 还原成同样的字符串，`nil` 保持 JSON null：
 
-~~~go
+```go
 // internal/values/values.go（节选）
 // ISO 把数据库毫秒时间转换为契约要求的 UTC 毫秒时间字符串。
 func ISO(ms int64) string { return time.UnixMilli(ms).UTC().Format("2006-01-02T15:04:05.000Z") }
@@ -91,7 +93,7 @@ func Date(ms *int64) any {
 	}
 	return ISO(*ms)
 }
-~~~
+```
 
 时间形状因此由同一段 Go 代码决定，和三种数据库各自 timestamp 类型的默认时区、精度无关。这也是为什么工程选择把时间存成整数：一旦交给列类型自己解释，格式就分散到三个方言里去了。
 
@@ -127,7 +129,7 @@ M6 为 SQLite 设单写连接，是运行策略中的限制而非数据库锁的
 
 同一张 users 表，在三份迁移里的写法并不相同（节选，省略部分列）：
 
-~~~sql
+```sql
 -- migrations/postgres/00001_initial.sql
 CREATE TABLE users (
   id BIGSERIAL PRIMARY KEY,
@@ -157,7 +159,7 @@ CREATE TABLE users (
   ...
   UNIQUE (username)
 );
-~~~
+```
 
 三份 DDL 体现出三个层次的差异。主键写法不同：PostgreSQL 用 BIGSERIAL，MySQL 用 AUTO_INCREMENT，SQLite 用 rowid 上的 AUTOINCREMENT。文本类型不同：只有 MySQL 需要给 username 和 email 指定 VARCHAR(255)，因为它的索引长度受字符集影响。排序规则也不同：MySQL 那行 `COLLATE=utf8mb4_0900_bin` 明确使用二进制比较，正是为了避免默认排序规则把大小写不同的 slug 判成重复。这些都不是 ORM 能替我们决定的事。
 

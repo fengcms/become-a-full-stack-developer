@@ -8,6 +8,8 @@
 
 ## 前言：比较之前先写出比较对象
 
+搭性能实验花的时间比写服务还多。第一版跑完我就发现不对——两边的数据库、缓存和部署位置都不一样，测出来的数字不能归到"语言"头上。
+
 “Go 是不是比 Node 快？”听上去像一个问题，其实可能指 CPU、HTTP 响应、数据库延迟、启动速度、内存占用或工程交付效率。若拿 Go + PostgreSQL 与 Node + Cloudflare D1 对比，测到的是语言、数据库、网络和部署位置的混合差异。
 
 M6 的性能实验将 Node Hono 与 Go 原生服务放在同一台 arm64 Mac 上，使用同一份 500 篇文章的 SQLite 数据副本，执行公开列表、详情、搜索、bcrypt12 登录和点赞/取消。服务都无业务缓存、读取完整响应；每场景先预热 5 次，读请求并发 8，登录并发 2，点赞和取消成对操作并发 4。
@@ -20,7 +22,7 @@ Go 使用原生编译服务；Node 使用 tsx 加载 Hono 源码。两者访问�
 
 这些约束不是文字描述，而是写进脚本的实际步骤。`scripts/benchmark-local.sh` 负责把两份服务拉起在同一台机器、同一份数据的两个副本上：
 
-~~~sh
+```sh
 # scripts/benchmark-local.sh（节选）：同机、同 fixture、各一份 SQLite 副本。
 export DB_DRIVER=sqlite DATABASE_URL="$scratch/source.db" JWT_SECRET=benchmark-shared-secret-32-characters
 export SEED_USERNAME=bench-admin SEED_PASSWORD=bench-password STORAGE_DRIVER=local
@@ -31,7 +33,7 @@ go run ./cmd/seed -articles 500
 cp "$scratch/source.db" "$scratch/go.db"
 cp "$scratch/source.db" "$scratch/node.db"
 DATABASE_URL="$scratch/go.db" HTTP_ADDR=127.0.0.1:18081 DB_METRICS_FILE="$scratch/db-go.json" "$scratch/server" > "$scratch/go.log" 2>&1 &
-~~~
+```
 
 脚本里有几个细节决定了数字是否可比：种子在复制前关闭，避免 WAL 未落盘造成两份数据库不一致；Go 与 Node 各用一个端口、各连一份副本，互不写同一文件；Node 侧用 `exec node --import tsx` 直接启动，让记录的进程号就是服务器本身，而不是它的启动父进程。
 
@@ -64,17 +66,17 @@ DATABASE_URL="$scratch/go.db" HTTP_ADDR=127.0.0.1:18081 DB_METRICS_FILE="$scratc
 
 这些百分位由客户端采集后排序取值，`scripts/benchmark.mts` 里就一行取位逻辑：
 
-~~~ts
+```ts
 // scripts/benchmark.mts（节选）：按并发数分发请求，客户端计时并取百分位。
 const percentile=(p:number)=>Number(samples[Math.min(samples.length-1,Math.ceil(samples.length*p)-1)].toFixed(2));
-~~~
+```
 
 同一文件里固化了场景参数，避免每次手工改变量：
 
-~~~ts
+```ts
 // scripts/benchmark.mts（节选）：读 50、登录 8、成对写 30。
 const cases=[{name:'列表',path:'/articles',n:50,c:8},{name:'详情',path:'/articles/1',n:50,c:8},{name:'搜索',path:'/search?q=Go&pageSize=20',n:50,c:8},{name:'登录 bcrypt12',path:'/auth/login',n:8,c:2},{name:'点赞与取消',path:'/articles/1/like',n:30,c:4}];
-~~~
+```
 
 本轮所有请求都成功。在这组样本里，Go 的读取和登录延迟较低，点赞/取消的 p50 是 Node 更低，但 Go 的尾延迟和成对操作吞吐较好。这个结果可以支持“在该机器、本数据库、副本数据和请求方式下，Go 观察到这些数字”；不能支持“Go 在生产必然更快”。
 

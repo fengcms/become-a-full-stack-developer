@@ -8,6 +8,8 @@
 
 ## 前言：生成代码之前，先问生成器到底生成了什么
 
+第一次把 OpenAPI 丢给生成器，我以为能省掉一半工作。生成结果打开一看，`x-authz` 扩展被忽略了，nullable 的写法也和契约对不上。工具版本、扩展名、响应包裹，每一样都得单独确认。
+
 Go 后端要实现既有 API。自然会想到：把 OpenAPI 丢给代码生成器，生成 handler、请求结构和响应结构，接口就有了。实际试验很快会遇到问题：生成器是否支持当前使用的 OpenAPI 3.1 特性？它能否理解项目里的 x-authz 扩展？nullable、格式校验、全局响应信封是否和冻结文件一致？生成的接口骨架是否会把现有服务的依赖结构带偏？
 
 M6 最终没有让生成器成为运行时契约解释器，而是把 OpenAPI YAML 同步为只读 JSON 快照，启动时加载并编译请求和响应 schema。业务 handler 仍由项目按 operationId 显式注册。这个选择让契约 schema 可被运行时与测试代码读取，同时保留实现结构的控制权；生产请求路径实际执行输入 schema 校验，响应 schema 则由共享校验器和测试显式检查。
@@ -22,7 +24,7 @@ M6 最终没有让生成器成为运行时契约解释器，而是把 OpenAPI YA
 
 然后，Go 用 go:embed 将 JSON 快照编进程序。运行时无需依赖工作目录中某个外部契约文件，也不会在部署后因为路径、挂载卷或相对目录变化找不到 schema。代价是契约更新需要重新构建二进制；这是发布制品的一部分，不是热加载。
 
-~~~text
+```text
 openapi.v1.yaml（唯一源文件）
          │ 同步脚本
          ▼
@@ -34,7 +36,7 @@ internal/contract/openapi.json（生成快照，受门禁比较）
          ├── 请求体校验
          ├── 响应 schema 可供测试校验
          └── operation 元数据用于 handler 注册与权限边界
-~~~
+```
 
 这条链有两个容易混淆的“生成”：同步 JSON 快照是确定性的格式转换；生成 Go 类型则是把契约某一部分映射为代码模型。前者解决运行时读取，后者可以减少手写结构，但不能自动保证权限、业务规则或与旧服务等价。
 
@@ -54,7 +56,7 @@ internal/contract/openapi.json（生成快照，受门禁比较）
 
 contract.Load 读取嵌入 JSON，解析文档，然后遍历 paths 中的每个操作。operationAt 提取 operationId、HTTP 方法、路径、x-authz 最低角色与 owner 标志、requestBody 是否 required，并编译 JSON 请求 schema 和 200 响应 schema。结果放在按 operationId 索引的 Catalog 中，供 bootstrap 绑定和 transport 校验使用。
 
-~~~go
+```go
 // internal/contract/contract.go（节选，省略操作遍历）
 // Load 读取嵌入快照，在内存规范化后编译各操作的 JSON Schema。
 func Load() (*Catalog, error) {
@@ -88,7 +90,7 @@ func Load() (*Catalog, error) {
 	// ...（此处遍历 paths 中的每个操作，逐个交给 operationAt）
 	return c, nil
 }
-~~~
+```
 
 有两处细节值得指出。第一，`inputCompiler.AssertFormat()` 只在输入编译器上开启格式断言，意味着请求体的 `format`（如 email、date-time）会被严格校验，而共享的响应编译器没有这一步，这正好对应前面说的「启用了请求格式断言」。第二，`Envelope` 与 `ValidationErrors` 两个 schema 单独编译并挂在 Catalog 上，供 `CheckResponse` 在测试中复用，而不是每次调用都重新编译。
 
@@ -104,7 +106,7 @@ schema 校验不是完整业务测试。它不知道文章作者是否有权编�
 
 Go contract.Load 在内存中遍历解析结果，将 nullable: true 转换为 anyOf: [原 schema, {type: null}]，再交给 JSON Schema 编译器。转换只作用于内存对象，不写回嵌入快照或源 YAML。原字段约束留在联合的第一个分支里，null 作为第二个分支，因此“可空”含义仍能由 schema 验证。
 
-~~~go
+```go
 // internal/contract/contract.go（节选）
 // 冻结文件在 OAS 3.1 内沿用 nullable，只在内存转换为 JSON Schema union。
 // 不写回源文件，也不把可空字段误解释为未提交字段。
@@ -129,7 +131,7 @@ func normalize(v any) {
 		}
 	}
 }
-~~~
+```
 
 注意它先递归子节点再处理当前节点，所以嵌套结构里的 nullable 也会被转换。转换动作只发生在内存 `doc` 上，`source.ReadFile` 读出的原始字节与磁盘上的 `openapi.json` 都不受影响。
 

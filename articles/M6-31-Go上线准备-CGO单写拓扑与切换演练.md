@@ -8,6 +8,8 @@
 
 ## 前言：上线不是最后一条 make run
 
+本地全绿、三个库都跑过、四个命令都能用，我一度以为可以上线了。把这份清单拿到"目标环境"里重新过一遍才发现，它们证明的全是准备。
+
 M6 Go 服务已经在本地 PostgreSQL 环境运行，三个数据库通过真实测试，提供四个独立程序：server、migrate、seed、data。Dockerfile 给出 Linux 多阶段构建方案，使用 CGO 与 Debian/glibc 支持 SQLite 原生依赖，以非 root 用户运行。
 
 这些事实构成上线准备，不是生产上线结果。本机原生构建通过，不能替代目标 Linux 镜像完整 build/run；代码中配置了 R2 provider，不能证明真实 bucket 凭据与权限可用；Go 实现了冻结 API，不表示域名、TLS、代理、监控和回滚已部署。

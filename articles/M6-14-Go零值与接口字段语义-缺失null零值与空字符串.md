@@ -8,6 +8,8 @@
 
 ## 前言：成功响应也可能悄悄写错数据
 
+写会员资料接口那天，我盯着三个请求看了很久：传 `bio: ""`、不传 `bio`、传 `bio: null`。它们在 Go 里解码出来，可能是同一个值——日志里看着差不多，写进数据库的结果却应该完全不同。
+
 假设会员编辑资料时明确把简介清空，请求传 bio 为空字符串。另一个请求没有带 bio，意思是“保留原值”。再一种情况，客户端传 bio 为 null，契约可能将它定义为清空，也可能禁止。三个请求看起来只差一处，却代表三种操作。
 
 Go 的 string 零值是空串，bool 是 false，数字是 0。如果把 JSON 解码到普通 struct，字段缺失和显式零值很容易变成同一份 Go 值；如果使用 GORM 的 Updates(struct)，零值字段还可能默认不更新。结果可能是接口返回成功，却留下旧数据。
@@ -38,7 +40,7 @@ M6 使用 values.Fields 保留提交字段集合，并按契约字段白名单�
 
 项目先使用 JSON Schema 验证请求，再通过 values.Fields 表示实际提交的字段。Fields 是 map[string]any；Has(k) 判断 key 是否出现，String、Bool、Int 等方法读取经过校验的值。字段存在性靠 Has 判断，不能用值是不是零值推断。它的几个访问方法本身都很短：
 
-~~~go
+```go
 // internal/values/values.go（节选）
 // Has 检查字段是否提交；值为 NULL 仍视为已提交。
 func (f Fields) Has(k string) bool { _, ok := f[k]; return ok }
@@ -64,7 +66,7 @@ func (f Fields) Int(k string) int64 {
 	}
 	return 0
 }
-~~~
+```
 
 `Has` 与取值方法是两件独立的事：`Has` 回答“键在不在”，取值方法回答“值是什么”。`Bool` 和 `Int` 在缺失时返回零值 0 和 false，这个行为本身没错，问题是调用方若只用它们，就丢掉了键是否存在这一层信息。所以项目里凡是需要区分“没提交”和“提交了零值”的地方，都要显式先调用 `Has`。
 
@@ -76,7 +78,7 @@ func (f Fields) Int(k string) int64 {
 
 对部分更新，可以显式构造 map：
 
-~~~go
+```go
 patch := map[string]any{}
 if fields.Has("isFeatured") {
     patch["is_featured"] = fields.Bool("isFeatured")
@@ -89,11 +91,11 @@ if len(patch) > 0 {
         Where("id = ?", articleID).
         Updates(patch).Error
 }
-~~~
+```
 
 真实项目里的写法更贴近领域对象：必填字段直接读，可选字段才用 Has 包一层。分类保存就是这样：
 
-~~~go
+```go
 // internal/taxonomy/categories.go（节选）
 	c.Name = in.String("name")
 	c.Slug = in.String("slug")
@@ -107,7 +109,7 @@ if len(patch) > 0 {
 		c.SortOrder = in.Int("sortOrder")
 	}
 	c.UpdatedAt = s.Now().UnixMilli()
-~~~
+```
 
 `name` 与 `slug` 是必填，直接读；`description`、`parentId`、`sortOrder` 可选，只有提交了才覆盖目标字段。`Text` 与 `Number` 返回指针，正好承载可空列的 null 语义。这也说明白名单不必都是一张 `patch` map：当领域对象本身就是待写结构时，逐字段的 `Has` 判断同样构成白名单——被省略的字段根本不会被赋值。
 
@@ -131,7 +133,7 @@ GORM 的 Updates(struct) 默认通常跳过零值字段。把文章 IsFeatured �
 
 若 GORM model 使用普通 string，SQL NULL 和空字符串无法表示为两个不同的 string 值。nullable 字段可以使用指针或专用 nullable 类型；输入 Fields 则能保留 key 存在而值为 nil。账号表就是按这个规则写的：
 
-~~~go
+```go
 // internal/platform/model/users.go
 // User 账号行；密码哈希和凭据配置标志不直接序列化为 HTTP 响应。
 type User struct {
@@ -151,13 +153,13 @@ type User struct {
 }
 
 func (User) TableName() string { return "users" }
-~~~
+```
 
 可空资料字段是 `*string`，必填的 `Username`、`Role`、`Status` 是值类型。`PasswordHash` 同样在 model 里，但它是密码哈希，绝不能出现在响应 DTO 中——这正是持久化行与响应投影必须分开的原因之一。
 
 领域代码根据契约判断：
 
-~~~go
+```go
 if fields.Has("bio") {
     if fields["bio"] == nil {
         updates["bio"] = nil // 仅在契约允许 null 清空时
@@ -165,7 +167,7 @@ if fields.Has("bio") {
         updates["bio"] = fields.String("bio")
     }
 }
-~~~
+```
 
 提交空字符串应写空字符串，不应自动变成 SQL NULL，除非契约明确定义了规范化。若数据库列为 NOT NULL，应该在 schema 或领域边界给出清楚错误，而不是让数据库异常充当用户验证。
 

@@ -8,6 +8,8 @@
 
 ## 前言：模型能描述字段，却不一定能安全升级数据
 
+开发阶段 AutoMigrate 很舒服：加字段、重启、列就在那儿。我一度想让生产也这样，省得每次发版再单独跑一遍迁移。把删列、改索引、多副本同时启动这几种情况在纸上过了一遍，才把这句话从部署文档里删掉。
+
 ORM 常带有自动建表或 AutoMigrate。开发时看见模型字段新增，数据库随后出现一列，体验确实轻快。但生产迁移不只是“模型和表不一样，就补一下”：删除列会丢数据，修改索引可能锁表，新旧应用版本可能同时运行，默认值会影响存量记录，跨数据库 DDL 行为也不同。
 
 M6 用 GORM 映射持久化模型，但服务启动不执行 AutoMigrate。数据库结构由版本化 goose migration 显式管理，PostgreSQL、MySQL 和 SQLite 各有独立 SQL。当前结构覆盖 15 张业务表，并由两版迁移组成。这样做让结构变化能够先审阅、再按数据库执行，并记录当前库已经应用到哪个版本。
@@ -22,7 +24,7 @@ GORM model 表达应用需要如何读写某张表：字段类型、列名、主
 
 M6 的迁移通过 goose 按版本执行。SQL 文件存放在 platform/database/migrations 下的方言目录，编译时嵌入程序；migrate 命令读取配置、连接所选数据库并调用 goose provider。应用启动路径只打开数据库、ping 连通性、组装业务服务，不会隐式更改表结构。
 
-~~~go
+```go
 // internal/platform/database/database.go（节选）
 // Migrate 执行版本化方言 SQL；不使用隐式结构体同步修改数据库。
 func Migrate(ctx context.Context, db *gorm.DB, driver string) error {
@@ -48,11 +50,11 @@ func Migrate(ctx context.Context, db *gorm.DB, driver string) error {
 	_, err = p.Up(ctx)
 	return err
 }
-~~~
+```
 
 `migrationsSub(driver)` 从嵌入的迁移文件中选出对应方言的子目录，`goose.NewProvider` 绑定方言与文件系统，`p.Up` 只应用尚未执行的版本。命令入口同样很短：
 
-~~~go
+```go
 // cmd/migrate/main.go
 func main() {
 	c, err := config.Load()
@@ -70,7 +72,7 @@ func main() {
 	}
 	log.Print("migrations complete")
 }
-~~~
+```
 
 它与 server 共用 `config.Load` 和 `database.Open`，唯一的差别是最后调用 `Migrate` 而不是装配 HTTP 应用。结构变更因此成为一条可以单独执行、单独观察的命令，而不是服务启动的副作用。
 
@@ -150,7 +152,7 @@ SQLite 的临时文件测试有价值，因为它包含真实文件锁和持久�
 
 对新增文章字段，可以按如下思路推进：
 
-~~~text
+```text
 确认 API 与数据需求
   ↓
 为每个支持方言写 migration
@@ -166,7 +168,7 @@ SQLite 的临时文件测试有价值，因为它包含真实文件锁和持久�
 启动应用、核验读写与监控
   ↓
 满足回滚条件后再安排旧列清理
-~~~
+```
 
 “先扩展、再切换、最后收缩”降低新旧代码共存时的风险。小规模教学项目可以减少流程环节，但仍应在测试库跑升级路径，并保留明确备份。
 

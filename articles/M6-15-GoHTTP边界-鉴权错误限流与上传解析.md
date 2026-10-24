@@ -8,6 +8,8 @@
 
 ## 前言：请求链的顺序是可观察行为
 
+同一条接口，我在 `Register` 里排处理链的顺序改过三次——认证、限流、body 上限、schema 校验，谁先谁后都会改变客户端最后看到的错误码。顺序排错的代价不是崩溃，是错误语义悄悄变了。
+
 同一个 endpoint，如果认证失败时返回 401 或 403，如果 JSON 格式错误时返回裸文本或统一信封，如果大请求先被完整读入内存才被拒绝，客户端与服务运维看到的都不是同一个系统。HTTP 边界的顺序不是纯粹代码风格，而是 API 行为和资源保护策略。
 
 M6 使用标准库 ServeMux 注册路径，但路由命中只是开始。httpapi.Register 按 operationId 从冻结契约取出方法、路径、角色、owner 元数据和请求 schema，再执行公共处理链。领域 handler 获得已解析身份与校验后的字段，返回领域结果或错误，由统一层映射成信封。
@@ -20,7 +22,7 @@ M6 使用标准库 ServeMux 注册路径，但路由命中只是开始。httpapi
 
 简化流程如下：
 
-~~~text
+```text
 HTTP method/path 匹配
    ↓
 读取 Authorization 并尝试解析 JWT
@@ -34,7 +36,7 @@ HTTP method/path 匹配
 调用业务 handler（Request 含 Actor、Fields、HTTP Context）
    ↓
 成功时写统一信封；失败时归一为契约错误
-~~~
+```
 
 这条链上每一步失败都会产生不同的可观察结果。把它们列出来，边界是否完整就一目了然：
 
@@ -65,7 +67,7 @@ owner override 不能仅凭 URL 中的数字确认。契约记录资源参数以
 
 契约规定公开端点每个 operation 独立每分钟 60 次，超过返回 429、Retry-After 和业务码 5001；鉴权端点不套用这项公开限流。M6 在 httpapi 中用进程内 Limiter 按 operation 加访问者 key 记录固定窗口，并限制 key map 的规模；匿名 key 取客户端 IP，已登录访问者可用 user ID。
 
-~~~go
+```go
 // internal/transport/httpapi/limiter.go（节选）
 // Allow 判断当前窗口是否允许请求，拒绝时返回剩余等待秒数。
 func (l *Limiter) Allow(key string, now time.Time) (int, bool) {
@@ -100,7 +102,7 @@ func (a *App) clientKey(r *http.Request, actor values.Actor) string {
 	}
 	return a.clientIP(r)
 }
-~~~
+```
 
 这段代码里有三处保护。`l.mu` 让并发请求串行更新窗口；`len(l.windows) >= 10000` 的清理分支防止 key 无限增长，清理后仍然超限时直接拒绝新 key；返回值是 `60 - 已过秒数 + 1`，让 `Retry-After` 有具体数值。`clientKey` 则说明限流键的选择：已登录用 `u:ID`，匿名才回落到 IP，这样同一出口 IP 后的多个会员不会因为一个匿名刷子而互相牵连。
 
@@ -112,7 +114,7 @@ func (a *App) clientKey(r *http.Request, actor values.Actor) string {
 
 普通 JSON body 通过 http.MaxBytesReader 限制为 2 MiB，再由 Decoder 解析到 Fields。请求体要求是一个 JSON 对象，额外拼接第二个 JSON 文档会被拒绝。可选 body 仅在契约允许时接受空 body；请求过大、格式错误或多余数据统一转成字段错误。
 
-~~~go
+```go
 // internal/transport/httpapi/app.go（节选）
 func decode(w http.ResponseWriter, r *http.Request, out *values.Fields, optional bool) error {
 	d := json.NewDecoder(http.MaxBytesReader(w, r.Body, 2*1024*1024))
@@ -131,11 +133,11 @@ func decode(w http.ResponseWriter, r *http.Request, out *values.Fields, optional
 	}
 	return nil
 }
-~~~
+```
 
 第二个 `Decode` 是这段代码最容易忽略的一处：它把结果读进一个被丢弃的 `extra`，只为确认读完之后恰好碰到 `io.EOF`。如果调用者发来两个拼接的 JSON 对象，第一次解码会成功，第二次却还能读到内容，于是被判定为“多余数据”。整数路径参数用同一套思路处理：
 
-~~~go
+```go
 // internal/transport/httpapi/params.go
 func pathID(r Request, key string) (int64, error) {
 	id, err := strconv.ParseInt(r.HTTP.PathValue(key), 10, 64)
@@ -144,7 +146,7 @@ func pathID(r Request, key string) (int64, error) {
 	}
 	return id, nil
 }
-~~~
+```
 
 非法或不存在的 ID 统一返回资源不存在，而不是暴露解析细节。这几个步骤挡住了几类常见边界问题：无界读取使内存占用受客户端控制；Decoder 只读第一个 JSON 而忽略尾随数据，会让调用者以为第二段也参与处理；直接 unmarshal 到业务 model 会混合字段存在性与持久化边界。
 

@@ -8,6 +8,8 @@
 
 ## 前言：从同一条业务问题比较
 
+把 Drizzle 的查询改写成 GORM，第一处就卡在更新语句上：Drizzle 写几行就改几列，GORM 却要把字段塞进 struct，而 struct 里的空字符串没有"没传"这个含义。当时我以为是写法问题，后来才明白是语义问题。
+
 Node 后端使用 Drizzle，Go 后端使用 GORM。只比较两个 API 的方法名，很容易得到“一个链式、一个 struct”这样浅层结论。真正有价值的问题是：同一套文章系统如何组合筛选与排序？字段缺失和空值由谁表达？关联更新如何保持原子？ORM 模型是否直接成为 API 响应？从 SQLite 切到 PostgreSQL 或 MySQL，哪些差异仍然必须被工程师处理？
 
 M6 以冻结 API 契约和既有 Node 行为为目标。ORM 是实现层工具，不是第二份契约。两种 ORM 的类型系统、查询构造和迁移生态都不同，但它们最终都要实现相同的请求、状态码、数据关系和错误边界。
@@ -52,13 +54,13 @@ M6 使用明确 DTO 与映射。查询端按列表所需投影选择字段，响
 
 示意：
 
-~~~go
+```go
 sortExpr, ok := sortColumns[input.Sort]
 if !ok {
     sortExpr = "created_at DESC"
 }
 query = query.Order(sortExpr).Order("id DESC")
-~~~
+```
 
 上面 map 中的 SQL 表达式必须是代码内固定白名单，不直接包含用户提供的列名或方向。筛选值则作为参数传给 Where，避免构造可注入 SQL 字符串。关键词搜索、分类 join 和状态范围仍需按具体查询与数据库方言验证。
 
@@ -70,7 +72,7 @@ Go struct 的零值会带来一个具体问题：GORM 的 Updates(struct) 默认
 
 解决办法不是对所有操作盲目 Select("*")，而是按请求语义显式构造更新 map，只把确实提交且允许编辑的字段放进去。输入层需要同时保留字段存在性：字段缺失代表“本次不更新”，存在并且为 false/0/空字符串则代表明确值。项目的 values.Fields 辅助类型用来跟踪契约允许的字段与其值。
 
-~~~go
+```go
 updates := map[string]any{}
 if input.Fields.Has("isFeatured") {
     updates["is_featured"] = input.IsFeatured
@@ -83,7 +85,7 @@ if len(updates) > 0 {
         return err
     }
 }
-~~~
+```
 
 这段是概念示意，字段名与调用位置发布前要按绑定快照核对。关键点是“有没有提交”和“值是什么”是两个问题。数据库模型的 bool、int、string 零值无法独自表达字段是否存在；ORM 自动化也不会替 API 设计者猜这个语义。
 
@@ -95,7 +97,7 @@ Drizzle 侧的 TypeScript 类型有时会让输入对象的字段可选，但可
 
 文章创建常常不仅插入 articles 主表，还要设置分类关系、同步标签，可能还会产生审核通知。项目用显式事务包住这些共同成功/失败的写入：
 
-~~~go
+```go
 err := db.Transaction(func(tx *gorm.DB) error {
     article, err := createArticle(tx, input)
     if err != nil {
@@ -106,7 +108,7 @@ err := db.Transaction(func(tx *gorm.DB) error {
     }
     return writeReviewNotification(tx, article)
 })
-~~~
+```
 
 事务 db 必须传给所有参与者。若 syncTags 在内部用全局 db 写入，它就脱离了外层事务，可能发生主文章回滚而关系留下的情况。用例持有事务可以明确显示哪些操作构成原子业务动作。
 
@@ -128,7 +130,7 @@ Go 后端要支持 PostgreSQL、MySQL 与 SQLite。GORM 为三者提供 dialecto
 
 驱动选择与连接池配置集中在一个 `Open` 函数里，SQLite 有额外的方言处理：
 
-~~~go
+```go
 // internal/platform/database/database.go（节选）
 // Open 选择实际数据库驱动并配置连接池；SQLite 强制外键和单写连接。
 func Open(driver, dsn string) (*gorm.DB, error) {
@@ -169,7 +171,7 @@ func Open(driver, dsn string) (*gorm.DB, error) {
 	}
 	return db, nil
 }
-~~~
+```
 
 三点值得注意。第一，SQLite 的 `_foreign_keys=on` 在代码里强制设置，注释写明“外键是业务不变量”，即使 DSN 里显式关闭也绕不过去。第二，`SkipDefaultTransaction: true` 与上一节呼应：GORM 不再自动为每条写语句包事务，所以多步写入必须自己开 `Transaction`。第三，`SetMaxOpenConns(1)` 只对 SQLite 生效，把并发写收敛成串行；同一段注释特意写明 WAL“不等于支持多个写实例”，避免读者把本地单写当成集群能力。
 

@@ -8,6 +8,8 @@
 
 ## 前言：认证兼容是字节级的行为约定
 
+重写认证时，我做的第一件事不是写代码，而是把 Node 那边生成的一个 token 和一个密码哈希存成文件，拿来当输入喂给还没写完的 Go 服务。
+
 M6 并没有换掉用户的登录协议。Node 使用 Hono JWT 与 bcryptjs，Go 使用 golang-jwt 和 x/crypto/bcrypt。二者需要互相接受对方签发的 token，并识别历史密码哈希。接口响应里的 accessToken、refreshToken、user 字段，以及 Cookie 行为也必须让既有网站、管理后台、Flutter 和小程序继续工作。
 
 “库都支持标准算法”只是起点。JWT 是否指定 HS256、sub 是 JSON number 还是 string、exp 刚好等于当前秒时算不算过期，都会改变结果。bcrypt 则按字节处理输入，中文和 emoji 在 UTF-8 下占用多个字节；超过 72 字节时不同实现可能拒绝或截断。
@@ -20,7 +22,7 @@ Node token 声明包含字符串 sub、role 和 exp。用户 ID 被编码为字�
 
 这两条约束在 `internal/auth/service.go` 的 `Parse` 里各有一处显式检查。算法白名单、过期要求、时钟注入、字符串 sub、角色等级，全部写在同一个函数里：
 
-~~~go
+```go
 // internal/auth/service.go（节选）：限定 HS256、要求 exp，并从字符串 sub 取 ID。
 func (s *Service) Parse(raw string) (values.Actor, error) {
 	token, err := jwt.Parse(raw, func(t *jwt.Token) (any, error) {
@@ -47,7 +49,7 @@ func (s *Service) Parse(raw string) (values.Actor, error) {
 	}
 	return a, nil
 }
-~~~
+```
 
 读这段代码要抓四个点。第一，`jwt.WithValidMethods` 给出的是**允许列表**，不是提示：token header 里声明的算法不参与决定，签名校验只会用 HS256。第二，`jwt.WithExpirationRequired` 让缺少 exp 的 token 直接失败，避免“无过期等于永久有效”。第三，`jwt.WithTimeFunc(s.Now)` 把时钟作为依赖注入，测试才能构造“刚好过期”的样本。第四，`sub` 被断言为 `string` 后才解析成整数，与 Node 把用户 ID 编码成字符串的契约形状严格对齐。
 
@@ -61,7 +63,7 @@ secret 需要相同且安全注入。测试 fixture 可以使用固定非生产�
 
 Node 使用 bcryptjs，成本参数 12；Go 使用 x/crypto/bcrypt，成本同为 12。bcrypt 算法只处理输入的前 72 字节。Go 包装层显式把 UTF-8 字节切到 72 字节再生成或验证哈希，以兼容 Node 的既有行为：
 
-~~~go
+```go
 // internal/auth/service.go：bcrypt cost 12，先按 UTF-8 字节截断到 72。
 func Hash(s string) (string, error) {
 	b := []byte(s)
@@ -80,7 +82,7 @@ func Verify(s, hash string) bool {
 	}
 	return bcrypt.CompareHashAndPassword([]byte(hash), b) == nil
 }
-~~~
+```
 
 注意 `[]byte(s)` 这一步：它把字符串按 UTF-8 编码成字节切片，`len(b)` 数的是字节而不是字符。`b[:72]` 是**字节截断**，所以一个 30 字的纯中文密码（约 90 字节）会被切到 72 字节处，而不是保留全部 30 个汉字。这与 Node bcryptjs 的行为一致，也正是能互相验证哈希的原因。
 
@@ -100,7 +102,7 @@ Access Token 是一小时有效的 HS256 JWT；Refresh Token 是随机生成的�
 
 `Result` 把这两种凭据一次发完，也能看出它们的存储方式完全不同——随机值只以摘要入库，访问令牌则用字符串 sub 签发：
 
-~~~go
+```go
 // internal/auth/service.go（节选）：刷新令牌只存 SHA-256 摘要。
 refresh := hex.EncodeToString(raw)
 digest := sha256.Sum256([]byte(refresh))
@@ -116,7 +118,7 @@ token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 	"role": u.Role,
 	"exp":  now.Unix() + 3600,
 }).SignedString([]byte(s.Secret))
-~~~
+```
 
 签发侧和验证侧是对称的：`jwt.NewWithClaims` 里 `sub` 用 `strconv.FormatInt` 写成字符串，解析侧才用 `strconv.ParseInt` 读回来；`exp` 写的是 `now.Unix() + 3600`，正好一小时。这种对称如果只在一边改动，就会出现“能签发但不能验证”或反之的隐蔽故障。
 

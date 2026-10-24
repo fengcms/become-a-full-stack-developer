@@ -8,6 +8,8 @@
 
 ## 前言：先分清“文件对象”和“附件记录”
 
+第一版存储抽象，我写了一个 `FileRepository`，把存字节、删字节、记元数据、查权限全塞进去。等第二个调用方出现，就知道写错了：它同时承诺字节 IO、权限和事务，却一样都保证不了。
+
 上传一张图片会产生两类状态。对象存储里保存字节、key 和 content type；数据库里保存谁上传、文章引用、URL、存储驱动、MIME 和文件大小。对象可以被多个附件记录引用，附件元数据也可能指向 local 或 R2。把两者塞进一个 FileRepository 接口，会让它同时承担字节 IO、权限、引用计数和数据库事务。
 
 M6 将对象能力抽象为 platform/storage.Provider，只定义 Put、Get、Delete。attachment.Service 管理元数据、用户权限、内容摘要 key 和共享对象生命周期。bootstrap 按配置选择 Provider，并把 provider map 注入附件领域服务。
@@ -20,7 +22,7 @@ Provider 接口以 context、key、字节和 MIME 为核心。Put 写入一个�
 
 接口的全部内容只有三个方法：
 
-~~~go
+```go
 // internal/platform/storage/storage.go（节选）
 // Provider 定义对象的写、读、删能力，不感知用户和文章关系。
 type Provider interface {
@@ -31,7 +33,7 @@ type Provider interface {
 	// Delete 删除对象；共享引用检查和失败补偿由附件服务负责。
 	Delete(context.Context, string) error
 }
-~~~
+```
 
 每个方法都以 `context.Context` 开头，这是把请求取消和调用方截止时间传进 IO 层的前提。`Put` 的四个参数分别是上下文、对象键、字节内容和 MIME 类型；`Get` 返回字节切片和错误；`Delete` 只返回错误。
 
@@ -49,7 +51,7 @@ Local provider 将对象保存在配置根目录下。SafeKey 只允许字母、
 
 路径校验和写入流程如下：
 
-~~~go
+```go
 // internal/platform/storage/storage.go（节选）
 // SafeKey 只允许安全对象键，阻止目录穿越和任意文件路径。
 var SafeKey = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
@@ -91,7 +93,7 @@ func (l Local) Put(ctx context.Context, key string, data []byte, mime string) er
 	}
 	return os.Rename(temp, p)
 }
-~~~
+```
 
 `SafeKey` 是一条白名单正则，只接受 ASCII 大小写字母、数字、点、下划线和连字符。斜杠、反斜杠、冒号都不在集合内，所以 `../../etc/passwd` 这类输入在 `path` 里第一步就被拒绝。`path` 额外单独挡掉 `.` 和 `..`——这两个字符串在正则里是合法的（只由点组成），但作为对象键没有意义且容易被用来指向父目录。所有读写方法都先经过 `path`，校验因此无法被绕过。
 
@@ -103,7 +105,7 @@ Local.Put 在目标目录创建临时文件，写完并关闭后再 Rename 到�
 
 Get 读取文件内容；不存在时转成 nil, nil；Delete 对不存在文件按幂等成功处理。这个约定让上层能够把对象不存在映射为附件 404，并让删除重试不会因目标已清理而失败。
 
-~~~go
+```go
 // internal/platform/storage/storage.go（节选）
 // Get 读取指定 key 的对象，读完后关闭响应流。
 func (l Local) Get(ctx context.Context, key string) ([]byte, error) {
@@ -136,7 +138,7 @@ func (l Local) Delete(ctx context.Context, key string) error {
 	}
 	return err
 }
-~~~
+```
 
 两个方法的共同点是都用 `errors.Is` 单独识别“文件不存在”，并把它翻译成成功语义：`Get` 返回 `nil, nil`，`Delete` 返回 `nil`。`errors.Is` 而不是 `==` 很重要，因为调用链上的错误可能被包装过，直接的相等比较会漏判。
 
@@ -160,7 +162,7 @@ R2 provider 使用 AWS SDK 的 S3 client，按 Cloudflare R2 endpoint、bucket�
 
 客户端的构造过程集中在一个函数里：
 
-~~~go
+```go
 // internal/platform/storage/r2.go（节选）
 // R2 以 S3 兼容协议访问 R2，凭据仅保存在客户端配置中。
 type R2 struct {
@@ -183,7 +185,7 @@ func NewR2(endpoint, bucket, key, secret string) (*R2, error) {
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) { o.BaseEndpoint = &endpoint; o.UsePathStyle = true })
 	return &R2{Client: client, Bucket: bucket}, nil
 }
-~~~
+```
 
 函数开头四项任一为空就返回错误，这就是“配置不完整时拒绝构造”的实现——与其让一个缺 key 的客户端在第一次上传时才失败，不如在装配阶段就报出来。
 
@@ -206,7 +208,7 @@ Put 上传字节及 MIME；Get 读响应体并关闭流，限制读取量；遇�
 
 读取方法把“对象不存在”从 SDK 的错误类型里分辨出来：
 
-~~~go
+```go
 // internal/platform/storage/r2.go（Get，节选）
 // Get 读取指定 key 的对象，读完后关闭响应流。
 func (r *R2) Get(ctx context.Context, key string) ([]byte, error) {
@@ -222,7 +224,7 @@ func (r *R2) Get(ctx context.Context, key string) ([]byte, error) {
 	defer res.Body.Close()
 	return io.ReadAll(io.LimitReader(res.Body, 10485761))
 }
-~~~
+```
 
 这里用了两种错误识别方式，因为 S3 兼容实现报告“不存在”的形态并不统一。`types.NoSuchKey` 是强类型错误，用 `errors.As` 匹配；`smithy.APIError` 是泛化的 API 错误，需要再查 `api.ErrorCode()` 是否等于 `"NotFound"`。两种命中都返回 `nil, nil`，与 local provider 的缺失语义对齐——上层拿到的行为一致，不需要知道背后是文件系统还是对象存储。
 

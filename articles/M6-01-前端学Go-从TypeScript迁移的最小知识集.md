@@ -8,6 +8,8 @@
 
 ## 前言：从“换语法”转向“换默认假设”
 
+第一次读 Go 版的 handler，我在 `if err != nil` 上停了半分钟——在 TypeScript 里这一步是 `throw`，一次就能跳到上层，这里却要每一层自己接住再返回。一屏代码写完，错误处理占了一半行数。
+
 如果你用 TypeScript 写过前端或 Node 服务，第一次看 Go 代码通常不会觉得陌生。函数、结构体、接口、切片、映射、包，都能找到熟悉的影子。真正让人不适应的，往往是看似简单的地方：错误为什么每一步都要处理？为什么没有类继承？`nil` 到底能不能直接返回？字段没传和传了空值为什么不能只看一个字符串？
 
 M6 用 Go 重写已经运行的文章系统后端，工程选用 `Go 1.26.6`、标准库 `net/http` 和 GORM。本文不是 Go 语言完整教程，而是给 TypeScript 开发者准备的读码指南：静态类型怎样影响数据边界，显式错误如何改变控制流，接口怎样表达能力，零值为什么不能混用。
@@ -29,33 +31,33 @@ M6 用 Go 重写已经运行的文章系统后端，工程选用 `Go 1.26.6`、�
 
 TypeScript 中我们可能这样写：
 
-~~~ts
+```ts
 const page = Number(query.page ?? 1);
 const title: string = input.title;
-~~~
+```
 
 Go 中常见的局部声明是：
 
-~~~go
+```go
 page := 1
 title := input.Title
-~~~
+```
 
 短声明符 := 根据右侧表达式推断类型并声明局部变量，只能在函数内使用。包级声明或显式类型使用 `var`：
 
-~~~go
+```go
 var page int = 1
 var title string
-~~~
+```
 
 这不是动态类型。编译器确定 page 为 `int` 后，不能再把字符串赋给它。结构体字段也有固定类型：
 
-~~~go
+```go
 type Page struct {
     Number int
     Size   int
 }
-~~~
+```
 
 Go 的 `int` 是整数，而 TypeScript 的 number 同时表示整数和浮点数。数据库 ID、计数、时间和金额，需要按范围与契约选择更合适的表示，不能因为 JSON 都是数字就认为语义相同。
 
@@ -63,11 +65,11 @@ Go 的 `int` 是整数，而 TypeScript 的 number 同时表示整数和浮点�
 
 短变量声明要求当前作用域里至少有一个新变量。下面的 err 只在 `if` 语句里有效：
 
-~~~go
+```go
 if err := save(); err != nil {
     return err
 }
-~~~
+```
 
 如果本来想更新外层变量，却写成 :=，外层值可能没有改变。看到重复变量名时，留意它是复用还是重新声明。
 
@@ -75,12 +77,12 @@ if err := save(); err != nil {
 
 Go 的常规错误路径通过返回值表达，而不是 throw/catch：
 
-~~~go
+```go
 user, err := findUser(id)
 if err != nil {
     return err
 }
-~~~
+```
 
 调用方必须处理失败，或把错误交给上层。成功和失败路径并排出现，读者可以看出某一步失败会阻止哪些后续操作。
 
@@ -96,7 +98,7 @@ M6 把业务错误集中在 `internal/fault`。领域服务返回业务错误，
 
 Go 的 `struct` 组合字段，方法通过接收者声明：
 
-~~~go
+```go
 type Actor struct {
     ID   int64
     Role string
@@ -105,7 +107,7 @@ type Actor struct {
 func (a Actor) Rank() int {
     return roleRanks[a.Role]
 }
-~~~
+```
 
 (a Actor) 是接收者，表示方法操作哪种值。它不是 Java 或 TypeScript 的 class，也不会自动获得父类字段和方法。
 
@@ -119,13 +121,13 @@ M6 把数据库结构和 API 响应 DTO 分开。`model.Article` 代表数据库
 
 Go 接口列出需要的方法。具体类型只要有这些方法，就满足接口，不必显式声明实现关系：
 
-~~~go
+```go
 type Provider interface {
     Put(context.Context, string, []byte, string) error
     Get(context.Context, string) ([]byte, error)
     Delete(context.Context, string) error
 }
-~~~
+```
 
 `storage.Local` 与 `storage.R2` 都有对应方法，可以作为 `Provider`。调用方依赖存储能力，不必知道对象写在本地还是远端。
 
@@ -137,19 +139,19 @@ type Provider interface {
 
 Go 的零值让变量不必先初始化：`int` 是 0，`bool` 是 false，`string` 是空串，指针、接口、`map`、`slice` 是 `nil`。零值很方便，但部分更新时，“用户没有提交字段”和“提交了空字符串”通常代表两种操作：
 
-~~~json
+```json
 {}
-~~~
+```
 
-~~~json
+```json
 {"displayName": ""}
-~~~
+```
 
 第一种可能表示保留原值，第二种可能表示清空。如果解码后都只有空字符串，业务层便丢失了区别。
 
 M6 用 `values.Fields` 保留字段是否出现，再读取字段的值。下面是它在源码里的实现，去掉注释后只剩几行，却能表达三层语义：
 
-~~~go
+```go
 // internal/values/values.go（节选）
 // Fields 保留请求字段存在性，避免把未提交、NULL 和零值混为一谈。
 type Fields map[string]any
@@ -168,7 +170,7 @@ func (f Fields) Text(k string) *string {
 	s := f.String(k)
 	return &s
 }
-~~~
+```
 
 这里没有范围校验，只有访问方式。`Has` 用 map 的“键是否存在”判断，`String` 做一次类型断言，`Text` 把“缺失或 null”与“空字符串”分开。范围与格式校验发生在契约 schema 层，`Fields` 只负责在已经校验过的输入上，把三种状态分别暴露给调用方。
 
@@ -184,14 +186,14 @@ func (f Fields) Text(k string) *string {
 
 Go 的 `slice` 是动态长度序列，`map` 是键值映射：
 
-~~~go
+```go
 ids := []int64{10, 20, 30}
 byID := map[int64]string{10: "article"}
-~~~
+```
 
 `nil slice` 长度为 0，可以追加；`nil map` 可以读，不能直接赋值，需要先初始化。JSON 编码时 `nil slice` 通常成为 null，初始化的空 `slice` 则成为 []。契约要求空数组时，响应应组装非 `nil` 空 `slice`。`values.Fields` 的 `Strings` 方法就是这么做的：
 
-~~~go
+```go
 // internal/values/values.go（节选）
 // Strings 读取字符串数组，空结果仍保持数组语义。
 func (f Fields) Strings(k string) []string {
@@ -208,7 +210,7 @@ func (f Fields) Strings(k string) []string {
 	}
 	return r
 }
-~~~
+```
 
 第一行 `r := []string{}` 是关键：先建立空切片，无论后面是否命中，返回值都不是 `nil`。如果写成 `var r []string`，没有元素时返回的就是 `nil`，序列化后成为 `null`，和契约要求的空数组相差一个字符，却足以让客户端解析失败。这段代码同时处理 `[]string` 与 JSON 解码后的 `[]any` 两种形态，也提醒我们：同一个数组从不同入口进来，运行时类型可能不同。
 
@@ -220,9 +222,9 @@ Map 遍历顺序不保证稳定。需要稳定排序时，应先转换成切片�
 
 M6 的 `go.mod` 声明模块身份：
 
-~~~go
+```go
 module github.com/fengcms/become-a-full-stack-developer/go-backend
-~~~
+```
 
 模块路径也是包 import 路径的前缀。同一模块内对自身包的 import 会解析到本地目录，不会因为路径看起来像 GitHub 地址就下载自身代码。
 
