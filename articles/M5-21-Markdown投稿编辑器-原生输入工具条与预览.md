@@ -264,7 +264,7 @@ onBlur={(e) => {
 
 ## 延伸阅读
 
-- [会员投稿状态机：保存、提交、撤回与防重复创建]({{LINK:M5-20}})
+- [会员投稿状态机：保存、提交、撤回与防重复创建](https://blog.csdn.net/fungleo/article/details/168861744)
 - [Markdown 编辑器：预览、暗色主题与连续图片粘贴](https://blog.csdn.net/fungleo/article/details/166107729)
 - [文章详情：Markdown、代码高亮与目录必须共享解析结果](https://blog.csdn.net/fungleo/article/details/166885283)
 
