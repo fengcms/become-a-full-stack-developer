@@ -2,7 +2,8 @@
 
 > 学新语言不必先背完整本语法。更重要的是看清旧经验在哪些地方仍成立，在哪些地方会误导你。
 
-{{IMG:M6-01-封面}}
+![成为全栈·Go 后端篇·前端学 Go：从 TypeScript 迁移的最小知识集](https://i-blog.csdnimg.cn/direct/20c2333b0de14ceea4e7dde96ac07458.png)
+
 
 > 本文代码快照：提交 ceac4e0（Go 1.26.6）。
 
@@ -92,7 +93,8 @@ M6 把业务错误集中在 `internal/fault`。领域服务返回业务错误，
 
 错误信息还有不同受众：内部日志可以保留排查原因，API 响应只返回契约允许的安全文案。错误被返回，不等于已经被记录；错误被记录，也不等于应该把内部细节发给用户。看到 return err，继续沿调用链确认错误最终在哪里映射和处理。
 
-{{IMG:M6-01-错误控制流}}
+![错误控制流](https://i-blog.csdnimg.cn/direct/4dc6c4ceccf1468f978745af595dd77a.png)
+
 
 ## 三、`struct` 组合数据，方法贴近类型，但没有继承
 
@@ -180,7 +182,8 @@ func (f Fields) Text(k string) *string {
 
 读代码时不妨先问：它代表请求生命周期的哪一步？哪些信息已经丢失？
 
-{{IMG:M6-01-字段存在性}}
+![字段存在性](https://i-blog.csdnimg.cn/direct/7b2d609b9b4e4a57b8ce77bb3d2a343f.png)
+
 
 ## 六、`slice` 与 `map` 的空值会影响响应
 
@@ -283,7 +286,7 @@ module github.com/fengcms/become-a-full-stack-developer/go-backend
 
 ### 文章 Tag（6 个）
 
-Go、Golang、TypeScript、后端开发、编程语言、全栈工程师
+Go Golang TypeScript 后端开发 编程语言 全栈工程师
 
 ### 文章简介（250 字以内）
 

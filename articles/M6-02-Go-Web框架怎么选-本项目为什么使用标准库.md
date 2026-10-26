@@ -2,7 +2,8 @@
 
 > 选框架之前先数清楚要解决的问题。依赖少只是结果之一，真正要看的是路由、校验、权限和响应边界由谁负责。
 
-{{IMG:M6-02-封面}}
+![成为全栈·Go 后端篇·Go Web 框架怎么选：本项目为什么使用标准库](https://i-blog.csdnimg.cn/direct/9a9ddcb4f23649068e669644b09e73da.png)
+
 
 > 本文代码快照：提交 ceac4e0（Go 1.26.6）。
 
@@ -56,7 +57,8 @@ id := r.PathValue("id")
 
 当前工程并不是在入口手写 68 行 HandleFunc。契约目录已经提供操作元数据，transport/httpapi 按 operation id 绑定 handler，再统一执行公共边界。注册表负责把“哪个操作由谁处理”连接起来；请求处理链负责通用 HTTP 行为；领域包负责内容规则和数据库事务。
 
-{{IMG:M6-02-请求链}}
+![请求链](https://i-blog.csdnimg.cn/direct/cac9d728314c4b6f9b6bf0fcd425a267.png)
+
 
 ## 三、路由表不是权限表，更不是业务逻辑
 
@@ -139,7 +141,8 @@ M6 把公共请求流程放在 httpapi 的注册 handler 中，目的是让一�
 
 还有一处教学上的取舍：测试可以直接构造 App、请求和 recorder，验证权限拒绝、公开端点限流、非法输入以及错误信封。标准库的 httptest 工具能在进程内调用 handler，不必先启动真实监听端口。它当然不能代替真实数据库集成或客户端 UI 验收，但适合测试传输层能独立保证的行为。若未来引入新框架，也应继续验证这些可观察结果，而不是只检查路由能返回 200。
 
-{{IMG:M6-02-中间件顺序}}
+![中间件顺序](https://i-blog.csdnimg.cn/direct/6843ba14b6a04548bda8273b1ea4efab.png)
+
 
 ## 五、标准库不是把所有代码塞回 main.go
 
@@ -204,7 +207,7 @@ HTTP 边界的代码并非零成本。项目需要自己维护公共流程，也
 
 ### 文章 Tag（6 个）
 
-Go、Golang、net/http、Web 框架、后端架构、全栈工程师
+Go Golang net/http Web 框架 后端架构 全栈工程师
 
 ### 文章简介（250 字以内）
 
