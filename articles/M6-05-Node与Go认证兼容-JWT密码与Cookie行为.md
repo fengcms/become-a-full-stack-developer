@@ -208,7 +208,7 @@ Node 与 Go 都使用 HS256 和 bcrypt cost 12，但兼容还要求相同的 cla
 
 ### 文章 Tag（6 个）
 
-Go、Golang、JWT、bcrypt、身份认证、跨语言兼容
+Go Golang JWT bcrypt 身份认证 跨语言兼容
 
 ### 文章简介（250 字以内）
 

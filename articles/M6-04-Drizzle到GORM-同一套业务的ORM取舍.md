@@ -2,11 +2,7 @@
 
 > ORM 会改变查询的表达方式，却不会替你决定契约、事务、空值语义或数据库差异。比较工具时，最好跟着一条真实业务看它把责任放在哪里。
 
-{{IMG:M6-04-封面}}
-![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/9383284233f84da2af6c59eac35deeed.png)
-![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/22c754fe5448455987a2e376f6f26d52.png)
-![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/866a4d137d934af0b5c6b0c8ea265c5f.png)
-
+![成为全栈·Go 后端篇·从 Drizzle 到 GORM：同一套业务的 ORM 取舍](https://i-blog.csdnimg.cn/direct/9383284233f84da2af6c59eac35deeed.png)
 
 > 本文代码快照：Go 侧提交 ceac4e0（Go 1.26.6，GORM 1.31.2）；Node 对照以当前仓库 Drizzle 源码为准。正式发布前请绑定并复核各自源码快照。
 
@@ -48,7 +44,9 @@ M6 使用明确 DTO 与映射。查询端按列表所需投影选择字段，响
 
 这条原则对两种 ORM 都成立：数据库 schema、查询结果和 API Contract 是三个相关但不相同的模型。Drizzle 的推导不会让 DTO 设计消失；GORM 的 struct 标签也不应该直接决定 HTTP 响应内容。
 
-{{IMG:M6-04-模型分层}}
+![模型分层](https://i-blog.csdnimg.cn/direct/22c754fe5448455987a2e376f6f26d52.png)
+
+
 
 ## 三、文章列表的筛选与排序要可审阅
 
@@ -95,7 +93,8 @@ if len(updates) > 0 {
 
 Drizzle 侧的 TypeScript 类型有时会让输入对象的字段可选，但可选属性与 null 仍是两种语义。一个值可以不存在、为 null、为 false、为 0 或为空字符串；服务层和数据库更新都需要按契约明确解释。跨语言复刻正好暴露了这个隐含假设。
 
-{{IMG:M6-04-字段语义}}
+![字段语义](https://i-blog.csdnimg.cn/direct/866a4d137d934af0b5c6b0c8ea265c5f.png)
+
 
 ## 五、事务由业务用例组合，不由 ORM 猜测
 
@@ -213,7 +212,7 @@ M6 继续使用 Node 侧的 Drizzle 和 Go 侧的 GORM，以各自语言生态�
 
 ## 延伸阅读
 
-- [用 Go 重写分层架构：领域包、装配根与最小抽象]({{LINK:M6-03}})
+- [用 Go 重写分层架构：领域包、装配根与最小抽象](https://blog.csdn.net/FungLeo/article/details/169152334)
 - [Node 后端为什么选择 Drizzle ORM](https://blog.csdn.net/fungleo/article/details/164254717)
 - [列表接口三件套：分页、筛选、排序](https://blog.csdn.net/fungleo/article/details/164425686)
 - [数据库选型：关系型还是文档型](https://blog.csdn.net/fungleo/article/details/164209279)
@@ -232,7 +231,7 @@ M6 继续使用 Node 侧的 Drizzle 和 Go 侧的 GORM，以各自语言生态�
 
 ### 文章 Tag（6 个）
 
-Go、Golang、GORM、Drizzle ORM、数据库设计、全栈工程师
+Go Golang GORM Drizzle ORM 数据库设计 全栈工程师
 
 ### 文章简介（250 字以内）
 
