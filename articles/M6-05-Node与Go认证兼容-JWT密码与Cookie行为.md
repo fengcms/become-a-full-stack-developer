@@ -2,7 +2,8 @@
 
 > “同样是 HS256”和“同样使用 bcrypt”不等于两个后端天然兼容。身份声明、过期边界、Cookie 优先级和密码字节处理都可能让旧客户端突然无法登录。
 
-{{IMG:M6-05-封面}}
+![成为全栈·Go 后端篇·跨语言认证兼容：Node 与 Go 如何互认 JWT 和密码](https://i-blog.csdnimg.cn/direct/2f5d6fa3c0ac4772abb2e52091e93fdd.png)
+
 
 > Node 基线：node-backend 当前源码；Go 快照：提交 ceac4e0。协议以冻结契约和固定测试向量为准。
 
@@ -94,7 +95,8 @@ func Verify(s, hash string) bool {
 
 准备多字节测试样本时，最实用的做法是先把候选项的字节长度算出来再放进用例：一个纯 ASCII 的 60 字符密码是 60 字节，一个 20 字的纯中文密码约 60 字节，20 个 emoji 可能就超过 72 字节。先知道输入落在边界的哪一侧，测试结论才有意义。
 
-{{IMG:M6-05-bcrypt}}
+![bcrypt](https://i-blog.csdnimg.cn/direct/e03f4973d96e45b4953cb4ab8fba33d5.png)
+
 
 ## 三、刷新令牌和访问令牌职责不同
 
@@ -126,7 +128,7 @@ token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 
 刷新 endpoint 同时支持 Cookie 与请求体 token。Node 路由约定 Cookie 优先，缺少 Cookie 时再读 body；Go httpapi.auth 也遵循相同优先级。网站 BFF 通常依赖 HttpOnly Cookie，Flutter 等客户端可能使用 body token。若优先级不一致，浏览器携带旧 Cookie 时会忽略客户端刚提交的新 body token，产生很难理解的错误。
 
-{{IMG:M6-05-令牌职责}}
+![令牌职责](https://i-blog.csdnimg.cn/direct/5755551ef06941e5b4fd7cf25ac72ec6.png)
 
 ## 四、Cookie 属性也是协议的一部分
 

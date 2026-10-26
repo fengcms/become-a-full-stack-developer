@@ -3,6 +3,10 @@
 > ORM 会改变查询的表达方式，却不会替你决定契约、事务、空值语义或数据库差异。比较工具时，最好跟着一条真实业务看它把责任放在哪里。
 
 {{IMG:M6-04-封面}}
+![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/9383284233f84da2af6c59eac35deeed.png)
+![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/22c754fe5448455987a2e376f6f26d52.png)
+![在这里插入图片描述](https://i-blog.csdnimg.cn/direct/866a4d137d934af0b5c6b0c8ea265c5f.png)
+
 
 > 本文代码快照：Go 侧提交 ceac4e0（Go 1.26.6，GORM 1.31.2）；Node 对照以当前仓库 Drizzle 源码为准。正式发布前请绑定并复核各自源码快照。
 
