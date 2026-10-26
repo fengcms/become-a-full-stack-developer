@@ -193,8 +193,8 @@
 
 | 文章标题 | tag | 代码 / 草稿位置 | CSDN 链接 | 状态 |
 |---|---|---|---|---|
-| 成为全栈·Go 后端篇·前端学 Go：从 TypeScript 迁移的最小知识集 | — | `articles/M6-01-前端学Go-从TypeScript迁移的最小知识集.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·Go Web 框架怎么选：本项目为什么使用标准库 | — | `articles/M6-02-Go-Web框架怎么选-本项目为什么使用标准库.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Go 后端篇·前端学 Go：从 TypeScript 迁移的最小知识集 | — | `articles/M6-01-前端学Go-从TypeScript迁移的最小知识集.md` | https://blog.csdn.net/fungleo/article/details/169055031 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·Go Web 框架怎么选：本项目为什么使用标准库 | — | `articles/M6-02-Go-Web框架怎么选-本项目为什么使用标准库.md` | https://blog.csdn.net/fungleo/article/details/169055367 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·用 Go 重写分层架构：领域包、装配根与最小抽象 | — | `articles/M6-03-Go分层架构-领域包装配根与最小抽象.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Go 后端篇·从 Drizzle 到 GORM：同一套业务的 ORM 取舍 | — | `articles/M6-04-Drizzle到GORM-同一套业务的ORM取舍.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Go 后端篇·跨语言认证兼容：Node 与 Go 如何互认 JWT 和密码 | — | `articles/M6-05-Node与Go认证兼容-JWT密码与Cookie行为.md` | — | 🟡 草稿中（正文完成，待发布） |
