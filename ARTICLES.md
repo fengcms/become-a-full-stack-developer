@@ -195,14 +195,14 @@
 |---|---|---|---|---|
 | 成为全栈·Go 后端篇·前端学 Go：从 TypeScript 迁移的最小知识集 | — | `articles/M6-01-前端学Go-从TypeScript迁移的最小知识集.md` | https://blog.csdn.net/fungleo/article/details/169055031 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·Go Web 框架怎么选：本项目为什么使用标准库 | — | `articles/M6-02-Go-Web框架怎么选-本项目为什么使用标准库.md` | https://blog.csdn.net/fungleo/article/details/169055367 | 🟢 已发布 |
-| 成为全栈·Go 后端篇·用 Go 重写分层架构：领域包、装配根与最小抽象 | — | `articles/M6-03-Go分层架构-领域包装配根与最小抽象.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·从 Drizzle 到 GORM：同一套业务的 ORM 取舍 | — | `articles/M6-04-Drizzle到GORM-同一套业务的ORM取舍.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·跨语言认证兼容：Node 与 Go 如何互认 JWT 和密码 | — | `articles/M6-05-Node与Go认证兼容-JWT密码与Cookie行为.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·goroutine 遇上数据库：并发模型不等于业务并发安全 | — | `articles/M6-06-Go并发与数据库-请求并发不等于业务并发安全.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·同一套接口的性能对比：先把实验做公平 | — | `articles/M6-07-Go与Node性能对比-公平实验和结果边界.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·Node 还是 Go：用这次重写回答选型问题 | — | `articles/M6-08-Node还是Go-结合重写项目做技术选型.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·契约一致性与差分测试：两套实现如何互相校验 | — | `articles/M6-09-Go与Node差分测试-兼容差异如何判定.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·第六批复盘：从换一种语言到证明系统等价 | — | `articles/M6-10-Go后端重写复盘-从换语言到证明系统等价.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Go 后端篇·用 Go 重写分层架构：领域包、装配根与最小抽象 | — | `articles/M6-03-Go分层架构-领域包装配根与最小抽象.md` | https://blog.csdn.net/fungleo/article/details/169152334 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·从 Drizzle 到 GORM：同一套业务的 ORM 取舍 | — | `articles/M6-04-Drizzle到GORM-同一套业务的ORM取舍.md` | https://blog.csdn.net/fungleo/article/details/169152990 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·跨语言认证兼容：Node 与 Go 如何互认 JWT 和密码 | — | `articles/M6-05-Node与Go认证兼容-JWT密码与Cookie行为.md` | https://blog.csdn.net/fungleo/article/details/169153071 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·goroutine 遇上数据库：并发模型不等于业务并发安全 | — | `articles/M6-06-Go并发与数据库-请求并发不等于业务并发安全.md` | https://blog.csdn.net/fungleo/article/details/169153212 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·同一套接口的性能对比：先把实验做公平 | [成为全栈·Go 后端篇·同一套接口的性能对比：先把实验做公平](https://blog.csdn.net/fungleo/article/details/169251790) | `articles/M6-07-Go与Node性能对比-公平实验和结果边界.md` | https://blog.csdn.net/fungleo/article/details/169251790 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·Node 还是 Go：用这次重写回答选型问题 | [成为全栈·Go 后端篇·Node 还是 Go：用这次重写回答选型问题](https://blog.csdn.net/fungleo/article/details/169251943) | `articles/M6-08-Node还是Go-结合重写项目做技术选型.md` | https://blog.csdn.net/fungleo/article/details/169251943 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·契约一致性与差分测试：两套实现如何互相校验 | [成为全栈·Go 后端篇·契约一致性与差分测试：两套实现如何互相校验](https://blog.csdn.net/fungleo/article/details/169252089) | `articles/M6-09-Go与Node差分测试-兼容差异如何判定.md` | https://blog.csdn.net/fungleo/article/details/169252089 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·第六批复盘：从换一种语言到证明系统等价 | [成为全栈·Go 后端篇·第六批复盘：从换一种语言到证明系统等价](https://blog.csdn.net/fungleo/article/details/169252487) | `articles/M6-10-Go后端重写复盘-从换语言到证明系统等价.md` | https://blog.csdn.net/fungleo/article/details/169252487 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·重写之前先锁基线：契约、Node 版本与行为清单 | — | `articles/M6-11-重写之前先锁基线-契约Node版本与行为清单.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Go 后端篇·Go 工程如何运行：模块、四个命令与退出生命周期 | — | `articles/M6-12-Go工程如何运行-模块四个命令与退出生命周期.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Go 后端篇·冻结 OpenAPI 3.1 怎么接入 Go：生成器之外的选择 | — | `articles/M6-13-Go接入冻结OpenAPI-生成器之外的选择.md` | — | 🟡 草稿中（正文完成，待发布） |
