@@ -2,7 +2,8 @@
 
 > 一次基准测试只能回答一个有限问题。若数据库、数据量、请求、缓存和运行方式不一致，最终数字讲的是整套环境差异，不是 Go 与 Node 的速度差异。
 
-{{IMG:M6-07-封面}}
+![成为全栈·Go 后端篇·同一套接口的性能对比：先把实验做公平](https://i-blog.csdnimg.cn/direct/533f93726a5d4313b33f06371df743d4.png)
+
 
 > 实测记录：2026-10-08，同一台 arm64 Mac；原始数据见 docs/go-backend/reports/performance.json。
 
@@ -52,7 +53,8 @@ DATABASE_URL="$scratch/go.db" HTTP_ADDR=127.0.0.1:18081 DB_METRICS_FILE="$scratc
 | 顺序 | 固定 Go 先、Node 后 | **未交替，无法消除顺序效应** |
 | 计时 | 本地 performance.now | 只覆盖客户端观测 |
 
-{{IMG:M6-07-实验控制}}
+![实验控制](https://i-blog.csdnimg.cn/direct/7e8349e933d349ba96bc74605b5e604c.png)
+
 
 ## 二、实际观察到的延迟与吞吐
 
@@ -103,7 +105,8 @@ Go 数据库统计记录 667 次 GORM 调用，总计 260.86 ms，最大 5.31 ms
 
 把这三类统计放在一起看，容易犯的错误是拿一个指标去解释另一个。RSS 高未必说明处理慢，数据库调用次数多也未必说明查询慢，客户端延迟低也未必说明服务端没做额外工作。要判断一个数字说明了什么，先确认它的采集位置、包含范围和单位，再决定它能支持哪一类结论。
 
-{{IMG:M6-07-指标}}
+![指标](https://i-blog.csdnimg.cn/direct/9d887e3d4bec4880ad0655b41dae4f33.png)
+
 
 ## 四、为什么没有拿 PostgreSQL 和 D1 比速度
 
@@ -169,7 +172,7 @@ M6 本地样本显示 Go 在多数读取与登录场景的观测延迟较低，�
 
 ### 文章 Tag（6 个）
 
-Go、Golang、Node.js、性能测试、SQLite、基准测试
+Go Golang Node.js 性能测试 SQLite 基准测试
 
 ### 文章简介（250 字以内）
 

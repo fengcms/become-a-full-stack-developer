@@ -2,7 +2,8 @@
 
 > 语言选择是团队、系统边界和交付环境的选择。一次重写只能提供具体案例和可迁移的问题，不能替所有团队得出同一个答案。
 
-{{IMG:M6-08-封面}}
+![成为全栈·Go 后端篇·Node 还是 Go：用这次重写回答选型问题](https://i-blog.csdnimg.cn/direct/98d8f79f2d2d4c17b90bbbaad487a081.png)
+
 
 > 本文基于 Node v1.0.4 与 Go 提交 ceac4e0 的项目实现；性能引用仅限同机 SQLite 小样本实验。
 
@@ -36,7 +37,7 @@ M6 开始时，Node 后端已经为网站、管理后台、Flutter 和小程序�
 
 若没有契约与消费者测试，重写容易变成凭感觉复刻，最后以 API 返回相似 JSON 宣布完成。M6 通过 operation coverage、差分 trace 和数据库状态核验，把这个工作量显式化。
 
-{{IMG:M6-08-契约相同}}
+![契约相同](https://i-blog.csdnimg.cn/direct/7c3ecccd4668460b9bcdba3850031768.png)
 
 ## 二、Node 的优势与边界
 
@@ -105,7 +106,9 @@ M6 的本地实验在一台 arm64 Mac、相同 500 篇 SQLite fixture 上观测�
 
 这三种方向并不互相排斥。一个团队完全可以先继续用 Node 维护线上，同时用一个小服务试点 Go；也可以在 Go 试点里先只迁移权限与上传，把最难兼容的部分提前暴露。
 
-{{IMG:M6-08-决策}}
+![决策](https://i-blog.csdnimg.cn/direct/24e53f471a284408a1a0156bc84f951d.png)
+
+
 
 ## 七、本次重写的真实收益与代价
 
@@ -142,7 +145,7 @@ M6 的本地实验在一台 arm64 Mac、相同 500 篇 SQLite fixture 上观测�
 
 ### 文章 Tag（6 个）
 
-Go、Golang、Node.js、后端选型、TypeScript、系统重写
+Go Golang Node.js 后端选型 TypeScript 系统重写
 
 ### 文章简介（250 字以内）
 
