@@ -2,7 +2,8 @@
 
 > JSON 里的“没传”与“传了 false”看起来都很简单，落到 Go struct 更新时却可能被合并。跨语言接口要先保存字段存在性，再解释字段值。
 
-{{IMG:M6-14-封面}}
+![成为全栈·Go 后端篇·Go 零值为什么会改坏接口：缺失、null、0 与空字符串](https://i-blog.csdnimg.cn/direct/3ab44eef3b38416aa58b9be33646084a.png)
+
 
 > 本文代码快照：提交 ceac4e0。契约版本 1.12.0；代码示例为简化示意，发布前按实际 mapper 复核。
 
@@ -115,7 +116,8 @@ if len(patch) > 0 {
 
 代码是示意，字段名和 mapper 位置须按绑定快照复核。资料、阅读进度、站点配置、文章修改的允许字段和 null 规则不同，应在各自领域包中表达。
 
-{{IMG:M6-14-更新白名单}}
+![更新白名单](https://i-blog.csdnimg.cn/direct/895282739995463da2322af43ba93b46.png)
+
 
 ## 四、GORM Updates(struct) 的零值陷阱
 
@@ -127,7 +129,8 @@ GORM 的 Updates(struct) 默认通常跳过零值字段。把文章 IsFeatured �
 
 这里有一个反直觉的点：GORM 用 map 更新时，零值会被当作明确值写入。这既是我们想要的行为（提交 false 就写 false），也是风险来源（把整个请求 body 无条件转成 map，就会把未提交的字段一起写成零值）。所以“用 map 就不用担心零值”只对了一半——它解决了“零值写不进去”的问题，却没有解决“哪些字段应该被写”的问题。后者只能由字段存在性和白名单回答。
 
-{{IMG:M6-14-字段语义}}
+![字段语义](https://i-blog.csdnimg.cn/direct/e999e54d17c7413fa9cc0663a35d6b2f.png)
+
 
 ## 五、NULL、空字符串和可空数据库列
 
@@ -230,7 +233,7 @@ Go 的零值简洁，却不携带客户端是否提交的历史。M6 先经过 s
 
 ### 文章 Tag（6 个）
 
-Go、Golang、JSON、GORM、接口设计、数据库更新
+Go Golang JSON GORM 接口设计 数据库更新
 
 ### 文章简介（250 字以内）
 
