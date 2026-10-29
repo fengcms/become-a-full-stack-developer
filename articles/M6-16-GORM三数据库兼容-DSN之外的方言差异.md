@@ -2,7 +2,8 @@
 
 > 能连接 PostgreSQL、MySQL、SQLite，只能说明驱动打开了连接。真正的多数据库支持，要证明类型、排序、锁、迁移和失败行为都符合业务预期。
 
-{{IMG:M6-16-封面}}
+![成为全栈·Go 后端篇·GORM 支持三数据库：三个 DSN 远远不够](https://i-blog.csdnimg.cn/direct/178560708cf64f57ae847340ef6d7e23.png)
+
 
 > 本文代码快照：提交 ceac4e0。PostgreSQL 为主库，MySQL 与 SQLite 有独立迁移和真实服务验证。
 
@@ -105,7 +106,8 @@ func Date(ms *int64) any {
 
 SQL order by 也必须显式设置次级排序，避免时间相同记录的顺序不稳定。LIKE/搜索的大小写行为需按照各库 SQL 语义验证，必要时在数据库适配层使用确定表达式。不可为了兼容把输入一律小写，除非契约和既有 Node 逻辑本来如此。
 
-{{IMG:M6-16-方言}}
+![方言](https://i-blog.csdnimg.cn/direct/73964cc39abb4a10b8495a7551b7868c.png)
+
 
 ## 四、RowsAffected 和 upsert 行为要看业务动作
 
@@ -183,7 +185,8 @@ CREATE TABLE users (
 
 维护这张矩阵的成本是真实的：每加一个字段，就要在三个方言里各写一次；每改一个索引，就要在三个文件里分别验证。反过来说，这份成本换来的是一句可以被复核的话——“这个版本在哪些数据库上、跑过哪些用例”。如果团队不愿意承担这份维护，更诚实的选择是只声明支持一个数据库，而不是让驱动列表替兼容性背书。
 
-{{IMG:M6-16-矩阵}}
+![矩阵](https://i-blog.csdnimg.cn/direct/c64720c55cac4b3eb411075b623489cd.png)
+
 
 ## 小结：多数据库是一组可验证承诺
 
@@ -212,7 +215,7 @@ GORM 的三个 driver 是入口，不是结论。连接池与 SQLite WAL、外�
 
 ### 文章 Tag（6 个）
 
-Go、Golang、GORM、多数据库、PostgreSQL、MySQL
+Go Golang GORM 多数据库 PostgreSQL MySQL SQLite
 
 ### 文章简介（250 字以内）
 

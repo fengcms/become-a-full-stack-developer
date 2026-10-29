@@ -2,7 +2,8 @@
 
 > HTTP handler 是不可信输入进入业务系统的门槛。先把身份、请求体和失败形状收住，再交给领域服务处理，才能让 68 个操作遵循同一套协议。
 
-{{IMG:M6-15-封面}}
+![成为全栈·Go 后端篇·HTTP 边界怎么守：鉴权、业务错误、限流与上传解析](https://i-blog.csdnimg.cn/direct/7bd75c07a191436a84bc9ba89e29a184.png)
+
 
 > 本文代码快照：提交 ceac4e0。部分代码为结构示意，发布前按实际路由和契约复核。
 
@@ -61,7 +62,8 @@ owner override 不能仅凭 URL 中的数字确认。契约记录资源参数以
 
 业务服务也应检查重要不变量，尤其当 service 会被多个入口调用时。传输层负责依据 operation 作通用身份边界，领域层负责资源真实归属和状态转移。两层互补，不能为了少写一次判断而把授权全部放到前端。
 
-{{IMG:M6-15-认证分级}}
+![认证分级](https://i-blog.csdnimg.cn/direct/578e0f95e6444209a2adde2a1d389364.png)
+
 
 ## 三、公开限流与客户端身份
 
@@ -154,7 +156,7 @@ func pathID(r Request, key string) (int64, error) {
 
 上传内容的真实类型识别、对象 key、摘要去重、元数据原子性和存储失败补偿由 attachment 领域能力负责。transport 只管 HTTP body 形状和传输上限；附件生命周期属于领域，塞进 handler 只会让协议代码承担它无法可靠保证的责任。
 
-{{IMG:M6-15-上传}}
+![上传](https://i-blog.csdnimg.cn/direct/20619cd1dd7b404bb1e492779e2d18a2.png)
 
 ## 五、统一错误信封不是把错误都变成 500
 
@@ -211,7 +213,7 @@ M6 的 Register 以 OpenAPI operation 为入口，统一执行身份、角色、
 
 ### 文章 Tag（6 个）
 
-Go、Golang、HTTP、JWT、API安全、文件上传
+Go Golang HTTP JWT API安全 文件上传
 
 ### 文章简介（250 字以内）
 
