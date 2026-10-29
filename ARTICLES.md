@@ -207,10 +207,10 @@
 | 成为全栈·Go 后端篇·Go 工程如何运行：模块、四个命令与退出生命周期 | [成为全栈·Go 后端篇·Go 工程如何运行：模块、四个命令与退出生命周期](https://blog.csdn.net/fungleo/article/details/169345525) | `articles/M6-12-Go工程如何运行-模块四个命令与退出生命周期.md` | https://blog.csdn.net/fungleo/article/details/169345525 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·冻结 OpenAPI 3.1 怎么接入 Go：生成器之外的选择 | [成为全栈·Go 后端篇·冻结 OpenAPI 3.1 怎么接入 Go：生成器之外的选择](https://blog.csdn.net/fungleo/article/details/169345671) | `articles/M6-13-Go接入冻结OpenAPI-生成器之外的选择.md` | https://blog.csdn.net/fungleo/article/details/169345671 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·Go 零值为什么会改坏接口：缺失、null、0 与空字符串 | [成为全栈·Go 后端篇·Go 零值为什么会改坏接口：缺失、null、0 与空字符串](https://blog.csdn.net/fungleo/article/details/169346384) | `articles/M6-14-Go零值与接口字段语义-缺失null零值与空字符串.md` | https://blog.csdn.net/fungleo/article/details/169346384 | 🟢 已发布 |
-| 成为全栈·Go 后端篇·HTTP 边界怎么守：鉴权、业务错误、限流与上传解析 | — | `articles/M6-15-GoHTTP边界-鉴权错误限流与上传解析.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·GORM 支持三数据库：三个 DSN 远远不够 | — | `articles/M6-16-GORM三数据库兼容-DSN之外的方言差异.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·版本迁移与模型设计：为什么启动不执行 AutoMigrate | — | `articles/M6-17-Go版本化数据库迁移-为何启动不执行AutoMigrate.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·刷新令牌旋转：为什么返回错误反而要提交事务 | — | `articles/M6-18-Go刷新令牌旋转-重放撤销与事务提交语义.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Go 后端篇·HTTP 边界怎么守：鉴权、业务错误、限流与上传解析 | [成为全栈·Go 后端篇·HTTP 边界怎么守：鉴权、业务错误、限流与上传解析](https://blog.csdn.net/fungleo/article/details/169440940) | `articles/M6-15-GoHTTP边界-鉴权错误限流与上传解析.md` | https://blog.csdn.net/fungleo/article/details/169440940 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·GORM 支持三数据库：三个 DSN 远远不够 | [成为全栈·Go 后端篇·GORM 支持三数据库：三个 DSN 远远不够](https://blog.csdn.net/fungleo/article/details/169441194) | `articles/M6-16-GORM三数据库兼容-DSN之外的方言差异.md` | https://blog.csdn.net/fungleo/article/details/169441194 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·版本迁移与模型设计：为什么启动不执行 AutoMigrate | [成为全栈·Go 后端篇·版本迁移与模型设计：为什么启动不执行 AutoMigrate](https://blog.csdn.net/fungleo/article/details/169441721) | `articles/M6-17-Go版本化数据库迁移-为何启动不执行AutoMigrate.md` | https://blog.csdn.net/fungleo/article/details/169441721 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·刷新令牌旋转：为什么返回错误反而要提交事务 | [成为全栈·Go 后端篇·刷新令牌旋转：为什么返回错误反而要提交事务](https://blog.csdn.net/fungleo/article/details/169442228) | `articles/M6-18-Go刷新令牌旋转-重放撤销与事务提交语义.md` | https://blog.csdn.net/fungleo/article/details/169442228 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·微信身份在 Go 中复刻：建号、首次设密与并发冲突 | — | `articles/M6-19-Go微信身份映射-建号首次设密与并发冲突.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Go 后端篇·文章状态机与审核通知：事务该由谁持有 | — | `articles/M6-20-Go文章状态机-事务与审核通知边界.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Go 后端篇·文章查询与展示投影：安全分页、排序和软删除 | — | `articles/M6-21-Go文章查询-分页排序软删除与展示投影.md` | — | 🟡 草稿中（正文完成，待发布） |
