@@ -203,10 +203,10 @@
 | 成为全栈·Go 后端篇·Node 还是 Go：用这次重写回答选型问题 | [成为全栈·Go 后端篇·Node 还是 Go：用这次重写回答选型问题](https://blog.csdn.net/fungleo/article/details/169251943) | `articles/M6-08-Node还是Go-结合重写项目做技术选型.md` | https://blog.csdn.net/fungleo/article/details/169251943 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·契约一致性与差分测试：两套实现如何互相校验 | [成为全栈·Go 后端篇·契约一致性与差分测试：两套实现如何互相校验](https://blog.csdn.net/fungleo/article/details/169252089) | `articles/M6-09-Go与Node差分测试-兼容差异如何判定.md` | https://blog.csdn.net/fungleo/article/details/169252089 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·第六批复盘：从换一种语言到证明系统等价 | [成为全栈·Go 后端篇·第六批复盘：从换一种语言到证明系统等价](https://blog.csdn.net/fungleo/article/details/169252487) | `articles/M6-10-Go后端重写复盘-从换语言到证明系统等价.md` | https://blog.csdn.net/fungleo/article/details/169252487 | 🟢 已发布 |
-| 成为全栈·Go 后端篇·重写之前先锁基线：契约、Node 版本与行为清单 | — | `articles/M6-11-重写之前先锁基线-契约Node版本与行为清单.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·Go 工程如何运行：模块、四个命令与退出生命周期 | — | `articles/M6-12-Go工程如何运行-模块四个命令与退出生命周期.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·冻结 OpenAPI 3.1 怎么接入 Go：生成器之外的选择 | — | `articles/M6-13-Go接入冻结OpenAPI-生成器之外的选择.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·Go 零值为什么会改坏接口：缺失、null、0 与空字符串 | — | `articles/M6-14-Go零值与接口字段语义-缺失null零值与空字符串.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Go 后端篇·重写之前先锁基线：契约、Node 版本与行为清单 | [成为全栈·Go 后端篇·重写之前先锁基线：契约、Node 版本与行为清单](https://blog.csdn.net/fungleo/article/details/169345155) | `articles/M6-11-重写之前先锁基线-契约Node版本与行为清单.md` | https://blog.csdn.net/fungleo/article/details/169345155 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·Go 工程如何运行：模块、四个命令与退出生命周期 | [成为全栈·Go 后端篇·Go 工程如何运行：模块、四个命令与退出生命周期](https://blog.csdn.net/fungleo/article/details/169345525) | `articles/M6-12-Go工程如何运行-模块四个命令与退出生命周期.md` | https://blog.csdn.net/fungleo/article/details/169345525 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·冻结 OpenAPI 3.1 怎么接入 Go：生成器之外的选择 | [成为全栈·Go 后端篇·冻结 OpenAPI 3.1 怎么接入 Go：生成器之外的选择](https://blog.csdn.net/fungleo/article/details/169345671) | `articles/M6-13-Go接入冻结OpenAPI-生成器之外的选择.md` | https://blog.csdn.net/fungleo/article/details/169345671 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·Go 零值为什么会改坏接口：缺失、null、0 与空字符串 | [成为全栈·Go 后端篇·Go 零值为什么会改坏接口：缺失、null、0 与空字符串](https://blog.csdn.net/fungleo/article/details/169346384) | `articles/M6-14-Go零值与接口字段语义-缺失null零值与空字符串.md` | https://blog.csdn.net/fungleo/article/details/169346384 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·HTTP 边界怎么守：鉴权、业务错误、限流与上传解析 | — | `articles/M6-15-GoHTTP边界-鉴权错误限流与上传解析.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Go 后端篇·GORM 支持三数据库：三个 DSN 远远不够 | — | `articles/M6-16-GORM三数据库兼容-DSN之外的方言差异.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Go 后端篇·版本迁移与模型设计：为什么启动不执行 AutoMigrate | — | `articles/M6-17-Go版本化数据库迁移-为何启动不执行AutoMigrate.md` | — | 🟡 草稿中（正文完成，待发布） |
