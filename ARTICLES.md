@@ -211,10 +211,10 @@
 | 成为全栈·Go 后端篇·GORM 支持三数据库：三个 DSN 远远不够 | [成为全栈·Go 后端篇·GORM 支持三数据库：三个 DSN 远远不够](https://blog.csdn.net/fungleo/article/details/169441194) | `articles/M6-16-GORM三数据库兼容-DSN之外的方言差异.md` | https://blog.csdn.net/fungleo/article/details/169441194 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·版本迁移与模型设计：为什么启动不执行 AutoMigrate | [成为全栈·Go 后端篇·版本迁移与模型设计：为什么启动不执行 AutoMigrate](https://blog.csdn.net/fungleo/article/details/169441721) | `articles/M6-17-Go版本化数据库迁移-为何启动不执行AutoMigrate.md` | https://blog.csdn.net/fungleo/article/details/169441721 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·刷新令牌旋转：为什么返回错误反而要提交事务 | [成为全栈·Go 后端篇·刷新令牌旋转：为什么返回错误反而要提交事务](https://blog.csdn.net/fungleo/article/details/169442228) | `articles/M6-18-Go刷新令牌旋转-重放撤销与事务提交语义.md` | https://blog.csdn.net/fungleo/article/details/169442228 | 🟢 已发布 |
-| 成为全栈·Go 后端篇·微信身份在 Go 中复刻：建号、首次设密与并发冲突 | — | `articles/M6-19-Go微信身份映射-建号首次设密与并发冲突.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·文章状态机与审核通知：事务该由谁持有 | — | `articles/M6-20-Go文章状态机-事务与审核通知边界.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·文章查询与展示投影：安全分页、排序和软删除 | — | `articles/M6-21-Go文章查询-分页排序软删除与展示投影.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·分类树与标签关系：目录变更为何需要协调 | — | `articles/M6-22-Go分类树与标签关系-拓扑校验和展示投影.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Go 后端篇·微信身份在 Go 中复刻：建号、首次设密与并发冲突 | [成为全栈·Go 后端篇·微信身份在 Go 中复刻：建号、首次设密与并发冲突](https://blog.csdn.net/fungleo/article/details/169545314) | `articles/M6-19-Go微信身份映射-建号首次设密与并发冲突.md` | https://blog.csdn.net/fungleo/article/details/169545314 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·文章状态机与审核通知：事务该由谁持有 | [成为全栈·Go 后端篇·文章状态机与审核通知：事务该由谁持有](https://blog.csdn.net/fungleo/article/details/169545792) | `articles/M6-20-Go文章状态机-事务与审核通知边界.md` | https://blog.csdn.net/fungleo/article/details/169545792 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·文章查询与展示投影：安全分页、排序和软删除 | [成为全栈·Go 后端篇·文章查询与展示投影：安全分页、排序和软删除](https://blog.csdn.net/fungleo/article/details/169546098) | `articles/M6-21-Go文章查询-分页排序软删除与展示投影.md` | https://blog.csdn.net/fungleo/article/details/169546098 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·分类树与标签关系：目录变更为何需要协调 | [成为全栈·Go 后端篇·分类树与标签关系：目录变更为何需要协调](https://blog.csdn.net/fungleo/article/details/169546310) | `articles/M6-22-Go分类树与标签关系-拓扑校验和展示投影.md` | https://blog.csdn.net/fungleo/article/details/169546310 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·评论后端的边界：敏感词、审核和整支删除 | — | `articles/M6-23-Go评论边界-敏感词审核与整支删除.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Go 后端篇·阅读量与内容辅助：滚动冷却为什么不能按天分桶 | — | `articles/M6-24-Go阅读量与内容辅助-滚动冷却和可见性.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Go 后端篇·点赞收藏与会员记录：关系表如何守住计数不变量 | — | `articles/M6-25-Go会员关系与计数-点赞收藏及阅读记录不变量.md` | — | 🟡 草稿中（正文完成，待发布） |
