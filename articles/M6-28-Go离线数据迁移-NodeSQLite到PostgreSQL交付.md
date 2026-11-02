@@ -2,7 +2,7 @@
 
 > 数据搬迁不是把表导成 JSON 再导入。它要锁定源快照、定义字段规范、遵守父子顺序、拒绝危险目标，并在真实写入后核对关系和计数。
 
-{{IMG:M6-28-封面}}
+![成为全栈·Go 后端篇·从 Node SQLite 到 PostgreSQL：把迁移做成独立交付物](https://i-blog.csdnimg.cn/direct/da45a4c0279a4ceab56aee5e53648f4b.png)
 
 > 本文代码快照：提交 ceac4e0。工具支持本地离线演练；不代表生产数据库已经切换。
 
@@ -111,7 +111,9 @@ func Export(ctx context.Context, db *gorm.DB, source string) (*Snapshot, error) 
 
 Repeatable read 的实际能力依赖数据库驱动和隔离级别。SQLite 源快照及 PostgreSQL/MySQL 读事务要按目标数据库实测；导出文件创建本身不是加密备份。文件应该有访问权限、校验和、保留时限及安全删除方式。
 
-{{IMG:M6-28-导出快照}}
+![导出快照](https://i-blog.csdnimg.cn/direct/cd1ae091d16049f9af41587ed5421e6e.png)
+
+
 
 ## 三、规范化兼容历史字段并检查拓扑顺序
 
@@ -251,7 +253,8 @@ PostgreSQL 导入成功后会重置各表自增序列到现有最大 ID，避免
 
 一次真实导入之后要再次独立运行行数和关键关系核对，并启动新后端执行接口 smoke。不能只凭工具输出 imported counts 宣布迁移完成。
 
-{{IMG:M6-28-导入校验}}
+![导入校验](https://i-blog.csdnimg.cn/direct/82f5a1f704024b05b41700a33e40f335.png)
+
 
 ## 六、离线命令示例与敏感数据
 
@@ -314,7 +317,7 @@ M6 的 Snapshot 白名单覆盖 13 张业务表，排除活跃会话、阅读去
 
 ### 文章 Tag（6 个）
 
-Go、Golang、数据库迁移、PostgreSQL、SQLite、数据一致性
+Go Golang 数据库迁移 PostgreSQL SQLite 数据一致性
 
 ### 文章简介（250 字以内）
 
