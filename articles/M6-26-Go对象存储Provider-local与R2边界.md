@@ -2,7 +2,8 @@
 
 > 存储接口越宽，调用方越需要理解它；接口越窄，业务就越容易保持稳定。M6 的 Provider 只表达对象字节的写、读、删，附件归属仍由领域层管理。
 
-{{IMG:M6-26-封面}}
+![成为全栈·Go 后端篇·local 与 R2 存储抽象：接口应该小到什么程度](https://i-blog.csdnimg.cn/direct/b3dd8478408946ae9dd12798ddf8a452.png)
+
 
 > 本文代码快照：提交 ceac4e0。R2 通过 AWS SDK 的 S3 兼容 API 访问；线上凭据和实际部署状态以交付报告为准。
 
@@ -154,7 +155,7 @@ local provider 的几个关键行为可以汇总成表：
 
 本地存储的原子 rename 只解决文件系统内的可见性，不等于数据库 transaction。对象和附件行之间仍有跨资源失败窗口，下一篇会讨论补偿。
 
-{{IMG:M6-26-provider}}
+![provider](https://i-blog.csdnimg.cn/direct/7783ff6d38b647c0a57b92453dbe0cbb.png)
 
 ## 三、R2 用 S3 兼容 API 但保留明确配置
 
@@ -248,7 +249,7 @@ Provider key 是内部对象寻址，URL 是客户端 HTTP 路由，Attachment �
 
 对象归属也不由 URL 决定。删除附件时，服务验证当前用户或管理角色，再处理数据库记录和共享对象引用。知道 key 不代表获得删除权限。
 
-{{IMG:M6-26-对象与引用}}
+![对象与引用](https://i-blog.csdnimg.cn/direct/5e9ce64a2dcc4e25bcbdafa7da58551d.png)
 
 ## 六、测试抽象的边界
 
@@ -283,7 +284,7 @@ M6 的 Provider 仅承担对象 Put/Get/Delete；本地 provider 防路径穿越
 
 ### 文章 Tag（6 个）
 
-Go、Golang、R2、S3、对象存储、文件上传
+Go Golang R2 S3 对象存储 文件上传
 
 ### 文章简介（250 字以内）
 
