@@ -30,7 +30,55 @@ M6 Go 服务已经在本地 PostgreSQL 环境运行，三个数据库通过真�
 
 make build 输出 server、migrate、data、seed。运行中的容器常驻只需要 server；发布/运维流程使用独立的一次性 migrate job；data 用于人工批准的数据搬迁；seed 只为开发环境创建样例，生产环境不应随服务启动自动跑它。
 
+四个程序的分工写成表更清楚，尤其是"谁该跟着容器一起启动"这一列：
+
+| 程序 | 作用 | 是否常驻 | 生产怎么触发 |
+|---|---|---|---|
+| `server` | HTTP 服务 | 是 | 容器 ENTRYPOINT |
+| `migrate` | 执行数据库迁移 | 否，一次性 job | 显式调用，不随服务启动 |
+| `data` | 导入 / 导出业务数据 | 否 | 人工批准后单独跑 |
+| `seed` | 生成开发样例数据 | 否 | 生产不跑 |
+
+`make build` 一次编译四个二进制，镜像里也都在 `/usr/local/bin`，但 ENTRYPOINT 只给 server。这不是漏了——迁移被刻意做成独立发布事件，容器重启多少次都不该顺手改一次表结构。
+
 Dockerfile 的 build stage 使用 Go 1.26.6 Debian Bookworm 编译四个 CGO_ENABLED=1 的二进制，runtime stage 使用 debian:bookworm-slim，安装 CA certificates，创建 UID/GID 10001 的非 root 用户，将上传目录赋予该用户。当前镜像 ENTRYPOINT 默认启动 server，迁移 job 可以通过容器 command override 调用 migrate。容器需要限制只读根文件系统时，应为 SQLite/local upload 另挂持久化目录并提供写权限。
+
+引一段实际在仓库里的 Dockerfile 比描述准确：
+
+```dockerfile
+# SQLite 走 CGO，所以要保留 C 工具链和 glibc 运行时
+FROM golang:1.26.6-bookworm AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=1 go build -trimpath -ldflags="-s -w" -o /out/server  ./cmd/server \
+ && CGO_ENABLED=1 go build -trimpath -ldflags="-s -w" -o /out/migrate ./cmd/migrate \
+ && CGO_ENABLED=1 go build -trimpath -ldflags="-s -w" -o /out/data    ./cmd/data \
+ && CGO_ENABLED=1 go build -trimpath -ldflags="-s -w" -o /out/seed    ./cmd/seed
+
+FROM debian:bookworm-slim
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates \
+ && rm -rf /var/lib/apt/lists/* \
+ && groupadd -g 10001 befull \
+ && useradd -u 10001 -g befull -d /app -s /usr/sbin/nologin befull \
+ && mkdir -p /app/uploads \
+ && chown -R befull:befull /app
+WORKDIR /app
+COPY --from=build /out/ /usr/local/bin/
+USER befull
+ENV HTTP_ADDR=0.0.0.0:8080 STORAGE_DRIVER=local UPLOAD_DIR=/app/uploads
+EXPOSE 8080
+ENTRYPOINT ["server"]
+```
+
+几行值得单独说：
+
+- **runtime 仍然是 Debian**。想去 alpine 把镜像压小是本能，但 SQLite 通过 CGO 链接 glibc，换 musl 要么重新编译要么起不来。省下几十 MB，换一个"本机好好的、容器里跑不动"，不划算。
+- **`USER befull` 放在 `COPY` 之后**。先把二进制以 root 拷进来，再整体 chown，最后切到非 root；顺序调过来，上传目录就写不进去。
+- **`ENTRYPOINT` 只有一个 server**。migrate 用 `docker run <image> migrate` 做 command override。前面那张表里"不随服务启动"就是在这一行落实的。
+- **`-trimpath -ldflags="-s -w"`** 去掉构建路径与调试信息。产物小一点，也不会把本机目录结构带进镜像。
 
 CGO 是 SQLite 驱动的构建条件之一。镜像基于 glibc 的 Debian builder 和 runtime，避免在 Alpine/musl 环境简单复制二进制导致链接失败。Go 二进制是否完全静态、证书路径和架构需按实际 buildx 目标验证。当前文档记载基础镜像 manifest 已验证，但没有把完整容器构建与部署环境运行说成通过。
 
@@ -50,9 +98,56 @@ R2 配置由 endpoint/bucket/access key/secret 等组成，密钥只通过运行
 
 当前本机原生 Go 构建和完整 Docker build 是不同证据。若完整 Linux 容器尚未执行，就保持“配置已准备，待目标环境构建验收”的说法。
 
+仓库里没有封装构建脚本，节点上用的是 docker 自带的 buildx。目标架构要显式指定——在 arm64 的 Mac 上 build 完就当作 x86 产物，是最常见的自欺：
+
+```bash
+docker buildx build \
+  --platform linux/amd64 \
+  -t befull-go:ceac4e0 \
+  --load .
+```
+
+本地三库用 compose 起，端口只绑 `127.0.0.1`，别把测试库摆在局域网里：
+
+```yaml
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: befull_go
+      POSTGRES_USER: befull
+      POSTGRES_PASSWORD: local-go-only
+    ports: ["127.0.0.1:15432:5432"]
+  mysql:
+    image: mysql:8.4
+    command: ["--character-set-server=utf8mb4",
+              "--collation-server=utf8mb4_0900_bin"]
+    ports: ["127.0.0.1:13306:3306"]
+```
+
+MySQL 那个 `utf8mb4_0900_bin` 不是随手挑的。排序规则若默认走 `_ci`（大小写不敏感），唯一索引会把 `Admin` 和 `admin` 当成同一个值，而同一条 SQL 在 PostgreSQL 上却是两个。这类分叉看代码看不出来，只有真跑三库矩阵才浮上来——这也正是"能连三种库"和"支持三种库"之间的距离。
+
 ## 五、生产数据切换应作为独立发布事件
 
 迁移 runbook 应包括：指定冻结窗口和责任人；暂停 Node 后端所有业务写入；备份并验证旧数据库；只读导出 13 张业务表；在目标 PostgreSQL 执行 DDL；运行 dry-run；真实导入；检查行数、身份、文章/关系、评论树、附件引用、like_count 与 sequence；单独复制对象字节并核验 hash；启动 Go 对只读和受控写接口 smoke；切换流量；观察日志、错误率、延迟与数据库指标。
+
+这串动作拆成表，每一步才看得出"失败之后退到哪"：
+
+| 阶段 | 动作 | 出问题退到哪 |
+|---|---|---|
+| 冻结 | 定窗口与责任人，Node 停写 | 解除停写，无副作用 |
+| 备份 | 备份旧库并验证可恢复 | 用备份回到 T0 |
+| 导出 | 只读导出 13 张业务表 | 丢弃快照重导 |
+| 建表 | 目标库执行 DDL | 空库重建 |
+| 演练 | dry-run 全量检查 | 修数据后重跑 |
+| 导入 | 真实导入 | 清空目标库重导 |
+| 核查 | 行数、身份、关系、评论树、附件引用、like_count、sequence | 差异登记后人工补 |
+| 对象 | 单独复制字节并核验 hash | 重传或保留旧桶 |
+| 验证 | Go 只读 + 受控写 smoke | 不切流，留在 Node |
+| 切流 | 流量指向 Go | 见下一节 |
+| 观察 | 日志、错误率、延迟、库指标 | 触发回退阈值 |
+
+表里最后三行是唯一不能"重来一次"的部分。前面每一步失败都可以清空重做，一旦切了流量、有了新写入，回退就不再是恢复备份那么简单——这正是下一节要处理的问题。
 
 快照不迁移 refresh_tokens 和阅读去重记录，因此用户要重新登录，阅读冷却重置。若冻结窗口中仍有旧端写入，静态快照会漏数据。不能两套后端同时任意写，再通过比较总行数假设可合并。
 
