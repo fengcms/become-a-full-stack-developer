@@ -219,10 +219,10 @@
 | 成为全栈·Go 后端篇·阅读量与内容辅助：滚动冷却为什么不能按天分桶 | [成为全栈·Go 后端篇·阅读量与内容辅助：滚动冷却为什么不能按天分桶](https://blog.csdn.net/fungleo/article/details/169639499) | `articles/M6-24-Go阅读量与内容辅助-滚动冷却和可见性.md` | https://blog.csdn.net/fungleo/article/details/169639499 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·点赞收藏与会员记录：关系表如何守住计数不变量 | [成为全栈·Go 后端篇·点赞收藏与会员记录：关系表如何守住计数不变量](https://blog.csdn.net/fungleo/article/details/169736465) | `articles/M6-25-Go会员关系与计数-点赞收藏及阅读记录不变量.md` | https://blog.csdn.net/fungleo/article/details/169736465 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·local 与 R2 存储抽象：接口应该小到什么程度 | [成为全栈·Go 后端篇·local 与 R2 存储抽象：接口应该小到什么程度](https://blog.csdn.net/fungleo/article/details/169736631) | `articles/M6-26-Go对象存储Provider-local与R2边界.md` | https://blog.csdn.net/fungleo/article/details/169736631 | 🟢 已发布 |
-| 成为全栈·Go 后端篇·文件与数据库没有共同事务：共享附件怎样补偿 | — | `articles/M6-27-Go附件文件补偿-共享引用与数据库外部事务.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·从 Node SQLite 到 PostgreSQL：把迁移做成独立交付物 | — | `articles/M6-28-Go离线数据迁移-NodeSQLite到PostgreSQL交付.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·Go 后端怎么测试：从成功响应到故障后置状态 | — | `articles/M6-29-Go后端测试-从响应成功到故障后置状态.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·换后端不改前端：四个客户端如何做兼容回归 | — | `articles/M6-30-Go兼容四个客户端-不改前端如何回归.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Go 后端篇·文件与数据库没有共同事务：共享附件怎样补偿 | [成为全栈·Go 后端篇·文件与数据库没有共同事务：共享附件怎样补偿](https://blog.csdn.net/fungleo/article/details/169828318) | `articles/M6-27-Go附件文件补偿-共享引用与数据库外部事务.md` | https://blog.csdn.net/fungleo/article/details/169828318 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·从 Node SQLite 到 PostgreSQL：把迁移做成独立交付物 | [成为全栈·Go 后端篇·从 Node SQLite 到 PostgreSQL：把迁移做成独立交付物](https://blog.csdn.net/fungleo/article/details/169828627) | `articles/M6-28-Go离线数据迁移-NodeSQLite到PostgreSQL交付.md` | https://blog.csdn.net/fungleo/article/details/169828627 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·Go 后端怎么测试：从成功响应到故障后置状态 | [成为全栈·Go 后端篇·Go 后端怎么测试：从成功响应到故障后置状态](https://blog.csdn.net/fungleo/article/details/169830493) | `articles/M6-29-Go后端测试-从响应成功到故障后置状态.md` | https://blog.csdn.net/fungleo/article/details/169830493 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·换后端不改前端：四个客户端如何做兼容回归 | [成为全栈·Go 后端篇·换后端不改前端：四个客户端如何做兼容回归](https://blog.csdn.net/fungleo/article/details/169830717) | `articles/M6-30-Go兼容四个客户端-不改前端如何回归.md` | https://blog.csdn.net/fungleo/article/details/169830717 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·Go 上线准备：CGO、单写拓扑与生产切换演练 | — | `articles/M6-31-Go上线准备-CGO单写拓扑与切换演练.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Go 后端篇·三轮代码审阅之后：把可读性和证据做成工程规则 | — | `articles/M6-32-Go代码审阅三轮之后-可读性和证据门禁.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·Go 后端篇·管理接口也有业务边界：用户、公开资料与站点配置 | — | `articles/M6-33-Go管理接口业务边界-会员隐私与站点配置.md` | — | 🟡 草稿中（正文完成，待发布） |
