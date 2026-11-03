@@ -2,7 +2,8 @@
 
 > 一个可执行的 Dockerfile 不等于已部署；一个能连三种数据库的二进制也不等于任意拓扑都安全。上线准备首先要列明制品、存储、写入拓扑和每项未完成验收。
 
-{{IMG:M6-31-封面}}
+![成为全栈·Go 后端篇·Go 上线准备：CGO、单写拓扑与生产切换演练](https://i-blog.csdnimg.cn/direct/e6e9f15dcb254c259d149b5128169e12.png)
+
 
 > 本文代码快照：提交 ceac4e0。Linux Dockerfile 已审阅，完整镜像构建、真实微信/R2 联调和生产切换未作为本轮已完成项。
 
@@ -24,7 +25,8 @@ M6 Go 服务已经在本地 PostgreSQL 环境运行，三个数据库通过真�
 
 一个保守拓扑可以是单个 Go 写服务实例 + PostgreSQL + R2 + 反向代理/TLS。是否需要多实例，依据可用性目标和负载决定；教学工程当前的实现范围不应被写成高可用集群。
 
-{{IMG:M6-31-拓扑}}
+![拓扑](https://i-blog.csdnimg.cn/direct/787c93e4529f40f4a51943739caad758.png)
+
 
 ## 二、四个程序与镜像职责
 
@@ -173,7 +175,7 @@ MySQL 那个 `utf8mb4_0900_bin` 不是随手挑的。排序规则若默认走 `_
 
 每项结果都记录环境、版本、日期、命令、日志位置和异常处理。尚未执行的保持 TODO，不用 Dockerfile 代码或本地 smoke 充数。
 
-{{IMG:M6-31-切换}}
+![切换](https://i-blog.csdnimg.cn/direct/8f27f388780445a08b0fc2f20294ad01.png)
 
 ## 小结：部署准备和生产上线是两个阶段
 
@@ -202,7 +204,7 @@ M6 提供 Go 1.26.6 多阶段 CGO Dockerfile、四个命令、PostgreSQL 主库�
 
 ### 文章 Tag（6 个）
 
-Go、Golang、Docker、CGO、PostgreSQL、生产部署
+Go Golang Docker CGO PostgreSQL 生产部署
 
 ### 文章简介（250 字以内）
 
