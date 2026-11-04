@@ -265,7 +265,7 @@ curl -i -X POST 'http://localhost:3000/api/v1/auth/refresh' \
 ## 延伸阅读
 
 - [C 端认证：内存令牌、HttpOnly Cookie 与会话代次](https://blog.csdn.net/fungleo/article/details/166945972)
-- [HTTP 协议：前端天天用却说不清的那些事]({{LINK:B-01}})
+- [HTTP 协议：前端天天用却说不清的那些事](https://blog.csdn.net/fungleo/article/details/170036371)
 - [会员中心：资料、密码与个人数据](https://blog.csdn.net/fungleo/article/details/166991388)
 
 ---

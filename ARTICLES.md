@@ -223,9 +223,9 @@
 | 成为全栈·Go 后端篇·从 Node SQLite 到 PostgreSQL：把迁移做成独立交付物 | [成为全栈·Go 后端篇·从 Node SQLite 到 PostgreSQL：把迁移做成独立交付物](https://blog.csdn.net/fungleo/article/details/169828627) | `articles/M6-28-Go离线数据迁移-NodeSQLite到PostgreSQL交付.md` | https://blog.csdn.net/fungleo/article/details/169828627 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·Go 后端怎么测试：从成功响应到故障后置状态 | [成为全栈·Go 后端篇·Go 后端怎么测试：从成功响应到故障后置状态](https://blog.csdn.net/fungleo/article/details/169830493) | `articles/M6-29-Go后端测试-从响应成功到故障后置状态.md` | https://blog.csdn.net/fungleo/article/details/169830493 | 🟢 已发布 |
 | 成为全栈·Go 后端篇·换后端不改前端：四个客户端如何做兼容回归 | [成为全栈·Go 后端篇·换后端不改前端：四个客户端如何做兼容回归](https://blog.csdn.net/fungleo/article/details/169830717) | `articles/M6-30-Go兼容四个客户端-不改前端如何回归.md` | https://blog.csdn.net/fungleo/article/details/169830717 | 🟢 已发布 |
-| 成为全栈·Go 后端篇·Go 上线准备：CGO、单写拓扑与生产切换演练 | — | `articles/M6-31-Go上线准备-CGO单写拓扑与切换演练.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·三轮代码审阅之后：把可读性和证据做成工程规则 | — | `articles/M6-32-Go代码审阅三轮之后-可读性和证据门禁.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·Go 后端篇·管理接口也有业务边界：用户、公开资料与站点配置 | — | `articles/M6-33-Go管理接口业务边界-会员隐私与站点配置.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·Go 后端篇·Go 上线准备：CGO、单写拓扑与生产切换演练 | [成为全栈·Go 后端篇·Go 上线准备：CGO、单写拓扑与生产切换演练](https://blog.csdn.net/fungleo/article/details/169931568) | `articles/M6-31-Go上线准备-CGO单写拓扑与切换演练.md` | https://blog.csdn.net/fungleo/article/details/169931568 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·三轮代码审阅之后：把可读性和证据做成工程规则 | [成为全栈·Go 后端篇·三轮代码审阅之后：把可读性和证据做成工程规则](https://blog.csdn.net/fungleo/article/details/169931983) | `articles/M6-32-Go代码审阅三轮之后-可读性和证据门禁.md` | https://blog.csdn.net/fungleo/article/details/169931983 | 🟢 已发布 |
+| 成为全栈·Go 后端篇·管理接口也有业务边界：用户、公开资料与站点配置 | [成为全栈·Go 后端篇·管理接口也有业务边界：用户、公开资料与站点配置](https://blog.csdn.net/fungleo/article/details/169932311) | `articles/M6-33-Go管理接口业务边界-会员隐私与站点配置.md` | https://blog.csdn.net/fungleo/article/details/169932311 | 🟢 已发布 |
 
 ---
 
@@ -268,10 +268,10 @@
 
 | 文章标题 | tag | 代码 / 草稿位置 | CSDN 链接 | 状态 |
 |---|---|---|---|---|
-| 成为全栈·基础补充·HTTP 协议：前端天天用却说不清的那些事 | — | `articles/B-01-HTTP协议-前端天天用却说不清的那些事.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·基础补充·命令行基础：全栈绕不开的终端操作 | — | `articles/B-02-命令行基础-全栈绕不开的终端操作.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·基础补充·Git 进阶：分支策略与协作 | — | `articles/B-03-Git进阶-分支策略与协作.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·基础补充·Linux 服务器入门 | — | `articles/B-04-Linux服务器入门.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·基础补充·HTTP 协议：前端天天用却说不清的那些事 | [成为全栈·基础补充·HTTP 协议：前端天天用却说不清的那些事](https://blog.csdn.net/fungleo/article/details/170036371) | `articles/B-01-HTTP协议-前端天天用却说不清的那些事.md` | https://blog.csdn.net/fungleo/article/details/170036371 | 🟢 已发布 |
+| 成为全栈·基础补充·命令行基础：全栈绕不开的终端操作 | [成为全栈·基础补充·命令行基础：全栈绕不开的终端操作](https://blog.csdn.net/fungleo/article/details/170036554) | `articles/B-02-命令行基础-全栈绕不开的终端操作.md` | https://blog.csdn.net/fungleo/article/details/170036554 | 🟢 已发布 |
+| 成为全栈·基础补充·Git 进阶：分支策略与协作 | [成为全栈·基础补充·Git 进阶：分支策略与协作](https://blog.csdn.net/fungleo/article/details/170036859) | `articles/B-03-Git进阶-分支策略与协作.md` | https://blog.csdn.net/fungleo/article/details/170036859 | 🟢 已发布 |
+| 成为全栈·基础补充·Linux 服务器入门 | [成为全栈·基础补充·Linux 服务器入门](https://blog.csdn.net/fungleo/article/details/170037094) | `articles/B-04-Linux服务器入门.md` | https://blog.csdn.net/fungleo/article/details/170037094 | 🟢 已发布 |
 | 成为全栈·基础补充·SQL 入门：从 SELECT 到 JOIN | — | `articles/B-05-SQL入门-从SELECT到JOIN.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·基础补充·数据库索引：为什么加了索引还是慢 | — | `articles/B-06-数据库索引-为什么加了索引还是慢.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·基础补充·TypeScript：从会用到用好 | — | `articles/B-07-TypeScript-从会用到用好.md` | — | 🟡 草稿中（正文完成，待发布） |

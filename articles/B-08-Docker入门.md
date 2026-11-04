@@ -242,7 +242,7 @@ Docker 这一章，沉淀下来的是四件事：
 
 ## 延伸阅读
 
-- [Linux 服务器入门]({{LINK:B-04}})
+- [Linux 服务器入门](https://blog.csdn.net/fungleo/article/details/170037094)
 - [部署上线：从本地起服到真正对外服务](https://blog.csdn.net/fungleo/article/details/164815866)
 - [一套后端双部署：适配层如何让一份代码跑在两套运行时](https://blog.csdn.net/fungleo/article/details/164816647)
 
