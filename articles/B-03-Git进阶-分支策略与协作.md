@@ -18,19 +18,24 @@ fix(auth): 修复微信登录请求的**Workers**重定向兼容性
 
 **它没说"修了个 bug"，它说清了"在什么环境下、什么问题"。**
 
+![成为全栈·基础补充·Git 进阶：分支策略与协作](https://i-blog.csdnimg.cn/direct/a8c9554e0d3440409dad5ce1628f3240.png)
+
+
 而那个 diff 只有 3 行代码 + 19 行测试。**3 行的改动能通过提交信息说清上下文，这才是提交信息该有的样子。**
 
 这篇讲提交历史怎么变成文档，以及这个专栏用它做的几件具体事。
 
-{{IMG:B-03-封面}}
 
-{{IMG:B-03-Git区域}}
 
 ## 提交信息是给未来的人看的
 
 先说为什么提交信息这么重要。
 
+
+![Git区域](https://i-blog.csdnimg.cn/direct/5256c9b0dbed4b61a29b1a08d46f290d.png)
+
 **半年后你查一个 bug，会先 `git log`，而不是先 `git blame`。** 而如果提交信息只写"修复问题"，你等于什么都没得到。
+
 
 这个专栏的约定是：
 
@@ -139,7 +144,7 @@ $ git show --stat <某提交> | grep test
 
 **所以"测试规模"这个数字是有出处的，不是编的。** 而这就是"提交历史也是文档"的另一种用法。
 
-{{IMG:B-03-分支策略}}
+![分支策略](https://i-blog.csdnimg.cn/direct/87cd818c2b3946aeafee0d7d60935237.png)
 
 ## 分支策略：这个专栏只有一条
 
@@ -290,7 +295,7 @@ Git 进阶在这个专栏里的实际用法，沉淀下来是四件事：
 
 ## 延伸阅读
 
-- [命令行基础：全栈绕不开的终端操作]({{LINK:B-02}})
+- [命令行基础：全栈绕不开的终端操作](https://blog.csdn.net/FungLeo/article/details/170036554)
 - [部署上线：从本地起服到真正对外服务](https://blog.csdn.net/fungleo/article/details/164815866)
 - [工程公约：git tag、仓库组织与 CSDN 发布流程](https://blog.csdn.net/fungleo/article/details/164166250)
 
@@ -308,7 +313,7 @@ Git 进阶在这个专栏里的实际用法，沉淀下来是四件事：
 
 ### 文章 Tag（6 个）
 
-Git、版本控制、Git分支、代码协作、Conventional Commits、程序员
+Git 版本控制 Git分支 代码协作 Conventional Commits 程序员
 
 ### 文章简介（250 字以内）
 

@@ -9,14 +9,14 @@ compatibility_flags = ["nodejs_compat"]
 ```
 
 **这是我自己在 `wrangler.toml` 里写的注释**，而它记录的是一个真实踩过的坑：**Cloudflare Workers 不支持 `node:*` 的顶层导入**，即使那段代码的分支永远不会执行。
+![成为全栈·基础补充·Linux 服务器入门](https://i-blog.csdnimg.cn/direct/5e621f7d00d94e4e92f1361b5d9c8ffe.png)
+
 
 而这件事的教训不是"Workers 有个限制"——**而是我的代码结构让一个永不执行的分支产生了副作用。**
 
 这篇讲服务器上那些"本地没事、线上出事"的问题，以及判断它们的方法。
 
-{{IMG:B-04-封面}}
 
-{{IMG:B-04-文件系统}}
 
 ## 服务器和本地最大的不同：文件系统
 
@@ -30,6 +30,7 @@ compatibility_flags = ["nodejs_compat"]
 /** 可重建缓存的容量预算；本地投稿草稿不在这些清理范围内。 */
 static const dataDiskBytes = 30 * mib;
 ```
+![文件系统](https://i-blog.csdnimg.cn/direct/e96b1ec1119b4d7a9c8242e7cecfd597.png)
 
 **这个缓存要写盘**——在本地 SQLite 上是毫无问题的（就是一个文件），而在线上：
 
@@ -105,7 +106,7 @@ CORS_ORIGINS = "https://www.example.com,https://manage.example.com"
 
 **这是一个值得学的做法**：把"不安全但常见"的做法直接禁掉，代价是配起来麻烦一点，收益是不需要每次 review 都检查 CORS。
 
-{{IMG:B-04-权限}}
+![权限](https://i-blog.csdnimg.cn/direct/0455159c9fcd4937a0b4226533a31c5a.png)
 
 ## 权限：文件权限位那三个数字
 
@@ -282,7 +283,7 @@ systemctl restart <service>
 
 ### 文章 Tag（6 个）
 
-Linux、服务器、SSH、运维、部署、全栈开发
+Linux 服务器 SSH 运维 部署 全栈开发
 
 ### 文章简介（250 字以内）
 
