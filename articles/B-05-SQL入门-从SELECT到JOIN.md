@@ -12,9 +12,8 @@
 
 这篇讲 SQL 里那些"语法简单但语义有坑"的地方，以及为什么这个项目把查询逻辑收在 `shared/pagination.ts` 这样的一个文件里。
 
-{{IMG:B-05-封面}}
+![成为全栈·基础补充·SQL 入门：从 SELECT 到 JOIN](https://i-blog.csdnimg.cn/direct/79d2c1fffafd438f866d767995f8ff59.png)
 
-{{IMG:B-05-SQL结构}}
 
 ## WHERE 的三个坑
 
@@ -45,6 +44,8 @@ ORDER BY COALESCE(articles.published_at, articles.created_at)
 而如果没有这个 COALESCE，**排序结果会是：所有有 published_at 的排在前面（降序），然后是 NULL 排在最后**——**而"最后"在 DESC 下通常就是最前面**（因为 NULL 在 SQLite 里被当作最小值）。
 
 **结果是草稿混进了最新列表。** 这就是那个 bug 的真实成因——**不是 WHERE 漏了条件，是排序对 NULL 的处理让草稿冒出来了。**
+
+![SQL结构](https://i-blog.csdnimg.cn/direct/181a443bd4ec4b48aba515f479a885c3.png)
 
 ### 二、LIKE 的通配符会传染
 
@@ -86,7 +87,8 @@ SELECT COUNT(*) FROM articles WHERE deleted_at IS NULL;
 
 **这两句话的区别就是那个 bug 的全部。** 而它属于一类更隐蔽的错误：**语法对、结果"看起来合理"、只有特定数据下才错。**
 
-{{IMG:B-05-JOIN}}
+![JOIN](https://i-blog.csdnimg.cn/direct/1f3eb95ac31b45188348874cc9a319d5.png)
+
 
 ## JOIN：左连接和内连接的差别
 
@@ -325,7 +327,7 @@ SQL 这一章，沉淀下来的是四件事：
 
 ### 文章 Tag（6 个）
 
-SQL、数据库、SELECT、JOIN、数据建模、后端开发
+SQL 数据库 SELECT JOIN 数据建模 后端开发
 
 ### 文章简介（250 字以内）
 

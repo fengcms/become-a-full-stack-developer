@@ -39,7 +39,8 @@ if (!user) throw new AppError(ErrCode.USERNAME_OR_PASSWORD_ERROR, 401);
 
 **——而这行断言其实不是为了测试，是为了让类型检查通过。**
 
-{{IMG:B-07-封面}}
+![成为全栈·基础补充·TypeScript：从会用到用好](https://i-blog.csdnimg.cn/direct/acb00c66cbd445e5ad8413bb3f191dc1.png)
+
 
 ## noUncheckedIndexedAccess：最值钱的一行
 
@@ -113,7 +114,8 @@ if (!user) throw new AppError(ErrCode.INTERNAL, 500);
 
 **两种语言在"索引越界"这件事上的默认选择相反**：Go 返回零值（可能是个 nil 指针），TS 编译期报错。**而这个项目的选择是"用类型系统挡住"。**
 
-{{IMG:B-07-联合类型}}
+![联合类型](https://i-blog.csdnimg.cn/direct/308c3958961547fa806c89027c697d4d.png)
+
 
 ## 其余几行各管什么
 
@@ -185,7 +187,7 @@ export type { AuthUser, AuthVars } from '@/types/auth';
 
 **这个"定义一处、多处导出"的做法在大型项目里很常见**，而它的价值是：**移动定义位置时，不用改所有 import。**
 
-{{IMG:B-07-类型来源}}
+![类型来源](https://i-blog.csdnimg.cn/direct/10a82c35773f433ab7015bb1d90e38cb.png)
 
 ## 类型从哪来：生成 vs 手写
 
@@ -341,7 +343,7 @@ TypeScript 这章，真正让代码质量提升的不是"类型系统多强"，�
 
 ### 文章 Tag（6 个）
 
-TypeScript、JavaScript、前端开发、类型系统、代码质量、全栈开发
+TypeScript JavaScript 前端开发 类型系统 代码质量 全栈开发
 
 ### 文章简介（250 字以内）
 

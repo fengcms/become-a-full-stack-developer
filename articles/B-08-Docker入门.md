@@ -8,9 +8,8 @@
 
 这篇讲 Docker 的核心概念，以及在这个项目里为什么它没出现——包括那个"一半"具体指什么。
 
-{{IMG:B-08-封面}}
+![成为全栈·基础补充·Docker 入门](https://i-blog.csdnimg.cn/direct/83ea85a797ec4d2ebd6d9e5435670b93.png)
 
-{{IMG:B-08-概念图}}
 
 ## 镜像和容器：两个词的差别
 
@@ -20,6 +19,9 @@
 |---|---|---|
 | **镜像（image）** | 安装盘 | 一个只读的文件系统快照 + 启动指令 |
 | **容器（container）** | 装好的系统 | 镜像跑起来的一个实例，**有自己独立的进程和可写层** |
+
+![概念图](https://i-blog.csdnimg.cn/direct/07118129532b49cebb131246114d922a.png)
+
 
 **关键在"独立"这个词。** 同一个镜像可以启动 N 个容器，它们：
 
@@ -102,7 +104,7 @@ B-17 记的那笔债就是这个：
 
 而这个取舍在教学项目上是合理的——**运维本身不是这个专栏要讲的东西**（那是 B-04 的事）。但它不该被隐藏，而应该像现在这样写清楚。
 
-{{IMG:B-08-容器应用}}
+![容器应用](https://i-blog.csdnimg.cn/direct/fce502d821c4409ba706e7e00e1c6754.png)
 
 ## 如果要用 Docker，最小的那一层
 
@@ -242,7 +244,7 @@ Docker 这一章，沉淀下来的是四件事：
 
 ## 延伸阅读
 
-- [Linux 服务器入门]({{LINK:B-04}})
+- [Linux 服务器入门](https://blog.csdn.net/FungLeo/article/details/170037094)
 - [部署上线：从本地起服到真正对外服务](https://blog.csdn.net/fungleo/article/details/164815866)
 - [一套后端双部署：适配层如何让一份代码跑在两套运行时](https://blog.csdn.net/fungleo/article/details/164816647)
 
@@ -260,7 +262,7 @@ Docker 这一章，沉淀下来的是四件事：
 
 ### 文章 Tag（6 个）
 
-Docker、容器、Dockerfile、Docker Compose、部署、DevOps
+Docker 容器 Dockerfile Docker Compose 部署 DevOps
 
 ### 文章简介（250 字以内）
 
