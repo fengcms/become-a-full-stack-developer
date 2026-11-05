@@ -298,7 +298,7 @@ cache.invalidate(affected);  // 写结束：真的删
 
 - [数据获取与缓存：60 秒再验证背后到底发生了什么](https://blog.csdn.net/fungleo/article/details/166784128)
 - [会员中心：资料、密码与个人数据为什么不能进公共缓存](https://blog.csdn.net/fungleo/article/details/166991388)
-- [数据库索引：为什么加了索引还是慢]({{LINK:B-06}})
+- [数据库索引：为什么加了索引还是慢](https://blog.csdn.net/fungleo/article/details/170131020)
 
 ---
 如果这篇文章对你有帮助，欢迎订阅我的 CSDN 专栏 **「成为全栈」**：

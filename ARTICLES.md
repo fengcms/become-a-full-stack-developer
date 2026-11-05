@@ -272,10 +272,10 @@
 | 成为全栈·基础补充·命令行基础：全栈绕不开的终端操作 | [成为全栈·基础补充·命令行基础：全栈绕不开的终端操作](https://blog.csdn.net/fungleo/article/details/170036554) | `articles/B-02-命令行基础-全栈绕不开的终端操作.md` | https://blog.csdn.net/fungleo/article/details/170036554 | 🟢 已发布 |
 | 成为全栈·基础补充·Git 进阶：分支策略与协作 | [成为全栈·基础补充·Git 进阶：分支策略与协作](https://blog.csdn.net/fungleo/article/details/170036859) | `articles/B-03-Git进阶-分支策略与协作.md` | https://blog.csdn.net/fungleo/article/details/170036859 | 🟢 已发布 |
 | 成为全栈·基础补充·Linux 服务器入门 | [成为全栈·基础补充·Linux 服务器入门](https://blog.csdn.net/fungleo/article/details/170037094) | `articles/B-04-Linux服务器入门.md` | https://blog.csdn.net/fungleo/article/details/170037094 | 🟢 已发布 |
-| 成为全栈·基础补充·SQL 入门：从 SELECT 到 JOIN | — | `articles/B-05-SQL入门-从SELECT到JOIN.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·基础补充·数据库索引：为什么加了索引还是慢 | — | `articles/B-06-数据库索引-为什么加了索引还是慢.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·基础补充·TypeScript：从会用到用好 | — | `articles/B-07-TypeScript-从会用到用好.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·基础补充·Docker 入门 | — | `articles/B-08-Docker入门.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·基础补充·SQL 入门：从 SELECT 到 JOIN | [成为全栈·基础补充·SQL 入门：从 SELECT 到 JOIN](https://blog.csdn.net/fungleo/article/details/170130915) | `articles/B-05-SQL入门-从SELECT到JOIN.md` | https://blog.csdn.net/fungleo/article/details/170130915 | 🟢 已发布 |
+| 成为全栈·基础补充·数据库索引：为什么加了索引还是慢 | [成为全栈·基础补充·数据库索引：为什么加了索引还是慢](https://blog.csdn.net/fungleo/article/details/170131020) | `articles/B-06-数据库索引-为什么加了索引还是慢.md` | https://blog.csdn.net/fungleo/article/details/170131020 | 🟢 已发布 |
+| 成为全栈·基础补充·TypeScript：从会用到用好 | [成为全栈·基础补充·TypeScript：从会用到用好](https://blog.csdn.net/fungleo/article/details/170131241) | `articles/B-07-TypeScript-从会用到用好.md` | https://blog.csdn.net/fungleo/article/details/170131241 | 🟢 已发布 |
+| 成为全栈·基础补充·Docker 入门 | [成为全栈·基础补充·Docker 入门](https://blog.csdn.net/fungleo/article/details/170131592) | `articles/B-08-Docker入门.md` | https://blog.csdn.net/fungleo/article/details/170131592 | 🟢 已发布 |
 | 成为全栈·基础补充·Nginx 入门：反向代理与静态托管 | — | `articles/B-09-Nginx入门-反向代理与静态托管.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·基础补充·域名、DNS 与 HTTPS 证书 | — | `articles/B-10-域名DNS与HTTPS证书.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·基础补充·Web 安全基础：XSS、CSRF 与 SQL 注入 | — | `articles/B-11-Web安全基础-XSS-CSRF与SQL注入.md` | — | 🟡 草稿中（正文完成，待发布） |

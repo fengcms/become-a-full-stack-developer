@@ -260,7 +260,7 @@ Nginx 这一章，沉淀下来的是四件事：
 ## 延伸阅读
 
 - [部署上线：从本地起服到真正对外服务](https://blog.csdn.net/fungleo/article/details/164815866)
-- [Docker 入门]({{LINK:B-08}})
+- [Docker 入门](https://blog.csdn.net/fungleo/article/details/170131592)
 - [Next.js 网站前台篇·OpenNext 部署 Cloudflare：构建成功不等于缓存正确](https://blog.csdn.net/fungleo/article/details/167218828)
 
 ---
