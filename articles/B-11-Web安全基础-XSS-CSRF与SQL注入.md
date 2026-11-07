@@ -20,6 +20,8 @@
 
 **它在渲染 JSON-LD 结构化数据**——而 JSON-LD 是必须以原始形式放进 `<script>` 标签的，没法用 React 的正常方式渲染。
 
+![成为全栈·基础补充·Web 安全基础：XSS、CSRF 与 SQL 注入](https://i-blog.csdnimg.cn/direct/ba2f09cf13854071bd7650b88996024b.png)
+
 所以这个项目必然要用 `dangerouslySetInnerHTML`。**问题变成了：怎么用才安全。**
 
 答案是：
@@ -31,9 +33,8 @@ export const jsonLd = (value: unknown): string =>
 
 **一个 `.replace()` 解决了。** 这篇讲它解决的是什么，以及另外两类在这个项目里被彻底防住的攻击。
 
-{{IMG:B-11-封面}}
 
-{{IMG:B-11-防护映射}}
+
 
 ## 先分清：三个攻击打的是不同东西
 
@@ -44,6 +45,8 @@ XSS、CSRF、SQL 注入经常被混为一谈，但它们**打的不是同一个�
 | **XSS** | **用户的浏览器** | 攻击者的代码在用户页面里跑起来了 |
 | **CSRF** | **用户的身份凭证** | 浏览器自动带上了凭证，且服务端分不清 |
 | **SQL 注入** | **数据库** | 攻击者的输入改变了 SQL 语义 |
+
+![防护映射](https://i-blog.csdnimg.cn/direct/d8f21dded1b34226b635aa075a1aa678.png)
 
 **这个区分决定防护放在哪一层**：
 
@@ -319,7 +322,8 @@ if (!user) throw new AppError(ErrCode.USERNAME_OR_PASSWORD_ERROR, 401);
 
 `webview_flutter` 本身没问题，问题是"如果我给它注入 Authorization 会怎样"——那是 M4-15 那个决定。
 
-{{IMG:B-11-防护边界}}
+![防护边界](https://i-blog.csdnimg.cn/direct/a2ce1e2ac5d148c99e5bb4baa662dad5.png)
+
 
 ## 怎样测试安全边界
 
@@ -439,7 +443,7 @@ await web.setJavaScriptMode(JavaScriptMode.unrestricted);
 
 ### 文章 Tag（6 个）
 
-Web安全、XSS、CSRF、SQL注入、网络安全、后端开发
+Web安全 XSS CSRF SQL注入 网络安全 后端开发
 
 ### 文章简介（250 字以内）
 

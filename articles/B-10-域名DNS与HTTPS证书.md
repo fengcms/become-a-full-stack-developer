@@ -12,7 +12,8 @@ routes = [{ pattern = "api.example.com", custom_domain = true }]
 
 这就是这一章要解决的问题：**当"打不开"出现时，怎么知道该找哪一层。**
 
-{{IMG:B-10-封面}}
+![成为全栈·基础补充·域名、DNS 与 HTTPS 证书](https://i-blog.csdnimg.cn/direct/dbdcaf1da9774b0f98dbbaffe7fa8b0d.png)
+
 
 ## 三层各管什么
 
@@ -36,7 +37,8 @@ routes = [{ pattern = "api.example.com", custom_domain = true }]
 
 **而最容易混的是前两层**，因为它们都由 Cloudflare 自动管理——**用户看到的是"打不开"，而你去 Worker 日志里查，什么都没有。**
 
-{{IMG:B-10-记录类型}}
+![记录类型](https://i-blog.csdnimg.cn/direct/2f63744792cc4486967b4cc3b38f0800.png)
+
 
 ## DNS：TTL 是"最长可能陈旧时间"
 
@@ -136,7 +138,7 @@ const site = String.fromEnvironment('SITE_URL', defaultValue: '');
 
 **所以这类"拼错的配置"需要专门检查**，而不能指望运行时发现。
 
-{{IMG:B-10-四层定位}}
+![四层定位](https://i-blog.csdnimg.cn/direct/e5726d5dfc924b429355ae855a06c157.png)
 
 ## 四层的问题，怎么定位
 
@@ -258,7 +260,7 @@ Cloudflare 的自动续期本来是有邮件通知的，**但我当时没配置�
 
 ## 延伸阅读
 
-- [Nginx 入门：反向代理与静态托管]({{LINK:B-09}})
+- [Nginx 入门：反向代理与静态托管](https://blog.csdn.net/FungLeo/article/details/170186548)
 - [部署上线：从本地起服到真正对外服务](https://blog.csdn.net/fungleo/article/details/164815866)
 - [一篇后端双部署：适配层如何让一份代码跑在两套运行时](https://blog.csdn.net/fungleo/article/details/164816647)
 
@@ -276,7 +278,7 @@ Cloudflare 的自动续期本来是有邮件通知的，**但我当时没配置�
 
 ### 文章 Tag（6 个）
 
-域名、DNS、HTTPS、TLS证书、网站部署、网络基础
+域名 DNS HTTPS TLS证书 网站部署 网络基础
 
 ### 文章简介（250 字以内）
 

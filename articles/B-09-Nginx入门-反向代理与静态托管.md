@@ -12,16 +12,18 @@ routes = [{ pattern = "api.example.com", custom_domain = true }]
 而如果没有这个平台，同样的事情要自己用 Nginx 配——**而那个配置文件里的每一行，都对应着一个"配错了会怎样"的问题。**
 
 这篇讲 Nginx 到底在解决什么问题，以及为什么这个专栏最终把它交给了 Cloudflare。
+![成为全栈·基础补充·Nginx 入门：反向代理与静态托管](https://i-blog.csdnimg.cn/direct/18ea360dddb24a4484ca861a0efbed8c.png)
 
-{{IMG:B-09-封面}}
 
-{{IMG:B-09-代理链路}}
+
 
 ## 反向代理：解决"浏览器不能直接访问后端"
 
 先说清楚它解决的问题。
 
 **浏览器的同源策略**决定了：网页只能请求和它同源的接口。所以如果你在 `example.com` 上打开网页，它不能直接请求 `api.other.com/articles`——**浏览器会拦下来**。
+
+![代理链路](https://i-blog.csdnimg.cn/direct/9f01b328b61841f597ee7ffb8b5f7bbd.png)
 
 而反向代理的做法是：
 
@@ -44,7 +46,7 @@ routes = [{ pattern = "api.example.com", custom_domain = true }]
 | HTTPS | 在代理这一层终止，前端不需要知道 |
 | 隐藏内部结构 | 外部看不到有几个服务、端口是多少 |
 
-{{IMG:B-09-静态托管}}
+![静态托管](https://i-blog.csdnimg.cn/direct/d5036439fa6248dc9156420a8fd68bce.png)
 
 ## 静态托管：Nginx 最常见的用法
 
@@ -277,7 +279,7 @@ Nginx 这一章，沉淀下来的是四件事：
 
 ### 文章 Tag（6 个）
 
-Nginx、反向代理、静态资源、Linux、HTTPS、网站部署
+Nginx 反向代理 静态资源 Linux HTTPS 网站部署
 
 ### 文章简介（250 字以内）
 
