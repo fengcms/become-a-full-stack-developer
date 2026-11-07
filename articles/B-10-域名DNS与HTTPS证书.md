@@ -258,7 +258,7 @@ Cloudflare 的自动续期本来是有邮件通知的，**但我当时没配置�
 
 ## 延伸阅读
 
-- [Nginx 入门：反向代理与静态托管]({{LINK:B-09}})
+- [Nginx 入门：反向代理与静态托管](https://blog.csdn.net/fungleo/article/details/170186548)
 - [部署上线：从本地起服到真正对外服务](https://blog.csdn.net/fungleo/article/details/164815866)
 - [一篇后端双部署：适配层如何让一份代码跑在两套运行时](https://blog.csdn.net/fungleo/article/details/164816647)
 

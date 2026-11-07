@@ -276,10 +276,10 @@
 | 成为全栈·基础补充·数据库索引：为什么加了索引还是慢 | [成为全栈·基础补充·数据库索引：为什么加了索引还是慢](https://blog.csdn.net/fungleo/article/details/170131020) | `articles/B-06-数据库索引-为什么加了索引还是慢.md` | https://blog.csdn.net/fungleo/article/details/170131020 | 🟢 已发布 |
 | 成为全栈·基础补充·TypeScript：从会用到用好 | [成为全栈·基础补充·TypeScript：从会用到用好](https://blog.csdn.net/fungleo/article/details/170131241) | `articles/B-07-TypeScript-从会用到用好.md` | https://blog.csdn.net/fungleo/article/details/170131241 | 🟢 已发布 |
 | 成为全栈·基础补充·Docker 入门 | [成为全栈·基础补充·Docker 入门](https://blog.csdn.net/fungleo/article/details/170131592) | `articles/B-08-Docker入门.md` | https://blog.csdn.net/fungleo/article/details/170131592 | 🟢 已发布 |
-| 成为全栈·基础补充·Nginx 入门：反向代理与静态托管 | — | `articles/B-09-Nginx入门-反向代理与静态托管.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·基础补充·域名、DNS 与 HTTPS 证书 | — | `articles/B-10-域名DNS与HTTPS证书.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·基础补充·Web 安全基础：XSS、CSRF 与 SQL 注入 | — | `articles/B-11-Web安全基础-XSS-CSRF与SQL注入.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·基础补充·认证与授权：两个总被混淆的概念 | — | `articles/B-12-认证与授权-两个总被混淆的概念.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·基础补充·Nginx 入门：反向代理与静态托管 | [成为全栈·基础补充·Nginx 入门：反向代理与静态托管](https://blog.csdn.net/fungleo/article/details/170186548) | `articles/B-09-Nginx入门-反向代理与静态托管.md` | https://blog.csdn.net/fungleo/article/details/170186548 | 🟢 已发布 |
+| 成为全栈·基础补充·域名、DNS 与 HTTPS 证书 | [成为全栈·基础补充·域名、DNS 与 HTTPS 证书](https://blog.csdn.net/fungleo/article/details/170186615) | `articles/B-10-域名DNS与HTTPS证书.md` | https://blog.csdn.net/fungleo/article/details/170186615 | 🟢 已发布 |
+| 成为全栈·基础补充·Web 安全基础：XSS、CSRF 与 SQL 注入 | [成为全栈·基础补充·Web 安全基础：XSS、CSRF 与 SQL 注入](https://blog.csdn.net/fungleo/article/details/170186691) | `articles/B-11-Web安全基础-XSS-CSRF与SQL注入.md` | https://blog.csdn.net/fungleo/article/details/170186691 | 🟢 已发布 |
+| 成为全栈·基础补充·认证与授权：两个总被混淆的概念 | [成为全栈·基础补充·认证与授权：两个总被混淆的概念](https://blog.csdn.net/fungleo/article/details/170186821) | `articles/B-12-认证与授权-两个总被混淆的概念.md` | https://blog.csdn.net/fungleo/article/details/170186821 | 🟢 已发布 |
 | 成为全栈·基础补充·缓存的层次与失效：浏览器、CDN、服务端、数据库 | — | `articles/B-13-缓存的层次与失效-浏览器CDN服务端数据库.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·基础补充·Node.js 运行时：事件循环与异步 | — | `articles/B-14-Nodejs运行时-事件循环与异步.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·基础补充·服务端心智模型：一个请求从浏览器到数据库发生了什么 | — | `articles/B-15-服务端心智模型-一个请求从浏览器到数据库发生了什么.md` | — | 🟡 草稿中（正文完成，待发布） |
