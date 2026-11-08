@@ -20,15 +20,16 @@ export async function atomic(db: Db, statements: Statement[]): Promise<number[]>
 
 **一个 `async` 函数，却在本地路径上完全同步执行。**
 
+![成为全栈·基础补充·Node.js 运行时：事件循环与异步](https://i-blog.csdnimg.cn/direct/c2aecf634ba543e7baa5a0523f241a57.png)
+
 这在 TypeScript 里合法（`async` 函数返回 Promise，里面可以是同步逻辑），但它立刻带来一个问题：**调用方能假设它是异步的吗？**
 
 答案是不能。**而这个项目里有一整类代码，专门处理"我不确定那个 Promise 会不会已经结束"。**
 
 这篇讲这个项目的 Node 运行时经验，以及为什么 Flutter 那边的每一处异步都要记身份（M4-09 那些 `epoch` 检查，其实根源在这里）。
 
-{{IMG:B-14-封面}}
 
-{{IMG:B-14-事件循环}}
+
 
 ## 单线程意味着：await 之间的代码会被插队
 
@@ -37,6 +38,9 @@ export async function atomic(db: Db, statements: Statement[]): Promise<number[]>
 **Node 的 JavaScript 执行是单线程的。** 而单线程不代表"顺序执行到底"——它代表的是：
 
 > **一次只执行一段代码，但会在 `await` 这些让出点主动把控制权交出去。**
+
+![事件循环](https://i-blog.csdnimg.cn/direct/8199a652c02549c1aff601e20675801f.png)
+
 
 而"让出点"具体是哪些，取决于具体是什么操作：
 
@@ -182,7 +186,7 @@ Future<void> refresh() {
 - 切换语义的操作 → **不安全**（必须共享）
 - 创建操作 → 不安全（会重复创建，M4-20 讲的那个）
 
-{{IMG:B-14-并发和并行}}
+![并发和并行](https://i-blog.csdnimg.cn/direct/a5ac6d7a1b174b4c8033343e42aba0b4.png)
 
 ## 并行不是并行：async 只是"不阻塞"
 
@@ -361,7 +365,7 @@ Node 运行时在这个项目里沉淀下来的判断：
 
 ### 文章 Tag（6 个）
 
-Node.js、事件循环、异步编程、JavaScript、后端开发、并发
+Node.js 事件循环 异步编程 JavaScript 后端开发 并发
 
 ### 文章简介（250 字以内）
 
