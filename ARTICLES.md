@@ -282,8 +282,8 @@
 | 成为全栈·基础补充·认证与授权：两个总被混淆的概念 | [成为全栈·基础补充·认证与授权：两个总被混淆的概念](https://blog.csdn.net/fungleo/article/details/170186821) | `articles/B-12-认证与授权-两个总被混淆的概念.md` | https://blog.csdn.net/fungleo/article/details/170186821 | 🟢 已发布 |
 | 成为全栈·基础补充·缓存的层次与失效：浏览器、CDN、服务端、数据库 | [成为全栈·基础补充·缓存的层次与失效：浏览器、CDN、服务端、数据库](https://blog.csdn.net/fungleo/article/details/170237215) | `articles/B-13-缓存的层次与失效-浏览器CDN服务端数据库.md` | https://blog.csdn.net/fungleo/article/details/170237215 | 🟢 已发布 |
 | 成为全栈·基础补充·Node.js 运行时：事件循环与异步 | [成为全栈·基础补充·Node.js 运行时：事件循环与异步](https://blog.csdn.net/fungleo/article/details/170237491) | `articles/B-14-Nodejs运行时-事件循环与异步.md` | https://blog.csdn.net/fungleo/article/details/170237491 | 🟢 已发布 |
-| 成为全栈·基础补充·服务端心智模型：一个请求从浏览器到数据库发生了什么 | — | `articles/B-15-服务端心智模型-一个请求从浏览器到数据库发生了什么.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·基础补充·API 契约与兼容性：接口文档怎样约束前后端 | — | `articles/B-16-API契约与兼容性-接口文档怎样约束前后端.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·基础补充·服务端心智模型：一个请求从浏览器到数据库发生了什么 | [成为全栈·基础补充·服务端心智模型：一个请求从浏览器到数据库发生了什么](https://blog.csdn.net/fungleo/article/details/170288320) | `articles/B-15-服务端心智模型-一个请求从浏览器到数据库发生了什么.md` | https://blog.csdn.net/fungleo/article/details/170288320 | 🟢 已发布 |
+| 成为全栈·基础补充·API 契约与兼容性：接口文档怎样约束前后端 | [成为全栈·基础补充·API 契约与兼容性：接口文档怎样约束前后端](https://blog.csdn.net/fungleo/article/details/170288351) | `articles/B-16-API契约与兼容性-接口文档怎样约束前后端.md` | https://blog.csdn.net/fungleo/article/details/170288351 | 🟢 已发布 |
 | 成为全栈·基础补充·测试分层与质量门禁：怎样验证一个全栈项目 | — | `articles/B-17-测试分层与质量门禁-怎样验证一个全栈项目.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·基础补充·数据库迁移与事务：数据结构怎样安全演进 | — | `articles/B-18-数据库迁移与事务-数据结构怎样安全演进.md` | — | 🟡 草稿中（正文完成，待发布） |
 | 成为全栈·基础补充·配置与运行观测：服务怎样安全启动和排障 | — | `articles/B-19-配置与运行观测-服务怎样安全启动和排障.md` | — | 🟡 草稿中（正文完成，待发布） |
