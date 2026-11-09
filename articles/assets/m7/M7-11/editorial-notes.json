@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 确认示例分页响应字段与冻结 OpenAPI 保持一致。\n- [ ] 对照 Vue DataTable 当前 remote、itemCount、page 和回调配置。\n- [ ] 对照 React TablePagination 的真实 props 和 URL 查询状态。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，避免把建议测试误写为已经通过线上测试。",
+  "originalImagePrompts": "1. M7-11-封面：接口数据显示 total=85、pageSize=10、totalPages=9，流向远程表格分页器，再通过 page=2 回到 API 请求，表现闭环；清爽白底浅蓝，数字准确。\n2. M7-11-排查图：从 Network 响应、total 映射、remote、受控 page、更新回调、queryKey 到请求 page 参数逐步排查，避免把 totalPages 和 total 混淆。\n3. M7-11-远程分页：放在正文同名占位处，远程分页数据流：total 与 page 如何从接口经 query key 流到表格分页组件。",
+  "coverShortTitle": "分页为什么只有一页",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

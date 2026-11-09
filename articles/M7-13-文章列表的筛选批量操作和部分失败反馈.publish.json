@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-13",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·文章列表的筛选、批量操作和部分失败反馈",
+  "description": "本文通过 Vue 与 React 管理后台的文章列表，分析服务端筛选、当前页选择、逐条 API 批量删除、软删除说明、部分失败和缓存刷新。重点对照 Vue 使用 Promise.allSettled 汇总失败数量但清空选择，与 React 顺序执行并保留失败项及逐条错误信息的差异，讨论如何选择并发策略、设计重试路径，并强调每条资源操作仍受后端契约授权。",
+  "tags": [
+    "Vue.js",
+    "批量操作",
+    "Promise.allSettled",
+    "TanStack Query",
+    "接口契约",
+    "前端工程化"
+  ],
+  "categoryName": "成为全栈",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-13/cover.png",
+  "ready": true
+}

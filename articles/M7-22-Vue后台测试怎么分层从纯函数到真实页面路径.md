@@ -2,7 +2,7 @@
 
 > “测试通过”只说明已执行的断言成立，不能自动证明浏览器中的所有用户流程正确，更不能证明线上写请求已验收。本文盘点 Vue 管理后台实际的测试层次，说明每层适合回答什么问题、当前还缺哪些证据。
 
-{{IMG:M7-22-封面}}
+![Vue 后台测试分层](./assets/m7/M7-22/cover.png)
 
 > 本文代码快照：Vue 后台提交 `d3ee41a`。主要参考 `manage-frontend-vue/src/**/*.test.ts`、`vitest.config.ts`、`package.json` 和 React 后台测试配置。
 
@@ -40,7 +40,7 @@ Vue 后台当前配置 Vitest、jsdom 和 Vue Test Utils 依赖，测试文件�
 
 它比单独测试 `canManageUsers()` 更接近用户实际导航，因为测试覆盖路由 meta 与全局守卫的组合。但它没有挂载每个页面组件，也没有完整验证登录表单填写、点击按钮、加载状态、真实网络跳转和浏览器 history 行为。
 
-{{IMG:M7-22-证据边界}}
+![证据边界示意图：Vue 后台测试分层](./assets/m7/M7-22/evidence-boundaries.png)
 
 ## 当前测试层次与尚未覆盖的区域
 
@@ -63,7 +63,7 @@ Vitest 与 Vite 共用配置，适合运行 TypeScript/Vue 测试；jsdom 提供
 
 浏览器 smoke 适合走关键用户路径：登录、文章列表翻页、打开编辑器、保存草稿、打开评论审核、修改主题、移动端打开抽屉。与单测不同，它要处理端口、认证账号、数据库状态和网络，因此应以隔离的测试环境运行。
 
-{{IMG:M7-22-镜像测试}}
+![镜像测试示意图：Vue 后台测试分层](./assets/m7/M7-22/behavior-tests.png)
 
 ## 避免镜像测试和过度断言
 
@@ -87,7 +87,7 @@ Vitest 与 Vite 共用配置，适合运行 TypeScript/Vue 测试；jsdom 提供
 
 ## 延伸阅读
 
-- [可折叠侧栏与移动抽屉：后台导航的响应式实现]({{LINK:M7-21}})
+- M7-21《可折叠侧栏与移动抽屉：后台导航的响应式实现》
 - [前端质量门禁：契约守卫、纯函数测试与浏览器验收](https://blog.csdn.net/fungleo/article/details/166643861)
 - [后端测试策略：单元、集成与测试数据库](https://blog.csdn.net/fungleo/article/details/164720486)
 - [Vitest 官方指南](https://vitest.dev/guide/)
@@ -100,37 +100,3 @@ Vitest 与 Vite 共用配置，适合运行 TypeScript/Vue 测试；jsdom 提供
 📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
-<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
-## 发布辅助信息
-
-### 文章 Tag（6 个）
-
-Vue.js、Vitest、Vue Test Utils、前端测试、单元测试、E2E 测试
-
-### 文章简介（250 字以内）
-
-本文盘点 Vue 管理后台当前真实测试：权限纯函数、request 信封/并发刷新/FormData、UI store 主题持久化和 Vue Router 守卫，并说明每一层能证明和不能证明什么。文章确认当前尚未建立系统化组件交互或 Playwright/Cypress 浏览器 E2E 套件，给出按风险增量补测的方案，避免把 mock 测试或本地打开页面宣称为线上验收。
-
-### 建议发布分类
-
-前端 / Vue.js
-
-### 封面短标题
-
-Vue 后台测试分层
-
-### 配图 AI 提示词
-
-1. M7-22-封面：测试金字塔：纯函数、请求/状态、路由、组件交互、浏览器 E2E；标注当前项目已覆盖与待补充层次，表达测试证据边界，不虚构覆盖率。
-2. M7-22-证据边界：mock fetch 测试证明 request 行为，但不能证明生产 Cookie/CORS；组件测试证明交互，浏览器测试验证真实主流程，线上验收另列。
-3. M7-22-镜像测试：放在正文同名占位处，测试边界示意：哪些测试是行为验证，哪些会退化成镜像实现细节。
-
-### 发布前核对
-
-- [ ] 确认测试文件列表和 vitest.config 当前状态。
-- [ ] 检查没有把已安装 Vue Test Utils 说成已有页面测试覆盖。
-- [ ] 核对 E2E 工具未配置时明确标为未落地。
-- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
-- [ ] 发布时删除本段辅助信息，更新测试范围描述。
-<!-- PUBLISH_ASSIST_END -->

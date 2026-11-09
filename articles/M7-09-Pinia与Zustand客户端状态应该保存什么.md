@@ -2,7 +2,7 @@
 
 > 状态管理库不是服务器数据的仓库，也不是把所有变量集中到一个全局对象的理由。本文对照 React Zustand 与 Vue Pinia 的认证 store、界面偏好和 Vue Query，划清客户端状态的来源与持久化边界。
 
-{{IMG:M7-09-封面}}
+![客户端状态边界](./assets/m7/M7-09/cover.png)
 
 > 本文代码快照：Vue 后台提交 `d3ee41a`，React 对照版提交 `d72df53`。主要参考两端 `store(s)/auth`、`store(s)/ui` 以及 Vue Query 使用方式。
 
@@ -14,7 +14,7 @@
 
 本文不把 Pinia 与 Zustand 做 API 名称对照表，而是比较项目里的真实边界：认证会话存内存，主题和侧栏偏好写入 localStorage，服务器文章数据交给 TanStack Vue Query。三者的生命周期和失效规则完全不同。
 
-{{IMG:M7-09-状态分类}}
+![状态分类示意图：客户端状态边界](./assets/m7/M7-09/state-ownership.png)
 
 ## Zustand 与 Pinia 的表达差异
 
@@ -65,7 +65,7 @@ React 版通过 Zustand `persist` 持久化侧栏状态，并沿用既有 key/�
 
 主题选项还支持 `system`，这是用户设置与当前系统媒体查询的组合结果。偏好值是 `system`，解析后的主题可能是 `dark` 或 `light`；不要把“用户选择”与“最终呈现”混成一个字段。
 
-{{IMG:M7-09-服务端数据}}
+![服务端数据示意图：客户端状态边界](./assets/m7/M7-09/server-cache.png)
 
 ## 服务端数据：不要再复制一份进 Pinia
 
@@ -112,7 +112,7 @@ Pinia 和 Zustand 都能保存共享客户端状态；Vue Query/React Query 管�
 
 ## 延伸阅读
 
-- [Vue Router 如何守住多角色后台边界]({{LINK:M7-08}})
+- M7-08《Vue Router 如何守住多角色后台边界》
 - [TanStack Query 不只是缓存：失效、派生与失败恢复](https://blog.csdn.net/fungleo/article/details/165847415)
 - [Zustand 官方文档](https://zustand.docs.pmnd.rs/)
 - [Pinia 官方文档](https://pinia.vuejs.org/)
@@ -125,37 +125,3 @@ Pinia 和 Zustand 都能保存共享客户端状态；Vue Query/React Query 管�
 📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
-<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
-## 发布辅助信息
-
-### 文章 Tag（6 个）
-
-Pinia、Zustand、Vue.js、React、状态管理、前端安全
-
-### 文章简介（250 字以内）
-
-本文对照 React Zustand 和 Vue Pinia 的实际代码，按数据来源与生命周期划分认证会话、页面交互、服务器数据、URL 状态和 UI 偏好。文章解释为什么 access token 不应持久化到 localStorage，为什么文章数据应由 TanStack Query 管理，以及 Vue 重写如何兼容 React 版侧栏偏好格式，并提供状态归属判断表。
-
-### 建议发布分类
-
-前端 / Vue.js
-
-### 封面短标题
-
-客户端状态边界
-
-### 配图 AI 提示词
-
-1. M7-09-封面：Pinia/Zustand 作为共享客户端状态、Vue Query 作为服务器缓存、URL 作为可分享筛选状态、localStorage 作为 UI 偏好存储的分层示意；认证 token 标注“内存”，避免画入 localStorage。
-2. M7-09-状态分类：用不同生命周期容器展示页面局部状态、共享会话、服务器缓存和持久 UI 偏好，指出每种数据由不同事实源负责。
-3. M7-09-服务端数据：放在正文同名占位处，状态归属示意：服务端数据交给查询缓存，客户端状态才留在 Pinia。
-
-### 发布前核对
-
-- [ ] 对照 React auth/ui store 与 Vue auth/ui store 当前实现。
-- [ ] 验证文章中本地存储 key 和 sidebar JSON 格式。
-- [ ] 确认没有将 Vue Query 服务器状态建议复制进 Pinia。
-- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
-- [ ] 发布时删除本段辅助信息，检查存储图没有误示 token 持久化。
-<!-- PUBLISH_ASSIST_END -->

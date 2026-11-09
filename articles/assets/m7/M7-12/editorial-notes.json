@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照 DashboardPage.vue 当前 API、enabled 条件和指标字段。\n- [ ] 对照 OpenAPI 确认文章/评论排序能力，不暗示不存在的过滤参数。\n- [ ] 核实空态、错误态描述与当前实际实现，未完成能力作为改进建议表达。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，核对图片没有虚构趋势图。",
+  "originalImagePrompts": "1. M7-12-封面：管理后台仪表盘信息架构，含统计卡、分类分布、近期文章、近期评论，多个 API 查询并行汇入，按编辑/管理员能力显示不同工作区；白色浅蓝底，清爽专业。\n2. M7-12-权限视图：编辑拥有内容文章和评论工作区，管理员额外拥有系统管理入口；统计指标注明来自契约 API，体现权限控制查询启用和页面展示两层。\n3. M7-12-多源数据：放在正文同名占位处，多源统计示意：同一页上的若干统计区块来自不同 API 与不同角色能力。",
+  "coverShortTitle": "仪表盘背后的数据设计",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

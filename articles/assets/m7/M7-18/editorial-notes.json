@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照 router、ProfileLayout、UserListPage 和个人中心页面清单。\n- [ ] 核实管理用户与个人资料各自的 API 字段和端点。\n- [ ] 检查个人 query 缓存的账号切换风险以建议表达，而非虚构已实现清理。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，检查角色矩阵权限语义。",
+  "originalImagePrompts": "1. M7-18-封面：同一管理应用分为“全站管理区”和“我的个人中心”两条导航；管理员管理他人用户，会员只能管理自身资料与互动，编辑拥有内容权限但无用户治理权限；清爽浅蓝白底。\n2. M7-18-路由权限：三角色对比矩阵，member→个人中心，editor→内容管理，admin→用户及站点管理，标注前端守卫与后端 API 双重校验。\n3. M7-18-缓存命名：放在正文同名占位处，缓存身份命名：按主体（管理员/会员）与用途区分 query key。",
+  "coverShortTitle": "管理区与会员中心并存",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

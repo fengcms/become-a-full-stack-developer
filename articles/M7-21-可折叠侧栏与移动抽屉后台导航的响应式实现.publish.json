@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-21",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·可折叠侧栏与移动抽屉：后台导航的响应式实现",
+  "description": "本文基于 Vue 管理后台 AdminLayout，分析桌面侧栏折叠、平板自动窄栏、手机抽屉和不同断点下的导航状态。覆盖桌面偏好持久化、移动 backdrop、路由后关闭、resize 清理、body 滚动锁和 aria-label，并如实指出完整抽屉还应验证 aria-expanded、Escape、焦点陷阱/返回等辅助技术行为。",
+  "tags": [
+    "Vue.js",
+    "响应式布局",
+    "侧边栏",
+    "移动端导航",
+    "无障碍",
+    "前端工程化"
+  ],
+  "categoryName": "成为全栈",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-21/cover.png",
+  "ready": true
+}

@@ -2,7 +2,7 @@
 
 > 一个管理后台从“能启动”到“敢继续开发”，中间还需要类型、测试、路由、请求代理和可重复的质量门禁。
 
-{{IMG:M7-02-封面}}
+![搭好 Vue 后台工程基座](./assets/m7/M7-02/cover.png)
 
 > 本文代码快照：Vue 后台提交 `d3ee41a`；项目依赖与工具版本以 `manage-frontend-vue/pnpm-lock.yaml` 为准。
 
@@ -43,7 +43,7 @@ pnpm install --frozen-lockfile
 
 `--frozen-lockfile` 的价值是：如果 `package.json` 已变化、锁文件却没有同步，安装应该明确失败，而不是临时解析一套新的版本继续跑。依赖升级是一个需要审阅的改动，不应该悄悄发生在每个人第一次安装项目时。
 
-{{IMG:M7-02-目录}}
+![目录示意图：搭好 Vue 后台工程基座](./assets/m7/M7-02/module-path.png)
 
 ## 目录不是越多越清楚，关键是能沿用户任务找到代码
 
@@ -126,7 +126,7 @@ server: {
 
 前端公开环境变量与后端秘密也要分开。Vite 的 `VITE_` 前缀变量会进入浏览器可见的构建结果，因此不能把数据库密码、API 私钥或管理凭证放进去。`API_TARGET` 是 Vite 开发服务器读取的配置，不需要暴露给浏览器端代码；登录名、密码也不应硬编码在项目里。
 
-{{IMG:M7-02-质量门禁}}
+![质量门禁示意图：搭好 Vue 后台工程基座](./assets/m7/M7-02/quality-gates.png)
 
 ## 工具门禁要各自负责一件事
 
@@ -170,9 +170,9 @@ Vue 后台的工程基座由几部分共同组成：Vite 负责开发与打包�
 
 ## 延伸阅读
 
-- [为什么把 React 管理后台再用 Vue 实现一遍]({{LINK:M7-01}})
-- [Vue 管理后台技术方案与工程边界](../docs/vue-manage-frontend/01-技术方案与工程边界.md)
-- [Vue 管理后台实施记录](../docs/vue-manage-frontend/03-实施记录.md)
+- M7-01《为什么把 React 管理后台再用 Vue 实现一遍》
+- [Vue 管理后台技术方案与工程边界](https://github.com/fengcms/become-a-full-stack-developer/blob/d3ee41aa907903bcef75104b5ad55010458acba9/docs/vue-manage-frontend/01-%E6%8A%80%E6%9C%AF%E6%96%B9%E6%A1%88%E4%B8%8E%E5%B7%A5%E7%A8%8B%E8%BE%B9%E7%95%8C.md)
+- [Vue 管理后台实施记录](https://github.com/fengcms/become-a-full-stack-developer/blob/d3ee41aa907903bcef75104b5ad55010458acba9/docs/vue-manage-frontend/03-%E5%AE%9E%E6%96%BD%E8%AE%B0%E5%BD%95.md)
 - [后台骨架：布局、数据路由与分层守卫](https://blog.csdn.net/fungleo/article/details/165589276)
 - [OpenAPI 生成类型，为什么请求函数仍然手写](https://blog.csdn.net/fungleo/article/details/165721265)
 
@@ -184,37 +184,3 @@ Vue 后台的工程基座由几部分共同组成：Vite 负责开发与打包�
 📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
-<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
-## 发布辅助信息
-
-### 文章 Tag（6 个）
-
-Vue.js、Vite、Naive UI、TypeScript、Biome、前端工程化
-
-### 文章简介（250 字以内）
-
-本文基于已经落地的 Vue 管理后台，介绍 Vue 3、Vite、TypeScript、Naive UI、Vue Router、Pinia、Vue Query、Biome、Vitest 和 `vue-tsc` 各自负责的边界。通过真实目录和入口代码解释应用装配顺序、API/附件代理、锁文件复现以及质量门禁，并区分类型、测试、构建和线上接口验证分别能证明什么，帮助开发者搭出可持续迭代的后台工程。
-
-### 建议发布分类
-
-前端 / Vue.js
-
-### 封面短标题
-
-搭好 Vue 后台工程基座
-
-### 配图 AI 提示词
-
-1. M7-02-封面：16:9 中文技术文章封面，浅白与极浅蓝背景，深蓝灰文字和靛蓝重点。中心展示一个整洁的 Vue 管理后台工程模块图，包含 Vite、TypeScript、Naive UI、Router、Pinia、Vue Query、Biome、Vitest 等标签，分成应用层、状态/请求层、验证层。中文排版正确，留白充足，不出现伪代码和未经授权的品牌图标。
-2. M7-02-质量门禁：流程图表现 `pnpm check`、`pnpm typecheck`、`pnpm test`、`pnpm build` 各自检查格式、SFC 类型、行为和生产打包；旁注“通过不等于线上写操作已验收”。白底、清晰中文、专业技术信息图。
-3. M7-02-目录：放在正文同名占位处，后台工程目录示意：沿“登录→列表→详情→编辑”的用户任务路径组织模块。
-
-### 发布前核对
-
-- [ ] 对照 `package.json` 和锁文件复核所有版本，不把安装快照说成当前市场最新版本。
-- [ ] 确认 `main.ts`、`vite.config.ts`、Biome 配置和项目目录仍与文章代码快照一致。
-- [ ] 核对 API 与 `/files` 两条代理规则、`API_TARGET` 默认值和 `.env.example` 的说明。
-- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
-- [ ] 发布时删除本段辅助信息，检查表格、代码块和图片排版。
-<!-- PUBLISH_ASSIST_END -->

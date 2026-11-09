@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-12",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·仪表盘不是几张卡片：组合统计接口与角色视图",
+  "description": "本文从 Vue 管理后台真实仪表盘讲解如何并行获取全站统计、分类分布、近期文章和评论，如何由角色能力控制相关 query 是否启用及区域是否展示，以及指标命名、加载/空/错误状态和下一步工作入口如何设计。文章强调以契约提供的数据为边界，不把累计值冒充趋势，不将前端隐藏区域视作后端授权。",
+  "tags": [
+    "Vue.js",
+    "管理后台",
+    "仪表盘",
+    "TanStack Query",
+    "数据可视化",
+    "RBAC"
+  ],
+  "categoryName": "成为全栈",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-12/cover.png",
+  "ready": true
+}

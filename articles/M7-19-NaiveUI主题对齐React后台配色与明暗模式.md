@@ -2,7 +2,7 @@
 
 > 换组件库时，默认主题很容易把整个产品带向另一个视觉方向。Vue 后台曾出现“前台浅蓝配色混进管理端”的偏差，后来改为参照 React 管理后台的蓝紫主色、明暗模式和设计令牌。本文拆解主题如何从全局变量传到 Naive UI 与 Markdown 编辑器。
 
-{{IMG:M7-19-封面}}
+![Naive UI 明暗主题对齐](./assets/m7/M7-19/cover.png)
 
 > 本文代码快照：Vue 后台提交 `d3ee41a`。主要参考 `src/App.vue`、`src/assets/main.css`、`src/stores/ui.ts`、React `src/index.css` 与主题切换实现。
 
@@ -20,7 +20,7 @@ React 版在 `index.css` 中定义浅色与 `.dark` 两套 CSS custom properties
 
 Vue 后台复制并调整了这一令牌模型到 `main.css`，保留 React 版蓝紫 accent 与轻柔浅色背景；暗色时替换 surface、文字、边框和侧栏令牌。它们驱动应用自己的布局 CSS 和响应式状态。
 
-{{IMG:M7-19-主题链路}}
+![主题链路示意图：Naive UI 明暗主题对齐](./assets/m7/M7-19/theme-pipeline.png)
 
 ## `NConfigProvider` 管理组件库主题
 
@@ -45,7 +45,7 @@ Vue 后台复制并调整了这一令牌模型到 `main.css`，保留 React 版�
 
 如果只切 CSS class，不把 darkTheme 交给 Naive UI，原生组件弹层、菜单或选择下拉可能仍处于浅色；如果只切 Naive UI theme，不切自定义 CSS 变量，应用自己的布局又会留在浅色。两层必须同步。
 
-{{IMG:M7-19-三态偏好}}
+![三态偏好示意图：Naive UI 明暗主题对齐](./assets/m7/M7-19/theme-preferences.png)
 
 ## system、light、dark 三种偏好
 
@@ -91,7 +91,7 @@ Vue store 读取 `theme` localStorage key，默认 `system`；侧栏状态沿用
 
 ## 延伸阅读
 
-- [管理员、编辑和会员：用户与个人中心并存]({{LINK:M7-18}})
+- M7-18《管理员、编辑和会员：用户与个人中心并存》
 - [表单页范式：校验、数据回填与未保存保护](https://blog.csdn.net/fungleo/article/details/165986069)
 - [Naive UI ConfigProvider 官方文档](https://www.naiveui.com/en-US/os-theme/components/config-provider)
 - [MDN：prefers-color-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
@@ -104,37 +104,3 @@ Vue store 读取 `theme` localStorage key，默认 `system`；侧栏状态沿用
 📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
-<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
-## 发布辅助信息
-
-### 文章 Tag（6 个）
-
-Naive UI、Vue.js、暗色模式、CSS Variables、主题系统、前端设计系统
-
-### 文章简介（250 字以内）
-
-本文根据 React 管理后台的蓝紫主色与浅/深色语义令牌，分析 Vue 后台如何用 CSS custom properties、Naive UI `NConfigProvider`、theme overrides、Pinia UI store 和系统媒体查询完成主题对齐。文章说明 CSS class 与 Naive UI darkTheme 必须同步，Markdown 编辑器/预览需要单独接入 resolvedTheme，并通过主题/侧栏持久化区分非敏感偏好与认证凭证。
-
-### 建议发布分类
-
-前端 / Vue.js
-
-### 封面短标题
-
-Naive UI 明暗主题对齐
-
-### 配图 AI 提示词
-
-1. M7-19-封面：同一 Vue 管理后台的浅色与深色双视图，蓝紫 accent 一致，包含 sidebar、表格、弹窗和 Markdown 编辑器，突出多层 theme token 同步。
-2. M7-19-主题链路：themePreference（system/light/dark）→ resolvedTheme → CSS .dark + Naive UI darkTheme + Markdown editor/preview，localStorage 仅保存 UI preference。
-3. M7-19-三态偏好：放在正文同名占位处，主题偏好三态：system、light、dark 如何解析并落到组件库与编辑器。
-
-### 发布前核对
-
-- [ ] 核实 React/Vue 管理后台 accent 与浅/深色 token，避免引用前台网站配色。
-- [ ] 对照 App.vue NConfigProvider overrides 和 ui.ts theme storage。
-- [ ] 检查系统变更监听与 Markdown 编辑/预览主题同步的实现。
-- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
-- [ ] 发布时删除本段辅助信息，人工复核明暗模式截图。
-<!-- PUBLISH_ASSIST_END -->

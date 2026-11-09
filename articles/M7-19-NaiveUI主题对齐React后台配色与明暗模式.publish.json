@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-19",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·Naive UI 主题对齐：React 后台配色与明暗模式",
+  "description": "本文根据 React 管理后台的蓝紫主色与浅/深色语义令牌，分析 Vue 后台如何用 CSS custom properties、Naive UI `NConfigProvider`、theme overrides、Pinia UI store 和系统媒体查询完成主题对齐。文章说明 CSS class 与 Naive UI darkTheme 必须同步，Markdown 编辑器/预览需要单独接入 resolvedTheme，并通过主题/侧栏持久化区分非敏感偏好与认证凭证。",
+  "tags": [
+    "Naive UI",
+    "Vue.js",
+    "暗色模式",
+    "CSS Variables",
+    "主题系统",
+    "前端设计系统"
+  ],
+  "categoryName": "成为全栈",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-19/cover.png",
+  "ready": true
+}

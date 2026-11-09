@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照 React auth/ui store 与 Vue auth/ui store 当前实现。\n- [ ] 验证文章中本地存储 key 和 sidebar JSON 格式。\n- [ ] 确认没有将 Vue Query 服务器状态建议复制进 Pinia。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，检查存储图没有误示 token 持久化。",
+  "originalImagePrompts": "1. M7-09-封面：Pinia/Zustand 作为共享客户端状态、Vue Query 作为服务器缓存、URL 作为可分享筛选状态、localStorage 作为 UI 偏好存储的分层示意；认证 token 标注“内存”，避免画入 localStorage。\n2. M7-09-状态分类：用不同生命周期容器展示页面局部状态、共享会话、服务器缓存和持久 UI 偏好，指出每种数据由不同事实源负责。\n3. M7-09-服务端数据：放在正文同名占位处，状态归属示意：服务端数据交给查询缓存，客户端状态才留在 Pinia。",
+  "coverShortTitle": "客户端状态边界",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

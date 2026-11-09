@@ -1,0 +1,13 @@
+{
+  "mode": "built-in image_gen",
+  "references": [
+    "/Users/fungleo/Downloads/博客封面.png",
+    "/Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/articles/assets/m7/M7-01/cover.png",
+    "/Users/fungleo/Sites/ShangHaiYingZhou/become-a-full-stack-developer/articles/assets/m7/M7-01/acceptance-baseline.png"
+  ],
+  "prompts": {
+    "cover": "Use case: text-localization. Edit supplied original and approved M7-01 cover reference into the next series cover. Preserve deep navy textured background, luminous cyan/green bottom ribbon, lower-left feather emblem, right-aligned large white title, left negative space, overall landscape aspect about 1.805:1. No extra illustrations or diagrams. Bottom-right tagline exactly “一个真实系统七端实战”. Crisp correct Chinese typography. Replace old headline and series line with the specified text; do not retain M0-01 or M7-01. Headline two lines “多角色” / “路由边界”. Series line “M7-08｜成为全栈·Vue 管理后台篇”.",
+    "role-access": "Use case: infographic-diagram. One landscape Chinese technical blog interior infographic, aspect about 1.805:1. Reference images define the approved series style: deep royal navy blue, clean white Chinese typography, cyan-to-green borders, very subtle luminous bottom ribbon and small feather emblem lower left. Use generous spacing, clear readable short labels, restrained flat cards. Mark with article ID and “示意图”. No fake screenshot, no evidence of passed tests, no checkmarks, no invented brand logos. Only show the specified content. Preserve exact identifiers, correct Chinese. Title “角色不同，导航结果不同”. Subtitle “M7-08 · 示意图”. Three spacious horizontal rows: “member” | “个人中心可用” | “控制台：No Access”; “editor” | “内容管理可用” | “用户管理：403”; “admin” | “内容、用户与站点管理” | “仍受服务端规则约束”. Bottom separate bar “前端控制体验，后端独立鉴权”. No green success checkmarks, no fake screenshots.",
+    "capability-functions": "Use case: infographic-diagram. One landscape Chinese technical blog interior infographic, aspect about 1.805:1. Reference images define the approved series style: deep royal navy blue, clean white Chinese typography, cyan-to-green borders, very subtle luminous bottom ribbon and small feather emblem lower left. Use generous spacing, clear readable short labels, restrained flat cards. Mark with article ID and “示意图”. No fake screenshot, no evidence of passed tests, no checkmarks, no invented brand logos. Only show the specified content. Preserve exact identifiers, correct Chinese. Title “菜单与路由，共用能力规则”. Subtitle “M7-08 · 示意图”. Top input “当前用户：member / editor / admin” flows into middle “permission.ts 纯权限函数”. From it two arrows branch to “菜单 can：过滤入口” and “路由 meta.capability：检查访问”. Lower independent full-width box “后端：逐请求校验身份、角色与资源归属”. Bottom caption “前端规则一致，不等于后端自动授权”."
+  }
+}

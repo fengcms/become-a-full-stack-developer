@@ -2,7 +2,7 @@
 
 > “本地能打开”不足以说明后台可交付。格式与 lint、Vue 模板类型、自动化测试、生产构建、深层路由和后端代理分别发现不同问题。本文把 Vue 工程的门禁和 Node/Go 联调方式串成一条可重复的验证流程。
 
-{{IMG:M7-23-封面}}
+![Vue 后台质量门禁](./assets/m7/M7-23/cover.png)
 
 > 本文代码快照：Vue 后台提交 `d3ee41a`。主要参考 `manage-frontend-vue/package.json`、`biome.json`、`vite.config.ts`、`.env.example`、`README.md` 和路由配置。
 
@@ -27,7 +27,7 @@ pnpm build
 
 `pnpm build` 运行 `vue-tsc --noEmit -p tsconfig.app.json`，通过后才执行 `vite build`。这意味着 production build 本身也包含 Vue-aware 类型检查，但开发期间仍可单独运行 typecheck 快速反馈。
 
-{{IMG:M7-23-Biome}}
+![Biome示意图：Vue 后台质量门禁](./assets/m7/M7-23/quality-gates.png)
 
 ## Biome：格式和 lint 一个工具负责
 
@@ -49,7 +49,7 @@ pnpm build
 
 若改了文章分页、上传、主题或路由，先运行相邻测试，再跑完整 test/build。没有对应测试的行为应通过页面验收或后续补测覆盖，而不是把“Vitest 通过”作为未测试路径的证明。
 
-{{IMG:M7-23-代理}}
+![代理示意图：Vue 后台质量门禁](./assets/m7/M7-23/development-proxy.png)
 
 ## Vite 代理：本地开发可切换 Node 与 Go
 
@@ -105,9 +105,9 @@ Biome 负责格式与 lint，`vue-tsc` 检查模板和 TS，Vitest 验证已覆�
 
 ## 延伸阅读
 
-- [Vue 后台测试怎么分层：从纯函数到真实页面路径]({{LINK:M7-22}})
+- M7-22《Vue 后台测试怎么分层：从纯函数到真实页面路径》
 - [总复盘：从“接口能调通”到“后台值得使用”](https://blog.csdn.net/fungleo/article/details/166690803)
-- [Vue 管理后台工程说明](../docs/vue-manage-frontend/README.md)
+- [Vue 管理后台工程说明](https://github.com/fengcms/become-a-full-stack-developer/blob/d3ee41aa907903bcef75104b5ad55010458acba9/docs/vue-manage-frontend/README.md)
 - [契约先行：设计一套被七个端复用的 API](https://blog.csdn.net/fungleo/article/details/164140515)
 
 ---
@@ -118,37 +118,3 @@ Biome 负责格式与 lint，`vue-tsc` 检查模板和 TS，Vitest 验证已覆�
 📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
-<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
-## 发布辅助信息
-
-### 文章 Tag（6 个）
-
-Vue.js、Biome、TypeScript、Vite、前端工程化、质量门禁
-
-### 文章简介（250 字以内）
-
-本文把 Vue 管理后台的工程门禁串起来：Biome 格式/lint、vue-tsc SFC 检查、Vitest、生产构建、OpenAPI 生成文件排除和 Vite `/api/v1`/`/files` 代理。重点说明 `API_TARGET` 只控制本地开发代理、生产仍需部署层支持 history fallback 与反向代理，并区分本地门禁通过和真实线上 Cookie/CORS/写操作验收。
-
-### 建议发布分类
-
-前端 / Vue.js
-
-### 封面短标题
-
-Vue 后台质量门禁
-
-### 配图 AI 提示词
-
-1. M7-23-封面：Biome、vue-tsc、Vitest、Vite build 四道门禁串联，之后连浏览器 smoke 和生产环境验收；白底浅蓝，标注每道门禁的验证范围。
-2. M7-23-代理：Vite dev server 将 `/api/v1` 与 `/files` 代理到 `API_TARGET`，可指向 Node/Go；旁边强调这是开发代理，生产由部署层实现。
-3. M7-23-Biome：放在正文同名占位处，本地门禁链：Biome、vue-tsc、Vitest 与构建各自负责一件事。
-
-### 发布前核对
-
-- [ ] 对照 package.json 脚本、Biome includes 与 Vite proxy 配置。
-- [ ] 确认 API_TARGET 与 VITE_API_BASE 的开发/直连差异。
-- [ ] 更新实际门禁执行结果，不把配置存在写成线上验收完成。
-- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
-- [ ] 发布时删除本段辅助信息，检查所有命令可运行。
-<!-- PUBLISH_ASSIST_END -->

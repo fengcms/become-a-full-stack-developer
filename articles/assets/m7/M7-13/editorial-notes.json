@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照 Vue bulkDelete 和 React useBatchSelection/BatchFailures 的实际行为。\n- [ ] 核实冻结契约没有被描述成提供不存在的批量端点。\n- [ ] 检查软删除语义、失败选择保留和提示文案均描述准确。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，区分代码现状与改进建议。",
+  "originalImagePrompts": "1. M7-13-封面：文章列表多选后分成成功与失败两组，成功触发列表缓存刷新，失败项保留明细和重试路径；对照并发和顺序处理策略，白底浅蓝，准确展示 Vue 当前汇总与 React 失败项保留的区别。\n2. M7-13-部分失败流程：多条 DELETE 请求映射到契约单篇端点，结果聚合为成功数、失败数、列表失效；强调不是数据库原子事务。\n3. M7-13-筛选与选择：放在正文同名占位处，筛选与选择范围示意：筛选条件变化时选择集合如何收敛与重置。",
+  "coverShortTitle": "批量操作如何处理失败",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

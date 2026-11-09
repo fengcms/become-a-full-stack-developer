@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照 LoginPage.vue 核实站点字段、开发预填和角色回跳。\n- [ ] 检查登录 API options 的 skipAuth/skipRefresh 语义。\n- [ ] 确认品牌配置不是登录前置条件，且页面没有虚构忘记密码入口。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，检查窄屏与暗色截图。",
+  "originalImagePrompts": "1. M7-20-封面：管理后台登录页桌面双栏原型，左侧站点品牌和内容工作台能力，右侧简洁账号密码表单；旁边小屏单栏示意。蓝紫主色、浅色卡片、专业克制，不出现真实密码。\n2. M7-20-登录流程：公开站点配置与登录表单并行/独立，品牌 API 失败时使用默认品牌仍可登录；登录成功按后端 role 跳转，守卫再检查权限。\n3. M7-20-品牌信息：放在正文同名占位处，登录页信息结构：品牌信息来自公开站点设置，表单按认证契约执行。",
+  "coverShortTitle": "登录页也是产品入口",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 2,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

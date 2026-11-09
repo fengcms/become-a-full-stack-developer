@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-23",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·Biome、类型检查、构建和 API 代理如何组成质量门禁",
+  "description": "本文把 Vue 管理后台的工程门禁串起来：Biome 格式/lint、vue-tsc SFC 检查、Vitest、生产构建、OpenAPI 生成文件排除和 Vite `/api/v1`/`/files` 代理。重点说明 `API_TARGET` 只控制本地开发代理、生产仍需部署层支持 history fallback 与反向代理，并区分本地门禁通过和真实线上 Cookie/CORS/写操作验收。",
+  "tags": [
+    "Vue.js",
+    "Biome",
+    "TypeScript",
+    "Vite",
+    "前端工程化",
+    "质量门禁"
+  ],
+  "categoryName": "成为全栈",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-23/cover.png",
+  "ready": true
+}

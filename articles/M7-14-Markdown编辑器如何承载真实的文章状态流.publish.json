@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-14",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·Markdown 编辑器如何承载真实的文章状态流",
+  "description": "本文以 Vue 管理后台 ArticleFormPage 为例，分析 Markdown 编辑器如何承载文章详情加载、正文与发布设置、草稿/待审/发布/下架状态、契约校验、dirty/busy/savedAt 保存反馈、未保存离开保护、预览和列表缓存失效。文章把编辑器输入能力与父页面的文章领域逻辑分开，并指出图片上传是独立异步流程，不等于选中文件即完成。",
+  "tags": [
+    "Vue.js",
+    "Markdown",
+    "md-editor-v3",
+    "内容管理系统",
+    "表单设计",
+    "前端工程化"
+  ],
+  "categoryName": "成为全栈",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-14/cover.png",
+  "ready": true
+}

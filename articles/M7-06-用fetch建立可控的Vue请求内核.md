@@ -2,7 +2,7 @@
 
 > 请求层是页面和后端之间的边界。它既不该散落在每个组件里，也不应把所有业务揉成一个巨大的客户端。本文拆解 Vue 后台的 fetch 内核，覆盖 URL、query、统一信封、错误、Bearer token 和 FormData。
 
-{{IMG:M7-06-封面}}
+![Fetch 请求内核](./assets/m7/M7-06/cover.png)
 
 > 本文代码快照：Vue 后台提交 `d3ee41a`。主要参考 `manage-frontend-vue/src/lib/request/index.ts`、`errors.ts`、`session.ts` 和 `index.test.ts`。
 
@@ -73,7 +73,7 @@ if (!skipAuth && auth.accessToken) {
 
 请求配置统一使用 `credentials: 'include'`，使浏览器可以随跨域请求携带符合策略的 Cookie，例如刷新会话所需的 HttpOnly refresh cookie。能否实际跨域成功还取决于后端 CORS 与 Cookie 属性，前端设置 credentials 不能替代服务端配置。
 
-{{IMG:M7-06-上传}}
+![上传示意图：Fetch 请求内核](./assets/m7/M7-06/formdata-upload.png)
 
 ## FormData 上传：不要手动设置 multipart Content-Type
 
@@ -110,7 +110,7 @@ body: formData
 
 提供 `http.get/post/put/patch/delete` 是为了让调用端更容易表达 HTTP 方法，最后它们仍然走同一个 `request`。这个薄 API 不会隐藏底层 fetch 太多，也避免页面重复分支。
 
-{{IMG:M7-06-错误模型}}
+![错误模型示意图：Fetch 请求内核](./assets/m7/M7-06/error-model.png)
 
 ## 错误模型：把网络失败、HTTP 状态与业务码讲清楚
 
@@ -146,7 +146,7 @@ Vue 后台的请求内核统一处理 URL、query、凭证、JSON/FormData、信
 
 ## 延伸阅读
 
-- [从冻结 OpenAPI 生成类型，并组织 Vue API 模块]({{LINK:M7-05}})
+- M7-05《从冻结 OpenAPI 生成类型，并组织 Vue API 模块》
 - [前端鉴权闭环：内存令牌、刷新旋转与路由守卫](https://blog.csdn.net/fungleo/article/details/165848076)
 - [MDN：Using FormData Objects](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest_API/Using_FormData_Objects)
 - [MDN：Using Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)
@@ -159,37 +159,3 @@ Vue 后台的请求内核统一处理 URL、query、凭证、JSON/FormData、信
 📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
-<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
-## 发布辅助信息
-
-### 文章 Tag（6 个）
-
-Vue.js、Fetch、HTTP、FormData、接口封装、前端工程化
-
-### 文章简介（250 字以内）
-
-本文拆解 Vue 管理后台基于 fetch 实现的请求内核，说明 URL 与 query 序列化、统一响应信封、ApiError、Bearer token、凭证策略、JSON 请求体及 FormData 上传的处理边界。结合真实测试解释为什么不能手动设置 multipart boundary、为什么 TypeScript 泛型不等于运行时校验，以及并发过期请求如何由内核共享刷新流程。
-
-### 建议发布分类
-
-前端 / Vue.js
-
-### 封面短标题
-
-Fetch 请求内核
-
-### 配图 AI 提示词
-
-1. M7-06-封面：从 Vue 页面到 API 业务函数，再到 fetch 请求内核、HTTP API 的分层流程图；请求内核旁标注 URL/query、认证、JSON/FormData、信封/错误，白色浅蓝底与深色文字。
-2. M7-06-上传：展示浏览器生成 multipart boundary 的过程，FormData 原样进入 fetch，Content-Type 由浏览器自动补齐 boundary；对比错误的手动 header 写法，以清晰技术信息图呈现。
-3. M7-06-错误模型：放在正文同名占位处，错误模型分层示意：网络失败、HTTP 状态与业务码三类错误分别归属与处理。
-
-### 发布前核对
-
-- [ ] 对照当前 request/index.ts、errors.ts、session.ts 核实刷新分支和错误映射。
-- [ ] 检查 FormData 测试确实断言无 Content-Type 且 body 原样传递。
-- [ ] 核实 API_BASE、credentials 与部署 CORS/Cookie 配置的关系，不将前端配置描述成线上已验收。
-- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
-- [ ] 发布时删除本段辅助信息，检查代码块与流程图排版。
-<!-- PUBLISH_ASSIST_END -->

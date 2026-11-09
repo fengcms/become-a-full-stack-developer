@@ -284,10 +284,10 @@
 | 成为全栈·基础补充·Node.js 运行时：事件循环与异步 | [成为全栈·基础补充·Node.js 运行时：事件循环与异步](https://blog.csdn.net/fungleo/article/details/170237491) | `articles/B-14-Nodejs运行时-事件循环与异步.md` | https://blog.csdn.net/fungleo/article/details/170237491 | 🟢 已发布 |
 | 成为全栈·基础补充·服务端心智模型：一个请求从浏览器到数据库发生了什么 | [成为全栈·基础补充·服务端心智模型：一个请求从浏览器到数据库发生了什么](https://blog.csdn.net/fungleo/article/details/170288320) | `articles/B-15-服务端心智模型-一个请求从浏览器到数据库发生了什么.md` | https://blog.csdn.net/fungleo/article/details/170288320 | 🟢 已发布 |
 | 成为全栈·基础补充·API 契约与兼容性：接口文档怎样约束前后端 | [成为全栈·基础补充·API 契约与兼容性：接口文档怎样约束前后端](https://blog.csdn.net/fungleo/article/details/170288351) | `articles/B-16-API契约与兼容性-接口文档怎样约束前后端.md` | https://blog.csdn.net/fungleo/article/details/170288351 | 🟢 已发布 |
-| 成为全栈·基础补充·测试分层与质量门禁：怎样验证一个全栈项目 | — | `articles/B-17-测试分层与质量门禁-怎样验证一个全栈项目.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·基础补充·数据库迁移与事务：数据结构怎样安全演进 | — | `articles/B-18-数据库迁移与事务-数据结构怎样安全演进.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·基础补充·配置与运行观测：服务怎样安全启动和排障 | — | `articles/B-19-配置与运行观测-服务怎样安全启动和排障.md` | — | 🟡 草稿中（正文完成，待发布） |
-| 成为全栈·基础补充·并发幂等与重复请求：怎样避免业务状态被改坏 | — | `articles/B-20-并发幂等与重复请求-怎样避免业务状态被改坏.md` | — | 🟡 草稿中（正文完成，待发布） |
+| 成为全栈·基础补充·测试分层与质量门禁：怎样验证一个全栈项目 | [成为全栈·基础补充·测试分层与质量门禁：怎样验证一个全栈项目](https://blog.csdn.net/fungleo/article/details/170344516) | `articles/B-17-测试分层与质量门禁-怎样验证一个全栈项目.md` | https://blog.csdn.net/fungleo/article/details/170344516 | 🟢 已发布 |
+| 成为全栈·基础补充·数据库迁移与事务：数据结构怎样安全演进 | [成为全栈·基础补充·数据库迁移与事务：数据结构怎样安全演进](https://blog.csdn.net/fungleo/article/details/170344705) | `articles/B-18-数据库迁移与事务-数据结构怎样安全演进.md` | https://blog.csdn.net/fungleo/article/details/170344705 | 🟢 已发布 |
+| 成为全栈·基础补充·配置与运行观测：服务怎样安全启动和排障 | [成为全栈·基础补充·配置与运行观测：服务怎样安全启动和排障](https://blog.csdn.net/fungleo/article/details/170344873) | `articles/B-19-配置与运行观测-服务怎样安全启动和排障.md` | https://blog.csdn.net/fungleo/article/details/170344873 | 🟢 已发布 |
+| 成为全栈·基础补充·并发幂等与重复请求：怎样避免业务状态被改坏 | [成为全栈·基础补充·并发幂等与重复请求：怎样避免业务状态被改坏](https://blog.csdn.net/fungleo/article/details/170345077) | `articles/B-20-并发幂等与重复请求-怎样避免业务状态被改坏.md` | https://blog.csdn.net/fungleo/article/details/170345077 | 🟢 已发布 |
 
 ---
 

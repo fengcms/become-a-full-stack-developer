@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照 `ArticleListPage.vue`、`PageHeader.vue` 和 `api/articles.ts` 核对示例片段与代码快照。\n- [ ] 确认 `PageHeader` 只有展示 props 和 actions slot；不要描述成已有 emit 或 v-model API。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 核对 Vue 官方 SFC 与 `<script setup>` 链接可用。\n- [ ] 发布时删除本段辅助信息，检查表格和代码块排版。",
+  "originalImagePrompts": "1. M7-03-封面：16:9 中文前端技术文章封面，极浅蓝白底，深色文字和蓝紫色重点。将一个 Vue 单文件组件表示成三个清楚相邻的层：`<script setup lang=\"ts\">`、`<template>`、`<style scoped>`，通过 props、slot 和数据状态连接；简洁现代、中文准确，不用伪造代码段。\n2. M7-03-组件边界：父页面向 `PageHeader` 传 title、description 两个 props，并通过 actions 命名 slot 填入“新建文章”按钮；图中明确 props 向下、slot 内容由父组件提供。白底浅蓝、中文易读，不出现额外 emits 或双向绑定箭头。\n3. M7-03-类型贯穿：放在正文同名占位处，类型贯穿示意：接口返回类型如何经 props、模板与组合式函数保持一致。",
+  "coverShortTitle": "读懂 script setup",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 2,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

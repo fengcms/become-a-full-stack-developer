@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 确认 `docs/api/openapi.v1.yaml` 当前冻结版本及文章引用的一致性。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 对照 `package.json` 的 `gen:types` 脚本和 `src/types/common.ts` 的实际别名。\n- [ ] 检查文章没有声称泛型会自动验证运行时响应。\n- [ ] 发布时删除本段辅助信息，检查代码块与表格排版。",
+  "originalImagePrompts": "1. M7-05-封面：以 OpenAPI YAML 契约为起点，经过 TypeScript 生成类型、业务类型别名、API 函数，最终到 Vue 页面表格的清晰管线图；白底浅蓝、深色文字、少量蓝紫色强调，适合作为严肃技术文章封面。\n2. M7-05-分层图：并排显示“编译期”类型链与“运行时”请求链；生成类型只提供静态约束，fetch 内核负责真正的认证、网络、错误处理，明确两条链路在 API 函数处汇合。\n3. M7-05-业务别名：放在正文同名占位处，类型分层示意：契约生成类型与业务别名各自负责，别名不是第二份契约。",
+  "coverShortTitle": "OpenAPI 到 Vue 类型",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

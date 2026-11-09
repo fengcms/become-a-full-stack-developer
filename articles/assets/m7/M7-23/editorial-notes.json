@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照 package.json 脚本、Biome includes 与 Vite proxy 配置。\n- [ ] 确认 API_TARGET 与 VITE_API_BASE 的开发/直连差异。\n- [ ] 更新实际门禁执行结果，不把配置存在写成线上验收完成。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，检查所有命令可运行。",
+  "originalImagePrompts": "1. M7-23-封面：Biome、vue-tsc、Vitest、Vite build 四道门禁串联，之后连浏览器 smoke 和生产环境验收；白底浅蓝，标注每道门禁的验证范围。\n2. M7-23-代理：Vite dev server 将 `/api/v1` 与 `/files` 代理到 `API_TARGET`，可指向 Node/Go；旁边强调这是开发代理，生产由部署层实现。\n3. M7-23-Biome：放在正文同名占位处，本地门禁链：Biome、vue-tsc、Vitest 与构建各自负责一件事。",
+  "coverShortTitle": "Vue 后台质量门禁",
+  "localLinksConverted": 1,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

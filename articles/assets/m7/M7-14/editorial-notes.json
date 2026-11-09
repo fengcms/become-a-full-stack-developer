@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照 ArticleFormPage 的表单字段、校验、状态和路由行为。\n- [ ] 核对文章状态和权限说明符合当前 OpenAPI 与 permission 函数。\n- [ ] 检查没有将上传回调描述成文件已上传。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，区分当前实现与未来异步确认改进建议。",
+  "originalImagePrompts": "1. M7-14-封面：一体化文章编辑工作台，中央 Markdown 正文编辑，侧边/下方发布设置、草稿/待审/发布状态、保存与预览，周围显示 dirty、上传中、成功反馈的状态关系；清爽浅色风格。\n2. M7-14-状态流：文章详情加载→表单编辑→本地校验→保存请求→服务端实体返回→查询缓存失效→路由更新，区分新建与编辑两种路径。\n3. M7-14-保存状态：放在正文同名占位处，保存状态机：dirty、busy 与 savedAt 的流转，以及未保存离开保护。",
+  "coverShortTitle": "Markdown 编辑器实战",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

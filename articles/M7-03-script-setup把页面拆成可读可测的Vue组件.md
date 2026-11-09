@@ -2,7 +2,7 @@
 
 > Vue 单文件组件让模板、状态和样式靠得很近。用得好，读者可以沿着页面看懂一次交互；用得不好，一个 `.vue` 文件也能变成另一个难以维护的“全家桶”。
 
-{{IMG:M7-03-封面}}
+![读懂 script setup](./assets/m7/M7-03/cover.png)
 
 > 本文代码快照：Vue 后台提交 `d3ee41a`，主要参考 `src/pages/articles/ArticleListPage.vue` 与 `src/components/PageHeader.vue`。
 
@@ -82,7 +82,7 @@ const articles = useQuery({ queryKey, queryFn }) // 服务器数据缓存
 
 不要因为它们都能在模板里访问，就把它们都称为“Vue 状态”。输入框、登录身份和文章列表有不同的来源与生命周期；这一点会在 M7-09、M7-10 分别展开。
 
-{{IMG:M7-03-组件边界}}
+![组件边界示意图：读懂 script setup](./assets/m7/M7-03/component-boundaries.png)
 
 ## 用 `PageHeader` 看父子组件之间的边界
 
@@ -162,7 +162,7 @@ const articles = useQuery({
 
 这也提示了 SFC 的容量边界：把页面状态和用户操作放在 `.vue` 文件里是可读的；如果一个文件同时维护多套无关状态机、重复的授权策略、复杂的纯数据转换，那就值得抽出 API 函数、权限函数、测试过的纯 helper 或真正复用的子组件。**要不要拆分，取决于职责和复用，不取决于这个文件到了第几行。**
 
-{{IMG:M7-03-类型贯穿}}
+![类型贯穿示意图：读懂 script setup](./assets/m7/M7-03/type-flow.png)
 
 ## 类型要贯穿模板，而不是停在接口返回类型
 
@@ -231,8 +231,8 @@ Vue 模板还涉及组件 props、事件、插槽、`v-model` 和动态绑定。
 
 ## 延伸阅读
 
-- [为什么把 React 管理后台再用 Vue 实现一遍]({{LINK:M7-01}})
-- [Vue3 + Vite + Naive UI：后台工程基座怎么搭]({{LINK:M7-02}})
+- M7-01《为什么把 React 管理后台再用 Vue 实现一遍》
+- M7-02《Vue3 + Vite + Naive UI：后台工程基座怎么搭》
 - [后台骨架：布局、数据路由与分层守卫](https://blog.csdn.net/fungleo/article/details/165589276)
 - [Vue 官方单文件组件指南](https://vuejs.org/guide/scaling-up/sfc.html)
 - [Vue 官方 `<script setup>` 指南](https://vuejs.org/api/sfc-script-setup.html)
@@ -245,37 +245,3 @@ Vue 模板还涉及组件 props、事件、插槽、`v-model` 和动态绑定。
 📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
-<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
-## 发布辅助信息
-
-### 文章 Tag（6 个）
-
-Vue.js、Composition API、TypeScript、前端组件化、Vue SFC、前端工程化
-
-### 文章简介（250 字以内）
-
-本文基于 Vue 管理后台的文章列表和 `PageHeader` 组件，讲解 `<script setup lang="ts">` 如何连接模板与组件状态、props/slot 如何划分父子边界、`vue-tsc` 如何检查 SFC 模板，以及组件和 composable 应在什么条件下抽取。文章避免只罗列指令，而是沿着筛选、分页和文章查询的实际数据流分析 SFC 责任边界，并给出组件拆分练习。
-
-### 建议发布分类
-
-前端 / Vue.js
-
-### 封面短标题
-
-读懂 script setup
-
-### 配图 AI 提示词
-
-1. M7-03-封面：16:9 中文前端技术文章封面，极浅蓝白底，深色文字和蓝紫色重点。将一个 Vue 单文件组件表示成三个清楚相邻的层：`<script setup lang="ts">`、`<template>`、`<style scoped>`，通过 props、slot 和数据状态连接；简洁现代、中文准确，不用伪造代码段。
-2. M7-03-组件边界：父页面向 `PageHeader` 传 title、description 两个 props，并通过 actions 命名 slot 填入“新建文章”按钮；图中明确 props 向下、slot 内容由父组件提供。白底浅蓝、中文易读，不出现额外 emits 或双向绑定箭头。
-3. M7-03-类型贯穿：放在正文同名占位处，类型贯穿示意：接口返回类型如何经 props、模板与组合式函数保持一致。
-
-### 发布前核对
-
-- [ ] 对照 `ArticleListPage.vue`、`PageHeader.vue` 和 `api/articles.ts` 核对示例片段与代码快照。
-- [ ] 确认 `PageHeader` 只有展示 props 和 actions slot；不要描述成已有 emit 或 v-model API。
-- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
-- [ ] 核对 Vue 官方 SFC 与 `<script setup>` 链接可用。
-- [ ] 发布时删除本段辅助信息，检查表格和代码块排版。
-<!-- PUBLISH_ASSIST_END -->

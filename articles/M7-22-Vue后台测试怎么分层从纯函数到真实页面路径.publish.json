@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-22",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·Vue 后台测试怎么分层：从纯函数到真实页面路径",
+  "description": "本文盘点 Vue 管理后台当前真实测试：权限纯函数、request 信封/并发刷新/FormData、UI store 主题持久化和 Vue Router 守卫，并说明每一层能证明和不能证明什么。文章确认当前尚未建立系统化组件交互或 Playwright/Cypress 浏览器 E2E 套件，给出按风险增量补测的方案，避免把 mock 测试或本地打开页面宣称为线上验收。",
+  "tags": [
+    "Vue.js",
+    "Vitest",
+    "Vue Test Utils",
+    "前端测试",
+    "单元测试",
+    "E2E 测试"
+  ],
+  "categoryName": "成为全栈",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-22/cover.png",
+  "ready": true
+}

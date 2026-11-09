@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 核实当前 CATEGORY_MAX_DEPTH=4、删除限制及 slug 正则。\n- [ ] 对照 CategoryTreePage.vue 遍历和父级 blocked 逻辑。\n- [ ] 对照 TagListPage.vue 的 articleCount 删除限制。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，验证示意树层数从 1 开始表述正确。",
+  "originalImagePrompts": "1. M7-17-封面：左侧无限层级分类树被投影成带缩进、层级、父级关系的管理表格；右侧标签以扁平清单管理；标出分类最大四级及删除约束，浅蓝白底、技术风格。\n2. M7-17-环路保护：正在编辑的分类节点和其子孙节点从父级候选列表排除，其他合法父级可选；说明后端也会再次校验深度与环路。\n3. M7-17-树投影：放在正文同名占位处，树到表格投影示意：嵌套分类树如何展平成带层级的表格行。",
+  "coverShortTitle": "分类树与标签管理",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

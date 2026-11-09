@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照 auth store、bootstrapSession、refreshOnce、forceLogout 和 logout 的实现核对流程。\n- [ ] 核对 OpenAPI 浏览器 Cookie 与移动端请求体凭证差异。\n- [ ] 不把本地代码测试描述成生产 Cookie/CORS 验收。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，勿在截图或日志中泄露凭证。",
+  "originalImagePrompts": "1. M7-07-封面：登录、内存 access token、HttpOnly refresh cookie、并发刷新合并、单次重放、退出撤销构成完整环形流程图；白色浅蓝底、深色文字，简洁安全工程风格。\n2. M7-07-并发刷新：多个过期 API 请求汇聚到单个 refresh promise，成功后各自携新 access token 重放一次；失败进入统一清理和登录跳转。明确标注“同一页面执行上下文”。\n3. M7-07-启动恢复：放在正文同名占位处，会话恢复时序：应用启动先建立会话、再挂载路由，避免未认证闪烁。",
+  "coverShortTitle": "登录会话完整生命周期",
+  "localLinksConverted": 1,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

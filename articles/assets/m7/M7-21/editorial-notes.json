@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照 AdminLayout.vue 和 main.css 的实际断点与监听清理。\n- [ ] 核对 sidebar storage key 沿用 React 格式。\n- [ ] 检查对 aria-hidden、aria-label 和焦点管理状态描述准确。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，避免把未实现的焦点陷阱描述成现状。",
+  "originalImagePrompts": "1. M7-21-封面：三种响应式后台布局并排：宽屏完整导航、平板图标窄栏、手机遮罩抽屉；标注 1280/1024 断点和主内容区域变化，白色浅蓝底。\n2. M7-21-状态图：桌面 sidebarCollapsed 持久偏好、tablet 自动窄栏、mobileOpen 临时抽屉；路由变化关闭 drawer，body overflow 在关闭/卸载时恢复。\n3. M7-21-移动抽屉：放在正文同名占位处，响应式导航状态机：桌面折叠、移动抽屉与遮罩、滚动锁定的切换。",
+  "coverShortTitle": "桌面侧栏与移动抽屉",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

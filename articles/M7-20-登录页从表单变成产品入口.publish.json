@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-20",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·登录页从表单变成产品入口",
+  "description": "本文从 Vue 管理后台 LoginPage 说明如何把简单登录表单设计成产品入口：桌面双栏品牌介绍、站点设置动态品牌、窄屏单列、键盘和 autocomplete 支持、加载与错误反馈、开发环境账号预填以及按角色登录分流。重点明确视觉升级不修改账号密码契约，站点设置失败不应阻断登录，真实权限仍由路由和后端执行。",
+  "tags": [
+    "Vue.js",
+    "登录页",
+    "Naive UI",
+    "响应式设计",
+    "用户体验",
+    "身份认证"
+  ],
+  "categoryName": "成为全栈",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-20/cover.png",
+  "ready": true
+}

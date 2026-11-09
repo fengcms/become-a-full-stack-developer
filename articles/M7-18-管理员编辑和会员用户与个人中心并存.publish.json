@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-18",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·管理员、编辑和会员：用户与个人中心并存",
+  "description": "本文分析同一 Vue 管理后台如何容纳管理员用户治理与会员个人中心：用户列表的角色/状态/等级管理和管理员密码重置，与会员自己的资料、改密、通知、点赞和收藏在路由、API、字段和缓存上的区别。文章解释 member 的 No Access 与 editor 能力不足的 403，并强调共享 UI 不意味着共用权限模型，个人数据归属必须由服务端验证。",
+  "tags": [
+    "Vue.js",
+    "会员中心",
+    "用户管理",
+    "RBAC",
+    "个人资料",
+    "前端权限"
+  ],
+  "categoryName": "成为全栈",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-18/cover.png",
+  "ready": true
+}
