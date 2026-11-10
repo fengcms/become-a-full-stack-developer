@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-01",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·为什么把 React 管理后台再用 Vue 实现一遍",
+  "description": "为什么一个已经运行的 React 管理后台还要再用 Vue 实现？本文从真实工程出发，明确 M7 重写的学习目标、React 对照基线、冻结 API 契约、三角色权限和业务验收边界。文章解释“业务行为一致”与“代码结构相同”的区别，并用分页问题说明页面出现数据不等于功能验收完成。文末给出目录阅读路径和对照练习，为后续 Vue 工程、请求、会话和管理业务文章建立共同基线。",
+  "tags": [
+    "Vue.js",
+    "React",
+    "前端工程化",
+    "管理后台",
+    "全栈开发",
+    "软件架构"
+  ],
+  "categoryName": "成为全栈开发工程师",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-01/cover.png",
+  "ready": true
+}

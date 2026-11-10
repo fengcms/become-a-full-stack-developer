@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 确认测试文件列表和 vitest.config 当前状态。\n- [ ] 检查没有把已安装 Vue Test Utils 说成已有页面测试覆盖。\n- [ ] 核对 E2E 工具未配置时明确标为未落地。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，更新测试范围描述。",
+  "originalImagePrompts": "1. M7-22-封面：测试金字塔：纯函数、请求/状态、路由、组件交互、浏览器 E2E；标注当前项目已覆盖与待补充层次，表达测试证据边界，不虚构覆盖率。\n2. M7-22-证据边界：mock fetch 测试证明 request 行为，但不能证明生产 Cookie/CORS；组件测试证明交互，浏览器测试验证真实主流程，线上验收另列。\n3. M7-22-镜像测试：放在正文同名占位处，测试边界示意：哪些测试是行为验证，哪些会退化成镜像实现细节。",
+  "coverShortTitle": "Vue 后台测试分层",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

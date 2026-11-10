@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-10",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·Vue Query：服务端数据缓存、query key 与变更失效",
+  "description": "本文通过 Vue 管理后台的文章列表、仪表盘、分类和站点设置，解释 TanStack Vue Query 的 query key、fresh/stale/inactive 状态、局部 staleTime、加载错误状态和 mutation 后缓存失效。文章强调 query key 必须覆盖影响响应的参数，服务器数据不应复制进 Pinia，并用文章域前缀失效说明写操作后如何让缓存重新对齐后端事实。",
+  "tags": [
+    "Vue Query",
+    "TanStack Query",
+    "Vue.js",
+    "前端缓存",
+    "数据获取",
+    "前端状态管理"
+  ],
+  "categoryName": "成为全栈开发工程师",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-10/cover.png",
+  "ready": true
+}

@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照 React 与 Vue 两端文章列表的当前实现核对状态模型描述。\n- [ ] 检查示例为简化说明，不要误读成 React/Vue 项目逐字相同的完整源码。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 核对 Vue 与 React 官方文档链接。\n- [ ] 发布时删除本段辅助信息，检查表格和代码块排版。",
+  "originalImagePrompts": "1. M7-04-封面：中文技术文章封面，左右两栏对照 Vue 响应式依赖追踪与 React 组件渲染快照，中央用同一个“文章筛选→分页列表”流程展示状态变化；白色和极浅蓝背景、深蓝紫重点色，准确简洁，不出现伪代码文字。\n2. M7-04-状态流：展示 keyword、status、page 三个输入流向 query，再流向 queryKey 与文章列表；标注 Vue computed 自动追踪、React render/useMemo 显式依赖，强调业务结果相同、运行模型不同。\n3. M7-04-依赖追踪：放在正文同名占位处，依赖追踪示意：Vue 读取时收集依赖、写入时通知订阅者，与 React 重渲染对比。",
+  "coverShortTitle": "响应式 vs Hooks",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 2,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

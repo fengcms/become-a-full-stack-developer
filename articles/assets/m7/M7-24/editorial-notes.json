@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 核实两端 commit 快照仍存在，并确认 OpenAPI 版本。\n- [ ] 更新本轮门禁执行结果、Vue 测试文件/测试数和 build 版本。\n- [ ] 对照 M7-13、M7-15、M7-21 实现，确认差异与待改进项未被修复。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址；工程说明相对链接保持不变。\n- [ ] 不将模块数量、代码行数或不等环境构建结果当作框架性能排名。\n- [ ] 发布时删除本段辅助信息，并说明线上验收范围。",
+  "originalImagePrompts": "1. M7-24-封面：React 和 Vue 两个方向共同接入一份 OpenAPI 冻结契约，最终呈现同一个内容管理后台；中间展示不同的组件、store、router、query 实现，强调行为对齐而非框架排名。\n2. M7-24-复盘图：真实缺陷→定位证据→实现差异→验证边界四阶段，包含分页、主题、权限和批量部分失败案例；避免速度竞赛或胜负奖杯视觉。\n3. M7-24-共用契约：放在正文同名占位处，共用契约示意：两套实现共享冻结 OpenAPI，差异集中在表达方式。",
+  "coverShortTitle": "React 与 Vue 重写复盘",
+  "localLinksConverted": 1,
+  "unpublishedReferencesConvertedToText": 4,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

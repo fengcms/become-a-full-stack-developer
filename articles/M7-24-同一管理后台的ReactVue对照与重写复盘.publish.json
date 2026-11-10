@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-24",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·同一管理后台的 React/Vue 对照与重写复盘",
+  "description": "本文总结同一管理后台由 React 与 Vue 实现的工程对照：共用 OpenAPI 契约下，比较组件库、状态模型、路由、请求缓存、主题和编辑器；以分页修复、批量部分失败、附件关联、移动抽屉和当前测试证据分析重写差异。文章限定结论在本项目，不把构建模块数、代码行数或主观体验包装成框架普遍优劣结论。",
+  "tags": [
+    "Vue.js",
+    "React",
+    "前端工程化",
+    "管理后台",
+    "项目重写",
+    "技术复盘"
+  ],
+  "categoryName": "成为全栈开发工程师",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-24/cover.png",
+  "ready": true
+}

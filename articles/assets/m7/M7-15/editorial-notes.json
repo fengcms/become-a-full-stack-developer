@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照 `attachments.ts`、`ArticleFormPage.vue` 与 request 内核核实上传参数和状态。\n- [ ] 核对契约文件大小/MIME/权限描述当前版本。\n- [ ] 检查新建文章 articleId 缺失与 Promise.all 部分成功均如实表述。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，区分上传成功与文章持久化成功。",
+  "originalImagePrompts": "1. M7-15-封面：文件选择→FormData POST upload→Attachment URL→Markdown 插入→文章保存的流程图，失败分支显示错误与可重试，标注文件上传与文章保存是两个独立阶段；白底浅蓝。\n2. M7-15-生命周期：已保存文章可携带 articleId 上传关联，新建文章没有 ID 时作为未关联素材；展示 URL 引用与附件记录不同步的边界，不虚构自动关联。\n3. M7-15-FormData：放在正文同名占位处，上传数据流：文件经 FormData、API 模块与上传回调关联到文章附件。",
+  "coverShortTitle": "图片上传完整链路",
+  "localLinksConverted": 1,
+  "unpublishedReferencesConvertedToText": 2,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

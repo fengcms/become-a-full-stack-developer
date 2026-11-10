@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-04",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·Vue 响应式与 React Hooks：同一交互的两种运行模型",
+  "description": "本文以同一套管理后台中的文章筛选、分页和权限展示为例，对比 Vue 响应式依赖追踪与 React 组件重新渲染模型。通过 `ref`、`computed`、`watch` 和 `useState`、`useMemo`、`useEffect`，解释两种框架的状态传播、闭包与依赖处理差异，并给出从 React 页面迁移 Vue 时区分本地状态、派生状态、服务器状态和副作用的检查方法。",
+  "tags": [
+    "Vue.js",
+    "React",
+    "响应式原理",
+    "Composition API",
+    "前端状态管理",
+    "前端工程化"
+  ],
+  "categoryName": "成为全栈开发工程师",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-04/cover.png",
+  "ready": true
+}

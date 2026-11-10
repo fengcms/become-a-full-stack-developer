@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-02",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·Vue3 + Vite + Naive UI：后台工程基座怎么搭",
+  "description": "本文基于已经落地的 Vue 管理后台，介绍 Vue 3、Vite、TypeScript、Naive UI、Vue Router、Pinia、Vue Query、Biome、Vitest 和 `vue-tsc` 各自负责的边界。通过真实目录和入口代码解释应用装配顺序、API/附件代理、锁文件复现以及质量门禁，并区分类型、测试、构建和线上接口验证分别能证明什么，帮助开发者搭出可持续迭代的后台工程。",
+  "tags": [
+    "Vue.js",
+    "Vite",
+    "Naive UI",
+    "TypeScript",
+    "Biome",
+    "前端工程化"
+  ],
+  "categoryName": "成为全栈开发工程师",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-02/cover.png",
+  "ready": true
+}

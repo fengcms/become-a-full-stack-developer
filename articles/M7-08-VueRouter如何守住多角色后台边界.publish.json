@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-08",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·Vue Router 如何守住多角色后台边界",
+  "description": "本文以 Vue 管理后台的会员、编辑、管理员角色为例，讲解 Vue Router 如何通过 meta 声明登录、控制台和能力要求，守卫怎样区分登录页、No Access、403 与 404，菜单与直接 URL 如何共享纯权限函数。文章同时明确前端路由守卫只负责导航体验，API 的真实读写权限必须由后端独立验证。",
+  "tags": [
+    "Vue.js",
+    "Vue Router",
+    "前端权限",
+    "RBAC",
+    "路由守卫",
+    "前后端鉴权"
+  ],
+  "categoryName": "成为全栈开发工程师",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-08/cover.png",
+  "ready": true
+}

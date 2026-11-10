@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-15",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·编辑器图片上传：从文件选择到文章附件关联",
+  "description": "本文追踪 Vue 管理后台 Markdown 图片从文件选择到文章正文引用的完整过程：FormData API、fetch boundary、Bearer 认证、附件响应 URL、Markdown 插入、封面上传、上传计数及保存互锁。文章也指出多文件 Promise.all 的部分成功边界、新建文章因尚无 ID 而不能关联 articleId、孤立附件清理需要独立设计，并提供分层验收清单。",
+  "tags": [
+    "Vue.js",
+    "Markdown",
+    "文件上传",
+    "FormData",
+    "附件管理",
+    "前端安全"
+  ],
+  "categoryName": "成为全栈开发工程师",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-15/cover.png",
+  "ready": true
+}

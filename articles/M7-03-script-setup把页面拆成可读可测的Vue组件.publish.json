@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-03",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·`<script setup>`：把页面拆成可读、可测的 Vue 组件",
+  "description": "本文基于 Vue 管理后台的文章列表和 `PageHeader` 组件，讲解 `<script setup lang=\"ts\">` 如何连接模板与组件状态、props/slot 如何划分父子边界、`vue-tsc` 如何检查 SFC 模板，以及组件和 composable 应在什么条件下抽取。文章避免只罗列指令，而是沿着筛选、分页和文章查询的实际数据流分析 SFC 责任边界，并给出组件拆分练习。",
+  "tags": [
+    "Vue.js",
+    "Composition API",
+    "TypeScript",
+    "前端组件化",
+    "Vue SFC",
+    "前端工程化"
+  ],
+  "categoryName": "成为全栈开发工程师",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-03/cover.png",
+  "ready": true
+}

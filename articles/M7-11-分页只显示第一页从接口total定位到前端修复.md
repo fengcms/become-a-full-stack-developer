@@ -2,7 +2,7 @@
 
 > 接口明明返回 `total: 85`、`totalPages: 9`，管理后台却看不到下一页。问题不一定在后端：如果表格分页没有进入远程模式，或控件状态没有受控回写，前端也可能只展示第一页。本文沿一次真实验收问题定位 UI 与接口之间的分页闭环。
 
-{{IMG:M7-11-封面}}
+![分页为什么只有一页](./assets/m7/M7-11/cover.png)
 
 > 本文代码快照：Vue 后台提交 `d3ee41a`。主要参考 `manage-frontend-vue/src/pages/articles/ArticleListPage.vue` 与 React 版 `manage-frontend/src/pages/articles/ArticleListPage.tsx`、`src/components/data/TablePagination.tsx`。
 
@@ -38,7 +38,7 @@
 
 若仅把当前 10 条数据交给组件，而没有告知总记录数，一些组件会默认本地分页或认为只有一页。若控件显示 9 页但 page 状态仍然是 1，点击后也不会发出第二页请求。不能只看按钮，要核实网络请求中的 `page` 值。
 
-{{IMG:M7-11-远程分页}}
+![远程分页示意图：分页为什么只有一页](./assets/m7/M7-11/remote-pagination.png)
 
 ## Naive UI 表格需要知道这是远程分页
 
@@ -109,7 +109,7 @@ React 管理后台使用独立的 `TablePagination`，把分页状态和回调�
 
 不同 UI 库的 API 不同，复刻时目标是行为一致而不是强行使用相同组件结构。React 版将分页提成独立控件，Vue 版将 pagination 配置交给 NDataTable；相同的验收标准是当前页、总数、切页请求和 URL/筛选语义正确。
 
-{{IMG:M7-11-排查图}}
+![排查图示意图：分页为什么只有一页](./assets/m7/M7-11/pagination-debugging.png)
 
 ## 排查清单：不要跳过网络请求这一环
 
@@ -157,7 +157,7 @@ query key 是否包含 page/pageSize/筛选条件？TanStack Query Devtools 或�
 
 ## 延伸阅读
 
-- [Vue Query：服务端数据缓存、query key 与变更失效]({{LINK:M7-10}})
+- M7-10《Vue Query：服务端数据缓存、query key 与变更失效》
 - [统计看板：从数字堆砌到可执行的工作入口](https://blog.csdn.net/fungleo/article/details/166582519)
 - [Naive UI DataTable 官方文档](https://www.naiveui.com/en-US/os-theme/components/data-table)
 
@@ -169,37 +169,3 @@ query key 是否包含 page/pageSize/筛选条件？TanStack Query Devtools 或�
 📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
-<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
-## 发布辅助信息
-
-### 文章 Tag（6 个）
-
-Vue.js、Naive UI、分页、服务端分页、TanStack Query、前端问题排查
-
-### 文章简介（250 字以内）
-
-本文从一次真实验收问题出发：接口返回 total=85、totalPages=9，管理后台却不能切换下一页。文章追踪服务端分页闭环，讲解 Naive UI DataTable 的 remote 模式、受控 page、itemCount 与页码回调如何连接 Vue Query key 和 API 参数，并对比 React 独立 TablePagination 的做法，给出从响应映射到网络请求的逐层排查和验证清单。
-
-### 建议发布分类
-
-前端 / Vue.js
-
-### 封面短标题
-
-分页为什么只有一页
-
-### 配图 AI 提示词
-
-1. M7-11-封面：接口数据显示 total=85、pageSize=10、totalPages=9，流向远程表格分页器，再通过 page=2 回到 API 请求，表现闭环；清爽白底浅蓝，数字准确。
-2. M7-11-排查图：从 Network 响应、total 映射、remote、受控 page、更新回调、queryKey 到请求 page 参数逐步排查，避免把 totalPages 和 total 混淆。
-3. M7-11-远程分页：放在正文同名占位处，远程分页数据流：total 与 page 如何从接口经 query key 流到表格分页组件。
-
-### 发布前核对
-
-- [ ] 确认示例分页响应字段与冻结 OpenAPI 保持一致。
-- [ ] 对照 Vue DataTable 当前 remote、itemCount、page 和回调配置。
-- [ ] 对照 React TablePagination 的真实 props 和 URL 查询状态。
-- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
-- [ ] 发布时删除本段辅助信息，避免把建议测试误写为已经通过线上测试。
-<!-- PUBLISH_ASSIST_END -->

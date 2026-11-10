@@ -2,7 +2,7 @@
 
 > 用户从文章列表进入编辑页，再返回列表时，为什么有时不用重新请求？缓存当然可以让界面更快，但若 key 设计错误或 mutation 后没有失效，速度就会变成展示旧数据。本文用 Vue 管理后台的真实查询说明缓存如何工作。
 
-{{IMG:M7-10-封面}}
+![Vue Query 缓存体系](./assets/m7/M7-10/cover.png)
 
 > 本文代码快照：Vue 后台提交 `d3ee41a`。主要参考 `src/main.ts`、文章、仪表盘、分类、标签与个人中心页面中的 `@tanstack/vue-query` 用法。
 
@@ -32,7 +32,7 @@ const queryClient = new QueryClient({
 
 这些值是本项目的选择，不是所有业务的最佳常量。数据更新频率、请求成本、用户对实时性的要求都会影响 staleTime。站点设置和标签比高频评论审核更稳定，页面可以局部覆盖为五分钟；大多数页面继续使用全局 30 秒。
 
-{{IMG:M7-10-缓存 key}}
+![缓存 key示意图：Vue Query 缓存体系](./assets/m7/M7-10/query-keys.png)
 
 ## Query key 是缓存身份
 
@@ -76,7 +76,7 @@ Vue Query 识别 Vue 的响应式查询选项，key 可随 `computed` 更新。�
 
 分类树和标签相对稳定，页面显式设置 `staleTime: 300_000`。文章审核、用户资料或通知等频繁变化数据沿用全局策略，并在写操作后主动失效。
 
-{{IMG:M7-10-变更失效}}
+![变更失效示意图：Vue Query 缓存体系](./assets/m7/M7-10/mutation-invalidation.png)
 
 ## Mutation 后如何让缓存重新变得可信
 
@@ -125,7 +125,7 @@ Vue Query 通过 query key 建立服务器数据身份，staleTime 决定 fresh 
 
 ## 延伸阅读
 
-- [Pinia 与 Zustand：客户端状态应该保存什么]({{LINK:M7-09}})
+- M7-09《Pinia 与 Zustand：客户端状态应该保存什么》
 - [列表页范式：让分页、筛选和返回位置进入 URL](https://blog.csdn.net/fungleo/article/details/165984930)
 - [TanStack Query 官方 Vue 文档](https://tanstack.com/query/latest/docs/framework/vue/overview)
 
@@ -137,37 +137,3 @@ Vue Query 通过 query key 建立服务器数据身份，staleTime 决定 fresh 
 📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
-<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
-## 发布辅助信息
-
-### 文章 Tag（6 个）
-
-Vue Query、TanStack Query、Vue.js、前端缓存、数据获取、前端状态管理
-
-### 文章简介（250 字以内）
-
-本文通过 Vue 管理后台的文章列表、仪表盘、分类和站点设置，解释 TanStack Vue Query 的 query key、fresh/stale/inactive 状态、局部 staleTime、加载错误状态和 mutation 后缓存失效。文章强调 query key 必须覆盖影响响应的参数，服务器数据不应复制进 Pinia，并用文章域前缀失效说明写操作后如何让缓存重新对齐后端事实。
-
-### 建议发布分类
-
-前端 / Vue.js
-
-### 封面短标题
-
-Vue Query 缓存体系
-
-### 配图 AI 提示词
-
-1. M7-10-封面：Vue 页面、queryKey、服务端查询缓存、mutation 成功失效、活跃查询刷新构成清晰闭环；fresh/stale/inactive 区域用时间线表示，白底浅蓝、深色技术风格。
-2. M7-10-缓存 key：文章列表 key 包含 page、status、keyword；文章详情 key 包含 id；文章修改后按 articles 前缀失效。图示避免把服务器缓存画进 Pinia。
-3. M7-10-变更失效：放在正文同名占位处，缓存失效流程：Mutation 成功如何按 query key 精确失效并触发重取。
-
-### 发布前核对
-
-- [ ] 对照 `main.ts` 默认查询策略及页面 staleTime。
-- [ ] 对照 mutation 成功回调，核实各 query 前缀和实际行为。
-- [ ] 核实 Vue Query 对 fresh/stale/inactive/gc 的官方定义。
-- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
-- [ ] 发布时删除本段辅助信息，确保示例 query key 与代码一致。
-<!-- PUBLISH_ASSIST_END -->

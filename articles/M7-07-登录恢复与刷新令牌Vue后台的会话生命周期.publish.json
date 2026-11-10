@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-07",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·登录恢复与刷新令牌：Vue 后台的会话生命周期",
+  "description": "本文沿 Vue 管理后台实现，完整分析登录后建立 Pinia 内存会话、启动时通过浏览器 Cookie 恢复、并发 401 合并刷新、失败请求单次重放、账号禁用处理及退出清理。重点区分 Web 的 HttpOnly Cookie 与移动端安全存储路径，并说明前端会话代码、后端令牌撤销和部署 CORS/Cookie 属性各自的责任及验证边界。",
+  "tags": [
+    "Vue.js",
+    "身份认证",
+    "JWT",
+    "Cookie",
+    "令牌刷新",
+    "前端安全"
+  ],
+  "categoryName": "成为全栈开发工程师",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-07/cover.png",
+  "ready": true
+}

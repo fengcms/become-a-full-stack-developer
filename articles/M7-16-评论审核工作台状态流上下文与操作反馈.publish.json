@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-16",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·评论审核工作台：状态流、上下文与操作反馈",
+  "description": "本文基于 Vue 管理后台评论工作台，讲解 reviewing/approved/rejected 筛选、服务端分页、parentId 回复上下文、专用审核端点、官方回复返回 rejected 状态、级联删除确认提示和评论缓存失效。文章如实指出当前列表只展示文章与父评论 ID，讨论如何改进上下文而避免 N+1 请求，并强调前端审核按钮不替代服务端授权。",
+  "tags": [
+    "Vue.js",
+    "评论审核",
+    "内容安全",
+    "后台管理",
+    "RBAC",
+    "接口契约"
+  ],
+  "categoryName": "成为全栈开发工程师",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-16/cover.png",
+  "ready": true
+}

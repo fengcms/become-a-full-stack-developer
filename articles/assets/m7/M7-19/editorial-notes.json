@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 核实 React/Vue 管理后台 accent 与浅/深色 token，避免引用前台网站配色。\n- [ ] 对照 App.vue NConfigProvider overrides 和 ui.ts theme storage。\n- [ ] 检查系统变更监听与 Markdown 编辑/预览主题同步的实现。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，人工复核明暗模式截图。",
+  "originalImagePrompts": "1. M7-19-封面：同一 Vue 管理后台的浅色与深色双视图，蓝紫 accent 一致，包含 sidebar、表格、弹窗和 Markdown 编辑器，突出多层 theme token 同步。\n2. M7-19-主题链路：themePreference（system/light/dark）→ resolvedTheme → CSS .dark + Naive UI darkTheme + Markdown editor/preview，localStorage 仅保存 UI preference。\n3. M7-19-三态偏好：放在正文同名占位处，主题偏好三态：system、light、dark 如何解析并落到组件库与编辑器。",
+  "coverShortTitle": "Naive UI 明暗主题对齐",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

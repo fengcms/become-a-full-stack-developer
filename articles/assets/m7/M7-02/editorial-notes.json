@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照 `package.json` 和锁文件复核所有版本，不把安装快照说成当前市场最新版本。\n- [ ] 确认 `main.ts`、`vite.config.ts`、Biome 配置和项目目录仍与文章代码快照一致。\n- [ ] 核对 API 与 `/files` 两条代理规则、`API_TARGET` 默认值和 `.env.example` 的说明。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，检查表格、代码块和图片排版。",
+  "originalImagePrompts": "1. M7-02-封面：16:9 中文技术文章封面，浅白与极浅蓝背景，深蓝灰文字和靛蓝重点。中心展示一个整洁的 Vue 管理后台工程模块图，包含 Vite、TypeScript、Naive UI、Router、Pinia、Vue Query、Biome、Vitest 等标签，分成应用层、状态/请求层、验证层。中文排版正确，留白充足，不出现伪代码和未经授权的品牌图标。\n2. M7-02-质量门禁：流程图表现 `pnpm check`、`pnpm typecheck`、`pnpm test`、`pnpm build` 各自检查格式、SFC 类型、行为和生产打包；旁注“通过不等于线上写操作已验收”。白底、清晰中文、专业技术信息图。\n3. M7-02-目录：放在正文同名占位处，后台工程目录示意：沿“登录→列表→详情→编辑”的用户任务路径组织模块。",
+  "coverShortTitle": "搭好 Vue 后台工程基座",
+  "localLinksConverted": 2,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

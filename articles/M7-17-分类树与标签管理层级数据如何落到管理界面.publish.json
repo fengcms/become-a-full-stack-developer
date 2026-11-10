@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-17",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·分类树与标签管理：层级数据如何落到管理界面",
+  "description": "本文基于 Vue 管理后台的分类与标签页面，讲解如何递归地把 CategoryNode 树投影为带 depth/parentId/hasChildren 的表格行，如何排除自身和后代以防分类环路，如何按最大四级深度限制父级候选，以及如何处理子分类和文章关联删除约束。文章对照扁平标签列表说明不同领域数据不应强行共用树形模型。",
+  "tags": [
+    "Vue.js",
+    "分类树",
+    "标签管理",
+    "Naive UI",
+    "前端数据结构",
+    "接口契约"
+  ],
+  "categoryName": "成为全栈开发工程师",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-17/cover.png",
+  "ready": true
+}

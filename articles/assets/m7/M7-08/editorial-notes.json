@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照 roles.ts、permission.ts、router/index.ts 和 menu.ts 当前实现。\n- [ ] 核对角色能力与 OpenAPI 冻结契约保持一致。\n- [ ] 检查没有把菜单隐藏或路由守卫描述为安全边界。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，检查角色图中的权限语义。",
+  "originalImagePrompts": "1. M7-08-封面：会员、编辑、管理员三条角色路径进入后台路由，经过“登录状态→后台角色→能力”三道前端判断；旁边单独画出后端 API 鉴权作为最终安全边界。白底浅蓝，深色文字，避免暗示前端能替代服务端。\n2. M7-08-权限对照：member 进入个人中心、访问控制台显示 No Access；editor 可管理内容但访问用户管理得到 403；admin 可进入管理功能。突出这些是前端体验控制，后端仍需独立鉴权。\n3. M7-08-能力函数：放在正文同名占位处，角色能力对照：member/editor/admin 如何映射到同一套能力判定函数。",
+  "coverShortTitle": "多角色路由边界",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

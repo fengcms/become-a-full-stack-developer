@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照当前 request/index.ts、errors.ts、session.ts 核实刷新分支和错误映射。\n- [ ] 检查 FormData 测试确实断言无 Content-Type 且 body 原样传递。\n- [ ] 核实 API_BASE、credentials 与部署 CORS/Cookie 配置的关系，不将前端配置描述成线上已验收。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，检查代码块与流程图排版。",
+  "originalImagePrompts": "1. M7-06-封面：从 Vue 页面到 API 业务函数，再到 fetch 请求内核、HTTP API 的分层流程图；请求内核旁标注 URL/query、认证、JSON/FormData、信封/错误，白色浅蓝底与深色文字。\n2. M7-06-上传：展示浏览器生成 multipart boundary 的过程，FormData 原样进入 fetch，Content-Type 由浏览器自动补齐 boundary；对比错误的手动 header 写法，以清晰技术信息图呈现。\n3. M7-06-错误模型：放在正文同名占位处，错误模型分层示意：网络失败、HTTP 状态与业务码三类错误分别归属与处理。",
+  "coverShortTitle": "Fetch 请求内核",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

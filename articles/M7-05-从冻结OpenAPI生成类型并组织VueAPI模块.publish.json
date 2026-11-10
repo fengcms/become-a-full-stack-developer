@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-05",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·从冻结 OpenAPI 生成类型，并组织 Vue API 模块",
+  "description": "本文基于 Vue 管理后台的真实代码，梳理冻结 OpenAPI、`openapi-typescript` 生成文件、业务类型别名、API 模块和 fetch 请求内核之间的职责。重点说明生成 TypeScript 类型不等于自动生成运行时请求，也不等于验证线上 JSON；通过文章列表接口示例展示契约字段如何流向页面，并介绍重新生成、类型检查和审阅差异的实践步骤。",
+  "tags": [
+    "OpenAPI",
+    "TypeScript",
+    "Vue.js",
+    "接口契约",
+    "代码生成",
+    "前端工程化"
+  ],
+  "categoryName": "成为全栈开发工程师",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-05/cover.png",
+  "ready": true
+}

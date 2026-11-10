@@ -1,0 +1,8 @@
+{
+  "originalPublicationChecks": "- [ ] 对照 `main.ts` 默认查询策略及页面 staleTime。\n- [ ] 对照 mutation 成功回调，核实各 query 前缀和实际行为。\n- [ ] 核实 Vue Query 对 fresh/stale/inactive/gc 的官方定义。\n- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。\n- [ ] 发布时删除本段辅助信息，确保示例 query key 与代码一致。",
+  "originalImagePrompts": "1. M7-10-封面：Vue 页面、queryKey、服务端查询缓存、mutation 成功失效、活跃查询刷新构成清晰闭环；fresh/stale/inactive 区域用时间线表示，白底浅蓝、深色技术风格。\n2. M7-10-缓存 key：文章列表 key 包含 page、status、keyword；文章详情 key 包含 id；文章修改后按 articles 前缀失效。图示避免把服务器缓存画进 Pinia。\n3. M7-10-变更失效：放在正文同名占位处，缓存失效流程：Mutation 成功如何按 query key 精确失效并触发重取。",
+  "coverShortTitle": "Vue Query 缓存体系",
+  "localLinksConverted": 0,
+  "unpublishedReferencesConvertedToText": 1,
+  "imageVisualReview": "逐张检查通过；示意图不作为运行证据"
+}

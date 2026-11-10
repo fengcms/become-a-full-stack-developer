@@ -2,7 +2,7 @@
 
 > 编辑器不是一个“大文本框”。它需要承载正文、摘要、封面、分类、标签、状态流转、图片上传、保存反馈、预览和离开保护。本文从 Vue 后台的文章编辑页出发，分析 Markdown 编辑器如何融入真实内容工作流。
 
-{{IMG:M7-14-封面}}
+![Markdown 编辑器实战](./assets/m7/M7-14/cover.png)
 
 > 本文代码快照：Vue 后台提交 `d3ee41a`。主要参考 `manage-frontend-vue/src/pages/articles/ArticleFormPage.vue`、`src/api/articles.ts` 和冻结 OpenAPI 的文章请求 schema。
 
@@ -43,7 +43,7 @@ function payload(status: ArticleStatus): ArticleCreate {
 
 标题和正文不能为空，标题、摘要和正文有契约长度限制；发布前分类为必填。保存验证失败时，界面切到对应内容或设置 tab，并给用户明确提示。校验在前端提升体验，服务端仍必须执行相同的权威验证。
 
-{{IMG:M7-14-状态流}}
+![状态流示意图：Markdown 编辑器实战](./assets/m7/M7-14/editor-workflow.png)
 
 ## 草稿、待审核、发布和下架不是按钮标签
 
@@ -53,7 +53,7 @@ function payload(status: ArticleStatus): ArticleCreate {
 
 单篇审核通常走专门的 approve 端点；管理员强改状态使用独立 status 端点。它们虽然都会改变 `status`，业务语义、权限和状态转换并不相同。管理文章状态流时，应该让动作名称与契约端点对应，避免用一个“设置状态”通用按钮掩盖差异。
 
-{{IMG:M7-14-保存状态}}
+![保存状态示意图：Markdown 编辑器实战](./assets/m7/M7-14/save-state.png)
 
 ## 保存状态：dirty、busy 与 savedAt
 
@@ -99,7 +99,7 @@ watch(
 
 ## 延伸阅读
 
-- [文章列表的筛选、批量操作和部分失败反馈]({{LINK:M7-13}})
+- M7-13《文章列表的筛选、批量操作和部分失败反馈》
 - [Markdown 编辑器：预览、暗色主题与连续图片粘贴](https://blog.csdn.net/fungleo/article/details/166107729)
 - [md-editor-v3 官方文档](https://imzbf.github.io/md-editor-v3/en-US/index)
 - [契约先行：设计一套被七个端复用的 API](https://blog.csdn.net/fungleo/article/details/164140515)
@@ -112,37 +112,3 @@ watch(
 📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
-<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
-## 发布辅助信息
-
-### 文章 Tag（6 个）
-
-Vue.js、Markdown、md-editor-v3、内容管理系统、表单设计、前端工程化
-
-### 文章简介（250 字以内）
-
-本文以 Vue 管理后台 ArticleFormPage 为例，分析 Markdown 编辑器如何承载文章详情加载、正文与发布设置、草稿/待审/发布/下架状态、契约校验、dirty/busy/savedAt 保存反馈、未保存离开保护、预览和列表缓存失效。文章把编辑器输入能力与父页面的文章领域逻辑分开，并指出图片上传是独立异步流程，不等于选中文件即完成。
-
-### 建议发布分类
-
-前端 / Vue.js
-
-### 封面短标题
-
-Markdown 编辑器实战
-
-### 配图 AI 提示词
-
-1. M7-14-封面：一体化文章编辑工作台，中央 Markdown 正文编辑，侧边/下方发布设置、草稿/待审/发布状态、保存与预览，周围显示 dirty、上传中、成功反馈的状态关系；清爽浅色风格。
-2. M7-14-状态流：文章详情加载→表单编辑→本地校验→保存请求→服务端实体返回→查询缓存失效→路由更新，区分新建与编辑两种路径。
-3. M7-14-保存状态：放在正文同名占位处，保存状态机：dirty、busy 与 savedAt 的流转，以及未保存离开保护。
-
-### 发布前核对
-
-- [ ] 对照 ArticleFormPage 的表单字段、校验、状态和路由行为。
-- [ ] 核对文章状态和权限说明符合当前 OpenAPI 与 permission 函数。
-- [ ] 检查没有将上传回调描述成文件已上传。
-- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
-- [ ] 发布时删除本段辅助信息，区分当前实现与未来异步确认改进建议。
-<!-- PUBLISH_ASSIST_END -->

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-06",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·用 fetch 建一层可控的请求内核",
+  "description": "本文拆解 Vue 管理后台基于 fetch 实现的请求内核，说明 URL 与 query 序列化、统一响应信封、ApiError、Bearer token、凭证策略、JSON 请求体及 FormData 上传的处理边界。结合真实测试解释为什么不能手动设置 multipart boundary、为什么 TypeScript 泛型不等于运行时校验，以及并发过期请求如何由内核共享刷新流程。",
+  "tags": [
+    "Vue.js",
+    "Fetch",
+    "HTTP",
+    "FormData",
+    "接口封装",
+    "前端工程化"
+  ],
+  "categoryName": "成为全栈开发工程师",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-06/cover.png",
+  "ready": true
+}

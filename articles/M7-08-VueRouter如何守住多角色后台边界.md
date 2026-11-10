@@ -2,7 +2,7 @@
 
 > 侧栏里看不到“用户管理”，不代表用户不能手动输入 `/users`。后台路由需要在导航入口建立清晰的体验边界，同时把真正的授权留给后端。本文以会员、编辑和管理员三种角色拆解 Vue Router 的访问控制。
 
-{{IMG:M7-08-封面}}
+![多角色路由边界](./assets/m7/M7-08/cover.png)
 
 > 本文代码快照：Vue 后台提交 `d3ee41a`。主要参考 `manage-frontend-vue/src/router/index.ts`、`src/config/roles.ts`、`src/lib/permission.ts`、`src/config/menu.ts` 和路由测试。
 
@@ -14,7 +14,7 @@
 
 项目的角色定义直接来自契约语义：`member` 是普通会员，可使用个人中心能力；`editor` 管理内容域；`admin` 还可以管理用户和站点设置。代码将这些规则集中在权限函数中，而不是让组件各自判断角色字符串。
 
-{{IMG:M7-08-权限对照}}
+![权限对照示意图：多角色路由边界](./assets/m7/M7-08/role-access.png)
 
 ## 路由表用 meta 表达访问意图
 
@@ -68,7 +68,7 @@ router.beforeEach((to) => {
 
 登录页读取导航 state，成功后按授权角色进行默认落地，或返回先前目标。回跳路径必须来自 Router 保存的内部导航状态，避免直接把任意外部 URL 当作跳转目标。若路径指向登录后仍不可访问的页面，守卫仍会再次执行权限检查。
 
-{{IMG:M7-08-能力函数}}
+![能力函数示意图：多角色路由边界](./assets/m7/M7-08/capability-functions.png)
 
 ## 角色等级和能力函数
 
@@ -140,7 +140,7 @@ Vue Router 用 `meta` 描述登录、控制台和能力要求；纯权限模块�
 
 ## 延伸阅读
 
-- [登录恢复与刷新令牌：Vue 后台的会话生命周期]({{LINK:M7-07}})
+- M7-07《登录恢复与刷新令牌：Vue 后台的会话生命周期》
 - [服务端状态、会话状态、界面状态：不要都塞进 Zustand](https://blog.csdn.net/fungleo/article/details/165722061)
 - [Vue Router 官方导航守卫](https://router.vuejs.org/guide/advanced/navigation-guards.html)
 - [契约先行：设计一套被七个端复用的 API](https://blog.csdn.net/fungleo/article/details/164140515)
@@ -153,37 +153,3 @@ Vue Router 用 `meta` 描述登录、控制台和能力要求；纯权限模块�
 📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
-<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
-## 发布辅助信息
-
-### 文章 Tag（6 个）
-
-Vue.js、Vue Router、前端权限、RBAC、路由守卫、前后端鉴权
-
-### 文章简介（250 字以内）
-
-本文以 Vue 管理后台的会员、编辑、管理员角色为例，讲解 Vue Router 如何通过 meta 声明登录、控制台和能力要求，守卫怎样区分登录页、No Access、403 与 404，菜单与直接 URL 如何共享纯权限函数。文章同时明确前端路由守卫只负责导航体验，API 的真实读写权限必须由后端独立验证。
-
-### 建议发布分类
-
-前端 / Vue.js
-
-### 封面短标题
-
-多角色路由边界
-
-### 配图 AI 提示词
-
-1. M7-08-封面：会员、编辑、管理员三条角色路径进入后台路由，经过“登录状态→后台角色→能力”三道前端判断；旁边单独画出后端 API 鉴权作为最终安全边界。白底浅蓝，深色文字，避免暗示前端能替代服务端。
-2. M7-08-权限对照：member 进入个人中心、访问控制台显示 No Access；editor 可管理内容但访问用户管理得到 403；admin 可进入管理功能。突出这些是前端体验控制，后端仍需独立鉴权。
-3. M7-08-能力函数：放在正文同名占位处，角色能力对照：member/editor/admin 如何映射到同一套能力判定函数。
-
-### 发布前核对
-
-- [ ] 对照 roles.ts、permission.ts、router/index.ts 和 menu.ts 当前实现。
-- [ ] 核对角色能力与 OpenAPI 冻结契约保持一致。
-- [ ] 检查没有把菜单隐藏或路由守卫描述为安全边界。
-- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
-- [ ] 发布时删除本段辅助信息，检查角色图中的权限语义。
-<!-- PUBLISH_ASSIST_END -->

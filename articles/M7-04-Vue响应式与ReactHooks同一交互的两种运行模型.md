@@ -2,7 +2,7 @@
 
 > 迁移框架时最容易出现的误区，是只把 `useState` 换成 `ref`，却继续用原框架的运行直觉理解新代码。本文用文章筛选、分页和权限展示，比较 Vue 的依赖追踪与 React 的组件重新渲染。
 
-{{IMG:M7-04-封面}}
+![响应式 vs Hooks](./assets/m7/M7-04/cover.png)
 
 > 本文代码快照：Vue 后台提交 `d3ee41a`，对照 React 后台提交 `d72df53`。主要参考 `manage-frontend-vue/src/pages/articles/ArticleListPage.vue`、`manage-frontend/src/pages/articles/ArticleListPage.tsx` 和两端的管理布局。
 
@@ -40,7 +40,7 @@ function ArticleList() {
 
 所以在 React 中，渲染函数里的局部变量属于一次渲染。事件处理函数会捕获创建它的那次渲染环境，这就是“闭包陈旧”类问题的来源之一。依赖数组也不是优化装饰，而是声明某段逻辑依赖哪些渲染值；漏掉依赖可能读到旧值，多写不稳定对象又可能触发额外执行。
 
-{{IMG:M7-04-依赖追踪}}
+![依赖追踪示意图：响应式 vs Hooks](./assets/m7/M7-04/dependency-tracking.png)
 
 ## Vue：读取时建立依赖，写入时通知订阅者
 
@@ -65,7 +65,7 @@ watch(keyword, () => {
 
 在模板里，顶层 ref 会自动解包，通常可以写 `v-model="keyword"` 或 `{{ page }}`；在普通 TypeScript 脚本里仍需要 `.value`。这种语法便利有明确边界，解构响应式对象、将 ref 传入普通函数等场景仍应留心是否保留了响应性。
 
-{{IMG:M7-04-状态流}}
+![状态流示意图：响应式 vs Hooks](./assets/m7/M7-04/state-flow.png)
 
 ## 看真实页面：筛选状态如何流到接口
 
@@ -163,8 +163,8 @@ React 的组件函数以渲染为单位重新执行，Hooks 依赖调用顺序�
 
 ## 延伸阅读
 
-- [为什么把 React 管理后台再用 Vue 实现一遍]({{LINK:M7-01}})
-- [`<script setup>`：把页面拆成可读、可测的 Vue 组件]({{LINK:M7-03}})
+- [M7-01《为什么把 React 管理后台再用 Vue 实现一遍》](https://blog.csdn.net/FungLeo/article/details/170419880)
+- [M7-03《`<script setup>`：把页面拆成可读、可测的 Vue 组件》](https://blog.csdn.net/FungLeo/article/details/170423154)
 - [服务端状态、会话状态、界面状态：不要都塞进 Zustand](https://blog.csdn.net/fungleo/article/details/165722061)
 - [Vue 官方响应式基础](https://vuejs.org/guide/essentials/reactivity-fundamentals.html)
 - [React 官方：State as a Snapshot](https://react.dev/learn/state-as-a-snapshot)
@@ -177,37 +177,3 @@ React 的组件函数以渲染为单位重新执行，Hooks 依赖调用顺序�
 📦 本系列配套代码仓库：[https://github.com/fengcms/become-a-full-stack-developer](https://github.com/fengcms/become-a-full-stack-developer)
 
 ![成为全栈专栏订阅](https://i-blog.csdnimg.cn/direct/64327c7510ad45dcb8b997df3a151525.png)
-
-<!-- PUBLISH_ASSIST_START：发布前辅助信息，发布时整段删除 -->
-## 发布辅助信息
-
-### 文章 Tag（6 个）
-
-Vue.js、React、响应式原理、Composition API、前端状态管理、前端工程化
-
-### 文章简介（250 字以内）
-
-本文以同一套管理后台中的文章筛选、分页和权限展示为例，对比 Vue 响应式依赖追踪与 React 组件重新渲染模型。通过 `ref`、`computed`、`watch` 和 `useState`、`useMemo`、`useEffect`，解释两种框架的状态传播、闭包与依赖处理差异，并给出从 React 页面迁移 Vue 时区分本地状态、派生状态、服务器状态和副作用的检查方法。
-
-### 建议发布分类
-
-前端 / Vue.js
-
-### 封面短标题
-
-响应式 vs Hooks
-
-### 配图 AI 提示词
-
-1. M7-04-封面：中文技术文章封面，左右两栏对照 Vue 响应式依赖追踪与 React 组件渲染快照，中央用同一个“文章筛选→分页列表”流程展示状态变化；白色和极浅蓝背景、深蓝紫重点色，准确简洁，不出现伪代码文字。
-2. M7-04-状态流：展示 keyword、status、page 三个输入流向 query，再流向 queryKey 与文章列表；标注 Vue computed 自动追踪、React render/useMemo 显式依赖，强调业务结果相同、运行模型不同。
-3. M7-04-依赖追踪：放在正文同名占位处，依赖追踪示意：Vue 读取时收集依赖、写入时通知订阅者，与 React 重渲染对比。
-
-### 发布前核对
-
-- [ ] 对照 React 与 Vue 两端文章列表的当前实现核对状态模型描述。
-- [ ] 检查示例为简化说明，不要误读成 React/Vue 项目逐字相同的完整源码。
-- [ ] 用实际配图替换三处 IMG 占位，并将延伸阅读中的 LINK 占位替换为已发布文章地址。
-- [ ] 核对 Vue 与 React 官方文档链接。
-- [ ] 发布时删除本段辅助信息，检查表格和代码块排版。
-<!-- PUBLISH_ASSIST_END -->

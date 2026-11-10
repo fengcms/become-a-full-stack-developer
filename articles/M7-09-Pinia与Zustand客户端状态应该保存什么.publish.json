@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-09",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·Pinia 与 Zustand：客户端状态应该保存什么",
+  "description": "本文对照 React Zustand 和 Vue Pinia 的实际代码，按数据来源与生命周期划分认证会话、页面交互、服务器数据、URL 状态和 UI 偏好。文章解释为什么 access token 不应持久化到 localStorage，为什么文章数据应由 TanStack Query 管理，以及 Vue 重写如何兼容 React 版侧栏偏好格式，并提供状态归属判断表。",
+  "tags": [
+    "Pinia",
+    "Zustand",
+    "Vue.js",
+    "React",
+    "状态管理",
+    "前端安全"
+  ],
+  "categoryName": "成为全栈开发工程师",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-09/cover.png",
+  "ready": true
+}

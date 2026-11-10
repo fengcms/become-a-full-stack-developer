@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "M7-11",
+  "platform": "csdn",
+  "title": "成为全栈·Vue 管理后台篇·分页只显示第一页：从接口 total 定位到前端修复",
+  "description": "本文从一次真实验收问题出发：接口返回 total=85、totalPages=9，管理后台却不能切换下一页。文章追踪服务端分页闭环，讲解 Naive UI DataTable 的 remote 模式、受控 page、itemCount 与页码回调如何连接 Vue Query key 和 API 参数，并对比 React 独立 TablePagination 的做法，给出从响应映射到网络请求的逐层排查和验证清单。",
+  "tags": [
+    "Vue.js",
+    "Naive UI",
+    "分页",
+    "服务端分页",
+    "TanStack Query",
+    "前端问题排查"
+  ],
+  "categoryName": "成为全栈开发工程师",
+  "articleType": "original",
+  "cover": "./assets/m7/M7-11/cover.png",
+  "ready": true
+}
