@@ -163,8 +163,8 @@ React 的组件函数以渲染为单位重新执行，Hooks 依赖调用顺序�
 
 ## 延伸阅读
 
-- M7-01《为什么把 React 管理后台再用 Vue 实现一遍》
-- M7-03《`<script setup>`：把页面拆成可读、可测的 Vue 组件》
+- [M7-01《为什么把 React 管理后台再用 Vue 实现一遍》](https://blog.csdn.net/FungLeo/article/details/170419880)
+- [M7-03《`<script setup>`：把页面拆成可读、可测的 Vue 组件》](https://blog.csdn.net/FungLeo/article/details/170423154)
 - [服务端状态、会话状态、界面状态：不要都塞进 Zustand](https://blog.csdn.net/fungleo/article/details/165722061)
 - [Vue 官方响应式基础](https://vuejs.org/guide/essentials/reactivity-fundamentals.html)
 - [React 官方：State as a Snapshot](https://react.dev/learn/state-as-a-snapshot)

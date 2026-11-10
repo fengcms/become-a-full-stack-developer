@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "platform": "csdn",
+  "articles": {
+    "M7-01": {
+      "articleId": "170419880",
+      "url": "https://blog.csdn.net/FungLeo/article/details/170419880",
+      "source": "M7-01-为什么把React管理后台再用Vue实现一遍.md",
+      "publishedDate": "2026-11-10",
+      "internalLinksUpdated": true,
+      "internalLinksStatus": "无需修改",
+      "internalLinksUpdatedDate": "2026-11-10"
+    },
+    "M7-02": {
+      "articleId": "170422373",
+      "url": "https://blog.csdn.net/FungLeo/article/details/170422373",
+      "source": "M7-02-Vue3-Vite-NaiveUI后台工程基座怎么搭.md",
+      "publishedDate": "2026-11-10",
+      "internalLinksUpdated": true,
+      "internalLinksStatus": "本地已更新；线上更新提交成功，平台提示审核中",
+      "internalLinksUpdatedDate": "2026-11-10"
+    },
+    "M7-03": {
+      "articleId": "170423154",
+      "url": "https://blog.csdn.net/FungLeo/article/details/170423154",
+      "source": "M7-03-script-setup把页面拆成可读可测的Vue组件.md",
+      "publishedDate": "2026-11-10",
+      "internalLinksUpdated": true,
+      "internalLinksStatus": "本地已更新；线上更新提交成功，平台提示审核中",
+      "internalLinksUpdatedDate": "2026-11-10"
+    },
+    "M7-04": {
+      "articleId": "170423802",
+      "url": "https://blog.csdn.net/FungLeo/article/details/170423802",
+      "source": "M7-04-Vue响应式与ReactHooks同一交互的两种运行模型.md",
+      "publishedDate": "2026-11-10",
+      "internalLinksUpdated": true,
+      "internalLinksStatus": "本地已更新；线上更新提交成功，平台提示审核中",
+      "internalLinksUpdatedDate": "2026-11-10"
+    }
+  },
+  "pendingReferences": {
+    "M7-03": [
+      "M7-09",
+      "M7-10",
+      "M7-11"
+    ],
+    "M7-04": [
+      "M7-05"
+    ]
+  },
+  "publishingPreferences": {
+    "categoryName": "成为全栈开发工程师",
+    "articleType": "original",
+    "creationStatement": "部分内容由AI辅助生成",
+    "backupToGitCode": true,
+    "visibility": "public",
+    "template": "默认模板",
+    "multiPlatform": false
+  }
+}

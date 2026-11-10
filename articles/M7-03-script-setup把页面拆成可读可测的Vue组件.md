@@ -181,7 +181,7 @@ const columns: DataTableColumns<ArticleSummary> = [
 
 Vue 模板还涉及组件 props、事件、插槽、`v-model` 和动态绑定。普通 `tsc` 主要理解 `.ts` 文件，并不能完整理解 Vue SFC 的模板；因此项目使用 `vue-tsc --noEmit` 执行 Vue-aware 检查，并把它纳入 `pnpm build`。Biome 可以承担格式化和 lint，但不能取代这一步。
 
-模板里的 ref 会自动解包，所以有些地方写 `page`，脚本里则读写 `page.value`。这个便利也需要保持一致：不要在同一数据流里有时把值当 ref、有时又把它当普通对象猜。后续 M7-04 会专门说明 ref 与 React render 状态模型的差别，以及 `computed`、`watch` 分别适合什么场景。
+模板里的 ref 会自动解包，所以有些地方写 `page`，脚本里则读写 `page.value`。这个便利也需要保持一致：不要在同一数据流里有时把值当 ref、有时又把它当普通对象猜。后续 [M7-04](https://blog.csdn.net/FungLeo/article/details/170423802) 会专门说明 ref 与 React render 状态模型的差别，以及 `computed`、`watch` 分别适合什么场景。
 
 ## 什么时候抽组件，什么时候抽组合式函数？
 
@@ -227,12 +227,12 @@ Vue 模板还涉及组件 props、事件、插槽、`v-model` 和动态绑定。
 
 读真实页面时，沿着“输入状态 → 查询参数 → API 模块 → 服务端缓存 → 模板展示”追踪；写新页面时，保持同样清楚的方向。只在复用、独立验证或职责边界确实需要时再抽组件和 composable。这样，单文件组件才能成为一个方便理解的工作单元，而不是把应用所有逻辑塞进一份文件的许可。
 
-下一篇将把视角从文件结构推进到运行模型：Vue 的依赖追踪与 React 的重新渲染分别意味着什么，为什么 `ref`、`computed` 和 `watch` 不能简单套用 React Hooks 的直觉。
+[下一篇：M7-04](https://blog.csdn.net/FungLeo/article/details/170423802)将把视角从文件结构推进到运行模型：Vue 的依赖追踪与 React 的重新渲染分别意味着什么，为什么 `ref`、`computed` 和 `watch` 不能简单套用 React Hooks 的直觉。
 
 ## 延伸阅读
 
-- M7-01《为什么把 React 管理后台再用 Vue 实现一遍》
-- M7-02《Vue3 + Vite + Naive UI：后台工程基座怎么搭》
+- [M7-01《为什么把 React 管理后台再用 Vue 实现一遍》](https://blog.csdn.net/FungLeo/article/details/170419880)
+- [M7-02《Vue3 + Vite + Naive UI：后台工程基座怎么搭》](https://blog.csdn.net/FungLeo/article/details/170422373)
 - [后台骨架：布局、数据路由与分层守卫](https://blog.csdn.net/fungleo/article/details/165589276)
 - [Vue 官方单文件组件指南](https://vuejs.org/guide/scaling-up/sfc.html)
 - [Vue 官方 `<script setup>` 指南](https://vuejs.org/api/sfc-script-setup.html)

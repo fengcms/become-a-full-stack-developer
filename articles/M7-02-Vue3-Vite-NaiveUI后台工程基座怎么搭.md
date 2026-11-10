@@ -166,11 +166,11 @@ Vue 后台的工程基座由几部分共同组成：Vite 负责开发与打包�
 
 这些工具没有谁可以独自替代其他工具。工程是否“搭好”，要看新页面能否按清楚的方向接入、接口地址是否可配置、类型和行为是否能验证、锁文件是否能复现安装，而不是看 `package.json` 里有多少热门依赖。
 
-下一篇进入 Vue 单文件组件本身：`<script setup>` 怎样把模板、状态和交互放在一个组件里，又怎样避免页面变成一个越来越大的脚本文件。
+[下一篇：M7-03](https://blog.csdn.net/FungLeo/article/details/170423154)进入 Vue 单文件组件本身：`<script setup>` 怎样把模板、状态和交互放在一个组件里，又怎样避免页面变成一个越来越大的脚本文件。
 
 ## 延伸阅读
 
-- M7-01《为什么把 React 管理后台再用 Vue 实现一遍》
+- [M7-01《为什么把 React 管理后台再用 Vue 实现一遍》](https://blog.csdn.net/FungLeo/article/details/170419880)
 - [Vue 管理后台技术方案与工程边界](https://github.com/fengcms/become-a-full-stack-developer/blob/d3ee41aa907903bcef75104b5ad55010458acba9/docs/vue-manage-frontend/01-%E6%8A%80%E6%9C%AF%E6%96%B9%E6%A1%88%E4%B8%8E%E5%B7%A5%E7%A8%8B%E8%BE%B9%E7%95%8C.md)
 - [Vue 管理后台实施记录](https://github.com/fengcms/become-a-full-stack-developer/blob/d3ee41aa907903bcef75104b5ad55010458acba9/docs/vue-manage-frontend/03-%E5%AE%9E%E6%96%BD%E8%AE%B0%E5%BD%95.md)
 - [后台骨架：布局、数据路由与分层守卫](https://blog.csdn.net/fungleo/article/details/165589276)
