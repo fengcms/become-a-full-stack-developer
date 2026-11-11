@@ -140,7 +140,7 @@ Vue Router 用 `meta` 描述登录、控制台和能力要求；纯权限模块�
 
 ## 延伸阅读
 
-- M7-07《登录恢复与刷新令牌：Vue 后台的会话生命周期》
+- [M7-07《登录恢复与刷新令牌：Vue 后台的会话生命周期》](https://blog.csdn.net/FungLeo/article/details/170488122)
 - [服务端状态、会话状态、界面状态：不要都塞进 Zustand](https://blog.csdn.net/fungleo/article/details/165722061)
 - [Vue Router 官方导航守卫](https://router.vuejs.org/guide/advanced/navigation-guards.html)
 - [契约先行：设计一套被七个端复用的 API](https://blog.csdn.net/fungleo/article/details/164140515)

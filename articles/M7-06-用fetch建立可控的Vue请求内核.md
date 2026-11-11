@@ -124,7 +124,7 @@ body: formData
 
 内核把刷新行为纳入同一流程：遇到契约中可刷新的 401，执行 `refreshOnce()`，并用新 token 对原请求重放一次。并发请求共享 `refreshInFlight` Promise，因此同时过期时只发出一次 refresh。`retried` 标记阻止请求无限重放；刷新请求本身设置 `skipRefresh` 并标记 `isRefreshCall`，避免刷新失败又递归刷新。
 
-本文的重点是请求内核边界，不展开完整会话生命周期；启动恢复、账号停用、退出与并发刷新会在 M7-07 详细说明。就此处而言，重要的是普通 API 函数无需复制刷新逻辑，认证恢复集中在可测的请求层。
+本文的重点是请求内核边界，不展开完整会话生命周期；启动恢复、账号停用、退出与并发刷新会在 [M7-07](https://blog.csdn.net/FungLeo/article/details/170488122) 详细说明。就此处而言，重要的是普通 API 函数无需复制刷新逻辑，认证恢复集中在可测的请求层。
 
 ## 用测试固定请求内核的关键行为
 
@@ -142,11 +142,11 @@ body: formData
 
 Vue 后台的请求内核统一处理 URL、query、凭证、JSON/FormData、信封、错误和认证刷新；`src/api/` 把契约端点变成业务函数；页面决定交互、反馈和缓存刷新。FormData 交给浏览器生成 boundary，TypeScript 泛型不等于运行时数据验证，跨域 Cookie 仍依赖服务端设置。
 
-下一篇将以这层请求能力为基础，沿着启动恢复、access token 内存态、refresh cookie、并发刷新、重放和退出，完整分析后台会话生命周期。
+[下一篇：M7-07](https://blog.csdn.net/FungLeo/article/details/170488122)将以这层请求能力为基础，沿着启动恢复、access token 内存态、refresh cookie、并发刷新、重放和退出，完整分析后台会话生命周期。
 
 ## 延伸阅读
 
-- M7-05《从冻结 OpenAPI 生成类型，并组织 Vue API 模块》
+- [M7-05《从冻结 OpenAPI 生成类型，并组织 Vue API 模块》](https://blog.csdn.net/FungLeo/article/details/170487360)
 - [前端鉴权闭环：内存令牌、刷新旋转与路由守卫](https://blog.csdn.net/fungleo/article/details/165848076)
 - [MDN：Using FormData Objects](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest_API/Using_FormData_Objects)
 - [MDN：Using Fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)

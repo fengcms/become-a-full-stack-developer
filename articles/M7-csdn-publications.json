@@ -35,8 +35,69 @@
       "source": "M7-04-Vue响应式与ReactHooks同一交互的两种运行模型.md",
       "publishedDate": "2026-11-10",
       "internalLinksUpdated": true,
-      "internalLinksStatus": "本地已更新；线上更新提交成功，平台提示审核中",
-      "internalLinksUpdatedDate": "2026-11-10"
+      "internalLinksStatus": "本地与线上前向内链已更新；提交成功，平台提示审核中",
+      "internalLinksUpdatedDate": "2026-11-11",
+      "status": "文章管理列表显示已发布"
+    },
+    "M7-05": {
+      "articleId": "170487360",
+      "url": "https://blog.csdn.net/FungLeo/article/details/170487360",
+      "source": "M7-05-从冻结OpenAPI生成类型并组织VueAPI模块.md",
+      "publishedDate": "2026-11-11",
+      "status": "文章管理列表显示已发布",
+      "images": {
+        "./assets/m7/M7-05/cover.png": "https://i-blog.csdnimg.cn/direct/ecc5110f27164471b9621cb955d1b1fe.png",
+        "./assets/m7/M7-05/domain-aliases.png": "https://i-blog.csdnimg.cn/direct/9633cb9efab54d96826c76b40e024c06.png",
+        "./assets/m7/M7-05/compile-runtime.png": "https://i-blog.csdnimg.cn/direct/5c4eb6f72f2946a7b72f212c7b389fb2.png"
+      },
+      "internalLinksUpdated": true,
+      "internalLinksUpdatedDate": "2026-11-11",
+      "internalLinksStatus": "本地与线上内链已更新；提交成功，平台提示审核中"
+    },
+    "M7-06": {
+      "articleId": "170488001",
+      "url": "https://blog.csdn.net/FungLeo/article/details/170488001",
+      "source": "M7-06-用fetch建立可控的Vue请求内核.md",
+      "publishedDate": "2026-11-11",
+      "status": "文章管理列表显示已发布",
+      "images": {
+        "./assets/m7/M7-06/cover.png": "https://i-blog.csdnimg.cn/direct/0c6946a5635c4f05a4717b46847681d8.png",
+        "./assets/m7/M7-06/formdata-upload.png": "https://i-blog.csdnimg.cn/direct/e777b702e99842dab49744b2035a7218.png",
+        "./assets/m7/M7-06/error-model.png": "https://i-blog.csdnimg.cn/direct/f7731564db304d539611df1f42fa539a.png"
+      },
+      "internalLinksUpdated": true,
+      "internalLinksUpdatedDate": "2026-11-11",
+      "internalLinksStatus": "本地与线上内链已更新；提交成功，平台提示审核中"
+    },
+    "M7-07": {
+      "articleId": "170488122",
+      "url": "https://blog.csdn.net/FungLeo/article/details/170488122",
+      "source": "M7-07-登录恢复与刷新令牌Vue后台的会话生命周期.md",
+      "publishedDate": "2026-11-11",
+      "status": "文章管理列表显示已发布",
+      "images": {
+        "./assets/m7/M7-07/cover.png": "https://i-blog.csdnimg.cn/direct/cdbd15c22a1b4c2fa8e9222b4a0947c3.png",
+        "./assets/m7/M7-07/session-bootstrap.png": "https://i-blog.csdnimg.cn/direct/88b3b04e8470483b93f14df97410d4d8.png",
+        "./assets/m7/M7-07/single-flight-refresh.png": "https://i-blog.csdnimg.cn/direct/8ec3a5cc43464b71a5c1f37bb687b426.png"
+      },
+      "internalLinksUpdated": true,
+      "internalLinksUpdatedDate": "2026-11-11",
+      "internalLinksStatus": "本地与线上内链已更新；提交成功，平台提示审核中"
+    },
+    "M7-08": {
+      "articleId": "170488265",
+      "url": "https://blog.csdn.net/FungLeo/article/details/170488265",
+      "source": "M7-08-VueRouter如何守住多角色后台边界.md",
+      "publishedDate": "2026-11-11",
+      "status": "文章管理列表显示已发布",
+      "images": {
+        "./assets/m7/M7-08/cover.png": "https://i-blog.csdnimg.cn/direct/a5e7bb2a58cb46779a838a34a3b7fe21.png",
+        "./assets/m7/M7-08/role-access.png": "https://i-blog.csdnimg.cn/direct/f598fb894fb649e9ae555bb04666cab6.png",
+        "./assets/m7/M7-08/capability-functions.png": "https://i-blog.csdnimg.cn/direct/44934513f11040fcbfc87803362aee02.png"
+      },
+      "internalLinksUpdated": true,
+      "internalLinksUpdatedDate": "2026-11-11",
+      "internalLinksStatus": "已链接 M7-07；M7-09 未发布，保留下一篇文字"
     }
   },
   "pendingReferences": {
@@ -45,8 +106,8 @@
       "M7-10",
       "M7-11"
     ],
-    "M7-04": [
-      "M7-05"
+    "M7-08": [
+      "M7-09"
     ]
   },
   "publishingPreferences": {

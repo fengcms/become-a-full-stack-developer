@@ -132,11 +132,11 @@ request 测试能证明：两个过期请求共享一次刷新、重放时使用
 
 Vue 后台的会话生命周期是：登录建立内存态，启动时用 Cookie 恢复，过期时合并并发刷新，失败请求最多重放一次，登出时服务端撤销并在本地无条件清理。access token 不持久化，refresh token 的浏览器长期载体由 HttpOnly Cookie 管理。安全属性、令牌轮换和撤销最终由服务端契约及部署配置共同保障。
 
-下一篇将从会话进入路由边界：如何把登录回跳、角色入口和能力级 403 放在 Vue Router 中，同时让菜单、直接 URL 和后端授权保持各自职责。
+[下一篇：M7-08](https://blog.csdn.net/FungLeo/article/details/170488265)将从会话进入路由边界：如何把登录回跳、角色入口和能力级 403 放在 Vue Router 中，同时让菜单、直接 URL 和后端授权保持各自职责。
 
 ## 延伸阅读
 
-- M7-06《用 fetch 建一层可控的请求内核》
+- [M7-06《用 fetch 建一层可控的请求内核》](https://blog.csdn.net/FungLeo/article/details/170488001)
 - [按钮级权限：能力映射、菜单过滤与自锁保护](https://blog.csdn.net/fungleo/article/details/166233264)
 - [API 契约：刷新令牌与令牌轮换](https://github.com/fengcms/become-a-full-stack-developer/blob/d3ee41aa907903bcef75104b5ad55010458acba9/docs/api/openapi.v1.yaml)
 - [MDN：Set-Cookie](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie)

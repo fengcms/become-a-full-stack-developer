@@ -160,11 +160,11 @@ pnpm typecheck
 
 冻结 OpenAPI 是接口事实源；`openapi-typescript` 生成契约的 TypeScript 表达；业务类型别名让页面更易读；`src/api/` 把业务端点包装为函数；请求内核处理认证、序列化和统一错误。类型生成强化了编译期约束，但不产生 HTTP 行为，也不验证运行时 JSON。
 
-下一篇将进入请求内核：如何用 fetch 统一 API 基础路径、query 编码、Bearer 凭证、响应信封和错误处理，并正确区分 JSON 请求与 FormData 上传。
+[下一篇：M7-06](https://blog.csdn.net/FungLeo/article/details/170488001)将进入请求内核：如何用 fetch 统一 API 基础路径、query 编码、Bearer 凭证、响应信封和错误处理，并正确区分 JSON 请求与 FormData 上传。
 
 ## 延伸阅读
 
-- M7-04《Vue 响应式与 React Hooks：同一交互的两种运行模型》
+- [M7-04《Vue 响应式与 React Hooks：同一交互的两种运行模型》](https://blog.csdn.net/FungLeo/article/details/170423802)
 - [请求层封装：统一信封、业务错误与并发 401](https://blog.csdn.net/fungleo/article/details/165590548)
 - [契约先行：设计一套被七个端复用的 API](https://blog.csdn.net/fungleo/article/details/164140515)
 - [OpenAPI TypeScript 官方文档](https://openapi-ts.dev/introduction)
